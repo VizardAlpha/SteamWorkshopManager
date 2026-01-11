@@ -1,0 +1,46 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="150"
+             x:Class="SteamWorkshopManager.Views.Components.ImagePicker"
+             x:Name="Root">
+
+    <StackPanel Spacing="8">
+        <TextBlock Text="{Binding #Root.Header}" FontWeight="SemiBold"
+                   IsVisible="{Binding #Root.Header, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+        <Grid ColumnDefinitions="200,*">
+            <!-- Image preview -->
+            <Border Width="200" Height="120"
+                    Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                    CornerRadius="4"
+                    ClipToBounds="True">
+                <Panel>
+                    <Image Source="{Binding #Root.ImagePath}"
+                           Stretch="UniformToFill"
+                           IsVisible="{Binding #Root.ImagePath, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                    <TextBlock Text="Aucune image"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                               IsVisible="{Binding #Root.ImagePath, Converter={x:Static StringConverters.IsNullOrEmpty}}"/>
+                </Panel>
+            </Border>
+
+            <!-- Controls -->
+            <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center" Spacing="8">
+                <TextBlock Text="{Binding #Root.ImagePath, TargetNullValue='Aucune image sélectionnée'}"
+                           TextTrimming="CharacterEllipsis"
+                           FontSize="12"
+                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Command="{Binding #Root.BrowseCommand}"
+                            Content="Parcourir..."/>
+                    <Button Command="{Binding #Root.ClearCommand}"
+                            Content="Effacer"
+                            IsVisible="{Binding #Root.ImagePath, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                </StackPanel>
+            </StackPanel>
+        </Grid>
+    </StackPanel>
+</UserControl>

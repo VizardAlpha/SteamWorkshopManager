@@ -1,0 +1,38 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="200"
+             x:Class="SteamWorkshopManager.Views.Components.ConfirmDialog"
+             x:Name="Root">
+
+    <Border Background="#80000000"
+            IsVisible="{Binding #Root.IsOpen}">
+        <Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                Padding="24" CornerRadius="8"
+                HorizontalAlignment="Center" VerticalAlignment="Center"
+                MinWidth="300" MaxWidth="450">
+            <StackPanel Spacing="16">
+                <TextBlock Text="{Binding #Root.Title}"
+                           FontSize="18" FontWeight="SemiBold"/>
+
+                <TextBlock Text="{Binding #Root.Message}"
+                           TextWrapping="Wrap"/>
+
+                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                    <Button Command="{Binding #Root.CancelCommand}"
+                            Content="{Binding #Root.CancelText}"
+                            IsEnabled="{Binding !#Root.IsLoading}"/>
+                    <Button Command="{Binding #Root.ConfirmCommand}"
+                            Content="{Binding #Root.ConfirmText}"
+                            Foreground="White"
+                            Background="{Binding #Root.ConfirmButtonBackground}"
+                            IsEnabled="{Binding !#Root.IsLoading}"/>
+                </StackPanel>
+
+                <ProgressBar IsVisible="{Binding #Root.IsLoading}"
+                             IsIndeterminate="True"/>
+            </StackPanel>
+        </Border>
+    </Border>
+</UserControl>

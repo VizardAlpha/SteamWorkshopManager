@@ -1,0 +1,98 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:SteamWorkshopManager.ViewModels"
+             xmlns:models="using:SteamWorkshopManager.Models"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="SteamWorkshopManager.Views.ItemListView"
+             x:DataType="vm:ItemListViewModel">
+
+    <Grid RowDefinitions="Auto,*">
+        <!-- Toolbar -->
+        <Border Grid.Row="0" Padding="16,12" Background="{DynamicResource SystemControlBackgroundAltHighBrush}">
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Text="Mes items publies"
+                           FontSize="18" FontWeight="SemiBold"
+                           VerticalAlignment="Center"/>
+                <Button Grid.Column="1"
+                        Command="{Binding LoadItemsCommand}"
+                        Content="Actualiser"
+                        IsEnabled="{Binding !IsLoading}"/>
+            </Grid>
+        </Border>
+
+        <!-- Content -->
+        <Grid Grid.Row="1">
+            <!-- Loading -->
+            <StackPanel IsVisible="{Binding IsLoading}"
+                        VerticalAlignment="Center" HorizontalAlignment="Center"
+                        Spacing="12">
+                <ProgressBar IsIndeterminate="True" Width="200"/>
+                <TextBlock Text="Chargement..." HorizontalAlignment="Center"/>
+            </StackPanel>
+
+            <!-- Error -->
+            <Border IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                    Background="#FFF3CD" Padding="16" Margin="16"
+                    CornerRadius="4" VerticalAlignment="Top">
+                <TextBlock Text="{Binding ErrorMessage}" Foreground="#856404"/>
+            </Border>
+
+            <!-- Items list -->
+            <ScrollViewer IsVisible="{Binding !IsLoading}">
+                <ItemsControl ItemsSource="{Binding Items}" Margin="16">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="models:WorkshopItem">
+                            <Button Command="{Binding $parent[ItemsControl].((vm:ItemListViewModel)DataContext).SelectItemCommand}"
+                                    CommandParameter="{Binding}"
+                                    Margin="8"
+                                    Padding="0"
+                                    Background="Transparent"
+                                    BorderThickness="0">
+                                <Border Width="200" Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                                        CornerRadius="8" ClipToBounds="True"
+                                        BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                                        BorderThickness="1">
+                                    <StackPanel>
+                                        <!-- Preview image -->
+                                        <Border Height="120" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                                                ClipToBounds="True">
+                                            <Panel>
+                                                <Image Source="{Binding PreviewBitmap}" Stretch="UniformToFill"
+                                                       IsVisible="{Binding PreviewBitmap, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                                <TextBlock Text="Image"
+                                                           HorizontalAlignment="Center"
+                                                           VerticalAlignment="Center"
+                                                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                                           IsVisible="{Binding PreviewBitmap, Converter={x:Static ObjectConverters.IsNull}}"/>
+                                            </Panel>
+                                        </Border>
+                                        <StackPanel Margin="12" Spacing="4">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <TextBlock Text="{Binding Title}"
+                                                           FontWeight="SemiBold"
+                                                           TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding VisibilityIcon}"
+                                                           ToolTip.Tip="{Binding Visibility}"/>
+                                            </Grid>
+                                            <TextBlock Text="{Binding UpdatedAt, StringFormat='Mis a jour: {0:dd/MM/yyyy}'}"
+                                                       FontSize="11"
+                                                       Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</UserControl>
