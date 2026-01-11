@@ -1,10 +1,11 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
-using System.Linq;
 using Avalonia.Markup.Xaml;
 using Steamworks;
+using SteamWorkshopManager.Services;
 using SteamWorkshopManager.Views;
+using System.Linq;
 
 namespace SteamWorkshopManager;
 
@@ -19,6 +20,10 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            // Initialize debug mode from settings
+            var settingsService = new SettingsService();
+            LogService.Instance.SetDebugMode(settingsService.Settings.DebugMode);
+
             DisableAvaloniaDataAnnotationValidation();
             desktop.MainWindow = new MainWindow();
             desktop.ShutdownRequested += OnShutdownRequested;
@@ -32,6 +37,7 @@ public partial class App : Application
         SteamAPI.Shutdown();
     }
 
+#pragma warning disable IL2026
     private static void DisableAvaloniaDataAnnotationValidation()
     {
         var dataValidationPluginsToRemove =
@@ -42,4 +48,5 @@ public partial class App : Application
             BindingPlugins.DataValidators.Remove(plugin);
         }
     }
+#pragma warning restore IL2026
 }

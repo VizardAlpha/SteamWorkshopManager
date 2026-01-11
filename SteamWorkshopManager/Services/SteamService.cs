@@ -4,10 +4,13 @@ using System.Threading.Tasks;
 using SteamWorkshopManager.Models;
 using Steamworks;
 
+using static SteamWorkshopManager.Services.LocalizationService;
+
 namespace SteamWorkshopManager.Services;
 
 public class SteamService : ISteamService
 {
+    private static readonly Logger Log = LogService.GetLogger<SteamService>();
     private bool _isInitialized;
 
     public bool IsInitialized => _isInitialized;
@@ -19,22 +22,28 @@ public class SteamService : ISteamService
 
         try
         {
-            Console.WriteLine($"Steam running: {SteamAPI.IsSteamRunning()}");
-        
+            var steamRunning = SteamAPI.IsSteamRunning();
+            Log.Info($"Steam running: {steamRunning}");
+
             _isInitialized = SteamAPI.Init();
-        
-            Console.WriteLine($"Init result: {_isInitialized}");
-        
+            Log.Info($"Steam API Init result: {_isInitialized}");
+
             if (_isInitialized)
             {
-                Console.WriteLine($"User logged on: {SteamUser.BLoggedOn()}");
+                var loggedOn = SteamUser.BLoggedOn();
+                var userId = SteamUser.GetSteamID();
+                Log.Info($"User logged on: {loggedOn}, SteamID: {userId}");
             }
-        
+            else
+            {
+                Log.Warning("Steam API initialization failed - Steam may not be running");
+            }
+
             return _isInitialized;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Exception: {ex.Message}");
+            Log.Error($"Steam initialization exception", ex);
             return false;
         }
     }
@@ -42,14 +51,20 @@ public class SteamService : ISteamService
     public void Shutdown()
     {
         if (!_isInitialized) return;
+        Log.Info("Shutting down Steam API");
         SteamAPI.Shutdown();
         _isInitialized = false;
     }
 
     public async Task<List<WorkshopItem>> GetPublishedItemsAsync()
     {
-        if (!_isInitialized) return [];
+        if (!_isInitialized)
+        {
+            Log.Warning("GetPublishedItemsAsync called but Steam is not initialized");
+            return [];
+        }
 
+        Log.Debug("Fetching published items from Steam Workshop");
         var items = new List<WorkshopItem>();
         var accountId = SteamUser.GetSteamID().GetAccountID();
 
@@ -70,7 +85,7 @@ public class SteamService : ISteamService
         var callResult = CallResult<SteamUGCQueryCompleted_t>.Create((result, failure) =>
         {
             if (failure)
-                tcs.SetException(new Exception("Erreur lors de la requête Steam"));
+                tcs.SetException(new Exception("Steam query failed"));
             else
                 tcs.SetResult(result);
         });
@@ -78,7 +93,7 @@ public class SteamService : ISteamService
         var handle = SteamUGC.SendQueryUGCRequest(query);
         callResult.Set(handle);
 
-        // Attendre le callback via polling
+        // Wait for callback via polling
         var timeout = DateTime.UtcNow.AddSeconds(30);
         while (!tcs.Task.IsCompleted && DateTime.UtcNow < timeout)
         {
@@ -88,11 +103,13 @@ public class SteamService : ISteamService
 
         if (!tcs.Task.IsCompleted)
         {
+            Log.Error("Query published items request timed out");
             SteamUGC.ReleaseQueryUGCRequest(query);
             return items;
         }
 
         var queryResult = await tcs.Task;
+        Log.Debug($"Query returned {queryResult.m_unNumResultsReturned} items (EResult: {queryResult.m_eResult})");
 
         for (uint i = 0; i < queryResult.m_unNumResultsReturned; i++)
         {
@@ -107,17 +124,20 @@ public class SteamService : ISteamService
                     }
                 }
 
-                // Récupérer l'URL de l'image preview
+                // Get preview image URL
                 string? previewUrl = null;
                 if (SteamUGC.GetQueryUGCPreviewURL(queryResult.m_handle, i, out var url, 1024))
                 {
                     previewUrl = url;
-                    Console.WriteLine($"[DEBUG] Item '{details.m_rgchTitle}' preview URL: {url}");
+                    Log.Debug($"Item '{details.m_rgchTitle}' preview URL: {url}");
                 }
                 else
                 {
-                    Console.WriteLine($"[DEBUG] Item '{details.m_rgchTitle}' - Pas d'URL preview trouvée");
+                    Log.Debug($"Item '{details.m_rgchTitle}' - No preview URL found");
                 }
+
+                var ownerId = new CSteamID(details.m_ulSteamIDOwner);
+                var currentUserId = SteamUser.GetSteamID();
 
                 items.Add(new WorkshopItem
                 {
@@ -128,12 +148,15 @@ public class SteamService : ISteamService
                     Visibility = MapVisibility(details.m_eVisibility),
                     Tags = tags,
                     CreatedAt = DateTimeOffset.FromUnixTimeSeconds(details.m_rtimeCreated).DateTime,
-                    UpdatedAt = DateTimeOffset.FromUnixTimeSeconds(details.m_rtimeUpdated).DateTime
+                    UpdatedAt = DateTimeOffset.FromUnixTimeSeconds(details.m_rtimeUpdated).DateTime,
+                    OwnerId = ownerId,
+                    IsOwner = ownerId == currentUserId
                 });
             }
         }
 
         SteamUGC.ReleaseQueryUGCRequest(queryResult.m_handle);
+        Log.Info($"Successfully fetched {items.Count} published items");
         return items;
     }
 
@@ -141,16 +164,24 @@ public class SteamService : ISteamService
         string contentFolderPath, string? previewImagePath, VisibilityType visibility,
         List<string> tags, string? changelog, IProgress<UploadProgress>? progress = null)
     {
-        if (!_isInitialized) return null;
+        if (!_isInitialized)
+        {
+            Log.Warning("CreateItemAsync called but Steam is not initialized");
+            return null;
+        }
 
-        progress?.Report(new UploadProgress("Création de l'item...", 0, 100));
+        Log.Info($"Creating new Workshop item: '{title}'");
+        Log.Debug($"Content folder: {contentFolderPath}, Preview: {previewImagePath ?? "none"}, Visibility: {visibility}");
+        Log.Debug($"Tags: {string.Join(", ", tags)}");
 
-        // Créer l'item
+        progress?.Report(new UploadProgress(GetString("CreatingItem"), 0, 100));
+
+        // Create item
         var createTcs = new TaskCompletionSource<CreateItemResult_t>();
         var createCallResult = CallResult<CreateItemResult_t>.Create((result, failure) =>
         {
             if (failure)
-                createTcs.SetException(new Exception("Erreur lors de la création"));
+                createTcs.SetException(new Exception("Item creation failed"));
             else
                 createTcs.SetResult(result);
         });
@@ -168,16 +199,26 @@ public class SteamService : ISteamService
             await Task.Delay(100);
         }
 
-        if (!createTcs.Task.IsCompleted) return null;
+        if (!createTcs.Task.IsCompleted)
+        {
+            Log.Error("Create item request timed out");
+            return null;
+        }
 
         var createResult = await createTcs.Task;
-        if (createResult.m_eResult != EResult.k_EResultOK) return null;
+        if (createResult.m_eResult != EResult.k_EResultOK)
+        {
+            Log.Error($"Failed to create item: {SteamErrorMapper.GetTechnicalDescription(createResult.m_eResult)}");
+            Log.Error($"User message: {SteamErrorMapper.GetErrorMessage(createResult.m_eResult)}");
+            return null;
+        }
 
         var fileId = createResult.m_nPublishedFileId;
+        Log.Info($"Item created successfully with FileId: {fileId}");
 
-        progress?.Report(new UploadProgress("Configuration de l'item...", 10, 100));
+        progress?.Report(new UploadProgress(GetString("ConfiguringItem"), 10, 100));
 
-        // Mettre à jour avec le contenu
+        // Update with content
         var updateHandle = SteamUGC.StartItemUpdate(
             new AppId_t(AppConstants.SongsOfSyxAppId),
             fileId
@@ -198,33 +239,33 @@ public class SteamService : ISteamService
         var submitCallResult = CallResult<SubmitItemUpdateResult_t>.Create((result, failure) =>
         {
             if (failure)
-                submitTcs.SetException(new Exception("Erreur lors de la soumission"));
+                submitTcs.SetException(new Exception("Submission failed"));
             else
                 submitTcs.SetResult(result);
         });
 
-        progress?.Report(new UploadProgress("Upload en cours...", 20, 100));
+        progress?.Report(new UploadProgress(GetString("Uploading"), 20, 100));
 
-        var submitHandle = SteamUGC.SubmitItemUpdate(updateHandle, changelog ?? "Version initiale");
+        var submitHandle = SteamUGC.SubmitItemUpdate(updateHandle, changelog ?? "Initial version");
         submitCallResult.Set(submitHandle);
 
-        timeout = DateTime.UtcNow.AddSeconds(300); // 5 minutes pour les gros uploads
+        timeout = DateTime.UtcNow.AddSeconds(300); // 5 minutes for large uploads
         while (!submitTcs.Task.IsCompleted && DateTime.UtcNow < timeout)
         {
             SteamAPI.RunCallbacks();
 
-            // Récupérer la progression de l'upload
+            // Get upload progress
             var status = SteamUGC.GetItemUpdateProgress(updateHandle, out var bytesProcessed, out var bytesTotal);
             if (bytesTotal > 0)
             {
                 var statusText = status switch
                 {
-                    EItemUpdateStatus.k_EItemUpdateStatusPreparingConfig => "Préparation...",
-                    EItemUpdateStatus.k_EItemUpdateStatusPreparingContent => "Préparation du contenu...",
-                    EItemUpdateStatus.k_EItemUpdateStatusUploadingContent => "Upload du contenu...",
-                    EItemUpdateStatus.k_EItemUpdateStatusUploadingPreviewFile => "Upload de l'image...",
-                    EItemUpdateStatus.k_EItemUpdateStatusCommittingChanges => "Finalisation...",
-                    _ => "Upload en cours..."
+                    EItemUpdateStatus.k_EItemUpdateStatusPreparingConfig => GetString("Preparing"),
+                    EItemUpdateStatus.k_EItemUpdateStatusPreparingContent => GetString("PreparingContent"),
+                    EItemUpdateStatus.k_EItemUpdateStatusUploadingContent => GetString("UploadingContent"),
+                    EItemUpdateStatus.k_EItemUpdateStatusUploadingPreviewFile => GetString("UploadingImage"),
+                    EItemUpdateStatus.k_EItemUpdateStatusCommittingChanges => GetString("Finalizing"),
+                    _ => GetString("Uploading")
                 };
                 progress?.Report(new UploadProgress(statusText, bytesProcessed, bytesTotal));
             }
@@ -232,14 +273,23 @@ public class SteamService : ISteamService
             await Task.Delay(100);
         }
 
-        if (!submitTcs.Task.IsCompleted) return null;
+        if (!submitTcs.Task.IsCompleted)
+        {
+            Log.Error("Submit item update request timed out");
+            return null;
+        }
 
         var submitResult = await submitTcs.Task;
         if (submitResult.m_eResult == EResult.k_EResultOK)
         {
-            progress?.Report(new UploadProgress("Terminé!", 100, 100));
+            Log.Info($"Item '{title}' published successfully");
+            progress?.Report(new UploadProgress(GetString("Done"), 100, 100));
+            return fileId;
         }
-        return submitResult.m_eResult == EResult.k_EResultOK ? fileId : null;
+
+        Log.Error($"Failed to submit item: {SteamErrorMapper.GetTechnicalDescription(submitResult.m_eResult)}");
+        Log.Error($"User message: {SteamErrorMapper.GetErrorMessage(submitResult.m_eResult)}");
+        return null;
     }
 
     public async Task<bool> UpdateItemAsync(PublishedFileId_t fileId, string? title,
@@ -247,9 +297,17 @@ public class SteamService : ISteamService
         VisibilityType? visibility, List<string>? tags, string? changelog,
         IProgress<UploadProgress>? progress = null)
     {
-        if (!_isInitialized) return false;
+        if (!_isInitialized)
+        {
+            Log.Warning("UpdateItemAsync called but Steam is not initialized");
+            return false;
+        }
 
-        progress?.Report(new UploadProgress("Préparation de la mise à jour...", 0, 100));
+        Log.Info($"Updating Workshop item: FileId={fileId}, Title='{title ?? "(unchanged)"}'");
+        Log.Debug($"Content folder: {contentFolderPath ?? "(unchanged)"}, Preview: {previewImagePath ?? "(unchanged)"}");
+        if (tags != null) Log.Debug($"Tags: {string.Join(", ", tags)}");
+
+        progress?.Report(new UploadProgress(GetString("PreparingUpdate"), 0, 100));
 
         var updateHandle = SteamUGC.StartItemUpdate(
             new AppId_t(AppConstants.SongsOfSyxAppId),
@@ -271,7 +329,7 @@ public class SteamService : ISteamService
         if (visibility.HasValue)
             SteamUGC.SetItemVisibility(updateHandle, MapToSteamVisibility(visibility.Value));
 
-        // Toujours mettre à jour les tags si la liste est fournie (même vide = supprimer tous les tags)
+        // Always update tags if list is provided (empty list = remove all tags)
         if (tags != null)
             SteamUGC.SetItemTags(updateHandle, tags);
 
@@ -279,33 +337,33 @@ public class SteamService : ISteamService
         var callResult = CallResult<SubmitItemUpdateResult_t>.Create((result, failure) =>
         {
             if (failure)
-                tcs.SetException(new Exception("Erreur lors de la mise à jour"));
+                tcs.SetException(new Exception("Update failed"));
             else
                 tcs.SetResult(result);
         });
 
-        progress?.Report(new UploadProgress("Upload en cours...", 10, 100));
+        progress?.Report(new UploadProgress(GetString("Uploading"), 10, 100));
 
         var handle = SteamUGC.SubmitItemUpdate(updateHandle, changelog ?? "");
         callResult.Set(handle);
 
-        var timeout = DateTime.UtcNow.AddSeconds(300); // 5 minutes pour les gros uploads
+        var timeout = DateTime.UtcNow.AddSeconds(300); // 5 minutes for large uploads
         while (!tcs.Task.IsCompleted && DateTime.UtcNow < timeout)
         {
             SteamAPI.RunCallbacks();
 
-            // Récupérer la progression de l'upload
+            // Get upload progress
             var status = SteamUGC.GetItemUpdateProgress(updateHandle, out var bytesProcessed, out var bytesTotal);
             if (bytesTotal > 0)
             {
                 var statusText = status switch
                 {
-                    EItemUpdateStatus.k_EItemUpdateStatusPreparingConfig => "Préparation...",
-                    EItemUpdateStatus.k_EItemUpdateStatusPreparingContent => "Préparation du contenu...",
-                    EItemUpdateStatus.k_EItemUpdateStatusUploadingContent => "Upload du contenu...",
-                    EItemUpdateStatus.k_EItemUpdateStatusUploadingPreviewFile => "Upload de l'image...",
-                    EItemUpdateStatus.k_EItemUpdateStatusCommittingChanges => "Finalisation...",
-                    _ => "Upload en cours..."
+                    EItemUpdateStatus.k_EItemUpdateStatusPreparingConfig => GetString("Preparing"),
+                    EItemUpdateStatus.k_EItemUpdateStatusPreparingContent => GetString("PreparingContent"),
+                    EItemUpdateStatus.k_EItemUpdateStatusUploadingContent => GetString("UploadingContent"),
+                    EItemUpdateStatus.k_EItemUpdateStatusUploadingPreviewFile => GetString("UploadingImage"),
+                    EItemUpdateStatus.k_EItemUpdateStatusCommittingChanges => GetString("Finalizing"),
+                    _ => GetString("Uploading")
                 };
                 progress?.Report(new UploadProgress(statusText, bytesProcessed, bytesTotal));
             }
@@ -313,25 +371,40 @@ public class SteamService : ISteamService
             await Task.Delay(100);
         }
 
-        if (!tcs.Task.IsCompleted) return false;
+        if (!tcs.Task.IsCompleted)
+        {
+            Log.Error("Update item request timed out");
+            return false;
+        }
 
         var result = await tcs.Task;
         if (result.m_eResult == EResult.k_EResultOK)
         {
-            progress?.Report(new UploadProgress("Terminé!", 100, 100));
+            Log.Info($"Item {fileId} updated successfully");
+            progress?.Report(new UploadProgress(GetString("Done"), 100, 100));
+            return true;
         }
-        return result.m_eResult == EResult.k_EResultOK;
+
+        Log.Error($"Failed to update item: {SteamErrorMapper.GetTechnicalDescription(result.m_eResult)}");
+        Log.Error($"User message: {SteamErrorMapper.GetErrorMessage(result.m_eResult)}");
+        return false;
     }
 
     public async Task<bool> DeleteItemAsync(PublishedFileId_t fileId)
     {
-        if (!_isInitialized) return false;
+        if (!_isInitialized)
+        {
+            Log.Warning("DeleteItemAsync called but Steam is not initialized");
+            return false;
+        }
+
+        Log.Info($"Deleting Workshop item: FileId={fileId}");
 
         var tcs = new TaskCompletionSource<DeleteItemResult_t>();
         var callResult = CallResult<DeleteItemResult_t>.Create((result, failure) =>
         {
             if (failure)
-                tcs.SetException(new Exception("Erreur lors de la suppression"));
+                tcs.SetException(new Exception("Deletion failed"));
             else
                 tcs.SetResult(result);
         });
@@ -346,10 +419,22 @@ public class SteamService : ISteamService
             await Task.Delay(100);
         }
 
-        if (!tcs.Task.IsCompleted) return false;
+        if (!tcs.Task.IsCompleted)
+        {
+            Log.Error("Delete item request timed out");
+            return false;
+        }
 
         var result = await tcs.Task;
-        return result.m_eResult == EResult.k_EResultOK;
+        if (result.m_eResult == EResult.k_EResultOK)
+        {
+            Log.Info($"Item {fileId} deleted successfully");
+            return true;
+        }
+
+        Log.Error($"Failed to delete item: {SteamErrorMapper.GetTechnicalDescription(result.m_eResult)}");
+        Log.Error($"User message: {SteamErrorMapper.GetErrorMessage(result.m_eResult)}");
+        return false;
     }
 
     public List<string> GetAvailableTags() => WorkshopTags.GetAllTags();

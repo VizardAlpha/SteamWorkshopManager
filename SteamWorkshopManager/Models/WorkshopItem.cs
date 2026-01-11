@@ -19,10 +19,13 @@ public class WorkshopItem : INotifyPropertyChanged
     public string? ContentFolderPath { get; set; }
     public VisibilityType Visibility { get; set; } = VisibilityType.Private;
     public List<WorkshopTag> Tags { get; set; } = [];
-    public List<ChangelogEntry> ChangelogHistory { get; set; } = [];
     public List<ItemVersion> Versions { get; set; } = [];
     public DateTime CreatedAt { get; init; }
     public DateTime UpdatedAt { get; set; }
+
+    // Owner information
+    public CSteamID OwnerId { get; init; }
+    public bool IsOwner { get; init; }
 
     public Bitmap? PreviewBitmap
     {

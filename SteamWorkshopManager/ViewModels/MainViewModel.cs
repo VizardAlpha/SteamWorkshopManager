@@ -12,6 +12,9 @@ public partial class MainViewModel : ViewModelBase
 {
     private readonly ISteamService _steamService;
     private readonly IFileDialogService _fileDialogService;
+    private readonly ISettingsService _settingsService;
+    private readonly INotificationService _notificationService;
+    private string _statusKey = "ConnectingToSteam";
 
     [ObservableProperty]
     private ViewModelBase? _currentView;
@@ -20,7 +23,7 @@ public partial class MainViewModel : ViewModelBase
     private bool _isSteamConnected;
 
     [ObservableProperty]
-    private string _statusMessage = "Connexion à Steam...";
+    private string _statusMessage = "Connecting to Steam...";
 
     [ObservableProperty]
     private WorkshopItem? _selectedItem;
@@ -37,18 +40,44 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     private string _uploadProgressText = string.Empty;
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsSuccessNotification))]
+    [NotifyPropertyChangedFor(nameof(IsErrorNotification))]
+    private bool _showNotification;
+
+    [ObservableProperty]
+    private string _notificationMessage = string.Empty;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsSuccessNotification))]
+    [NotifyPropertyChangedFor(nameof(IsErrorNotification))]
+    private NotificationType _notificationType;
+
+    public bool IsSuccessNotification => ShowNotification && NotificationType == NotificationType.Success;
+    public bool IsErrorNotification => ShowNotification && NotificationType == NotificationType.Error;
+
     public ItemListViewModel ItemListViewModel { get; }
 
     public IProgress<UploadProgress> UploadProgressReporter { get; }
 
-    public MainViewModel() : this(new SteamService(), new FileDialogService()) { }
+    public MainViewModel() : this(new SteamService(), new FileDialogService(), new SettingsService(), new NotificationService()) { }
 
-    public MainViewModel(ISteamService steamService, IFileDialogService fileDialogService)
+    public MainViewModel(ISteamService steamService, IFileDialogService fileDialogService, ISettingsService settingsService, INotificationService notificationService)
     {
         _steamService = steamService;
         _fileDialogService = fileDialogService;
+        _settingsService = settingsService;
+        _notificationService = notificationService;
 
-        // Configurer le reporter de progression
+        // Subscribe to notification events
+        _notificationService.StateChanged += OnNotificationStateChanged;
+
+        // Initialize localization with saved language
+        LocalizationService.Instance.CurrentLanguage = _settingsService.Settings.Language;
+        LocalizationService.Instance.Initialize();
+        LocalizationService.Instance.LanguageChanged += OnLanguageChanged;
+
+        // Configure progress reporter
         UploadProgressReporter = new Progress<UploadProgress>(p =>
         {
             Dispatcher.UIThread.Post(() =>
@@ -90,8 +119,42 @@ public partial class MainViewModel : ViewModelBase
         };
     }
 
+    private void OnLanguageChanged()
+    {
+        StatusMessage = Loc[_statusKey];
+    }
+
+    private void OnNotificationStateChanged(NotificationState state)
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            ShowNotification = state.IsVisible;
+            NotificationMessage = state.Message;
+            NotificationType = state.Type;
+
+            // Auto-hide after 3 seconds for success/error notifications
+            if (state.IsVisible && state.Type != NotificationType.Progress)
+            {
+                HideNotificationAfterDelay();
+            }
+        });
+    }
+
+    private async void HideNotificationAfterDelay()
+    {
+        await Task.Delay(3000);
+        _notificationService.Hide();
+    }
+
+    private void SetStatus(string key)
+    {
+        _statusKey = key;
+        StatusMessage = Loc[key];
+    }
+
     private async void InitializeSteamAsync()
     {
+        SetStatus("ConnectingToSteam");
         var connected = await Task.Run(() => _steamService.Initialize());
 
         await Dispatcher.UIThread.InvokeAsync(async () =>
@@ -100,12 +163,12 @@ public partial class MainViewModel : ViewModelBase
 
             if (connected)
             {
-                StatusMessage = "Connecté à Steam";
+                SetStatus("ConnectedToSteam");
                 await ItemListViewModel.LoadItemsAsync();
             }
             else
             {
-                StatusMessage = "Steam non disponible - Lancez Steam et redémarrez l'application";
+                SetStatus("SteamNotAvailable");
             }
         });
     }
@@ -113,17 +176,18 @@ public partial class MainViewModel : ViewModelBase
     private void OnItemSelected(WorkshopItem item)
     {
         SelectedItem = item;
-        CurrentView = new ItemEditorViewModel(item, _steamService, _fileDialogService, UploadProgressReporter);
+        CurrentView = new ItemEditorViewModel(item, _steamService, _fileDialogService, _settingsService, _notificationService, UploadProgressReporter);
         if (CurrentView is ItemEditorViewModel editor)
         {
             editor.CloseRequested += OnEditorCloseRequested;
+            editor.ItemUpdated += OnItemUpdated;
             editor.ItemDeleted += OnItemDeleted;
         }
     }
 
     private void OnCreateRequested()
     {
-        CurrentView = new CreateItemViewModel(_steamService, _fileDialogService, UploadProgressReporter);
+        CurrentView = new CreateItemViewModel(_steamService, _fileDialogService, _settingsService, _notificationService, UploadProgressReporter);
         if (CurrentView is CreateItemViewModel creator)
         {
             creator.CloseRequested += OnEditorCloseRequested;
@@ -135,6 +199,13 @@ public partial class MainViewModel : ViewModelBase
     {
         CurrentView = ItemListViewModel;
         SelectedItem = null;
+    }
+
+    private async void OnItemUpdated()
+    {
+        CurrentView = ItemListViewModel;
+        SelectedItem = null;
+        await ItemListViewModel.LoadItemsAsync();
     }
 
     private async void OnItemDeleted()
@@ -161,5 +232,18 @@ public partial class MainViewModel : ViewModelBase
     private void NavigateToCreate()
     {
         OnCreateRequested();
+    }
+
+    [RelayCommand]
+    private void NavigateToSettings()
+    {
+        var settingsVm = new SettingsViewModel(_settingsService);
+        settingsVm.CloseRequested += OnSettingsCloseRequested;
+        CurrentView = settingsVm;
+    }
+
+    private void OnSettingsCloseRequested()
+    {
+        CurrentView = ItemListViewModel;
     }
 }

@@ -4,119 +4,219 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:SteamWorkshopManager.ViewModels"
              xmlns:models="using:SteamWorkshopManager.Models"
+             xmlns:converters="using:SteamWorkshopManager.Converters"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="SteamWorkshopManager.Views.ItemEditorView"
              x:DataType="vm:ItemEditorViewModel">
 
     <Grid RowDefinitions="Auto,*,Auto">
         <!-- Header -->
-        <Border Grid.Row="0" Padding="16,12" Background="{DynamicResource SystemControlBackgroundAltHighBrush}">
+        <Border Grid.Row="0" Padding="24,16" Background="#171a21">
             <Grid ColumnDefinitions="Auto,*,Auto">
                 <Button Command="{Binding CloseCommand}"
-                        Content="← Retour"
-                        Background="Transparent"/>
+                        Classes="ghost">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="←" FontSize="16"/>
+                        <TextBlock Text="{DynamicResource Back}"/>
+                    </StackPanel>
+                </Button>
                 <TextBlock Grid.Column="1" Text="{Binding Title}"
-                           FontSize="18" FontWeight="SemiBold"
-                           VerticalAlignment="Center" Margin="16,0"/>
-                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+                           FontSize="20" FontWeight="SemiBold"
+                           Foreground="White"
+                           VerticalAlignment="Center" Margin="24,0"
+                           TextTrimming="CharacterEllipsis"/>
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12">
                     <Button Command="{Binding ShowDeleteDialogCommand}"
-                            Content="Supprimer"
-                            Foreground="Red"/>
+                            Classes="danger"
+                            Content="{DynamicResource Delete}"/>
                     <Button Command="{Binding SaveCommand}"
-                            Content="Enregistrer"
                             Classes="accent"
+                            Content="{DynamicResource Save}"
                             IsEnabled="{Binding !IsSaving}"/>
                 </StackPanel>
             </Grid>
         </Border>
 
         <!-- Tabs -->
-        <TabControl Grid.Row="1" SelectedIndex="{Binding SelectedTabIndex}" Margin="16">
+        <TabControl Grid.Row="1" SelectedIndex="{Binding SelectedTabIndex}" Margin="24,16">
             <!-- Tab: Informations -->
             <TabItem Header="Informations">
                 <ScrollViewer>
-                    <StackPanel Spacing="16" Margin="0,16">
+                    <StackPanel Spacing="24" Margin="0,20">
                         <!-- Preview image -->
-                        <StackPanel Spacing="8">
-                            <TextBlock Text="Image de prévisualisation" FontWeight="SemiBold"/>
-                            <Grid ColumnDefinitions="200,*">
-                                <Border Width="200" Height="120"
-                                        Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
-                                        CornerRadius="4" ClipToBounds="True">
-                                    <Panel>
-                                        <Image Source="{Binding PreviewImage}" Stretch="UniformToFill"
-                                               IsVisible="{Binding PreviewImage, Converter={x:Static ObjectConverters.IsNotNull}}"/>
-                                        <TextBlock Text="Aperçu" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                   IsVisible="{Binding PreviewImage, Converter={x:Static ObjectConverters.IsNull}}"/>
-                                    </Panel>
-                                </Border>
-                                <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center" Spacing="8">
-                                    <TextBlock Text="{Binding PreviewImagePath, TargetNullValue='Aucune image sélectionnée'}"
-                                               TextTrimming="CharacterEllipsis"/>
-                                    <Button Command="{Binding BrowsePreviewImageCommand}"
-                                            Content="Parcourir..."/>
-                                </StackPanel>
-                            </Grid>
-                        </StackPanel>
+                        <Border Classes="card">
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="{DynamicResource PreviewImage}" Classes="section-header"/>
+                                <Grid ColumnDefinitions="220,*">
+                                    <Border Width="220" Height="140"
+                                            Background="#1e2328"
+                                            CornerRadius="8" ClipToBounds="True">
+                                        <Panel>
+                                            <Image Source="{Binding PreviewImage}" Stretch="UniformToFill"
+                                                   IsVisible="{Binding PreviewImage, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                        IsVisible="{Binding PreviewImage, Converter={x:Static ObjectConverters.IsNull}}"
+                                                        Spacing="8">
+                                                <TextBlock Text="[IMG]" FontSize="14" HorizontalAlignment="Center" Opacity="0.3"/>
+                                                <TextBlock Text="{DynamicResource NoImage}" FontSize="12" Foreground="#556677"/>
+                                            </StackPanel>
+                                        </Panel>
+                                    </Border>
+                                    <StackPanel Grid.Column="1" Margin="20,0,0,0" VerticalAlignment="Center" Spacing="12">
+                                        <StackPanel Orientation="Horizontal" Spacing="12">
+                                            <TextBlock Text="{Binding PreviewImagePath, TargetNullValue='No image selected'}"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       Foreground="#8899a6"
+                                                       FontSize="12"
+                                                       MaxWidth="300"/>
+                                            <TextBlock Text="{Binding PreviewImageSize}"
+                                                       Foreground="#8899a6"
+                                                       FontSize="12"
+                                                       IsVisible="{Binding PreviewImageSize, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                        </StackPanel>
+                                        <!-- Warning if image > 1 MB -->
+                                        <Border Background="#3d2a2a" Padding="8" CornerRadius="4"
+                                                BorderBrush="#c23b2e" BorderThickness="1"
+                                                IsVisible="{Binding IsImageTooLarge}">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <TextBlock Text="!" FontWeight="Bold" Foreground="#ff8a80" FontSize="12"/>
+                                                <TextBlock Text="{DynamicResource ImageTooLarge}"
+                                                           Foreground="#ff8a80" FontSize="12"/>
+                                            </StackPanel>
+                                        </Border>
+                                        <Button Command="{Binding BrowsePreviewImageCommand}"
+                                                Classes="secondary"
+                                                Content="{DynamicResource ChooseImage}"/>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
 
                         <!-- Title -->
-                        <StackPanel Spacing="4">
-                            <TextBlock Text="Titre" FontWeight="SemiBold"/>
-                            <TextBox Text="{Binding Title}" MaxLength="128"/>
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="{DynamicResource Title}" Classes="section-header"/>
+                            <TextBox Text="{Binding Title}" MaxLength="128"
+                                     Watermark="{DynamicResource TitlePlaceholder}"/>
                         </StackPanel>
 
                         <!-- Description -->
-                        <StackPanel Spacing="4">
-                            <TextBlock Text="Description" FontWeight="SemiBold"/>
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="{DynamicResource Description}" Classes="section-header"/>
                             <TextBox Text="{Binding Description}"
                                      AcceptsReturn="True"
                                      TextWrapping="Wrap"
-                                     Height="150"/>
+                                     Height="150"
+                                     Watermark="{DynamicResource DescriptionPlaceholder}"/>
                         </StackPanel>
 
                         <!-- Content folder -->
-                        <StackPanel Spacing="4">
-                            <TextBlock Text="Dossier du contenu" FontWeight="SemiBold"/>
-                            <Grid ColumnDefinitions="*,Auto">
-                                <TextBox Text="{Binding ContentFolderPath}" IsReadOnly="True"/>
-                                <Button Grid.Column="1" Command="{Binding BrowseContentFolderCommand}"
-                                        Content="Parcourir..." Margin="8,0,0,0"/>
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="{DynamicResource ContentFolder}" Classes="section-header"/>
+                            <Grid ColumnDefinitions="*,Auto,Auto">
+                                <TextBox Text="{Binding ContentFolderPath}" IsReadOnly="True"
+                                         Watermark="{DynamicResource ContentFolderPlaceholder}"/>
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding ContentFolderSize}"
+                                           VerticalAlignment="Center"
+                                           Foreground="#8899a6"
+                                           FontSize="12"
+                                           Margin="12,0,0,0"
+                                           IsVisible="{Binding ContentFolderSize, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                <Button Grid.Column="2" Command="{Binding BrowseContentFolderCommand}"
+                                        Classes="secondary"
+                                        Content="{DynamicResource Browse}" Margin="12,0,0,0"/>
                             </Grid>
                         </StackPanel>
 
                         <!-- Tags -->
-                        <StackPanel Spacing="4">
-                            <TextBlock Text="Tags" FontWeight="SemiBold"/>
-                            <ItemsControl ItemsSource="{Binding TagCategories}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate DataType="models:TagCategory">
-                                        <Expander Header="{Binding Name}" Margin="0,0,0,4">
-                                            <ItemsControl ItemsSource="{Binding Tags}" Margin="16,8,0,0">
-                                                <ItemsControl.ItemsPanel>
-                                                    <ItemsPanelTemplate>
-                                                        <WrapPanel Orientation="Horizontal"/>
-                                                    </ItemsPanelTemplate>
-                                                </ItemsControl.ItemsPanel>
-                                                <ItemsControl.ItemTemplate>
-                                                    <DataTemplate DataType="models:WorkshopTag">
-                                                        <CheckBox Content="{Binding Name}"
-                                                                  IsChecked="{Binding IsSelected}"
-                                                                  Margin="0,0,16,4"/>
-                                                    </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
-                                            </ItemsControl>
-                                        </Expander>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
+                        <Border Classes="card">
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="{DynamicResource Tags}" Classes="section-header"/>
+                                <ItemsControl ItemsSource="{Binding TagCategories}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="models:TagCategory">
+                                            <Expander Margin="0,0,0,8">
+                                                <Expander.Header>
+                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Foreground="White"/>
+                                                </Expander.Header>
+                                                <ItemsControl ItemsSource="{Binding Tags}" Margin="8,12,0,0">
+                                                    <ItemsControl.ItemsPanel>
+                                                        <ItemsPanelTemplate>
+                                                            <WrapPanel Orientation="Horizontal"/>
+                                                        </ItemsPanelTemplate>
+                                                    </ItemsControl.ItemsPanel>
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate DataType="models:WorkshopTag">
+                                                            <CheckBox Content="{Binding Name}"
+                                                                      IsChecked="{Binding IsSelected}"
+                                                                      Margin="0,0,20,8"/>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </Expander>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <!-- Custom Tags -->
+                                <Expander Margin="0,0,0,8" IsExpanded="True">
+                                    <Expander.Header>
+                                        <TextBlock Text="{DynamicResource CustomTags}" FontWeight="SemiBold" Foreground="{StaticResource SteamLightBlueBrush}"/>
+                                    </Expander.Header>
+                                    <StackPanel Margin="8,12,0,0" Spacing="12">
+                                        <!-- Add new tag -->
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBox Text="{Binding NewCustomTag}"
+                                                     Watermark="{DynamicResource NewTagPlaceholder}"/>
+                                            <Button Grid.Column="1"
+                                                    Command="{Binding AddCustomTagCommand}"
+                                                    Classes="accent"
+                                                    Content="{DynamicResource AddCustomTag}"
+                                                    Margin="12,0,0,0"/>
+                                        </Grid>
+                                        <!-- Custom tags list -->
+                                        <ItemsControl ItemsSource="{Binding CustomTags}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel Orientation="Horizontal"/>
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate DataType="models:WorkshopTag">
+                                                    <Border Background="#2a3a4a" CornerRadius="4" Padding="8,4" Margin="0,0,8,8">
+                                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                                            <CheckBox Content="{Binding Name}"
+                                                                      IsChecked="{Binding IsSelected}"/>
+                                                            <Button Command="{Binding $parent[ItemsControl].((vm:ItemEditorViewModel)DataContext).RemoveCustomTagCommand}"
+                                                                    CommandParameter="{Binding}"
+                                                                    Classes="ghost"
+                                                                    Padding="4,2"
+                                                                    FontSize="10"
+                                                                    Foreground="#ff8a80">
+                                                                <TextBlock Text="✕"/>
+                                                            </Button>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Expander>
+                            </StackPanel>
+                        </Border>
 
                         <!-- Visibility -->
-                        <StackPanel Spacing="4">
-                            <TextBlock Text="Visibilité" FontWeight="SemiBold"/>
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="{DynamicResource Visibility}" Classes="section-header"/>
                             <ComboBox ItemsSource="{Binding VisibilityOptions}"
                                       SelectedItem="{Binding Visibility}"
-                                      Width="200"/>
+                                      Width="250">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate x:DataType="models:VisibilityType">
+                                        <TextBlock Text="{Binding Converter={x:Static converters:VisibilityTypeConverter.Instance}}"/>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
                         </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
@@ -124,51 +224,53 @@
 
             <!-- Tab: Changelog -->
             <TabItem Header="Changelog">
-                <StackPanel Spacing="8" Margin="0,16">
-                    <TextBlock Text="Changelog de la mise à jour" FontWeight="SemiBold"/>
+                <StackPanel Spacing="12" Margin="0,20">
+                    <TextBlock Text="{DynamicResource UpdateNotes}" Classes="section-header"/>
                     <TextBox Text="{Binding NewChangelog}"
                              AcceptsReturn="True"
                              TextWrapping="Wrap"
-                             Height="150"
-                             Watermark="Décrivez les changements de cette mise à jour..."/>
-                    <TextBlock Text="Ce texte sera affiché dans l'historique des mises à jour sur le Workshop."
-                               FontSize="11"
-                               Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                             Height="200"
+                             Watermark="{DynamicResource ChangelogPlaceholder}"/>
+                    <Border Background="#2a3a4a" Padding="12" CornerRadius="6">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="i" Foreground="{StaticResource SteamLightBlueBrush}" FontSize="14" FontWeight="Bold" FontStyle="Italic"/>
+                            <TextBlock Text="{DynamicResource ChangelogInfo}"
+                                       FontSize="12"
+                                       Foreground="#8899a6"/>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
             </TabItem>
 
             <!-- Tab: Versions -->
             <TabItem Header="Versions">
-                <StackPanel Spacing="16" Margin="0,16">
-                    <TextBlock Text="Gestion des versions"
-                               FontSize="14"
-                               Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
-
-                    <Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
-                            Padding="16" CornerRadius="4">
+                <StackPanel Spacing="20" Margin="0,20">
+                    <Border Background="#2a3a4a" Padding="16" CornerRadius="8">
                         <StackPanel Spacing="8">
-                            <TextBlock Text="Fonctionnalité multi-versions"
-                                       FontWeight="SemiBold"/>
-                            <TextBlock Text="Cette fonctionnalité permet de publier plusieurs versions de votre mod pour différentes versions du jeu. Vérifiez si elle est activée pour Songs of Syx."
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="i" Foreground="{StaticResource SteamLightBlueBrush}" FontSize="16" FontWeight="Bold" FontStyle="Italic"/>
+                                <TextBlock Text="{DynamicResource MultiVersion}" FontWeight="SemiBold" Foreground="White"/>
+                            </StackPanel>
+                            <TextBlock Text="{DynamicResource MultiVersionInfo}"
                                        TextWrapping="Wrap"
-                                       Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                                       Foreground="#8899a6"
+                                       FontSize="13"/>
                         </StackPanel>
                     </Border>
 
                     <ItemsControl ItemsSource="{Binding Versions}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="models:ItemVersion">
-                                <Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
-                                        Padding="12" Margin="0,0,0,8" CornerRadius="4">
+                                <Border Classes="card" Margin="0,0,0,8">
                                     <Grid ColumnDefinitions="*,Auto">
                                         <StackPanel Spacing="4">
-                                            <TextBlock Text="{Binding VersionName}" FontWeight="SemiBold"/>
+                                            <TextBlock Text="{Binding VersionName}" FontWeight="SemiBold" Foreground="White"/>
                                             <TextBlock Text="{Binding GameVersionCompatibility}"
                                                        FontSize="12"
-                                                       Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                                                       Foreground="#8899a6"/>
                                         </StackPanel>
                                         <CheckBox Grid.Column="1"
-                                                  Content="Toutes versions"
+                                                  Content="{DynamicResource AllVersions}"
                                                   IsChecked="{Binding IsCompatibleWithAllVersions}"
                                                   IsEnabled="False"/>
                                     </Grid>
@@ -183,34 +285,49 @@
         <!-- Error message -->
         <Border Grid.Row="2"
                 IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                Background="#F8D7DA" Padding="16" Margin="16,0,16,16" CornerRadius="4">
-            <TextBlock Text="{Binding ErrorMessage}" Foreground="#721C24"/>
+                Background="#3d2a2a" Padding="16" Margin="24,0,24,16" CornerRadius="8"
+                BorderBrush="#c23b2e" BorderThickness="1">
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <TextBlock Text="!" FontWeight="Bold" Foreground="#c23b2e" FontSize="16"/>
+                <TextBlock Text="{Binding ErrorMessage}" Foreground="#ff8a80"/>
+            </StackPanel>
         </Border>
 
         <!-- Delete confirmation overlay -->
         <Border Grid.RowSpan="3"
                 IsVisible="{Binding ShowDeleteConfirmation}"
-                Background="#80000000">
-            <Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
-                    Padding="24" CornerRadius="8"
+                Background="#CC000000">
+            <Border Background="#2a2e33"
+                    Padding="28" CornerRadius="12"
                     HorizontalAlignment="Center" VerticalAlignment="Center"
-                    MinWidth="300">
-                <StackPanel Spacing="16">
-                    <TextBlock Text="Confirmer la suppression"
-                               FontSize="18" FontWeight="SemiBold"/>
-                    <TextBlock TextWrapping="Wrap">
-                        <Run Text="Êtes-vous sûr de vouloir supprimer"/>
-                        <Run Text="{Binding Title}" FontWeight="SemiBold"/>
-                        <Run Text="? Cette action est irréversible."/>
-                    </TextBlock>
-                    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                    MinWidth="400"
+                    BoxShadow="{StaticResource ToastShadow}">
+                <StackPanel Spacing="20">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="{DynamicResource ConfirmDelete}"
+                                   FontSize="20" FontWeight="SemiBold" Foreground="White"/>
+                        <TextBlock TextWrapping="Wrap" Foreground="#8899a6" FontSize="14">
+                            <Run Text="{DynamicResource DeleteConfirmMessage}"/>
+                            <Run Text="{Binding Title}" FontWeight="SemiBold" Foreground="White"/>
+                            <Run Text="?"/>
+                        </TextBlock>
+                    </StackPanel>
+                    <Border Background="#3d2a2a" Padding="12" CornerRadius="6"
+                            BorderBrush="#c23b2e" BorderThickness="1">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <TextBlock Text="!" Foreground="#ff8a80" FontSize="12" FontWeight="Bold"/>
+                            <TextBlock Text="{DynamicResource DeleteWarning}"
+                                       Foreground="#ff8a80" FontSize="12"/>
+                        </StackPanel>
+                    </Border>
+                    <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Right">
                         <Button Command="{Binding CancelDeleteCommand}"
-                                Content="Annuler"
+                                Classes="secondary"
+                                Content="{DynamicResource Cancel}"
                                 IsEnabled="{Binding !IsDeleting}"/>
                         <Button Command="{Binding ConfirmDeleteCommand}"
-                                Content="Supprimer"
-                                Foreground="White"
-                                Background="Red"
+                                Classes="danger"
+                                Content="{DynamicResource DeletePermanently}"
                                 IsEnabled="{Binding !IsDeleting}"/>
                     </StackPanel>
                 </StackPanel>

@@ -10,14 +10,20 @@
 
     <Grid RowDefinitions="Auto,*">
         <!-- Toolbar -->
-        <Border Grid.Row="0" Padding="16,12" Background="{DynamicResource SystemControlBackgroundAltHighBrush}">
+        <Border Grid.Row="0" Padding="24,20" Background="Transparent">
             <Grid ColumnDefinitions="*,Auto">
-                <TextBlock Text="Mes items publies"
-                           FontSize="18" FontWeight="SemiBold"
-                           VerticalAlignment="Center"/>
+                <StackPanel>
+                    <TextBlock Text="{DynamicResource MyPublicationsTitle}"
+                               Classes="page-title"/>
+                    <TextBlock Text="{DynamicResource MyPublicationsSubtitle}"
+                               FontSize="13"
+                               Foreground="#8899a6"
+                               Margin="0,4,0,0"/>
+                </StackPanel>
                 <Button Grid.Column="1"
                         Command="{Binding LoadItemsCommand}"
-                        Content="Actualiser"
+                        Classes="secondary"
+                        Content="{DynamicResource Refresh}"
                         IsEnabled="{Binding !IsLoading}"/>
             </Grid>
         </Border>
@@ -27,21 +33,40 @@
             <!-- Loading -->
             <StackPanel IsVisible="{Binding IsLoading}"
                         VerticalAlignment="Center" HorizontalAlignment="Center"
-                        Spacing="12">
-                <ProgressBar IsIndeterminate="True" Width="200"/>
-                <TextBlock Text="Chargement..." HorizontalAlignment="Center"/>
+                        Spacing="16">
+                <ProgressBar IsIndeterminate="True" Width="200" Height="4"
+                             Foreground="{StaticResource AccentGradient}"/>
+                <TextBlock Text="{DynamicResource LoadingPublications}"
+                           HorizontalAlignment="Center"
+                           Foreground="#8899a6"/>
             </StackPanel>
 
             <!-- Error -->
             <Border IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                    Background="#FFF3CD" Padding="16" Margin="16"
-                    CornerRadius="4" VerticalAlignment="Top">
-                <TextBlock Text="{Binding ErrorMessage}" Foreground="#856404"/>
+                    Background="#3d2a2a" Padding="16" Margin="24"
+                    CornerRadius="8" VerticalAlignment="Top"
+                    BorderBrush="#c23b2e" BorderThickness="1">
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <TextBlock Text="!" FontWeight="Bold" Foreground="#c23b2e" FontSize="16"/>
+                    <TextBlock Text="{Binding ErrorMessage}" Foreground="#ff8a80"/>
+                </StackPanel>
             </Border>
 
-            <!-- Items list -->
-            <ScrollViewer IsVisible="{Binding !IsLoading}">
-                <ItemsControl ItemsSource="{Binding Items}" Margin="16">
+            <!-- Empty state -->
+            <StackPanel IsVisible="{Binding !IsLoading}"
+                        VerticalAlignment="Center" HorizontalAlignment="Center"
+                        Spacing="16">
+                <StackPanel.IsVisible>
+                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                        <Binding Path="!IsLoading"/>
+                        <Binding Path="Items.Count" Converter="{x:Static ObjectConverters.IsNull}"/>
+                    </MultiBinding>
+                </StackPanel.IsVisible>
+            </StackPanel>
+
+            <!-- Items grid -->
+            <ScrollViewer IsVisible="{Binding !IsLoading}" Padding="16,0">
+                <ItemsControl ItemsSource="{Binding Items}" Margin="8">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <WrapPanel Orientation="Horizontal"/>
@@ -54,37 +79,78 @@
                                     Margin="8"
                                     Padding="0"
                                     Background="Transparent"
-                                    BorderThickness="0">
-                                <Border Width="200" Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
-                                        CornerRadius="8" ClipToBounds="True"
-                                        BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
-                                        BorderThickness="1">
+                                    BorderThickness="0"
+                                    Cursor="Hand">
+                                <Border Width="220"
+                                        Background="#2a2e33"
+                                        CornerRadius="12"
+                                        ClipToBounds="True"
+                                        BoxShadow="{StaticResource CardShadow}">
+                                    <Border.Transitions>
+                                        <Transitions>
+                                            <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.2"/>
+                                            <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2"/>
+                                        </Transitions>
+                                    </Border.Transitions>
                                     <StackPanel>
                                         <!-- Preview image -->
-                                        <Border Height="120" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
-                                                ClipToBounds="True">
+                                        <Border Height="130" Background="#1e2328" ClipToBounds="True">
                                             <Panel>
                                                 <Image Source="{Binding PreviewBitmap}" Stretch="UniformToFill"
                                                        IsVisible="{Binding PreviewBitmap, Converter={x:Static ObjectConverters.IsNotNull}}"/>
-                                                <TextBlock Text="Image"
-                                                           HorizontalAlignment="Center"
-                                                           VerticalAlignment="Center"
-                                                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
-                                                           IsVisible="{Binding PreviewBitmap, Converter={x:Static ObjectConverters.IsNull}}"/>
+                                                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                            IsVisible="{Binding PreviewBitmap, Converter={x:Static ObjectConverters.IsNull}}"
+                                                            Spacing="8">
+                                                    <TextBlock Text="[IMG]" FontSize="14" HorizontalAlignment="Center" Opacity="0.3"/>
+                                                    <TextBlock Text="{DynamicResource NoImage}"
+                                                               FontSize="11"
+                                                               Foreground="#556677"
+                                                               HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                                <!-- Badges -->
+                                                <StackPanel Orientation="Horizontal" Spacing="4"
+                                                            HorizontalAlignment="Right"
+                                                            VerticalAlignment="Top"
+                                                            Margin="8">
+                                                    <!-- Contributor badge -->
+                                                    <Border Background="#CC8b5cf6"
+                                                            CornerRadius="4"
+                                                            Padding="5,2"
+                                                            MinWidth="18"
+                                                            MinHeight="18"
+                                                            IsVisible="{Binding !IsOwner}"
+                                                            ToolTip.Tip="{DynamicResource Contributor}">
+                                                        <TextBlock Text="C"
+                                                                   FontSize="10"
+                                                                   FontWeight="Bold"
+                                                                   Foreground="White"
+                                                                   HorizontalAlignment="Center"
+                                                                   VerticalAlignment="Center"/>
+                                                    </Border>
+                                                    <!-- Visibility badge -->
+                                                    <Border Background="#CC1e2328"
+                                                            CornerRadius="4"
+                                                            Padding="8,4">
+                                                        <TextBlock Text="{Binding VisibilityIcon}"
+                                                                   FontSize="12"
+                                                                   ToolTip.Tip="{Binding Visibility}"/>
+                                                    </Border>
+                                                </StackPanel>
                                             </Panel>
                                         </Border>
-                                        <StackPanel Margin="12" Spacing="4">
-                                            <Grid ColumnDefinitions="*,Auto">
-                                                <TextBlock Text="{Binding Title}"
-                                                           FontWeight="SemiBold"
-                                                           TextTrimming="CharacterEllipsis"/>
-                                                <TextBlock Grid.Column="1"
-                                                           Text="{Binding VisibilityIcon}"
-                                                           ToolTip.Tip="{Binding Visibility}"/>
-                                            </Grid>
-                                            <TextBlock Text="{Binding UpdatedAt, StringFormat='Mis a jour: {0:dd/MM/yyyy}'}"
-                                                       FontSize="11"
-                                                       Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                                        <!-- Info -->
+                                        <StackPanel Margin="14" Spacing="6">
+                                            <TextBlock Text="{Binding Title}"
+                                                       FontWeight="SemiBold"
+                                                       FontSize="14"
+                                                       Foreground="White"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       MaxLines="1"/>
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                                                                <TextBlock Text="{Binding UpdatedAt, StringFormat='{}{0:dd MMM yyyy}'}"
+                                                           FontSize="11"
+                                                           Foreground="#8899a6"/>
+                                            </StackPanel>
                                         </StackPanel>
                                     </StackPanel>
                                 </Border>

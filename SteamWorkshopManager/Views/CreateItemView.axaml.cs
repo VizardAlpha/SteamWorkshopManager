@@ -10,54 +10,31 @@ public partial class CreateItemView : UserControl
     public CreateItemView()
     {
         InitializeComponent();
-
-        var dropZone = this.FindControl<Border>("DropZone");
-        if (dropZone is not null)
-        {
-            dropZone.AddHandler(DragDrop.DragEnterEvent, OnDragEnter);
-            dropZone.AddHandler(DragDrop.DragLeaveEvent, OnDragLeave);
-            dropZone.AddHandler(DragDrop.DropEvent, OnDrop);
-        }
     }
 
-    private void OnDragEnter(object? sender, DragEventArgs e)
+    private void DropZone_DragOver(object? sender, DragEventArgs e)
     {
-        if (DataContext is CreateItemViewModel vm)
-        {
-            vm.IsDragOver = true;
-        }
+        e.DragEffects = DragDropEffects.Copy;
+        e.Handled = true;
     }
 
-    private void OnDragLeave(object? sender, DragEventArgs e)
+    private void DropZone_Drop(object? sender, DragEventArgs e)
     {
-        if (DataContext is CreateItemViewModel vm)
-        {
-            vm.IsDragOver = false;
-        }
-    }
-
-    private void OnDrop(object? sender, DragEventArgs e)
-    {
-        if (DataContext is CreateItemViewModel vm)
-        {
-            vm.IsDragOver = false;
-
-#pragma warning disable CS0618 // DragEventArgs.Data is obsolete
-            var files = e.Data.GetFiles();
+#pragma warning disable CS0618
+        var fileNames = e.Data.GetFileNames();
 #pragma warning restore CS0618
 
-            if (files is not null)
+        if (fileNames is not null && DataContext is CreateItemViewModel vm)
+        {
+            foreach (var file in fileNames)
             {
-                foreach (var file in files)
+                if (Directory.Exists(file))
                 {
-                    var path = file.Path.LocalPath;
-                    if (Directory.Exists(path))
-                    {
-                        vm.HandleFolderDrop(path);
-                        break;
-                    }
+                    vm.HandleFolderDrop(file);
+                    break;
                 }
             }
         }
+        e.Handled = true;
     }
 }

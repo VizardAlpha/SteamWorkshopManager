@@ -1,0 +1,186 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:SteamWorkshopManager.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="400"
+             x:Class="SteamWorkshopManager.Views.SettingsView"
+             x:DataType="vm:SettingsViewModel">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        <!-- Header -->
+        <Border Grid.Row="0" Padding="24,16" Background="#171a21">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <Button Command="{Binding CloseCommand}"
+                        Classes="ghost">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="&#x2190;" FontSize="16"/>
+                        <TextBlock Text="{DynamicResource Back}"/>
+                    </StackPanel>
+                </Button>
+                <TextBlock Grid.Column="1" Text="{DynamicResource Settings}"
+                           FontSize="20" FontWeight="SemiBold"
+                           Foreground="White"
+                           VerticalAlignment="Center" Margin="24,0"/>
+            </Grid>
+        </Border>
+
+        <!-- Content -->
+        <ScrollViewer Grid.Row="1">
+            <StackPanel Spacing="24" Margin="24,24">
+                <!-- Language Section -->
+                <Border Classes="card">
+                    <StackPanel Spacing="16">
+                        <TextBlock Text="{DynamicResource Language}" Classes="section-header"/>
+
+                        <StackPanel Orientation="Horizontal" Spacing="16">
+                            <!-- English Button -->
+                            <Button Command="{Binding SelectEnglishCommand}"
+                                    Padding="0"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Cursor="Hand">
+                                <Panel Width="140" Height="90">
+                                    <!-- Unselected state -->
+                                    <Border IsVisible="{Binding !IsEnglishSelected}"
+                                            CornerRadius="8"
+                                            ClipToBounds="True"
+                                            BorderThickness="3"
+                                            BorderBrush="#3a4a5a"
+                                            Background="#1e2328">
+                                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8">
+                                            <TextBlock Text="GB" FontSize="24" HorizontalAlignment="Center" FontWeight="Bold" Foreground="#8899a6"/>
+                                            <TextBlock Text="{DynamicResource English}"
+                                                       Foreground="White"
+                                                       FontWeight="SemiBold"
+                                                       HorizontalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <!-- Selected state -->
+                                    <Border IsVisible="{Binding IsEnglishSelected}"
+                                            CornerRadius="8"
+                                            ClipToBounds="True"
+                                            BorderThickness="3"
+                                            BorderBrush="#a4d007"
+                                            Background="#2a3a2a">
+                                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8">
+                                            <TextBlock Text="GB" FontSize="24" HorizontalAlignment="Center" FontWeight="Bold" Foreground="#a4d007"/>
+                                            <TextBlock Text="{DynamicResource English}"
+                                                       Foreground="White"
+                                                       FontWeight="SemiBold"
+                                                       HorizontalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Border>
+                                </Panel>
+                            </Button>
+
+                            <!-- French Button -->
+                            <Button Command="{Binding SelectFrenchCommand}"
+                                    Padding="0"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Cursor="Hand">
+                                <Panel Width="140" Height="90">
+                                    <!-- Unselected state -->
+                                    <Border IsVisible="{Binding !IsFrenchSelected}"
+                                            CornerRadius="8"
+                                            ClipToBounds="True"
+                                            BorderThickness="3"
+                                            BorderBrush="#3a4a5a"
+                                            Background="#1e2328">
+                                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8">
+                                            <TextBlock Text="FR" FontSize="24" HorizontalAlignment="Center" FontWeight="Bold" Foreground="#8899a6"/>
+                                            <TextBlock Text="{DynamicResource French}"
+                                                       Foreground="White"
+                                                       FontWeight="SemiBold"
+                                                       HorizontalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <!-- Selected state -->
+                                    <Border IsVisible="{Binding IsFrenchSelected}"
+                                            CornerRadius="8"
+                                            ClipToBounds="True"
+                                            BorderThickness="3"
+                                            BorderBrush="#a4d007"
+                                            Background="#2a3a2a">
+                                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8">
+                                            <TextBlock Text="FR" FontSize="24" HorizontalAlignment="Center" FontWeight="Bold" Foreground="#a4d007"/>
+                                            <TextBlock Text="{DynamicResource French}"
+                                                       Foreground="White"
+                                                       FontWeight="SemiBold"
+                                                       HorizontalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Border>
+                                </Panel>
+                            </Button>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Debug Mode Section -->
+                <Border Classes="card">
+                    <StackPanel Spacing="16">
+                        <TextBlock Text="{DynamicResource DebugMode}" Classes="section-header"/>
+
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="{DynamicResource EnableDebugMode}"
+                                           Foreground="White"
+                                           FontWeight="SemiBold"/>
+                                <TextBlock Text="{DynamicResource DebugModeDescription}"
+                                           Foreground="#8899a6"
+                                           FontSize="12"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <ToggleSwitch Grid.Column="1"
+                                          IsChecked="{Binding IsDebugModeEnabled}"
+                                          OnContent=""
+                                          OffContent=""
+                                          VerticalAlignment="Center"/>
+                        </Grid>
+
+                        <!-- Log file path (visible when debug mode is enabled) -->
+                        <StackPanel IsVisible="{Binding IsDebugModeEnabled}" Spacing="8">
+                            <TextBlock Text="{DynamicResource LogFileLocation}"
+                                       Foreground="#8899a6"
+                                       FontSize="12"/>
+                            <Button Command="{Binding OpenLogFolderCommand}"
+                                    Padding="0"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Cursor="Hand"
+                                    HorizontalAlignment="Left">
+                                <Border Background="#1e2328"
+                                        CornerRadius="4"
+                                        Padding="12,8">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <TextBlock Text="📂" FontSize="14" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding LogFilePath}"
+                                                   Foreground="#66c0f4"
+                                                   FontSize="11"
+                                                   FontFamily="Consolas, Courier New, monospace"
+                                                   TextWrapping="Wrap"
+                                                   TextDecorations="Underline"
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                            </Button>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- App Info -->
+                <Border Classes="card">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Steam Workshop Manager"
+                                   FontSize="16" FontWeight="SemiBold" Foreground="White"/>
+                        <TextBlock Text="Version 1.0.0"
+                                   FontSize="12" Foreground="#8899a6"/>
+                        <TextBlock Text="Songs of Syx (AppID: 1162750)"
+                                   FontSize="12" Foreground="#556677"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

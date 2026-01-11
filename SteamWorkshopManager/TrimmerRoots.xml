@@ -1,0 +1,16 @@
+<linker>
+  <!-- Preserve types used by XAML resource dictionaries -->
+  <assembly fullname="System.Runtime">
+    <type fullname="System.String" preserve="all"/>
+  </assembly>
+
+  <!-- Preserve Avalonia XAML loading -->
+  <assembly fullname="Avalonia.Markup.Xaml">
+    <type fullname="*" preserve="all"/>
+  </assembly>
+
+  <!-- Preserve the application assembly -->
+  <assembly fullname="SteamWorkshopManager">
+    <type fullname="*" preserve="all"/>
+  </assembly>
+</linker>

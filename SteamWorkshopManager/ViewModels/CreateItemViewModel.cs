@@ -16,7 +16,10 @@ public partial class CreateItemViewModel : ViewModelBase
 {
     private readonly ISteamService _steamService;
     private readonly IFileDialogService _fileDialogService;
+    private readonly ISettingsService _settingsService;
+    private readonly INotificationService _notificationService;
     private readonly IProgress<UploadProgress>? _uploadProgress;
+    private const long MaxImageSizeBytes = 1024 * 1024; // 1 MB Steam limit
 
     [ObservableProperty]
     private string _title = string.Empty;
@@ -25,13 +28,20 @@ public partial class CreateItemViewModel : ViewModelBase
     private string _description = string.Empty;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PreviewImageSize))]
+    [NotifyPropertyChangedFor(nameof(IsImageTooLarge))]
     private string? _previewImagePath;
 
     [ObservableProperty]
     private Bitmap? _previewImage;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ContentFolderSize))]
     private string? _contentFolderPath;
+
+    public string ContentFolderSize => FormatFolderSize(ContentFolderPath);
+    public string PreviewImageSize => FormatFileSize(PreviewImagePath);
+    public bool IsImageTooLarge => GetFileSize(PreviewImagePath) > MaxImageSizeBytes;
 
     [ObservableProperty]
     private VisibilityType _visibility = VisibilityType.Private;
@@ -48,7 +58,11 @@ public partial class CreateItemViewModel : ViewModelBase
     [ObservableProperty]
     private string? _errorMessage;
 
+    [ObservableProperty]
+    private string _newCustomTag = string.Empty;
+
     public ObservableCollection<TagCategory> TagCategories { get; } = [];
+    public ObservableCollection<WorkshopTag> CustomTags { get; } = [];
 
     public static IEnumerable<VisibilityType> VisibilityOptions =>
         Enum.GetValues<VisibilityType>();
@@ -57,13 +71,15 @@ public partial class CreateItemViewModel : ViewModelBase
     public event Action? ItemCreated;
 
     public CreateItemViewModel(ISteamService steamService, IFileDialogService fileDialogService,
-        IProgress<UploadProgress>? uploadProgress = null)
+        ISettingsService settingsService, INotificationService notificationService, IProgress<UploadProgress>? uploadProgress = null)
     {
         _steamService = steamService;
         _fileDialogService = fileDialogService;
+        _settingsService = settingsService;
+        _notificationService = notificationService;
         _uploadProgress = uploadProgress;
 
-        // Charger les tags par catégorie
+        // Load tags by category
         foreach (var (category, tags) in WorkshopTags.TagsByCategory)
         {
             var tagCategory = new TagCategory { Name = category };
@@ -73,13 +89,19 @@ public partial class CreateItemViewModel : ViewModelBase
             }
             TagCategories.Add(tagCategory);
         }
+
+        // Load custom tags from settings
+        foreach (var customTag in settingsService.GetCustomTags())
+        {
+            CustomTags.Add(new WorkshopTag(customTag, false));
+        }
     }
 
     [RelayCommand]
     private async Task BrowsePreviewImageAsync()
     {
         var path = await _fileDialogService.OpenFileAsync(
-            "Sélectionner une image de prévisualisation",
+            Loc["SelectPreviewImage"],
             ".png", ".jpg", ".jpeg", ".gif"
         );
 
@@ -101,17 +123,17 @@ public partial class CreateItemViewModel : ViewModelBase
     private async Task BrowseContentFolderAsync()
     {
         var path = await _fileDialogService.OpenFolderAsync(
-            "Sélectionner le dossier du mod"
+            Loc["ContentFolder"]
         );
 
         if (!string.IsNullOrEmpty(path))
         {
             ContentFolderPath = path;
 
-            // Auto-remplir le titre si vide
+            // Auto-fill title if empty
             if (string.IsNullOrEmpty(Title))
             {
-                Title = Path.GetFileName(path) ?? "Nouveau mod";
+                Title = Path.GetFileName(path) ?? "New mod";
             }
         }
     }
@@ -124,7 +146,7 @@ public partial class CreateItemViewModel : ViewModelBase
 
             if (string.IsNullOrEmpty(Title))
             {
-                Title = Path.GetFileName(folderPath) ?? "Nouveau mod";
+                Title = Path.GetFileName(folderPath) ?? "New mod";
             }
         }
     }
@@ -134,19 +156,19 @@ public partial class CreateItemViewModel : ViewModelBase
     {
         if (string.IsNullOrWhiteSpace(Title))
         {
-            ErrorMessage = "Le titre est obligatoire";
+            ErrorMessage = Loc["TitleRequired"];
             return;
         }
 
         if (string.IsNullOrWhiteSpace(ContentFolderPath))
         {
-            ErrorMessage = "Le dossier du mod est obligatoire";
+            ErrorMessage = Loc["FolderRequired"];
             return;
         }
 
         if (!Directory.Exists(ContentFolderPath))
         {
-            ErrorMessage = "Le dossier spécifié n'existe pas";
+            ErrorMessage = Loc["FolderNotExist"];
             return;
         }
 
@@ -159,6 +181,7 @@ public partial class CreateItemViewModel : ViewModelBase
                 .SelectMany(c => c.Tags)
                 .Where(t => t.IsSelected)
                 .Select(t => t.Name)
+                .Concat(CustomTags.Where(t => t.IsSelected).Select(t => t.Name))
                 .ToList();
 
             var fileId = await _steamService.CreateItemAsync(
@@ -168,22 +191,31 @@ public partial class CreateItemViewModel : ViewModelBase
                 PreviewImagePath,
                 Visibility,
                 selectedTags,
-                string.IsNullOrWhiteSpace(InitialChangelog) ? "Version initiale" : InitialChangelog,
+                string.IsNullOrWhiteSpace(InitialChangelog) ? "Initial version" : InitialChangelog,
                 _uploadProgress
             );
 
             if (fileId.HasValue)
             {
+                // Save paths for this new mod
+                _settingsService.SetContentFolderPath((ulong)fileId.Value, ContentFolderPath);
+                if (!string.IsNullOrEmpty(PreviewImagePath))
+                {
+                    _settingsService.SetPreviewImagePath((ulong)fileId.Value, PreviewImagePath);
+                }
+                _notificationService.ShowSuccess(Loc["ItemCreatedSuccess"]);
                 ItemCreated?.Invoke();
             }
             else
             {
-                ErrorMessage = "Échec de la création de l'item";
+                _notificationService.ShowError(Loc["CreationFailed"]);
+                ErrorMessage = Loc["CreationFailed"];
             }
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"Erreur : {ex.Message}";
+            _notificationService.ShowError(Loc["CreationFailed"]);
+            ErrorMessage = $"{Loc["CreationFailed"]}: {ex.Message}";
         }
         finally
         {
@@ -195,5 +227,97 @@ public partial class CreateItemViewModel : ViewModelBase
     private void Cancel()
     {
         CloseRequested?.Invoke();
+    }
+
+    [RelayCommand]
+    private void AddCustomTag()
+    {
+        if (string.IsNullOrWhiteSpace(NewCustomTag))
+            return;
+
+        var tagName = NewCustomTag.Trim();
+
+        // Check if tag already exists
+        if (CustomTags.Any(t => t.Name.Equals(tagName, StringComparison.OrdinalIgnoreCase)))
+        {
+            NewCustomTag = string.Empty;
+            return;
+        }
+
+        // Add to settings and list
+        _settingsService.AddCustomTag(tagName);
+        CustomTags.Add(new WorkshopTag(tagName, true));
+        NewCustomTag = string.Empty;
+    }
+
+    [RelayCommand]
+    private void RemoveCustomTag(WorkshopTag tag)
+    {
+        if (tag == null) return;
+
+        _settingsService.RemoveCustomTag(tag.Name);
+        CustomTags.Remove(tag);
+    }
+
+    /// <summary>
+    /// Gets file size in bytes.
+    /// </summary>
+    private static long GetFileSize(string? filePath)
+    {
+        if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
+            return 0;
+
+        try
+        {
+            return new FileInfo(filePath).Length;
+        }
+        catch
+        {
+            return 0;
+        }
+    }
+
+    /// <summary>
+    /// Formats file size for display.
+    /// </summary>
+    private static string FormatFileSize(string? filePath)
+    {
+        var size = GetFileSize(filePath);
+        if (size == 0)
+            return string.Empty;
+
+        return size switch
+        {
+            < 1024 => $"{size} B",
+            < 1024 * 1024 => $"{size / 1024.0:F1} KB",
+            _ => $"{size / (1024.0 * 1024):F2} MB"
+        };
+    }
+
+    /// <summary>
+    /// Formats folder size for display.
+    /// </summary>
+    private static string FormatFolderSize(string? folderPath)
+    {
+        if (string.IsNullOrEmpty(folderPath) || !Directory.Exists(folderPath))
+            return string.Empty;
+
+        try
+        {
+            var dirInfo = new DirectoryInfo(folderPath);
+            var size = dirInfo.GetFiles("*", SearchOption.AllDirectories).Sum(f => f.Length);
+
+            return size switch
+            {
+                < 1024 => $"{size} B",
+                < 1024 * 1024 => $"{size / 1024.0:F1} KB",
+                < 1024 * 1024 * 1024 => $"{size / (1024.0 * 1024):F1} MB",
+                _ => $"{size / (1024.0 * 1024 * 1024):F2} GB"
+            };
+        }
+        catch
+        {
+            return string.Empty;
+        }
     }
 }

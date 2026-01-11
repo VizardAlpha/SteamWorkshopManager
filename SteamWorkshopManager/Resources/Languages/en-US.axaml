@@ -1,0 +1,192 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Header -->
+    <x:String x:Key="AppTitle">Workshop Manager</x:String>
+    <x:String x:Key="AppSubtitle">Songs of Syx</x:String>
+    <x:String x:Key="MyPublications">My publications</x:String>
+    <x:String x:Key="NewItem">+ New</x:String>
+
+    <!-- Status -->
+    <x:String x:Key="ConnectingToSteam">Connecting to Steam...</x:String>
+    <x:String x:Key="ConnectedToSteam">Connected to Steam</x:String>
+    <x:String x:Key="SteamNotAvailable">Steam not available - Launch Steam and restart the application</x:String>
+    <x:String x:Key="SteamNotInitialized">Steam is not initialized</x:String>
+
+    <!-- Item List -->
+    <x:String x:Key="MyPublicationsTitle">My publications</x:String>
+    <x:String x:Key="MyPublicationsSubtitle">Manage your mods published on the Workshop</x:String>
+    <x:String x:Key="Refresh">Refresh</x:String>
+    <x:String x:Key="LoadingPublications">Loading your publications...</x:String>
+    <x:String x:Key="NoImage">No image</x:String>
+    <x:String x:Key="LoadingError">Loading error</x:String>
+
+    <!-- Item Editor -->
+    <x:String x:Key="Back">Back</x:String>
+    <x:String x:Key="Delete">Delete</x:String>
+    <x:String x:Key="Save">Save</x:String>
+    <x:String x:Key="PreviewImage">Preview image</x:String>
+    <x:String x:Key="NoImageSelected">No image selected</x:String>
+    <x:String x:Key="ChooseImage">Choose an image</x:String>
+    <x:String x:Key="SelectPreviewImage">Select a preview image</x:String>
+    <x:String x:Key="ImageTooLarge">Image exceeds Steam's 1 MB limit</x:String>
+    <x:String x:Key="Title">Title</x:String>
+    <x:String x:Key="TitlePlaceholder">Name of your mod</x:String>
+    <x:String x:Key="Description">Description</x:String>
+    <x:String x:Key="DescriptionPlaceholder">Describe your mod in detail...</x:String>
+    <x:String x:Key="ContentFolder">Content folder</x:String>
+    <x:String x:Key="ContentFolderPlaceholder">Path to the mod folder</x:String>
+    <x:String x:Key="Browse">Browse</x:String>
+    <x:String x:Key="Tags">Tags</x:String>
+    <x:String x:Key="Visibility">Visibility</x:String>
+    <x:String x:Key="UpdateNotes">Update notes</x:String>
+    <x:String x:Key="ChangelogPlaceholder">Describe the changes in this update...</x:String>
+    <x:String x:Key="ChangelogInfo">This text will be visible in the update history on Steam Workshop.</x:String>
+    <x:String x:Key="MultiVersion">Multi-version</x:String>
+    <x:String x:Key="MultiVersionInfo">This feature allows you to publish multiple versions of your mod for different game versions. Check if it is enabled for Songs of Syx.</x:String>
+    <x:String x:Key="AllVersions">All versions</x:String>
+
+    <!-- Create Item -->
+    <x:String x:Key="NewPublication">New publication</x:String>
+    <x:String x:Key="PublishToWorkshop">Publish to Workshop</x:String>
+    <x:String x:Key="DragDropFolder">Drag and drop your mod folder</x:String>
+    <x:String x:Key="Or">or</x:String>
+    <x:String x:Key="BrowseFolders">Browse folders</x:String>
+    <x:String x:Key="NoFolderSelected">No folder selected</x:String>
+    <x:String x:Key="InitialVersionNotes">Initial version notes</x:String>
+    <x:String x:Key="InitialVersionPlaceholder">Describe the first version of your mod...</x:String>
+    <x:String x:Key="TitleRequired">Title is required</x:String>
+    <x:String x:Key="FolderRequired">Mod folder is required</x:String>
+    <x:String x:Key="FolderNotExist">The specified folder does not exist</x:String>
+    <x:String x:Key="CreationFailed">Failed to create item</x:String>
+    <x:String x:Key="Publishing">Publishing...</x:String>
+
+    <!-- Delete Dialog -->
+    <x:String x:Key="ConfirmDelete">Confirm deletion</x:String>
+    <x:String x:Key="DeleteConfirmMessage">Are you sure you want to delete</x:String>
+    <x:String x:Key="DeleteWarning">This action is irreversible.</x:String>
+    <x:String x:Key="Cancel">Cancel</x:String>
+    <x:String x:Key="DeletePermanently">Delete permanently</x:String>
+    <x:String x:Key="DeleteFailed">Failed to delete</x:String>
+    <x:String x:Key="UpdateFailed">Failed to update</x:String>
+
+    <!-- Settings -->
+    <x:String x:Key="Settings">Settings</x:String>
+    <x:String x:Key="Language">Language</x:String>
+    <x:String x:Key="English">English</x:String>
+    <x:String x:Key="French">French</x:String>
+    <x:String x:Key="Close">Close</x:String>
+
+    <!-- Upload Progress -->
+    <x:String x:Key="CreatingItem">Creating item...</x:String>
+    <x:String x:Key="ConfiguringItem">Configuring item...</x:String>
+    <x:String x:Key="Uploading">Uploading...</x:String>
+    <x:String x:Key="Preparing">Preparing...</x:String>
+    <x:String x:Key="PreparingContent">Preparing content...</x:String>
+    <x:String x:Key="UploadingContent">Uploading content...</x:String>
+    <x:String x:Key="UploadingImage">Uploading image...</x:String>
+    <x:String x:Key="Finalizing">Finalizing...</x:String>
+    <x:String x:Key="Done">Done!</x:String>
+    <x:String x:Key="PreparingUpdate">Preparing update...</x:String>
+
+    <!-- Visibility Types -->
+    <x:String x:Key="Public">Public</x:String>
+    <x:String x:Key="FriendsOnly">Friends Only</x:String>
+    <x:String x:Key="Private">Private</x:String>
+    <x:String x:Key="Unlisted">Unlisted</x:String>
+
+    <!-- Contributor -->
+    <x:String x:Key="Contributor">Contributor</x:String>
+
+    <!-- Custom Tags -->
+    <x:String x:Key="CustomTags">Custom Tags</x:String>
+    <x:String x:Key="AddCustomTag">Add</x:String>
+    <x:String x:Key="NewTagPlaceholder">Enter a new tag...</x:String>
+    <x:String x:Key="RemoveTag">Remove</x:String>
+
+    <!-- Notifications -->
+    <x:String x:Key="ItemCreatedSuccess">Item created successfully!</x:String>
+    <x:String x:Key="ItemUpdatedSuccess">Item updated successfully!</x:String>
+    <x:String x:Key="ItemDeletedSuccess">Item deleted successfully!</x:String>
+    <x:String x:Key="OperationFailed">Operation failed</x:String>
+
+    <!-- Debug Mode -->
+    <x:String x:Key="DebugMode">Debug Mode</x:String>
+    <x:String x:Key="EnableDebugMode">Enable Debug Logging</x:String>
+    <x:String x:Key="DebugModeDescription">When enabled, detailed logs are saved to help troubleshoot issues. Share the log file when reporting problems.</x:String>
+    <x:String x:Key="LogFileLocation">Log file location:</x:String>
+
+    <!-- Steam Error Codes -->
+    <x:String x:Key="SteamOK">Operation completed successfully</x:String>
+    <x:String x:Key="SteamFail">Generic failure</x:String>
+    <x:String x:Key="SteamNoConnection">No Steam connection available</x:String>
+    <x:String x:Key="SteamInvalidPassword">Invalid password</x:String>
+    <x:String x:Key="SteamLoggedInElsewhere">Account is logged in elsewhere</x:String>
+    <x:String x:Key="SteamInvalidProtocol">Invalid protocol version</x:String>
+    <x:String x:Key="SteamInvalidParam">Invalid parameter</x:String>
+    <x:String x:Key="SteamFileNotFound">File not found</x:String>
+    <x:String x:Key="SteamBusy">Steam is busy, please try again</x:String>
+    <x:String x:Key="SteamInvalidState">Invalid state</x:String>
+    <x:String x:Key="SteamInvalidName">Invalid name</x:String>
+    <x:String x:Key="SteamInvalidEmail">Invalid email address</x:String>
+    <x:String x:Key="SteamDuplicateName">Name already exists</x:String>
+    <x:String x:Key="SteamAccessDenied">Access denied</x:String>
+    <x:String x:Key="SteamTimeout">Operation timed out</x:String>
+    <x:String x:Key="SteamBanned">Account is banned</x:String>
+    <x:String x:Key="SteamAccountNotFound">Account not found</x:String>
+    <x:String x:Key="SteamInvalidSteamID">Invalid Steam ID</x:String>
+    <x:String x:Key="SteamServiceUnavailable">Steam service is unavailable</x:String>
+    <x:String x:Key="SteamNotLoggedOn">Not logged on to Steam</x:String>
+    <x:String x:Key="SteamPending">Operation is pending</x:String>
+    <x:String x:Key="SteamEncryptionFailure">Encryption failure</x:String>
+    <x:String x:Key="SteamInsufficientPrivilege">Insufficient privileges</x:String>
+    <x:String x:Key="SteamLimitExceeded">Limit exceeded</x:String>
+    <x:String x:Key="SteamRevoked">Access revoked</x:String>
+    <x:String x:Key="SteamExpired">Item has expired</x:String>
+    <x:String x:Key="SteamAlreadyRedeemed">Already redeemed</x:String>
+    <x:String x:Key="SteamDuplicateRequest">Duplicate request</x:String>
+    <x:String x:Key="SteamAlreadyOwned">Already owned</x:String>
+    <x:String x:Key="SteamIPNotFound">IP address not found</x:String>
+    <x:String x:Key="SteamPersistFailed">Failed to persist data</x:String>
+    <x:String x:Key="SteamLockingFailed">Locking failed</x:String>
+    <x:String x:Key="SteamLogonSessionReplaced">Logon session replaced</x:String>
+    <x:String x:Key="SteamConnectFailed">Connection failed</x:String>
+    <x:String x:Key="SteamHandshakeFailed">Handshake failed</x:String>
+    <x:String x:Key="SteamIOFailure">I/O failure</x:String>
+    <x:String x:Key="SteamRemoteDisconnect">Remote disconnected</x:String>
+    <x:String x:Key="SteamShoppingCartNotFound">Shopping cart not found</x:String>
+    <x:String x:Key="SteamBlocked">Blocked</x:String>
+    <x:String x:Key="SteamIgnored">Ignored</x:String>
+    <x:String x:Key="SteamNoMatch">No match found</x:String>
+    <x:String x:Key="SteamAccountDisabled">Account is disabled</x:String>
+    <x:String x:Key="SteamServiceReadOnly">Service is read-only</x:String>
+    <x:String x:Key="SteamAccountNotFeatured">Account is not featured</x:String>
+    <x:String x:Key="SteamAdministratorOK">Administrator approved</x:String>
+    <x:String x:Key="SteamContentVersion">Content version mismatch</x:String>
+    <x:String x:Key="SteamTryAnotherCM">Try another connection manager</x:String>
+    <x:String x:Key="SteamPasswordRequiredToKickSession">Password required to kick session</x:String>
+    <x:String x:Key="SteamAlreadyLoggedInElsewhere">Already logged in elsewhere</x:String>
+    <x:String x:Key="SteamSuspended">Account is suspended</x:String>
+    <x:String x:Key="SteamCancelled">Operation was cancelled</x:String>
+    <x:String x:Key="SteamDataCorruption">Data corruption detected</x:String>
+    <x:String x:Key="SteamDiskFull">Disk is full</x:String>
+    <x:String x:Key="SteamRemoteCallFailed">Remote call failed</x:String>
+    <x:String x:Key="SteamExternalAccountUnlinked">External account unlinked</x:String>
+    <x:String x:Key="SteamPSNTicketInvalid">PSN ticket is invalid</x:String>
+    <x:String x:Key="SteamExternalAccountAlreadyLinked">External account already linked</x:String>
+    <x:String x:Key="SteamRemoteFileConflict">Remote file conflict</x:String>
+    <x:String x:Key="SteamIllegalPassword">Illegal password</x:String>
+    <x:String x:Key="SteamSameAsPreviousValue">Same as previous value</x:String>
+    <x:String x:Key="SteamAccountLogonDenied">Account logon denied</x:String>
+    <x:String x:Key="SteamCannotUseOldPassword">Cannot use old password</x:String>
+    <x:String x:Key="SteamInvalidLoginAuthCode">Invalid login auth code</x:String>
+    <x:String x:Key="SteamAccountLogonDeniedNoMail">Account logon denied, no email on file</x:String>
+    <x:String x:Key="SteamHardwareNotCapableOfIPT">Hardware not capable of IPT</x:String>
+    <x:String x:Key="SteamIPTInitError">IPT initialization error</x:String>
+    <x:String x:Key="SteamParentalControlRestricted">Parental control restricted</x:String>
+    <x:String x:Key="SteamFacebookQueryError">Facebook query error</x:String>
+    <x:String x:Key="SteamExpiredLoginAuthCode">Login auth code has expired</x:String>
+    <x:String x:Key="SteamIPLoginRestrictionFailed">IP login restriction failed</x:String>
+    <x:String x:Key="SteamAccountLockedDown">Account is locked down</x:String>
+    <x:String x:Key="SteamRateLimitExceeded">Rate limit exceeded, try again later</x:String>
+    <x:String x:Key="SteamUnknownError">Unknown Steam error</x:String>
+</ResourceDictionary>

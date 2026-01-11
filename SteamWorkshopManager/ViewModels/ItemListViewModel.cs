@@ -12,14 +12,15 @@ namespace SteamWorkshopManager.ViewModels;
 
 public partial class ItemListViewModel : ViewModelBase
 {
+    private static readonly Logger Log = LogService.GetLogger<ItemListViewModel>();
     private readonly ISteamService _steamService;
     private static readonly HttpClient HttpClient = new();
 
     [ObservableProperty]
-    private bool _isLoading;
+    private string? _errorMessage;
 
     [ObservableProperty]
-    private string? _errorMessage;
+    private bool _isLoading;
 
     public ObservableCollection<WorkshopItem> Items { get; } = [];
 
@@ -36,7 +37,7 @@ public partial class ItemListViewModel : ViewModelBase
     {
         if (!_steamService.IsInitialized)
         {
-            ErrorMessage = "Steam n'est pas initialisé";
+            ErrorMessage = Loc["SteamNotInitialized"];
             return;
         }
 
@@ -50,13 +51,12 @@ public partial class ItemListViewModel : ViewModelBase
             foreach (var item in items)
             {
                 Items.Add(item);
-                // Charger l'image en arrière-plan
                 _ = LoadItemPreviewAsync(item);
             }
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"Erreur lors du chargement : {ex.Message}";
+            ErrorMessage = $"{Loc["LoadingError"]}: {ex.Message}";
         }
         finally
         {
@@ -70,18 +70,18 @@ public partial class ItemListViewModel : ViewModelBase
 
         try
         {
-            Console.WriteLine($"[DEBUG] Loading thumbnail for '{item.Title}': {item.PreviewImageUrl}");
+            Log.Debug($"Loading thumbnail for '{item.Title}': {item.PreviewImageUrl}");
             var response = await HttpClient.GetAsync(item.PreviewImageUrl);
             if (response.IsSuccessStatusCode)
             {
                 var stream = await response.Content.ReadAsStreamAsync();
                 item.PreviewBitmap = new Bitmap(stream);
-                Console.WriteLine($"[DEBUG] Thumbnail loaded for '{item.Title}'");
+                Log.Debug($"Thumbnail loaded for '{item.Title}'");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[DEBUG] Failed to load thumbnail for '{item.Title}': {ex.Message}");
+            Log.Warning($"Failed to load thumbnail for '{item.Title}': {ex.Message}");
         }
     }
 

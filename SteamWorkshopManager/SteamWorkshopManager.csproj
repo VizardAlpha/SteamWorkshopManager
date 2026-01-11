@@ -8,11 +8,16 @@
 
         <!-- Trimming & Single File -->
         <PublishTrimmed>true</PublishTrimmed>
-        <TrimMode>full</TrimMode>
+        <TrimMode>partial</TrimMode>
         <PublishSingleFile>true</PublishSingleFile>
         <SelfContained>true</SelfContained>
         <IncludeNativeLibrariesForSelfExtract>false</IncludeNativeLibrariesForSelfExtract>
     </PropertyGroup>
+
+    <ItemGroup>
+        <TrimmerRootDescriptor Include="TrimmerRoots.xml"/>
+        <TrimmerRootAssembly Include="SteamWorkshopManager"/>
+    </ItemGroup>
 
     <ItemGroup>
         <None Include="steam_api64.dll">
@@ -28,6 +33,7 @@
 
     <ItemGroup>
         <AvaloniaResource Include="Assets\**"/>
+        <AvaloniaResource Include="Resources\**"/>
     </ItemGroup>
 
     <ItemGroup>

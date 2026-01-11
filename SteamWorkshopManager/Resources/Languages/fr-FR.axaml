@@ -1,0 +1,193 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+    <!-- Header -->
+    <sys:String x:Key="AppTitle">Workshop Manager</sys:String>
+    <sys:String x:Key="AppSubtitle">Songs of Syx</sys:String>
+    <sys:String x:Key="MyPublications">Mes publications</sys:String>
+    <sys:String x:Key="NewItem">+ Nouveau</sys:String>
+
+    <!-- Status -->
+    <sys:String x:Key="ConnectingToSteam">Connexion à Steam...</sys:String>
+    <sys:String x:Key="ConnectedToSteam">Connecté à Steam</sys:String>
+    <sys:String x:Key="SteamNotAvailable">Steam non disponible - Lancez Steam et redémarrez l'application</sys:String>
+    <sys:String x:Key="SteamNotInitialized">Steam n'est pas initialisé</sys:String>
+
+    <!-- Item List -->
+    <sys:String x:Key="MyPublicationsTitle">Mes publications</sys:String>
+    <sys:String x:Key="MyPublicationsSubtitle">Gérez vos mods publiés sur le Workshop</sys:String>
+    <sys:String x:Key="Refresh">Actualiser</sys:String>
+    <sys:String x:Key="LoadingPublications">Chargement de vos publications...</sys:String>
+    <sys:String x:Key="NoImage">Pas d'image</sys:String>
+    <sys:String x:Key="LoadingError">Erreur de chargement</sys:String>
+
+    <!-- Item Editor -->
+    <sys:String x:Key="Back">Retour</sys:String>
+    <sys:String x:Key="Delete">Supprimer</sys:String>
+    <sys:String x:Key="Save">Enregistrer</sys:String>
+    <sys:String x:Key="PreviewImage">Image de prévisualisation</sys:String>
+    <sys:String x:Key="NoImageSelected">Aucune image sélectionnée</sys:String>
+    <sys:String x:Key="ChooseImage">Choisir une image</sys:String>
+    <sys:String x:Key="SelectPreviewImage">Sélectionner une image de prévisualisation</sys:String>
+    <sys:String x:Key="ImageTooLarge">L'image dépasse la limite de 1 Mo de Steam</sys:String>
+    <sys:String x:Key="Title">Titre</sys:String>
+    <sys:String x:Key="TitlePlaceholder">Nom de votre mod</sys:String>
+    <sys:String x:Key="Description">Description</sys:String>
+    <sys:String x:Key="DescriptionPlaceholder">Décrivez votre mod en détail...</sys:String>
+    <sys:String x:Key="ContentFolder">Dossier du contenu</sys:String>
+    <sys:String x:Key="ContentFolderPlaceholder">Chemin vers le dossier du mod</sys:String>
+    <sys:String x:Key="Browse">Parcourir</sys:String>
+    <sys:String x:Key="Tags">Tags</sys:String>
+    <sys:String x:Key="Visibility">Visibilité</sys:String>
+    <sys:String x:Key="UpdateNotes">Notes de mise à jour</sys:String>
+    <sys:String x:Key="ChangelogPlaceholder">Décrivez les changements de cette mise à jour...</sys:String>
+    <sys:String x:Key="ChangelogInfo">Ce texte sera visible dans l'historique des mises à jour sur le Workshop Steam.</sys:String>
+    <sys:String x:Key="MultiVersion">Multi-versions</sys:String>
+    <sys:String x:Key="MultiVersionInfo">Cette fonctionnalité permet de publier plusieurs versions de votre mod pour différentes versions du jeu. Vérifiez si elle est activée pour Songs of Syx.</sys:String>
+    <sys:String x:Key="AllVersions">Toutes versions</sys:String>
+
+    <!-- Create Item -->
+    <sys:String x:Key="NewPublication">Nouvelle publication</sys:String>
+    <sys:String x:Key="PublishToWorkshop">Publier sur le Workshop</sys:String>
+    <sys:String x:Key="DragDropFolder">Glissez-déposez le dossier de votre mod</sys:String>
+    <sys:String x:Key="Or">ou</sys:String>
+    <sys:String x:Key="BrowseFolders">Parcourir les dossiers</sys:String>
+    <sys:String x:Key="NoFolderSelected">Aucun dossier sélectionné</sys:String>
+    <sys:String x:Key="InitialVersionNotes">Notes de version initiale</sys:String>
+    <sys:String x:Key="InitialVersionPlaceholder">Décrivez la première version de votre mod...</sys:String>
+    <sys:String x:Key="TitleRequired">Le titre est obligatoire</sys:String>
+    <sys:String x:Key="FolderRequired">Le dossier du mod est obligatoire</sys:String>
+    <sys:String x:Key="FolderNotExist">Le dossier spécifié n'existe pas</sys:String>
+    <sys:String x:Key="CreationFailed">Échec de la création de l'item</sys:String>
+    <sys:String x:Key="Publishing">Publication en cours...</sys:String>
+
+    <!-- Delete Dialog -->
+    <sys:String x:Key="ConfirmDelete">Confirmer la suppression</sys:String>
+    <sys:String x:Key="DeleteConfirmMessage">Êtes-vous sûr de vouloir supprimer</sys:String>
+    <sys:String x:Key="DeleteWarning">Cette action est irréversible.</sys:String>
+    <sys:String x:Key="Cancel">Annuler</sys:String>
+    <sys:String x:Key="DeletePermanently">Supprimer définitivement</sys:String>
+    <sys:String x:Key="DeleteFailed">Échec de la suppression</sys:String>
+    <sys:String x:Key="UpdateFailed">Échec de la mise à jour</sys:String>
+
+    <!-- Settings -->
+    <sys:String x:Key="Settings">Paramètres</sys:String>
+    <sys:String x:Key="Language">Langue</sys:String>
+    <sys:String x:Key="English">Anglais</sys:String>
+    <sys:String x:Key="French">Français</sys:String>
+    <sys:String x:Key="Close">Fermer</sys:String>
+
+    <!-- Upload Progress -->
+    <sys:String x:Key="CreatingItem">Création de l'item...</sys:String>
+    <sys:String x:Key="ConfiguringItem">Configuration de l'item...</sys:String>
+    <sys:String x:Key="Uploading">Upload en cours...</sys:String>
+    <sys:String x:Key="Preparing">Préparation...</sys:String>
+    <sys:String x:Key="PreparingContent">Préparation du contenu...</sys:String>
+    <sys:String x:Key="UploadingContent">Upload du contenu...</sys:String>
+    <sys:String x:Key="UploadingImage">Upload de l'image...</sys:String>
+    <sys:String x:Key="Finalizing">Finalisation...</sys:String>
+    <sys:String x:Key="Done">Terminé !</sys:String>
+    <sys:String x:Key="PreparingUpdate">Préparation de la mise à jour...</sys:String>
+
+    <!-- Visibility Types -->
+    <sys:String x:Key="Public">Public</sys:String>
+    <sys:String x:Key="FriendsOnly">Amis uniquement</sys:String>
+    <sys:String x:Key="Private">Privé</sys:String>
+    <sys:String x:Key="Unlisted">Non répertorié</sys:String>
+
+    <!-- Contributor -->
+    <sys:String x:Key="Contributor">Contributeur</sys:String>
+
+    <!-- Custom Tags -->
+    <sys:String x:Key="CustomTags">Tags personnalisés</sys:String>
+    <sys:String x:Key="AddCustomTag">Ajouter</sys:String>
+    <sys:String x:Key="NewTagPlaceholder">Entrez un nouveau tag...</sys:String>
+    <sys:String x:Key="RemoveTag">Supprimer</sys:String>
+
+    <!-- Notifications -->
+    <sys:String x:Key="ItemCreatedSuccess">Item créé avec succès !</sys:String>
+    <sys:String x:Key="ItemUpdatedSuccess">Item mis à jour avec succès !</sys:String>
+    <sys:String x:Key="ItemDeletedSuccess">Item supprimé avec succès !</sys:String>
+    <sys:String x:Key="OperationFailed">L'opération a échoué</sys:String>
+
+    <!-- Debug Mode -->
+    <sys:String x:Key="DebugMode">Mode Debug</sys:String>
+    <sys:String x:Key="EnableDebugMode">Activer les logs de debug</sys:String>
+    <sys:String x:Key="DebugModeDescription">Lorsqu'activé, des logs détaillés sont enregistrés pour aider au diagnostic. Partagez le fichier de logs lors du signalement de problèmes.</sys:String>
+    <sys:String x:Key="LogFileLocation">Emplacement du fichier de logs :</sys:String>
+
+    <!-- Steam Error Codes -->
+    <sys:String x:Key="SteamOK">Opération réussie</sys:String>
+    <sys:String x:Key="SteamFail">Échec générique</sys:String>
+    <sys:String x:Key="SteamNoConnection">Pas de connexion Steam disponible</sys:String>
+    <sys:String x:Key="SteamInvalidPassword">Mot de passe invalide</sys:String>
+    <sys:String x:Key="SteamLoggedInElsewhere">Le compte est connecté ailleurs</sys:String>
+    <sys:String x:Key="SteamInvalidProtocol">Version de protocole invalide</sys:String>
+    <sys:String x:Key="SteamInvalidParam">Paramètre invalide</sys:String>
+    <sys:String x:Key="SteamFileNotFound">Fichier non trouvé</sys:String>
+    <sys:String x:Key="SteamBusy">Steam est occupé, veuillez réessayer</sys:String>
+    <sys:String x:Key="SteamInvalidState">État invalide</sys:String>
+    <sys:String x:Key="SteamInvalidName">Nom invalide</sys:String>
+    <sys:String x:Key="SteamInvalidEmail">Adresse email invalide</sys:String>
+    <sys:String x:Key="SteamDuplicateName">Le nom existe déjà</sys:String>
+    <sys:String x:Key="SteamAccessDenied">Accès refusé</sys:String>
+    <sys:String x:Key="SteamTimeout">L'opération a expiré</sys:String>
+    <sys:String x:Key="SteamBanned">Le compte est banni</sys:String>
+    <sys:String x:Key="SteamAccountNotFound">Compte non trouvé</sys:String>
+    <sys:String x:Key="SteamInvalidSteamID">Steam ID invalide</sys:String>
+    <sys:String x:Key="SteamServiceUnavailable">Service Steam indisponible</sys:String>
+    <sys:String x:Key="SteamNotLoggedOn">Non connecté à Steam</sys:String>
+    <sys:String x:Key="SteamPending">Opération en attente</sys:String>
+    <sys:String x:Key="SteamEncryptionFailure">Échec du chiffrement</sys:String>
+    <sys:String x:Key="SteamInsufficientPrivilege">Privilèges insuffisants</sys:String>
+    <sys:String x:Key="SteamLimitExceeded">Limite dépassée</sys:String>
+    <sys:String x:Key="SteamRevoked">Accès révoqué</sys:String>
+    <sys:String x:Key="SteamExpired">L'élément a expiré</sys:String>
+    <sys:String x:Key="SteamAlreadyRedeemed">Déjà utilisé</sys:String>
+    <sys:String x:Key="SteamDuplicateRequest">Requête en double</sys:String>
+    <sys:String x:Key="SteamAlreadyOwned">Déjà possédé</sys:String>
+    <sys:String x:Key="SteamIPNotFound">Adresse IP non trouvée</sys:String>
+    <sys:String x:Key="SteamPersistFailed">Échec de la persistance des données</sys:String>
+    <sys:String x:Key="SteamLockingFailed">Échec du verrouillage</sys:String>
+    <sys:String x:Key="SteamLogonSessionReplaced">Session de connexion remplacée</sys:String>
+    <sys:String x:Key="SteamConnectFailed">Échec de la connexion</sys:String>
+    <sys:String x:Key="SteamHandshakeFailed">Échec de la négociation</sys:String>
+    <sys:String x:Key="SteamIOFailure">Échec d'entrée/sortie</sys:String>
+    <sys:String x:Key="SteamRemoteDisconnect">Déconnexion distante</sys:String>
+    <sys:String x:Key="SteamShoppingCartNotFound">Panier non trouvé</sys:String>
+    <sys:String x:Key="SteamBlocked">Bloqué</sys:String>
+    <sys:String x:Key="SteamIgnored">Ignoré</sys:String>
+    <sys:String x:Key="SteamNoMatch">Aucune correspondance trouvée</sys:String>
+    <sys:String x:Key="SteamAccountDisabled">Le compte est désactivé</sys:String>
+    <sys:String x:Key="SteamServiceReadOnly">Service en lecture seule</sys:String>
+    <sys:String x:Key="SteamAccountNotFeatured">Le compte n'est pas mis en avant</sys:String>
+    <sys:String x:Key="SteamAdministratorOK">Approuvé par l'administrateur</sys:String>
+    <sys:String x:Key="SteamContentVersion">Version du contenu incompatible</sys:String>
+    <sys:String x:Key="SteamTryAnotherCM">Essayez un autre gestionnaire de connexion</sys:String>
+    <sys:String x:Key="SteamPasswordRequiredToKickSession">Mot de passe requis pour déconnecter la session</sys:String>
+    <sys:String x:Key="SteamAlreadyLoggedInElsewhere">Déjà connecté ailleurs</sys:String>
+    <sys:String x:Key="SteamSuspended">Le compte est suspendu</sys:String>
+    <sys:String x:Key="SteamCancelled">L'opération a été annulée</sys:String>
+    <sys:String x:Key="SteamDataCorruption">Corruption de données détectée</sys:String>
+    <sys:String x:Key="SteamDiskFull">Disque plein</sys:String>
+    <sys:String x:Key="SteamRemoteCallFailed">Échec de l'appel distant</sys:String>
+    <sys:String x:Key="SteamExternalAccountUnlinked">Compte externe dissocié</sys:String>
+    <sys:String x:Key="SteamPSNTicketInvalid">Ticket PSN invalide</sys:String>
+    <sys:String x:Key="SteamExternalAccountAlreadyLinked">Compte externe déjà lié</sys:String>
+    <sys:String x:Key="SteamRemoteFileConflict">Conflit de fichier distant</sys:String>
+    <sys:String x:Key="SteamIllegalPassword">Mot de passe non autorisé</sys:String>
+    <sys:String x:Key="SteamSameAsPreviousValue">Identique à la valeur précédente</sys:String>
+    <sys:String x:Key="SteamAccountLogonDenied">Connexion au compte refusée</sys:String>
+    <sys:String x:Key="SteamCannotUseOldPassword">Impossible d'utiliser l'ancien mot de passe</sys:String>
+    <sys:String x:Key="SteamInvalidLoginAuthCode">Code d'authentification invalide</sys:String>
+    <sys:String x:Key="SteamAccountLogonDeniedNoMail">Connexion refusée, aucun email enregistré</sys:String>
+    <sys:String x:Key="SteamHardwareNotCapableOfIPT">Matériel non compatible IPT</sys:String>
+    <sys:String x:Key="SteamIPTInitError">Erreur d'initialisation IPT</sys:String>
+    <sys:String x:Key="SteamParentalControlRestricted">Contrôle parental activé</sys:String>
+    <sys:String x:Key="SteamFacebookQueryError">Erreur de requête Facebook</sys:String>
+    <sys:String x:Key="SteamExpiredLoginAuthCode">Code d'authentification expiré</sys:String>
+    <sys:String x:Key="SteamIPLoginRestrictionFailed">Restriction de connexion IP échouée</sys:String>
+    <sys:String x:Key="SteamAccountLockedDown">Le compte est verrouillé</sys:String>
+    <sys:String x:Key="SteamRateLimitExceeded">Limite de requêtes dépassée, réessayez plus tard</sys:String>
+    <sys:String x:Key="SteamUnknownError">Erreur Steam inconnue</sys:String>
+</ResourceDictionary>

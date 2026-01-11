@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:SteamWorkshopManager.ViewModels"
+        xmlns:services="using:SteamWorkshopManager.Services"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="600"
@@ -9,7 +10,9 @@
         Icon="/Assets/avalonia-logo.ico"
         Title="Steam Workshop Manager - Songs of Syx"
         MinWidth="900" MinHeight="600"
-        Width="1000" Height="700">
+        Width="1100" Height="750"
+        Background="#171a21"
+        DragDrop.AllowDrop="True">
 
     <Design.DataContext>
         <vm:MainViewModel/>
@@ -18,63 +21,166 @@
     <Panel>
         <Grid RowDefinitions="Auto,*,Auto">
             <!-- Header -->
-            <Border Grid.Row="0" Background="#1b2838" Padding="16,12">
+            <Border Grid.Row="0" Background="{StaticResource HeaderGradient}" Padding="24,16">
                 <Grid ColumnDefinitions="*,Auto">
-                    <StackPanel Orientation="Horizontal" Spacing="12">
-                        <TextBlock Text="Steam Workshop Manager"
-                                   FontSize="20" FontWeight="SemiBold"
-                                   Foreground="White"
-                                   VerticalAlignment="Center"/>
-                        <TextBlock Text="Songs of Syx"
-                                   FontSize="14"
-                                   Foreground="#CCFFFFFF"
-                                   VerticalAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal" Spacing="16">
+                        <!-- Logo/Icon area -->
+                        <Border Width="40" Height="40" CornerRadius="8"
+                                Background="{StaticResource AccentGradient}">
+                            <TextBlock Text="W" FontSize="20" FontWeight="Bold"
+                                       Foreground="White"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"/>
+                        </Border>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Workshop Manager"
+                                       FontSize="18" FontWeight="SemiBold"
+                                       Foreground="White"/>
+                            <TextBlock Text="Songs of Syx"
+                                       FontSize="12"
+                                       Foreground="#99FFFFFF"/>
+                        </StackPanel>
                     </StackPanel>
 
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12">
                         <Button Command="{Binding NavigateToListCommand}"
-                                Content="Mes items"/>
+                                Classes="ghost"
+                                Content="{DynamicResource MyPublications}"/>
                         <Button Command="{Binding NavigateToCreateCommand}"
-                                Content="+ Nouveau"/>
+                                Classes="accent"
+                                Content="{DynamicResource NewItem}"/>
+                        <Button Command="{Binding NavigateToSettingsCommand}"
+                                Classes="ghost"
+                                ToolTip.Tip="{DynamicResource Settings}"
+                                Padding="10">
+                            <TextBlock Text="⚙" FontSize="18"/>
+                        </Button>
                     </StackPanel>
                 </Grid>
             </Border>
 
             <!-- Content -->
-            <ContentControl Grid.Row="1" Content="{Binding CurrentView}" Margin="0"/>
+            <Border Grid.Row="1" Background="#1e2328" DragDrop.AllowDrop="True">
+                <ContentControl Content="{Binding CurrentView}" DragDrop.AllowDrop="True"/>
+            </Border>
 
             <!-- Status bar -->
-            <Border Grid.Row="2" Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
-                    Padding="12,8">
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Ellipse x:Name="StatusIndicator" Width="8" Height="8" Fill="Red"/>
-                    <TextBlock Text="{Binding StatusMessage}"
-                               FontSize="12"
-                               VerticalAlignment="Center"/>
-                </StackPanel>
+            <Border Grid.Row="2" Background="#171a21" Padding="24,12">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Border x:Name="StatusIndicator" Width="10" Height="10" CornerRadius="5"
+                                Background="#a4d007"/>
+                        <TextBlock Text="{Binding StatusMessage}"
+                                   FontSize="12"
+                                   Foreground="#8899a6"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <TextBlock Grid.Column="2"
+                               Text="v1.0.0"
+                               FontSize="11"
+                               Foreground="#556677"/>
+                </Grid>
             </Border>
         </Grid>
 
-        <!-- Toast notification overlay -->
+        <!-- Upload progress toast -->
         <Border IsVisible="{Binding IsUploadInProgress}"
-                Background="#E0333333"
-                CornerRadius="8"
-                Padding="16,12"
+                Background="#F0242a35"
+                CornerRadius="12"
+                Padding="20,16"
                 HorizontalAlignment="Right"
                 VerticalAlignment="Bottom"
-                Margin="0,0,24,60"
-                MinWidth="300">
-            <StackPanel Spacing="8">
-                <TextBlock Text="{Binding UploadStatusMessage}"
-                           Foreground="White"
-                           FontWeight="SemiBold"/>
+                Margin="0,0,24,70"
+                MinWidth="320"
+                BoxShadow="{StaticResource ToastShadow}">
+            <StackPanel Spacing="12">
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <Border Width="32" Height="32" CornerRadius="16"
+                            Background="{StaticResource AccentGradient}">
+                        <TextBlock Text="↑" FontSize="16" FontWeight="Bold"
+                                   Foreground="White"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{Binding UploadStatusMessage}"
+                                   Foreground="White"
+                                   FontWeight="SemiBold"
+                                   FontSize="14"/>
+                        <TextBlock Text="{Binding UploadProgressText}"
+                                   Foreground="#8899a6"
+                                   FontSize="12"/>
+                    </StackPanel>
+                </StackPanel>
                 <ProgressBar Value="{Binding UploadProgress}"
                              Minimum="0"
                              Maximum="100"
-                             Height="6"/>
-                <TextBlock Text="{Binding UploadProgressText}"
-                           Foreground="#CCFFFFFF"
-                           FontSize="11"/>
+                             Height="4"
+                             CornerRadius="2"
+                             Background="#3a4a5a"
+                             Foreground="{StaticResource AccentGradient}"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Success toast notification -->
+        <Border IsVisible="{Binding IsSuccessNotification}"
+                Background="#F01e3a1e"
+                CornerRadius="12"
+                Padding="20,16"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Top"
+                Margin="0,24,0,0"
+                MinWidth="300"
+                BoxShadow="{StaticResource ToastShadow}">
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <Border Width="32" Height="32" CornerRadius="16">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                            <GradientStop Color="#4CAF50" Offset="0"/>
+                            <GradientStop Color="#81C784" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <TextBlock Text="✓" FontSize="18" FontWeight="Bold"
+                               Foreground="White"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"/>
+                </Border>
+                <TextBlock Text="{Binding NotificationMessage}"
+                           Foreground="White"
+                           FontWeight="SemiBold"
+                           FontSize="14"
+                           VerticalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Error toast notification -->
+        <Border IsVisible="{Binding IsErrorNotification}"
+                Background="#F03d1e1e"
+                CornerRadius="12"
+                Padding="20,16"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Top"
+                Margin="0,24,0,0"
+                MinWidth="300"
+                BoxShadow="{StaticResource ToastShadow}">
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <Border Width="32" Height="32" CornerRadius="16">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                            <GradientStop Color="#f44336" Offset="0"/>
+                            <GradientStop Color="#e57373" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <TextBlock Text="✗" FontSize="18" FontWeight="Bold"
+                               Foreground="White"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"/>
+                </Border>
+                <TextBlock Text="{Binding NotificationMessage}"
+                           Foreground="White"
+                           FontWeight="SemiBold"
+                           FontSize="14"
+                           VerticalAlignment="Center"/>
             </StackPanel>
         </Border>
     </Panel>

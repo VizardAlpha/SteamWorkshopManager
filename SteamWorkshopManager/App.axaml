@@ -2,14 +2,148 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="SteamWorkshopManager.App"
              xmlns:local="using:SteamWorkshopManager"
-             RequestedThemeVariant="Default">
-             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+             RequestedThemeVariant="Dark">
 
     <Application.DataTemplates>
         <local:ViewLocator/>
     </Application.DataTemplates>
-  
+
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Default language - English (will be swapped at runtime if user changes) -->
+                <ResourceInclude Source="avares://SteamWorkshopManager/Resources/Languages/en-US.axaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Steam-inspired color palette -->
+            <Color x:Key="SteamDarkBlue">#1b2838</Color>
+            <Color x:Key="SteamMediumBlue">#2a475e</Color>
+            <Color x:Key="SteamLightBlue">#66c0f4</Color>
+            <Color x:Key="SteamGreen">#5c7e10</Color>
+            <Color x:Key="SteamBrightGreen">#a4d007</Color>
+            <Color x:Key="SteamDarkGray">#1e2328</Color>
+            <Color x:Key="SteamMediumGray">#2a2e33</Color>
+            <Color x:Key="SteamLightGray">#c7d5e0</Color>
+
+            <SolidColorBrush x:Key="SteamDarkBlueBrush" Color="{StaticResource SteamDarkBlue}"/>
+            <SolidColorBrush x:Key="SteamMediumBlueBrush" Color="{StaticResource SteamMediumBlue}"/>
+            <SolidColorBrush x:Key="SteamLightBlueBrush" Color="{StaticResource SteamLightBlue}"/>
+            <SolidColorBrush x:Key="SteamGreenBrush" Color="{StaticResource SteamGreen}"/>
+            <SolidColorBrush x:Key="SteamBrightGreenBrush" Color="{StaticResource SteamBrightGreen}"/>
+            <SolidColorBrush x:Key="SteamDarkGrayBrush" Color="{StaticResource SteamDarkGray}"/>
+            <SolidColorBrush x:Key="SteamMediumGrayBrush" Color="{StaticResource SteamMediumGray}"/>
+            <SolidColorBrush x:Key="SteamLightGrayBrush" Color="{StaticResource SteamLightGray}"/>
+
+            <LinearGradientBrush x:Key="HeaderGradient" StartPoint="0%,0%" EndPoint="100%,0%">
+                <GradientStop Color="#1b2838" Offset="0"/>
+                <GradientStop Color="#2a475e" Offset="1"/>
+            </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="AccentGradient" StartPoint="0%,0%" EndPoint="100%,0%">
+                <GradientStop Color="#5c7e10" Offset="0"/>
+                <GradientStop Color="#a4d007" Offset="1"/>
+            </LinearGradientBrush>
+
+            <BoxShadows x:Key="CardShadow">0 2 8 0 #40000000</BoxShadows>
+            <BoxShadows x:Key="CardHoverShadow">0 4 16 0 #60000000</BoxShadows>
+            <BoxShadows x:Key="ToastShadow">0 8 32 0 #80000000</BoxShadows>
+        </ResourceDictionary>
+    </Application.Resources>
+
     <Application.Styles>
         <FluentTheme />
+
+        <!-- Primary action button style -->
+        <Style Selector="Button.accent">
+            <Setter Property="Background" Value="{StaticResource AccentGradient}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="CornerRadius" Value="4"/>
+        </Style>
+        <Style Selector="Button.accent:pointerover /template/ ContentPresenter">
+            <Setter Property="Background">
+                <Setter.Value>
+                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,0%">
+                        <GradientStop Color="#6d9211" Offset="0"/>
+                        <GradientStop Color="#b5e108" Offset="1"/>
+                    </LinearGradientBrush>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Secondary button style -->
+        <Style Selector="Button.secondary">
+            <Setter Property="Background" Value="#3a4a5a"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="CornerRadius" Value="4"/>
+        </Style>
+        <Style Selector="Button.secondary:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#4a5a6a"/>
+        </Style>
+
+        <!-- Ghost button style -->
+        <Style Selector="Button.ghost">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource SteamLightGrayBrush}"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="CornerRadius" Value="4"/>
+        </Style>
+        <Style Selector="Button.ghost:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#20FFFFFF"/>
+        </Style>
+
+        <!-- Danger button style -->
+        <Style Selector="Button.danger">
+            <Setter Property="Background" Value="#c23b2e"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="CornerRadius" Value="4"/>
+        </Style>
+        <Style Selector="Button.danger:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#d44b3e"/>
+        </Style>
+
+        <!-- Card style -->
+        <Style Selector="Border.card">
+            <Setter Property="Background" Value="#2a2e33"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="BoxShadow" Value="{StaticResource CardShadow}"/>
+            <Setter Property="Padding" Value="16"/>
+        </Style>
+
+        <!-- Improved TextBox -->
+        <Style Selector="TextBox">
+            <Setter Property="Background" Value="#1e2328"/>
+            <Setter Property="BorderBrush" Value="#3a4a5a"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="12,10"/>
+        </Style>
+        <Style Selector="TextBox:focus">
+            <Setter Property="BorderBrush" Value="{StaticResource SteamLightBlueBrush}"/>
+        </Style>
+
+        <!-- Improved ComboBox -->
+        <Style Selector="ComboBox">
+            <Setter Property="Background" Value="#1e2328"/>
+            <Setter Property="BorderBrush" Value="#3a4a5a"/>
+            <Setter Property="CornerRadius" Value="4"/>
+        </Style>
+
+        <!-- Section header style -->
+        <Style Selector="TextBlock.section-header">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource SteamLightGrayBrush}"/>
+            <Setter Property="Margin" Value="0,0,0,8"/>
+        </Style>
+
+        <!-- Page title style -->
+        <Style Selector="TextBlock.page-title">
+            <Setter Property="FontSize" Value="24"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
     </Application.Styles>
 </Application>
