@@ -1,16 +1,23 @@
 using System;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using SteamWorkshopManager.Models;
 using SteamWorkshopManager.Services;
 
 namespace SteamWorkshopManager.ViewModels;
 
 public partial class SettingsViewModel : ViewModelBase
 {
+    private static readonly Logger Log = LogService.GetLogger<SettingsViewModel>();
+
     private readonly ISettingsService _settingsService;
+    private readonly ISessionRepository _sessionRepository;
+    private readonly SessionManager _sessionManager;
     private readonly ILogService _logService;
 
     [ObservableProperty]
@@ -25,11 +32,23 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     private string _logFilePath = string.Empty;
 
-    public event Action? CloseRequested;
+    [ObservableProperty]
+    private WorkshopSession? _activeSession;
 
-    public SettingsViewModel(ISettingsService settingsService)
+    [ObservableProperty]
+    private ObservableCollection<WorkshopSession> _sessions = [];
+
+    [ObservableProperty]
+    private bool _isLoadingSessions;
+
+    public event Action? CloseRequested;
+    public event Action? AddSessionRequested;
+
+    public SettingsViewModel(ISettingsService settingsService, ISessionRepository? sessionRepository = null)
     {
         _settingsService = settingsService;
+        _sessionRepository = sessionRepository ?? new SessionRepository(settingsService);
+        _sessionManager = new SessionManager(_sessionRepository);
         _logService = LogService.Instance;
 
         // Initialize selection based on current language
@@ -40,6 +59,65 @@ public partial class SettingsViewModel : ViewModelBase
         // Initialize debug mode from settings
         _isDebugModeEnabled = _settingsService.Settings.DebugMode;
         _logFilePath = _logService.GetLogFilePath();
+
+        // Load sessions
+        _ = LoadSessionsAsync();
+    }
+
+    private async Task LoadSessionsAsync()
+    {
+        IsLoadingSessions = true;
+        try
+        {
+            var sessions = await _sessionRepository.GetAllSessionsAsync();
+            var activeId = AppConfig.CurrentSession?.Id;
+
+            foreach (var session in sessions)
+            {
+                session.IsActive = session.Id == activeId;
+            }
+
+            Sessions = new ObservableCollection<WorkshopSession>(sessions);
+            ActiveSession = AppConfig.CurrentSession;
+        }
+        catch (Exception ex)
+        {
+            Log.Error("Failed to load sessions", ex);
+        }
+        finally
+        {
+            IsLoadingSessions = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task SwitchSessionAsync(WorkshopSession session)
+    {
+        if (session.Id == ActiveSession?.Id) return;
+
+        Log.Info($"Switching to session: {session.Name}");
+        await _sessionManager.SwitchSessionAsync(session);
+        // App will restart
+    }
+
+    [RelayCommand]
+    private void AddSession()
+    {
+        AddSessionRequested?.Invoke();
+    }
+
+    [RelayCommand]
+    private async Task DeleteSessionAsync(WorkshopSession session)
+    {
+        if (session.Id == ActiveSession?.Id)
+        {
+            Log.Warning("Cannot delete active session");
+            return;
+        }
+
+        Log.Info($"Deleting session: {session.Name}");
+        await _sessionRepository.DeleteSessionAsync(session.Id);
+        Sessions.Remove(session);
     }
 
     partial void OnIsDebugModeEnabledChanged(bool value)

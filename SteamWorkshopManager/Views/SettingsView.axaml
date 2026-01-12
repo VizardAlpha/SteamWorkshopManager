@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:SteamWorkshopManager.ViewModels"
+             xmlns:models="using:SteamWorkshopManager.Models"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="400"
              x:Class="SteamWorkshopManager.Views.SettingsView"
              x:DataType="vm:SettingsViewModel">
@@ -28,6 +29,87 @@
         <!-- Content -->
         <ScrollViewer Grid.Row="1">
             <StackPanel Spacing="24" Margin="24,24">
+                <!-- Sessions Section -->
+                <Border Classes="card">
+                    <StackPanel Spacing="16">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="{DynamicResource Sessions}" Classes="section-header"/>
+                            <Button Grid.Column="1"
+                                    Command="{Binding AddSessionCommand}"
+                                    Classes="accent"
+                                    Padding="12,6">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <TextBlock Text="+" FontSize="14" FontWeight="Bold"/>
+                                    <TextBlock Text="{DynamicResource AddSession}"/>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+
+                        <!-- Sessions List -->
+                        <ItemsControl ItemsSource="{Binding Sessions}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="models:WorkshopSession">
+                                    <Button Command="{Binding $parent[ItemsControl].((vm:SettingsViewModel)DataContext).SwitchSessionCommand, FallbackValue={x:Null}}"
+                                            CommandParameter="{Binding}"
+                                            HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Stretch"
+                                            Padding="0"
+                                            Margin="0,0,0,8"
+                                            Background="Transparent"
+                                            BorderThickness="0"
+                                            Cursor="Hand">
+                                        <Border Padding="12"
+                                                CornerRadius="6"
+                                                Background="#1e2328">
+                                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                                <!-- Active indicator -->
+                                                <Border Grid.Column="0"
+                                                        Width="4"
+                                                        CornerRadius="2"
+                                                        Margin="0,0,12,0"
+                                                        Background="#a4d007"
+                                                        IsVisible="{Binding IsActive}"/>
+
+                                                <!-- Session info -->
+                                                <StackPanel Grid.Column="1" Spacing="2">
+                                                    <TextBlock Text="{Binding GameName}"
+                                                               FontWeight="SemiBold"
+                                                               Foreground="White"/>
+                                                    <TextBlock Text="{Binding AppId, StringFormat='AppID: {0}'}"
+                                                               FontSize="12"
+                                                               Foreground="#8899a6"/>
+                                                </StackPanel>
+
+                                                <!-- Active badge -->
+                                                <Border Grid.Column="2"
+                                                        IsVisible="{Binding IsActive}"
+                                                        Background="#2a3a2a"
+                                                        CornerRadius="4"
+                                                        Padding="8,4"
+                                                        VerticalAlignment="Center">
+                                                    <TextBlock Text="{DynamicResource Active}"
+                                                               FontSize="11"
+                                                               Foreground="#a4d007"/>
+                                                </Border>
+                                            </Grid>
+                                        </Border>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- Restart notice -->
+                        <Border Background="#1a3a5a"
+                                CornerRadius="4"
+                                Padding="12">
+                            <TextBlock Text="{DynamicResource SessionSwitchNotice}"
+                                       FontSize="12"
+                                       Foreground="#66c0f4"
+                                       TextWrapping="Wrap"/>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
                 <!-- Language Section -->
                 <Border Classes="card">
                     <StackPanel Spacing="16">
@@ -176,8 +258,12 @@
                                    FontSize="16" FontWeight="SemiBold" Foreground="White"/>
                         <TextBlock Text="Version 1.0.0"
                                    FontSize="12" Foreground="#8899a6"/>
-                        <TextBlock Text="Songs of Syx (AppID: 1162750)"
-                                   FontSize="12" Foreground="#556677"/>
+                        <TextBlock FontSize="12" Foreground="#556677">
+                            <Run Text="{Binding ActiveSession.GameName, FallbackValue='No session'}"/>
+                            <Run Text=" (AppID: "/>
+                            <Run Text="{Binding ActiveSession.AppId, FallbackValue='N/A'}"/>
+                            <Run Text=")"/>
+                        </TextBlock>
                     </StackPanel>
                 </Border>
             </StackPanel>

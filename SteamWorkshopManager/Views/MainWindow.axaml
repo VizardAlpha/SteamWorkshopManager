@@ -8,7 +8,7 @@
         x:Class="SteamWorkshopManager.Views.MainWindow"
         x:DataType="vm:MainViewModel"
         Icon="/Assets/avalonia-logo.ico"
-        Title="Steam Workshop Manager - Songs of Syx"
+        Title="{Binding WindowTitle}"
         MinWidth="900" MinHeight="600"
         Width="1100" Height="750"
         Background="#171a21"
@@ -36,7 +36,7 @@
                             <TextBlock Text="Workshop Manager"
                                        FontSize="18" FontWeight="SemiBold"
                                        Foreground="White"/>
-                            <TextBlock Text="Songs of Syx"
+                            <TextBlock Text="{Binding ActiveGameName}"
                                        FontSize="12"
                                        Foreground="#99FFFFFF"/>
                         </StackPanel>

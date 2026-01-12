@@ -115,6 +115,32 @@
     <x:String x:Key="DebugModeDescription">When enabled, detailed logs are saved to help troubleshoot issues. Share the log file when reporting problems.</x:String>
     <x:String x:Key="LogFileLocation">Log file location:</x:String>
 
+    <!-- Sessions -->
+    <x:String x:Key="Sessions">Sessions</x:String>
+    <x:String x:Key="AddSession">Add</x:String>
+    <x:String x:Key="AddNewSession">Add a session</x:String>
+    <x:String x:Key="AddSessionInstructions">Enter the Steam AppId of the game whose Workshop you want to manage.</x:String>
+    <x:String x:Key="Active">Active</x:String>
+    <x:String x:Key="SessionSwitchNotice">Switching sessions will restart the application to reload Steam with the new AppId.</x:String>
+
+    <!-- Setup Wizard -->
+    <x:String x:Key="SetupWizardTitle">Welcome to Workshop Manager</x:String>
+    <x:String x:Key="SetupWizardSubtitle">Configure your first Workshop session</x:String>
+    <x:String x:Key="SetupWizardInstructions">Enter the Steam AppId of the game whose Workshop you want to manage. You can find the AppId in the URL of the game's Steam store page.</x:String>
+    <x:String x:Key="AppIdLabel">Steam AppId</x:String>
+    <x:String x:Key="ValidateButton">Validate</x:String>
+    <x:String x:Key="Validating">Validating...</x:String>
+    <x:String x:Key="WorkshopFound">Workshop found</x:String>
+    <x:String x:Key="CreatingSession">Creating session...</x:String>
+    <x:String x:Key="CreateSessionButton">Create Session</x:String>
+    <x:String x:Key="SetupWizardHint">Example: 1162750 for Songs of Syx</x:String>
+    <x:String x:Key="AppIdRequired">Please enter an AppId</x:String>
+    <x:String x:Key="AppIdInvalid">Please enter a valid numeric AppId</x:String>
+    <x:String x:Key="InvalidAppId">This AppId does not exist</x:String>
+    <x:String x:Key="NoWorkshop">This game has no Workshop</x:String>
+    <x:String x:Key="NetworkError">Network error during validation</x:String>
+    <x:String x:Key="UnknownError">An unknown error occurred</x:String>
+
     <!-- Steam Error Codes -->
     <x:String x:Key="SteamOK">Operation completed successfully</x:String>
     <x:String x:Key="SteamFail">Generic failure</x:String>

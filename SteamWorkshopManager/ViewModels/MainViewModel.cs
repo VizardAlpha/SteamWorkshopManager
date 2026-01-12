@@ -22,6 +22,16 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isSteamConnected;
 
+    /// <summary>
+    /// The name of the currently active game/session for display in the header.
+    /// </summary>
+    public string ActiveGameName => AppConfig.CurrentSession?.GameName ?? "Workshop Manager";
+
+    /// <summary>
+    /// The window title including the active game name.
+    /// </summary>
+    public string WindowTitle => $"Steam Workshop Manager - {ActiveGameName}";
+
     [ObservableProperty]
     private string _statusMessage = "Connecting to Steam...";
 
@@ -239,11 +249,22 @@ public partial class MainViewModel : ViewModelBase
     {
         var settingsVm = new SettingsViewModel(_settingsService);
         settingsVm.CloseRequested += OnSettingsCloseRequested;
+        settingsVm.AddSessionRequested += OnAddSessionRequested;
         CurrentView = settingsVm;
     }
 
     private void OnSettingsCloseRequested()
     {
         CurrentView = ItemListViewModel;
+    }
+
+    /// <summary>
+    /// Event raised when user wants to add a new session.
+    /// </summary>
+    public event Action? OpenAddSessionWizard;
+
+    private void OnAddSessionRequested()
+    {
+        OpenAddSessionWizard?.Invoke();
     }
 }

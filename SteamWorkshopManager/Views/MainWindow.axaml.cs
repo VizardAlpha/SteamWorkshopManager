@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Media;
+using SteamWorkshopManager.Services;
 using SteamWorkshopManager.ViewModels;
 
 namespace SteamWorkshopManager.Views;
@@ -29,5 +30,27 @@ public partial class MainWindow : Window
                 }
             }
         };
+
+        viewModel.OpenAddSessionWizard += OnOpenAddSessionWizard;
+    }
+
+    private async void OnOpenAddSessionWizard()
+    {
+        var settingsService = new SettingsService();
+        var sessionRepository = new SessionRepository(settingsService);
+        var addSessionWindow = new AddSessionWindow(sessionRepository);
+
+        // When session is created, switch to it (which restarts the app)
+        addSessionWindow.SessionCreatedAndReady += async () =>
+        {
+            var session = await sessionRepository.GetActiveSessionAsync();
+            if (session != null)
+            {
+                var sessionManager = new SessionManager(sessionRepository);
+                await sessionManager.SwitchSessionAsync(session);
+            }
+        };
+
+        await addSessionWindow.ShowDialog(this);
     }
 }

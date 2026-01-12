@@ -22,6 +22,30 @@ public class SteamService : ISteamService
 
         try
         {
+            // Log the AppId we'll be using
+            Log.Info($"Initializing Steam for AppId: {AppConfig.AppId}");
+            Log.Debug($"Current session: {AppConfig.CurrentSession?.GameName ?? "none"}");
+
+            // Ensure environment variables are set for Steam API
+            // This is required when launching the .exe directly (not after session switch)
+            var appIdStr = AppConfig.AppId.ToString();
+            var envAppId = Environment.GetEnvironmentVariable("SteamAppId");
+            var envGameId = Environment.GetEnvironmentVariable("SteamGameId");
+
+            if (envAppId != appIdStr)
+            {
+                Environment.SetEnvironmentVariable("SteamAppId", appIdStr);
+                Log.Debug($"Set SteamAppId environment variable to {appIdStr}");
+            }
+            if (envGameId != appIdStr)
+            {
+                Environment.SetEnvironmentVariable("SteamGameId", appIdStr);
+                Log.Debug($"Set SteamGameId environment variable to {appIdStr}");
+            }
+
+            Log.Debug($"Environment SteamAppId: {Environment.GetEnvironmentVariable("SteamAppId") ?? "(not set)"}");
+            Log.Debug($"Environment SteamGameId: {Environment.GetEnvironmentVariable("SteamGameId") ?? "(not set)"}");
+
             var steamRunning = SteamAPI.IsSteamRunning();
             Log.Info($"Steam running: {steamRunning}");
 
@@ -33,6 +57,15 @@ public class SteamService : ISteamService
                 var loggedOn = SteamUser.BLoggedOn();
                 var userId = SteamUser.GetSteamID();
                 Log.Info($"User logged on: {loggedOn}, SteamID: {userId}");
+
+                // Log the AppId that Steam is using
+                var steamAppId = SteamUtils.GetAppID();
+                Log.Info($"Steam AppID from SteamUtils: {steamAppId}");
+
+                if (steamAppId.m_AppId != AppConfig.AppId)
+                {
+                    Log.Warning($"AppId mismatch! Expected: {AppConfig.AppId}, Steam reports: {steamAppId.m_AppId}");
+                }
             }
             else
             {
@@ -73,8 +106,8 @@ public class SteamService : ISteamService
             EUserUGCList.k_EUserUGCList_Published,
             EUGCMatchingUGCType.k_EUGCMatchingUGCType_Items,
             EUserUGCListSortOrder.k_EUserUGCListSortOrder_CreationOrderDesc,
-            new AppId_t(AppConstants.SongsOfSyxAppId),
-            new AppId_t(AppConstants.SongsOfSyxAppId),
+            new AppId_t(AppConfig.AppId),
+            new AppId_t(AppConfig.AppId),
             1
         );
 
@@ -187,7 +220,7 @@ public class SteamService : ISteamService
         });
 
         var createHandle = SteamUGC.CreateItem(
-            new AppId_t(AppConstants.SongsOfSyxAppId),
+            new AppId_t(AppConfig.AppId),
             EWorkshopFileType.k_EWorkshopFileTypeCommunity
         );
         createCallResult.Set(createHandle);
@@ -220,7 +253,7 @@ public class SteamService : ISteamService
 
         // Update with content
         var updateHandle = SteamUGC.StartItemUpdate(
-            new AppId_t(AppConstants.SongsOfSyxAppId),
+            new AppId_t(AppConfig.AppId),
             fileId
         );
 
@@ -310,7 +343,7 @@ public class SteamService : ISteamService
         progress?.Report(new UploadProgress(GetString("PreparingUpdate"), 0, 100));
 
         var updateHandle = SteamUGC.StartItemUpdate(
-            new AppId_t(AppConstants.SongsOfSyxAppId),
+            new AppId_t(AppConfig.AppId),
             fileId
         );
 

@@ -1,0 +1,122 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:SteamWorkshopManager.ViewModels"
+        x:Class="SteamWorkshopManager.Views.AddSessionWindow"
+        x:DataType="vm:AddSessionViewModel"
+        Title="{DynamicResource AddSession}"
+        Width="450"
+        Height="320"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False">
+
+    <Border Background="{DynamicResource SystemChromeLowColor}" Padding="24">
+        <Grid RowDefinitions="Auto,*,Auto">
+            <!-- Header -->
+            <StackPanel Grid.Row="0" Spacing="8" Margin="0,0,0,20">
+                <TextBlock Text="{DynamicResource AddNewSession}"
+                           FontSize="20"
+                           FontWeight="SemiBold"/>
+                <TextBlock Text="{DynamicResource AddSessionInstructions}"
+                           TextWrapping="Wrap"
+                           Foreground="{DynamicResource SystemBaseMediumColor}"
+                           FontSize="13"/>
+            </StackPanel>
+
+            <!-- Content -->
+            <StackPanel Grid.Row="1" Spacing="16">
+                <!-- AppId Input -->
+                <StackPanel Spacing="8">
+                    <TextBlock Text="{DynamicResource AppIdLabel}" FontWeight="SemiBold"/>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBox Grid.Column="0"
+                                 Text="{Binding AppIdInput, Mode=TwoWay}"
+                                 Watermark="480490"
+                                 IsEnabled="{Binding !IsValidating}"
+                                 Margin="0,0,8,0"/>
+                        <Button Grid.Column="1"
+                                Content="{DynamicResource ValidateButton}"
+                                Command="{Binding ValidateAppIdCommand}"
+                                IsEnabled="{Binding !IsValidating}"
+                                Width="100"/>
+                    </Grid>
+                </StackPanel>
+
+                <!-- Validating -->
+                <Border IsVisible="{Binding IsValidating}"
+                        Padding="12"
+                        Background="{DynamicResource SystemListLowColor}"
+                        CornerRadius="4">
+                    <StackPanel Spacing="8">
+                        <ProgressBar IsIndeterminate="True" Height="4"/>
+                        <TextBlock Text="{DynamicResource Validating}" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Success -->
+                <Border IsVisible="{Binding IsValid}"
+                        Padding="12"
+                        Background="#1a4caf50"
+                        BorderBrush="#4caf50"
+                        BorderThickness="1"
+                        CornerRadius="4">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <TextBlock Grid.Column="0" Text="✓" FontSize="20" Foreground="#4caf50"
+                                   VerticalAlignment="Center" Margin="0,0,12,0"/>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding GameName}" FontWeight="SemiBold" Foreground="#4caf50"/>
+                            <TextBlock Text="{DynamicResource WorkshopFound}" FontSize="12" Foreground="#4caf50" Opacity="0.8"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Error -->
+                <Border IsVisible="{Binding HasError}"
+                        Padding="12"
+                        Background="#1af44336"
+                        BorderBrush="#f44336"
+                        BorderThickness="1"
+                        CornerRadius="4">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <TextBlock Grid.Column="0" Text="✗" FontSize="20" Foreground="#f44336"
+                                   VerticalAlignment="Center" Margin="0,0,12,0"/>
+                        <TextBlock Grid.Column="1" Text="{Binding ErrorMessage}" Foreground="#f44336"
+                                   TextWrapping="Wrap" VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+            </StackPanel>
+
+            <!-- Footer -->
+            <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto" Margin="0,20,0,0">
+                <Button Grid.Column="1"
+                        Content="{DynamicResource Cancel}"
+                        Command="{Binding CancelCommand}"
+                        Margin="0,0,8,0"
+                        MinWidth="80"/>
+                <Button Grid.Column="2"
+                        Content="{DynamicResource AddSession}"
+                        Command="{Binding CreateSessionCommand}"
+                        IsEnabled="{Binding IsValid}"
+                        Classes="accent"
+                        MinWidth="120">
+                    <Button.Styles>
+                        <Style Selector="Button.accent">
+                            <Setter Property="Background" Value="{DynamicResource SystemAccentColor}"/>
+                            <Setter Property="Foreground" Value="White"/>
+                        </Style>
+                    </Button.Styles>
+                </Button>
+            </Grid>
+
+            <!-- Creating overlay -->
+            <Border Grid.Row="0" Grid.RowSpan="3"
+                    IsVisible="{Binding IsCreating}"
+                    Background="#80000000"
+                    Margin="-24">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="16" Width="200">
+                    <ProgressBar IsIndeterminate="True" Height="6"/>
+                    <TextBlock Text="{DynamicResource CreatingSession}" Foreground="White" FontSize="16" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

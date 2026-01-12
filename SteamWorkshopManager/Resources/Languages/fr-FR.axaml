@@ -190,4 +190,30 @@
     <sys:String x:Key="SteamAccountLockedDown">Le compte est verrouillé</sys:String>
     <sys:String x:Key="SteamRateLimitExceeded">Limite de requêtes dépassée, réessayez plus tard</sys:String>
     <sys:String x:Key="SteamUnknownError">Erreur Steam inconnue</sys:String>
+
+    <!-- Sessions -->
+    <sys:String x:Key="Sessions">Sessions</sys:String>
+    <sys:String x:Key="AddSession">Ajouter</sys:String>
+    <sys:String x:Key="AddNewSession">Ajouter une session</sys:String>
+    <sys:String x:Key="AddSessionInstructions">Entrez l'AppId Steam du jeu dont vous souhaitez gérer le Workshop.</sys:String>
+    <sys:String x:Key="Active">Actif</sys:String>
+    <sys:String x:Key="SessionSwitchNotice">Changer de session redémarrera l'application pour recharger Steam avec le nouvel AppId.</sys:String>
+
+    <!-- Setup Wizard -->
+    <sys:String x:Key="SetupWizardTitle">Bienvenue dans Workshop Manager</sys:String>
+    <sys:String x:Key="SetupWizardSubtitle">Configurez votre première session Workshop</sys:String>
+    <sys:String x:Key="SetupWizardInstructions">Entrez l'AppId Steam du jeu dont vous souhaitez gérer le Workshop. Vous pouvez trouver l'AppId dans l'URL de la page Steam du jeu.</sys:String>
+    <sys:String x:Key="AppIdLabel">AppId Steam</sys:String>
+    <sys:String x:Key="ValidateButton">Valider</sys:String>
+    <sys:String x:Key="Validating">Validation...</sys:String>
+    <sys:String x:Key="WorkshopFound">Workshop trouvé</sys:String>
+    <sys:String x:Key="CreatingSession">Création de la session...</sys:String>
+    <sys:String x:Key="CreateSessionButton">Créer la session</sys:String>
+    <sys:String x:Key="SetupWizardHint">Exemple : 1162750 pour Songs of Syx</sys:String>
+    <sys:String x:Key="AppIdRequired">Veuillez entrer un AppId</sys:String>
+    <sys:String x:Key="AppIdInvalid">Veuillez entrer un AppId numérique valide</sys:String>
+    <sys:String x:Key="InvalidAppId">Cet AppId n'existe pas</sys:String>
+    <sys:String x:Key="NoWorkshop">Ce jeu n'a pas de Workshop</sys:String>
+    <sys:String x:Key="NetworkError">Erreur réseau lors de la validation</sys:String>
+    <sys:String x:Key="UnknownError">Une erreur inconnue s'est produite</sys:String>
 </ResourceDictionary>

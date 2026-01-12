@@ -79,8 +79,9 @@ public partial class CreateItemViewModel : ViewModelBase
         _notificationService = notificationService;
         _uploadProgress = uploadProgress;
 
-        // Load tags by category
-        foreach (var (category, tags) in WorkshopTags.TagsByCategory)
+        // Load tags by category from current session
+        var sessionTags = AppConfig.CurrentSession?.TagsByCategory ?? new Dictionary<string, List<string>>();
+        foreach (var (category, tags) in sessionTags)
         {
             var tagCategory = new TagCategory { Name = category };
             foreach (var tag in tags)
@@ -90,8 +91,9 @@ public partial class CreateItemViewModel : ViewModelBase
             TagCategories.Add(tagCategory);
         }
 
-        // Load custom tags from settings
-        foreach (var customTag in settingsService.GetCustomTags())
+        // Load custom tags from current session
+        var sessionCustomTags = AppConfig.CurrentSession?.CustomTags ?? [];
+        foreach (var customTag in sessionCustomTags)
         {
             CustomTags.Add(new WorkshopTag(customTag, false));
         }
@@ -244,8 +246,8 @@ public partial class CreateItemViewModel : ViewModelBase
             return;
         }
 
-        // Add to settings and list
-        _settingsService.AddCustomTag(tagName);
+        // Add to session and list
+        AddCustomTagToSession(tagName);
         CustomTags.Add(new WorkshopTag(tagName, true));
         NewCustomTag = string.Empty;
     }
@@ -255,8 +257,56 @@ public partial class CreateItemViewModel : ViewModelBase
     {
         if (tag == null) return;
 
-        _settingsService.RemoveCustomTag(tag.Name);
+        RemoveCustomTagFromSession(tag.Name);
         CustomTags.Remove(tag);
+    }
+
+    /// <summary>
+    /// Adds a custom tag to the current session and saves it.
+    /// </summary>
+    private static void AddCustomTagToSession(string tagName)
+    {
+        var session = AppConfig.CurrentSession;
+        if (session == null) return;
+
+        if (!session.CustomTags.Contains(tagName, StringComparer.OrdinalIgnoreCase))
+        {
+            session.CustomTags.Add(tagName);
+            SaveSessionAsync(session);
+        }
+    }
+
+    /// <summary>
+    /// Removes a custom tag from the current session and saves it.
+    /// </summary>
+    private static void RemoveCustomTagFromSession(string tagName)
+    {
+        var session = AppConfig.CurrentSession;
+        if (session == null) return;
+
+        var index = session.CustomTags.FindIndex(t => t.Equals(tagName, StringComparison.OrdinalIgnoreCase));
+        if (index >= 0)
+        {
+            session.CustomTags.RemoveAt(index);
+            SaveSessionAsync(session);
+        }
+    }
+
+    /// <summary>
+    /// Saves the session asynchronously (fire and forget).
+    /// </summary>
+    private static async void SaveSessionAsync(Models.WorkshopSession session)
+    {
+        try
+        {
+            var settingsService = new SettingsService();
+            var sessionRepository = new SessionRepository(settingsService);
+            await sessionRepository.SaveSessionAsync(session);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ERROR] Failed to save session: {ex.Message}");
+        }
     }
 
     /// <summary>
