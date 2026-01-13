@@ -31,15 +31,7 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Publish
-        run: |
-          dotnet publish SteamWorkshopManager/SteamWorkshopManager.csproj \
-            -c Release \
-            -r ${{ matrix.rid }} \
-            --self-contained false \
-            /p:DebugType=None \
-            /p:DebugSymbols=false \
-            -o dist
-        shell: bash
+        run: dotnet publish SteamWorkshopManager/SteamWorkshopManager.csproj -c Release -r ${{ matrix.rid }} --self-contained false -p:DebugType=None -p:DebugSymbols=false -o dist
 
       - name: Create archive (Windows)
         if: matrix.os == 'windows-latest'
