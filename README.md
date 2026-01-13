@@ -17,7 +17,7 @@ Features:
 # Requirements
 
 - Steam must be running
-- .NET 10 Runtime (framework-dependent builds)
+- [.NET 10 Runtime (framework-dependent builds)](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)
 
 # Releases
 
