@@ -44,4 +44,4 @@ dotnet publish SteamWorkshopManager/SteamWorkshopManager.csproj -c Release -r wi
 
 Available languages: English, French
 
-To add a new language, create a new resource file in `Resources/` following the existing pattern.
+To add a new language, create a new resource file in [`Resources/`](https://github.com/VizardAlpha/SteamWorkshopManager/tree/master/SteamWorkshopManager/Resources/Languages) following the existing pattern.
