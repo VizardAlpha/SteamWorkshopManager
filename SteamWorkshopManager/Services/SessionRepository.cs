@@ -6,6 +6,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using SteamWorkshopManager.Models;
+using SteamWorkshopManager.Services.Interfaces;
+using SteamWorkshopManager.Services.Log;
 
 namespace SteamWorkshopManager.Services;
 

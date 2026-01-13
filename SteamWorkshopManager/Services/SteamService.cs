@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using SteamWorkshopManager.Models;
 using Steamworks;
-
+using SteamWorkshopManager.Services.Interfaces;
+using SteamWorkshopManager.Services.Log;
 using static SteamWorkshopManager.Services.LocalizationService;
 
 namespace SteamWorkshopManager.Services;
@@ -55,8 +56,7 @@ public class SteamService : ISteamService
             if (_isInitialized)
             {
                 var loggedOn = SteamUser.BLoggedOn();
-                var userId = SteamUser.GetSteamID();
-                Log.Info($"User logged on: {loggedOn}, SteamID: {userId}");
+                Log.Info($"User logged on: {loggedOn}");
 
                 // Log the AppId that Steam is using
                 var steamAppId = SteamUtils.GetAppID();
@@ -469,9 +469,7 @@ public class SteamService : ISteamService
         Log.Error($"User message: {SteamErrorMapper.GetErrorMessage(result.m_eResult)}");
         return false;
     }
-
-    public List<string> GetAvailableTags() => WorkshopTags.GetAllTags();
-
+    
     private static VisibilityType MapVisibility(ERemoteStoragePublishedFileVisibility visibility) =>
         visibility switch
         {

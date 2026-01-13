@@ -12,3 +12,36 @@ Features:
 - Auto-fetched tags: Workshop tags are automatically retrieved for each game
 - Custom tags: Add your own tags per game
 - Multi-language: English and French supported
+
+
+# Requirements
+
+- Steam must be running
+- .NET 10 Runtime (framework-dependent builds)
+
+# Releases
+
+Download the latest release for your platform from the [Releases](https://github.com/VizardAlpha/SteamWorkshopManager/releases) page:
+- **Windows**: `SteamWorkshopManager-windows.zip`
+- **macOS**: `SteamWorkshopManager-macos.zip`
+- **Linux**: `SteamWorkshopManager-linux.zip`
+
+# Build from source
+
+```bash
+# Clone
+git clone https://github.com/VizardAlpha/SteamWorkshopManager.git
+cd SteamWorkshopManager
+
+# Run
+dotnet run --project SteamWorkshopManager
+
+# Publish (example for Windows)
+dotnet publish SteamWorkshopManager/SteamWorkshopManager.csproj -c Release -r win-x64 --self-contained false -o .dist/windows
+```
+
+# Localization
+
+Available languages: English, French
+
+To add a new language, create a new resource file in `Resources/` following the existing pattern.

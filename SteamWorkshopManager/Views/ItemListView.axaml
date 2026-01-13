@@ -53,15 +53,19 @@
             </Border>
 
             <!-- Empty state -->
-            <StackPanel IsVisible="{Binding !IsLoading}"
-                        VerticalAlignment="Center" HorizontalAlignment="Center"
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
                         Spacing="16">
                 <StackPanel.IsVisible>
                     <MultiBinding Converter="{x:Static BoolConverters.And}">
                         <Binding Path="!IsLoading"/>
-                        <Binding Path="Items.Count" Converter="{x:Static ObjectConverters.IsNull}"/>
+                        <Binding Path="HasNoItems"/>
                     </MultiBinding>
                 </StackPanel.IsVisible>
+                <TextBlock Text="📦" FontSize="48" HorizontalAlignment="Center" Opacity="0.5"/>
+                <TextBlock Text="{DynamicResource NoPublications}"
+                           FontSize="16"
+                           Foreground="#8899a6"
+                           HorizontalAlignment="Center"/>
             </StackPanel>
 
             <!-- Items grid -->

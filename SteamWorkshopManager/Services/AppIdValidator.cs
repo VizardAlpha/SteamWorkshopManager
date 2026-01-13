@@ -2,6 +2,8 @@ using System;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using SteamWorkshopManager.Services.Interfaces;
+using SteamWorkshopManager.Services.Log;
 
 namespace SteamWorkshopManager.Services;
 

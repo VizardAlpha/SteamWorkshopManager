@@ -18,6 +18,7 @@
     <x:String x:Key="Refresh">Refresh</x:String>
     <x:String x:Key="LoadingPublications">Loading your publications...</x:String>
     <x:String x:Key="NoImage">No image</x:String>
+    <x:String x:Key="NoPublications">No publications yet</x:String>
     <x:String x:Key="LoadingError">Loading error</x:String>
 
     <!-- Item Editor -->

@@ -2,6 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:SteamWorkshopManager.ViewModels"
         xmlns:services="using:SteamWorkshopManager.Services"
+        xmlns:local="using:SteamWorkshopManager"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="600"
@@ -76,7 +77,7 @@
                                    VerticalAlignment="Center"/>
                     </StackPanel>
                     <TextBlock Grid.Column="2"
-                               Text="v1.0.0"
+                               Text="{x:Static local:AppInfo.VersionWithPrefix}"
                                FontSize="11"
                                Foreground="#556677"/>
                 </Grid>

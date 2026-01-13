@@ -6,7 +6,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using AngleSharp;
-using AngleSharp.Dom;
+using SteamWorkshopManager.Services.Interfaces;
+using SteamWorkshopManager.Services.Log;
 
 namespace SteamWorkshopManager.Services;
 

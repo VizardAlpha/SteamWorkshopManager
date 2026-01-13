@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using SteamWorkshopManager.Models;
 using Steamworks;
 
-namespace SteamWorkshopManager.Services;
+namespace SteamWorkshopManager.Services.Interfaces;
 
 public interface ISteamService
 {
@@ -22,8 +22,7 @@ public interface ISteamService
         string? contentFolderPath, string? previewImagePath, VisibilityType? visibility,
         List<string>? tags, string? changelog, IProgress<UploadProgress>? progress = null);
     Task<bool> DeleteItemAsync(PublishedFileId_t fileId);
-
-    List<string> GetAvailableTags();
+    
 }
 
 public record UploadProgress(string Status, ulong BytesProcessed, ulong BytesTotal)

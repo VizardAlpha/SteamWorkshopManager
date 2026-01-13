@@ -1,6 +1,7 @@
 using System;
 using Avalonia.Controls;
 using SteamWorkshopManager.Services;
+using SteamWorkshopManager.Services.Interfaces;
 using SteamWorkshopManager.ViewModels;
 
 namespace SteamWorkshopManager.Views;

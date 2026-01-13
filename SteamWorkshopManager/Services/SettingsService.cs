@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using SteamWorkshopManager.Services.Interfaces;
 
 namespace SteamWorkshopManager.Services;
 

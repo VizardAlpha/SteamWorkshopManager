@@ -1,6 +1,6 @@
 using System;
 
-namespace SteamWorkshopManager.Services;
+namespace SteamWorkshopManager.Services.Interfaces;
 
 public interface INotificationService
 {

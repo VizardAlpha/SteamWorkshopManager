@@ -19,7 +19,7 @@ public static class SteamErrorMapper
     /// <summary>
     /// Gets the localization key for a Steam EResult code.
     /// </summary>
-    public static string GetErrorKey(EResult result)
+    private static string GetErrorKey(EResult result)
     {
         return result switch
         {

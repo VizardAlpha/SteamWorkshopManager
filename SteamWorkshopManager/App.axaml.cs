@@ -9,6 +9,8 @@ using SteamWorkshopManager.Services;
 using SteamWorkshopManager.Views;
 using System.Linq;
 using System.Threading.Tasks;
+using SteamWorkshopManager.Services.Interfaces;
+using SteamWorkshopManager.Services.Log;
 
 namespace SteamWorkshopManager;
 

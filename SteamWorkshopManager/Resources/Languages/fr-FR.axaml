@@ -19,6 +19,7 @@
     <sys:String x:Key="Refresh">Actualiser</sys:String>
     <sys:String x:Key="LoadingPublications">Chargement de vos publications...</sys:String>
     <sys:String x:Key="NoImage">Pas d'image</sys:String>
+    <sys:String x:Key="NoPublications">Aucune publication</sys:String>
     <sys:String x:Key="LoadingError">Erreur de chargement</sys:String>
 
     <!-- Item Editor -->

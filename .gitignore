@@ -20,4 +20,5 @@ riderModule.iml
 # Editor-based HTTP Client requests
 /httpRequests/
 
+dist
 .idea

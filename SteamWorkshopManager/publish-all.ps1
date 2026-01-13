@@ -1,25 +1,46 @@
-﻿# Restore
-dotnet restore
+﻿$Project = "./SteamWorkshopManager/SteamWorkshopManager.csproj"
+$Config  = "Release"
 
-# Clean
-dotnet clean -c Release
+Write-Host "🔄 Restore..." -ForegroundColor Cyan
+dotnet restore $Project
 
-# Publish Windows
-dotnet publish ./SteamWorkshopManager/SteamWorkshopManager.csproj -c Release -r win-x64 -o ./SteamWorkshopManager/bin/Publish/win
-Remove-Item ./SteamWorkshopManager/bin/Publish/win/libsteam_api.dylib -ErrorAction SilentlyContinue
-Remove-Item ./SteamWorkshopManager/bin/Publish/win/libsteam_api.so -ErrorAction SilentlyContinue
-Remove-Item ./SteamWorkshopManager/bin/Publish/win/*.pdb -ErrorAction SilentlyContinue
+Write-Host "🧹 Clean..." -ForegroundColor Cyan
+dotnet clean $Project -c $Config
 
-# Publish Mac
-dotnet publish ./SteamWorkshopManager/SteamWorkshopManager.csproj -c Release -r osx-x64 -o ./SteamWorkshopManager/bin/Publish/mac
-Remove-Item ./SteamWorkshopManager/bin/Publish/mac/steam_api64.dll -ErrorAction SilentlyContinue
-Remove-Item ./SteamWorkshopManager/bin/Publish/mac/libsteam_api.so -ErrorAction SilentlyContinue
-Remove-Item ./SteamWorkshopManager/bin/Publish/mac/*.pdb -ErrorAction SilentlyContinue
+# =====================
+# Windows
+# =====================
+Write-Host "🪟 Publish Windows..." -ForegroundColor Cyan
+dotnet publish $Project `
+  -c $Config `
+  -r win-x64 `
+  --self-contained false `
+  /p:DebugType=None `
+  /p:DebugSymbols=false `
+  -o ./dist/windows
 
-# Publish Linux
-dotnet publish ./SteamWorkshopManager/SteamWorkshopManager.csproj -c Release -r linux-x64 -o ./SteamWorkshopManager/bin/Publish/linux
-Remove-Item ./SteamWorkshopManager/bin/Publish/linux/steam_api64.dll -ErrorAction SilentlyContinue
-Remove-Item ./SteamWorkshopManager/bin/Publish/linux/libsteam_api.dylib -ErrorAction SilentlyContinue
-Remove-Item ./SteamWorkshopManager/bin/Publish/linux/*.pdb -ErrorAction SilentlyContinue
+# =====================
+# macOS
+# =====================
+Write-Host "🍎 Publish macOS..." -ForegroundColor Cyan
+dotnet publish $Project `
+  -c $Config `
+  -r osx-x64 `
+  --self-contained false `
+  /p:DebugType=None `
+  /p:DebugSymbols=false `
+  -o ./dist/macos
+
+# =====================
+# Linux
+# =====================
+Write-Host "🐧 Publish Linux..." -ForegroundColor Cyan
+dotnet publish $Project `
+  -c $Config `
+  -r linux-x64 `
+  --self-contained false `
+  /p:DebugType=None `
+  /p:DebugSymbols=false `
+  -o ./dist/linux
 
 Write-Host "✅ Publish terminé !" -ForegroundColor Green

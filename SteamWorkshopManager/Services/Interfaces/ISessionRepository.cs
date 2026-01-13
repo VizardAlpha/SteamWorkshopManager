@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using SteamWorkshopManager.Models;
 
-namespace SteamWorkshopManager.Services;
+namespace SteamWorkshopManager.Services.Interfaces;
 
 /// <summary>
 /// Repository for managing workshop sessions.

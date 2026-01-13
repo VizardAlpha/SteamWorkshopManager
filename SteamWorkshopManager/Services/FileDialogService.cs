@@ -4,6 +4,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
+using SteamWorkshopManager.Services.Interfaces;
 
 namespace SteamWorkshopManager.Services;
 

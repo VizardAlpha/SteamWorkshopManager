@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace SteamWorkshopManager.Services;
+namespace SteamWorkshopManager.Services.Interfaces;
 
 public interface ISettingsService
 {

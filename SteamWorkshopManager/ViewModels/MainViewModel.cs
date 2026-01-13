@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SteamWorkshopManager.Models;
 using SteamWorkshopManager.Services;
+using SteamWorkshopManager.Services.Interfaces;
 
 namespace SteamWorkshopManager.ViewModels;
 

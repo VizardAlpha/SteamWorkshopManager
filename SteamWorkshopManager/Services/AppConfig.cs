@@ -1,4 +1,6 @@
 using SteamWorkshopManager.Models;
+using SteamWorkshopManager.Services.Interfaces;
+using SteamWorkshopManager.Services.Log;
 
 namespace SteamWorkshopManager.Services;
 

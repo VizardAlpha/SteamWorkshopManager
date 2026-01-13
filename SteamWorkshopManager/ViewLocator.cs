@@ -12,7 +12,7 @@ public class ViewLocator : IDataTemplate
         if (param is null)
             return null;
 
-        // Map ViewModels to Views explicitly for AOT compatibility
+        // Map ViewModels
         return param switch
         {
             ItemListViewModel => new ItemListView(),

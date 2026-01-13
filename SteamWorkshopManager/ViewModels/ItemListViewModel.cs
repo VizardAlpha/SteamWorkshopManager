@@ -7,6 +7,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SteamWorkshopManager.Models;
 using SteamWorkshopManager.Services;
+using SteamWorkshopManager.Services.Interfaces;
+using SteamWorkshopManager.Services.Log;
 
 namespace SteamWorkshopManager.ViewModels;
 
@@ -21,6 +23,9 @@ public partial class ItemListViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _isLoading;
+
+    [ObservableProperty]
+    private bool _hasNoItems = true;
 
     public ObservableCollection<WorkshopItem> Items { get; } = [];
 
@@ -61,6 +66,7 @@ public partial class ItemListViewModel : ViewModelBase
         finally
         {
             IsLoading = false;
+            HasNoItems = Items.Count == 0;
         }
     }
 

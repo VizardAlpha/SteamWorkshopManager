@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:SteamWorkshopManager.ViewModels"
              xmlns:models="using:SteamWorkshopManager.Models"
+             xmlns:local="using:SteamWorkshopManager"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="400"
              x:Class="SteamWorkshopManager.Views.SettingsView"
              x:DataType="vm:SettingsViewModel">
@@ -256,7 +257,7 @@
                     <StackPanel Spacing="8">
                         <TextBlock Text="Steam Workshop Manager"
                                    FontSize="16" FontWeight="SemiBold" Foreground="White"/>
-                        <TextBlock Text="Version 1.0.0"
+                        <TextBlock Text="{Binding Source={x:Static local:AppInfo.Version}, StringFormat='Version {0}'}"
                                    FontSize="12" Foreground="#8899a6"/>
                         <TextBlock FontSize="12" Foreground="#556677">
                             <Run Text="{Binding ActiveSession.GameName, FallbackValue='No session'}"/>
