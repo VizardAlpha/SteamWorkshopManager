@@ -39,7 +39,7 @@
                     CornerRadius="3"
                     Cursor="Hand"
                     Focusable="False"
-                    ToolTip.Tip="Expand"
+                    ToolTip.Tip="{DynamicResource Expand}"
                     Content="⤢"/>
         </Grid>
 

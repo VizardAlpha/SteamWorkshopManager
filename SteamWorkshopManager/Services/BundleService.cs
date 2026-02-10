@@ -29,7 +29,6 @@ public static class BundleService
         foreach (var lang in EmbeddedLanguages)
         {
             var targetPath = Path.Combine(BundlePath, $"{lang}.axaml");
-            if (File.Exists(targetPath)) continue;
 
             try
             {
@@ -40,13 +39,53 @@ public static class BundleService
                     continue;
                 }
 
-                using var fileStream = File.Create(targetPath);
-                stream.CopyTo(fileStream);
+                if (!File.Exists(targetPath))
+                {
+                    using var fileStream = File.Create(targetPath);
+                    stream.CopyTo(fileStream);
+                }
+                else
+                {
+                    // Merge new keys from embedded resource into existing file
+                    MergeNewKeys(stream, targetPath);
+                }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"[ERROR] Failed to extract {lang}.axaml: {ex.Message}");
             }
+        }
+    }
+
+    /// <summary>
+    /// Adds any keys present in the embedded resource but missing from the existing bundle file.
+    /// </summary>
+    private static void MergeNewKeys(Stream embeddedStream, string targetPath)
+    {
+        var embeddedDoc = XDocument.Load(embeddedStream);
+        var targetDoc = XDocument.Load(targetPath);
+
+        if (embeddedDoc.Root is null || targetDoc.Root is null) return;
+
+        var existingKeys = new HashSet<string>(
+            targetDoc.Root.Elements()
+                .Select(e => e.Attribute(XNs + "Key")?.Value)
+                .Where(k => k is not null)!);
+
+        var added = 0;
+        foreach (var element in embeddedDoc.Root.Elements())
+        {
+            var key = element.Attribute(XNs + "Key")?.Value;
+            if (key is null || existingKeys.Contains(key)) continue;
+
+            targetDoc.Root.Add(element);
+            added++;
+        }
+
+        if (added > 0)
+        {
+            targetDoc.Save(targetPath);
+            Console.WriteLine($"[INFO] Merged {added} new keys into {Path.GetFileName(targetPath)}");
         }
     }
 

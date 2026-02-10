@@ -95,6 +95,9 @@ public partial class MainViewModel : ViewModelBase
         LocalizationService.Instance.Initialize();
         LocalizationService.Instance.LanguageChanged += OnLanguageChanged;
 
+        // Initialize Steam auth service with stored tokens
+        SteamAuthService.Initialize(_settingsService);
+
         // Configure progress reporter
         UploadProgressReporter = new Progress<UploadProgress>(p =>
         {

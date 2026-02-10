@@ -225,8 +225,27 @@
     <!-- BBCode Editor -->
     <x:String x:Key="BbCodeMode">BBCode</x:String>
     <x:String x:Key="PlainTextMode">Texte brut</x:String>
+    <x:String x:Key="Expand">Agrandir</x:String>
 
     <!-- Update Checker -->
     <x:String x:Key="UpdateAvailable">Une nouvelle version est disponible :</x:String>
     <x:String x:Key="Download">Télécharger</x:String>
+
+    <!-- Changelog History -->
+    <x:String x:Key="History">Historique</x:String>
+    <x:String x:Key="OpenInBrowser">Ouvrir dans le navigateur</x:String>
+    <x:String x:Key="Downloading">Téléchargement...</x:String>
+    <x:String x:Key="DownloadVersion">Télécharger cette version</x:String>
+    <x:String x:Key="OpenFolder">Ouvrir le dossier</x:String>
+    <x:String x:Key="DownloadComplete">Téléchargement terminé !</x:String>
+    <x:String x:Key="DownloadFailed">Échec du téléchargement</x:String>
+    <x:String x:Key="AlreadyDownloaded">Déjà téléchargé</x:String>
+    <x:String x:Key="NoChangelogs">Aucun changelog trouvé</x:String>
+
+    <!-- Steam QR Auth -->
+    <x:String x:Key="SteamAuthRequired">Connectez-vous à Steam pour consulter les changelogs et télécharger les versions précédentes.</x:String>
+    <x:String x:Key="SteamAuthButton">Se connecter via QR Code</x:String>
+    <x:String x:Key="SteamAuthScanQR">Scannez ce QR code avec l'application Steam Mobile</x:String>
+    <x:String x:Key="SteamAuthCancel">Annuler</x:String>
+    <x:String x:Key="SteamAuthSuccess">Connexion Steam réussie !</x:String>
 </ResourceDictionary>

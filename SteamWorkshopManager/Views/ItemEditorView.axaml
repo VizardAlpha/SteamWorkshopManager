@@ -277,6 +277,164 @@
                     </ItemsControl>
                 </StackPanel>
             </TabItem>
+
+            <!-- Tab: History -->
+            <TabItem Header="{DynamicResource History}">
+                <DockPanel Margin="0,20">
+                    <!-- Header with action buttons -->
+                    <StackPanel DockPanel.Dock="Top" Spacing="12">
+                        <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+                            <Button Command="{Binding LoadChangelogHistoryCommand}"
+                                    Classes="secondary"
+                                    Content="{DynamicResource Refresh}"/>
+                            <Button Grid.Column="1" Command="{Binding OpenChangelogInBrowserCommand}"
+                                    Classes="secondary"
+                                    Content="{DynamicResource OpenInBrowser}"
+                                    Margin="8,0,0,0"/>
+                            <ProgressBar Grid.Column="3"
+                                         IsIndeterminate="True"
+                                         IsVisible="{Binding IsLoadingChangelogs}"
+                                         Width="120"
+                                         VerticalAlignment="Center"/>
+                        </Grid>
+
+                        <!-- Download progress bar -->
+                        <Border IsVisible="{Binding IsDownloading}"
+                                Background="#2a3a4a" Padding="12" CornerRadius="6">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="{DynamicResource Downloading}" Foreground="#8899a6" FontSize="12"/>
+                                <ProgressBar Value="{Binding DownloadProgress}"
+                                             Minimum="0" Maximum="1"
+                                             Height="6"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Steam auth banner -->
+                        <Border IsVisible="{Binding NeedsSteamAuth}"
+                                Background="#2a3a4a" Padding="16" CornerRadius="8"
+                                BorderBrush="{StaticResource SteamLightBlueBrush}" BorderThickness="1">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{DynamicResource SteamAuthRequired}"
+                                               Foreground="White" FontWeight="SemiBold" FontSize="13"/>
+                                </StackPanel>
+                                <Button Grid.Column="1"
+                                        Command="{Binding AuthenticateWithSteamCommand}"
+                                        Classes="accent"
+                                        Content="{DynamicResource SteamAuthButton}"
+                                        FontSize="12"
+                                        IsVisible="{Binding !IsAuthenticating}"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- QR code overlay -->
+                        <Border IsVisible="{Binding IsAuthenticating}"
+                                Background="#1e2328" Padding="24" CornerRadius="8"
+                                BorderBrush="{StaticResource SteamLightBlueBrush}" BorderThickness="1">
+                            <StackPanel HorizontalAlignment="Center" Spacing="16">
+                                <TextBlock Text="{DynamicResource SteamAuthScanQR}"
+                                           Foreground="White" FontSize="14" FontWeight="SemiBold"
+                                           HorizontalAlignment="Center"/>
+                                <Border Background="White" Padding="8" CornerRadius="8"
+                                        HorizontalAlignment="Center"
+                                        IsVisible="{Binding QrCodeImage, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                    <Image Source="{Binding QrCodeImage}"
+                                           Width="200" Height="200"
+                                           RenderOptions.BitmapInterpolationMode="None"/>
+                                </Border>
+                                <ProgressBar IsIndeterminate="True" Width="120" HorizontalAlignment="Center"
+                                             IsVisible="{Binding QrCodeImage, Converter={x:Static ObjectConverters.IsNull}}"/>
+                                <Button Command="{Binding CancelAuthCommand}"
+                                        Classes="secondary"
+                                        Content="{DynamicResource SteamAuthCancel}"
+                                        HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Empty state -->
+                    <TextBlock DockPanel.Dock="Top"
+                               Text="{DynamicResource NoChangelogs}"
+                               Foreground="#556677"
+                               FontSize="14"
+                               HorizontalAlignment="Center"
+                               Margin="0,40"
+                               IsVisible="{Binding !ChangeLogHistory.Count}"/>
+
+                    <!-- Changelog entries -->
+                    <ScrollViewer>
+                        <ItemsControl ItemsSource="{Binding ChangeLogHistory}" Margin="0,12,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="models:ChangeLogEntry">
+                                    <Border Classes="card" Margin="0,0,0,8" Padding="16">
+                                        <StackPanel Spacing="8">
+                                            <!-- Date + Manifest row -->
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <StackPanel Orientation="Horizontal" Spacing="12">
+                                                    <TextBlock Text="{Binding Date, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}"
+                                                               FontWeight="SemiBold" Foreground="White" FontSize="14"/>
+                                                    <TextBlock Text="{Binding ManifestId}"
+                                                               Foreground="#556677" FontSize="11"
+                                                               VerticalAlignment="Center"
+                                                               TextTrimming="CharacterEllipsis"
+                                                               MaxWidth="200"/>
+                                                </StackPanel>
+                                                <!-- Already downloaded badge -->
+                                                <Border Grid.Column="1"
+                                                        Background="#1a3a2a" Padding="8,4" CornerRadius="4"
+                                                        BorderBrush="#2a6a3a" BorderThickness="1"
+                                                        IsVisible="{Binding IsDownloaded}">
+                                                    <TextBlock Text="{DynamicResource AlreadyDownloaded}"
+                                                               Foreground="#66bb6a" FontSize="11"/>
+                                                </Border>
+                                            </Grid>
+
+                                            <!-- Branch info (optional) -->
+                                            <StackPanel Orientation="Horizontal" Spacing="8"
+                                                        IsVisible="{Binding HasBranches}">
+                                                <TextBlock Text="Branch:" Foreground="#556677" FontSize="11"/>
+                                                <TextBlock Text="{Binding SnapshotGameBranchMin}" Foreground="#8899a6" FontSize="11"/>
+                                                <TextBlock Text="-" Foreground="#556677" FontSize="11"/>
+                                                <TextBlock Text="{Binding SnapshotGameBranchMax}" Foreground="#8899a6" FontSize="11"/>
+                                            </StackPanel>
+
+                                            <!-- Description text -->
+                                            <TextBox Text="{Binding ChangeDescription, Mode=OneWay}"
+                                                     IsReadOnly="True"
+                                                     TextWrapping="Wrap"
+                                                     MaxHeight="200"
+                                                     Background="#1e2328"
+                                                     Foreground="#c7d5e0"
+                                                     FontSize="12"
+                                                     Padding="8"
+                                                     CornerRadius="4"/>
+
+                                            <!-- Action buttons -->
+                                            <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
+                                                <Button Command="{Binding $parent[UserControl].((vm:ItemEditorViewModel)DataContext).DownloadVersionCommand}"
+                                                        CommandParameter="{Binding}"
+                                                        Classes="accent"
+                                                        Content="{DynamicResource DownloadVersion}"
+                                                        FontSize="12"
+                                                        Padding="12,6"
+                                                        IsVisible="{Binding !IsDownloaded}"
+                                                        IsEnabled="{Binding HasManifestId}"/>
+                                                <Button Command="{Binding $parent[UserControl].((vm:ItemEditorViewModel)DataContext).OpenVersionFolderCommand}"
+                                                        CommandParameter="{Binding}"
+                                                        Classes="secondary"
+                                                        Content="{DynamicResource OpenFolder}"
+                                                        FontSize="12"
+                                                        Padding="12,6"
+                                                        IsVisible="{Binding IsDownloaded}"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </DockPanel>
+            </TabItem>
         </TabControl>
 
         <!-- Error message -->

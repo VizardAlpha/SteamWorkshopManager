@@ -1,13 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using QRCoder;
 using SteamWorkshopManager.Models;
 using SteamWorkshopManager.Services;
 using SteamWorkshopManager.Services.Interfaces;
@@ -28,6 +31,9 @@ public partial class ItemEditorViewModel : ViewModelBase
     private readonly string? _initialPreviewImagePath;
     private readonly long _initialImageSize;
     private readonly DateTime _initialImageModified;
+    private readonly ChangelogScraperService _changelogScraper;
+    private readonly WorkshopDownloadService _workshopDownloader;
+    private bool _changelogHistoryLoaded;
     private static readonly HttpClient HttpClient = new();
     private const long MaxImageSizeBytes = 1024 * 1024; // 1 MB Steam limit
 
@@ -78,9 +84,30 @@ public partial class ItemEditorViewModel : ViewModelBase
     [ObservableProperty]
     private string _newCustomTag = string.Empty;
 
+    [ObservableProperty]
+    private bool _isLoadingChangelogs;
+
+    [ObservableProperty]
+    private bool _isDownloading;
+
+    [ObservableProperty]
+    private double _downloadProgress;
+
+    [ObservableProperty]
+    private bool _needsSteamAuth;
+
+    [ObservableProperty]
+    private bool _isAuthenticating;
+
+    [ObservableProperty]
+    private Bitmap? _qrCodeImage;
+
+    private CancellationTokenSource? _authCts;
+
     public ObservableCollection<TagCategory> TagCategories { get; } = [];
     public ObservableCollection<WorkshopTag> CustomTags { get; } = [];
     public ObservableCollection<ItemVersion> Versions { get; } = [];
+    public ObservableCollection<ChangeLogEntry> ChangeLogHistory { get; } = [];
 
     public static IEnumerable<VisibilityType> VisibilityOptions =>
         Enum.GetValues<VisibilityType>();
@@ -98,6 +125,8 @@ public partial class ItemEditorViewModel : ViewModelBase
         _settingsService = settingsService;
         _notificationService = notificationService;
         _uploadProgress = uploadProgress;
+        _changelogScraper = new ChangelogScraperService();
+        _workshopDownloader = new WorkshopDownloadService();
 
         _title = item.Title;
         _description = item.Description;
@@ -340,6 +369,165 @@ public partial class ItemEditorViewModel : ViewModelBase
         {
             IsDeleting = false;
         }
+    }
+
+    partial void OnSelectedTabIndexChanged(int value)
+    {
+        if (value == 3 && !_changelogHistoryLoaded)
+            LoadChangelogHistoryCommand.Execute(null);
+    }
+
+    [RelayCommand]
+    private async Task LoadChangelogHistoryAsync()
+    {
+        IsLoadingChangelogs = true;
+        try
+        {
+            // Try to refresh access token if we have a stored refresh token
+            if (!SteamAuthService.IsAuthenticated && SteamAuthService.HasRefreshToken)
+                await SteamAuthService.TryRefreshAccessTokenAsync();
+
+            // Not authenticated → show auth banner, don't scrape
+            if (!SteamAuthService.IsAuthenticated)
+            {
+                NeedsSteamAuth = true;
+                _changelogHistoryLoaded = true;
+                return;
+            }
+
+            NeedsSteamAuth = false;
+
+            var entries = await _changelogScraper.GetChangeLogsAsync((ulong)_originalItem.PublishedFileId);
+            ChangeLogHistory.Clear();
+            foreach (var entry in entries)
+            {
+                entry.IsDownloaded = _workshopDownloader.IsVersionDownloaded(
+                    AppConfig.AppId, _originalItem.Title, entry.Timestamp);
+                ChangeLogHistory.Add(entry);
+            }
+            _changelogHistoryLoaded = true;
+        }
+        catch (Exception ex)
+        {
+            _notificationService.ShowError($"{Loc["DownloadFailed"]}: {ex.Message}");
+        }
+        finally
+        {
+            IsLoadingChangelogs = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task DownloadVersionAsync(ChangeLogEntry entry)
+    {
+        IsDownloading = true;
+        DownloadProgress = 0;
+        try
+        {
+            var progress = new Progress<double>(p => DownloadProgress = p);
+            var path = await _workshopDownloader.DownloadVersionAsync(
+                AppConfig.AppId, (ulong)_originalItem.PublishedFileId, _originalItem.Title, entry, progress);
+
+            if (path != null)
+            {
+                entry.IsDownloaded = true;
+                // Force UI refresh by replacing the entry
+                var index = ChangeLogHistory.IndexOf(entry);
+                if (index >= 0)
+                {
+                    ChangeLogHistory.RemoveAt(index);
+                    ChangeLogHistory.Insert(index, entry);
+                }
+                _notificationService.ShowSuccess(Loc["DownloadComplete"]);
+            }
+            else
+            {
+                _notificationService.ShowError(Loc["DownloadFailed"]);
+            }
+        }
+        catch (Exception ex)
+        {
+            _notificationService.ShowError($"{Loc["DownloadFailed"]}: {ex.Message}");
+        }
+        finally
+        {
+            IsDownloading = false;
+            DownloadProgress = 0;
+        }
+    }
+
+    [RelayCommand]
+    private void OpenVersionFolder(ChangeLogEntry entry)
+    {
+        _workshopDownloader.OpenVersionFolder(AppConfig.AppId, _originalItem.Title, entry.Timestamp);
+    }
+
+    [RelayCommand]
+    private void OpenChangelogInBrowser()
+    {
+        var url = $"https://steamcommunity.com/sharedfiles/filedetails/changelog/{(ulong)_originalItem.PublishedFileId}";
+        Process.Start(new ProcessStartInfo { FileName = url, UseShellExecute = true });
+    }
+
+    [RelayCommand]
+    private async Task AuthenticateWithSteamAsync()
+    {
+        IsAuthenticating = true;
+        _authCts = new CancellationTokenSource();
+
+        void OnQrUrlChanged(string url)
+        {
+            try
+            {
+                var qrGenerator = new QRCodeGenerator();
+                var qrCodeData = qrGenerator.CreateQrCode(url, QRCodeGenerator.ECCLevel.M);
+                var qrCode = new PngByteQRCode(qrCodeData);
+                var pngBytes = qrCode.GetGraphic(5, [255, 255, 255], [30, 35, 40]);
+
+                using var stream = new MemoryStream(pngBytes);
+                QrCodeImage = new Bitmap(stream);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Failed to generate QR code: {ex.Message}");
+            }
+        }
+
+        try
+        {
+            SteamAuthService.QrChallengeUrlChanged += OnQrUrlChanged;
+            await SteamAuthService.BeginQrAuthAsync(_authCts.Token);
+
+            _notificationService.ShowSuccess(Loc["SteamAuthSuccess"]);
+            NeedsSteamAuth = false;
+            IsAuthenticating = false;
+            QrCodeImage = null;
+
+            // Reload changelogs with authenticated session
+            _changelogHistoryLoaded = false;
+            await LoadChangelogHistoryAsync();
+        }
+        catch (OperationCanceledException)
+        {
+            // User cancelled
+        }
+        catch (Exception ex)
+        {
+            _notificationService.ShowError(ex.Message);
+        }
+        finally
+        {
+            SteamAuthService.QrChallengeUrlChanged -= OnQrUrlChanged;
+            IsAuthenticating = false;
+            QrCodeImage = null;
+            _authCts = null;
+        }
+    }
+
+    [RelayCommand]
+    private void CancelAuth()
+    {
+        _authCts?.Cancel();
     }
 
     [RelayCommand]

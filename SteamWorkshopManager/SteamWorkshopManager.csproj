@@ -6,9 +6,9 @@
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
 
-        <Version>1.1.0</Version>
-        <AssemblyVersion>1.1.0.0</AssemblyVersion>
-        <FileVersion>1.1.0.0</FileVersion>
+        <Version>1.2.0</Version>
+        <AssemblyVersion>1.2.0.0</AssemblyVersion>
+        <FileVersion>1.2.0.0</FileVersion>
     </PropertyGroup>
 
     <!-- Steam native libraries - copy based on OS or RuntimeIdentifier -->
@@ -43,6 +43,9 @@
         </PackageReference>
         
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.1" />
+        
+        <PackageReference Include="QRCoder" Version="1.7.0" />
+        <PackageReference Include="SteamKit2" Version="3.4.0" />
         <PackageReference Include="Steamworks.NET" Version="2024.8.0" />
     </ItemGroup>
 

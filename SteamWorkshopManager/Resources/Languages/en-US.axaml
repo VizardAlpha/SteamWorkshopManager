@@ -225,8 +225,27 @@
     <!-- BBCode Editor -->
     <x:String x:Key="BbCodeMode">BBCode</x:String>
     <x:String x:Key="PlainTextMode">Plain text</x:String>
+    <x:String x:Key="Expand">Expand</x:String>
 
     <!-- Update Checker -->
     <x:String x:Key="UpdateAvailable">A new version is available:</x:String>
     <x:String x:Key="Download">Download</x:String>
+
+    <!-- Changelog History -->
+    <x:String x:Key="History">History</x:String>
+    <x:String x:Key="OpenInBrowser">Open in browser</x:String>
+    <x:String x:Key="Downloading">Downloading...</x:String>
+    <x:String x:Key="DownloadVersion">Download this version</x:String>
+    <x:String x:Key="OpenFolder">Open folder</x:String>
+    <x:String x:Key="DownloadComplete">Download complete!</x:String>
+    <x:String x:Key="DownloadFailed">Download failed</x:String>
+    <x:String x:Key="AlreadyDownloaded">Already downloaded</x:String>
+    <x:String x:Key="NoChangelogs">No changelogs found</x:String>
+
+    <!-- Steam QR Auth -->
+    <x:String x:Key="SteamAuthRequired">Sign in to Steam to view changelogs and download previous versions.</x:String>
+    <x:String x:Key="SteamAuthButton">Sign in via QR Code</x:String>
+    <x:String x:Key="SteamAuthScanQR">Scan this QR code with the Steam Mobile app</x:String>
+    <x:String x:Key="SteamAuthCancel">Cancel</x:String>
+    <x:String x:Key="SteamAuthSuccess">Steam sign-in successful!</x:String>
 </ResourceDictionary>
