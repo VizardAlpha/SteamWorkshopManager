@@ -44,4 +44,6 @@ dotnet publish SteamWorkshopManager/SteamWorkshopManager.csproj -c Release -r wi
 
 Available languages: English, French
 
-To add a new language, create a new resource file in [`Resources/`](https://github.com/VizardAlpha/SteamWorkshopManager/blob/master/TRANSLATING.md) following the existing pattern.
+Languages are stored as `.axaml` resource files in `%AppData%/SteamWorkshopManager/bundle/`. Built-in languages are automatically extracted on first launch. New languages can be added by dropping a file into the bundle folder — no rebuild required.
+
+Want to contribute a translation? See [TRANSLATING.md](TRANSLATING.md) for instructions.
