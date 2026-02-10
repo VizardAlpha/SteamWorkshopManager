@@ -48,7 +48,7 @@
     <x:String x:Key="ChangelogPlaceholder">Décrivez les changements de cette mise à jour...</x:String>
     <x:String x:Key="ChangelogInfo">Ce texte sera visible dans l'historique des mises à jour sur le Workshop Steam.</x:String>
     <x:String x:Key="MultiVersion">Multi-versions</x:String>
-    <x:String x:Key="MultiVersionInfo">Cette fonctionnalité permet de publier plusieurs versions de votre mod pour différentes versions du jeu. Vérifiez si elle est activée pour Songs of Syx.</x:String>
+    <x:String x:Key="MultiVersionInfo">Cette fonctionnalité permet de publier plusieurs versions de votre mod pour différentes versions du jeu. Vérifiez si elle est activée pour le jeu.</x:String>
     <x:String x:Key="AllVersions">Toutes versions</x:String>
 
     <!-- Create Item -->

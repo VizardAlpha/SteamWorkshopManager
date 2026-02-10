@@ -111,6 +111,12 @@ public partial class BbCodeEditorControl : UserControl
             EditorTextBox.Text = Text;
     }
 
+    protected override void OnUnloaded(RoutedEventArgs e)
+    {
+        CollapseEditor();
+        base.OnUnloaded(e);
+    }
+
     private void OnToggleChanged(object? sender, RoutedEventArgs e)
     {
         ToolbarPanel.IsVisible = BbCodeToggle.IsChecked == true;

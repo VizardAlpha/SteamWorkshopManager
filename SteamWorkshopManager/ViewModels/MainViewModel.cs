@@ -192,36 +192,56 @@ public partial class MainViewModel : ViewModelBase
         });
     }
 
+    private void DetachCurrentView()
+    {
+        switch (CurrentView)
+        {
+            case ItemEditorViewModel editor:
+                editor.CloseRequested -= OnEditorCloseRequested;
+                editor.ItemUpdated -= OnItemUpdated;
+                editor.ItemDeleted -= OnItemDeleted;
+                break;
+            case CreateItemViewModel creator:
+                creator.CloseRequested -= OnEditorCloseRequested;
+                creator.ItemCreated -= OnItemCreated;
+                break;
+            case SettingsViewModel settings:
+                settings.CloseRequested -= OnSettingsCloseRequested;
+                settings.AddSessionRequested -= OnAddSessionRequested;
+                break;
+        }
+    }
+
     private void OnItemSelected(WorkshopItem item)
     {
+        DetachCurrentView();
         SelectedItem = item;
-        CurrentView = new ItemEditorViewModel(item, _steamService, _fileDialogService, _settingsService, _notificationService, UploadProgressReporter);
-        if (CurrentView is ItemEditorViewModel editor)
-        {
-            editor.CloseRequested += OnEditorCloseRequested;
-            editor.ItemUpdated += OnItemUpdated;
-            editor.ItemDeleted += OnItemDeleted;
-        }
+        var editor = new ItemEditorViewModel(item, _steamService, _fileDialogService, _settingsService, _notificationService, UploadProgressReporter);
+        editor.CloseRequested += OnEditorCloseRequested;
+        editor.ItemUpdated += OnItemUpdated;
+        editor.ItemDeleted += OnItemDeleted;
+        CurrentView = editor;
     }
 
     private void OnCreateRequested()
     {
-        CurrentView = new CreateItemViewModel(_steamService, _fileDialogService, _settingsService, _notificationService, UploadProgressReporter);
-        if (CurrentView is CreateItemViewModel creator)
-        {
-            creator.CloseRequested += OnEditorCloseRequested;
-            creator.ItemCreated += OnItemCreated;
-        }
+        DetachCurrentView();
+        var creator = new CreateItemViewModel(_steamService, _fileDialogService, _settingsService, _notificationService, UploadProgressReporter);
+        creator.CloseRequested += OnEditorCloseRequested;
+        creator.ItemCreated += OnItemCreated;
+        CurrentView = creator;
     }
 
     private void OnEditorCloseRequested()
     {
+        DetachCurrentView();
         CurrentView = ItemListViewModel;
         SelectedItem = null;
     }
 
     private async void OnItemUpdated()
     {
+        DetachCurrentView();
         CurrentView = ItemListViewModel;
         SelectedItem = null;
         await ItemListViewModel.LoadItemsAsync();
@@ -229,6 +249,7 @@ public partial class MainViewModel : ViewModelBase
 
     private async void OnItemDeleted()
     {
+        DetachCurrentView();
         CurrentView = ItemListViewModel;
         SelectedItem = null;
         await ItemListViewModel.LoadItemsAsync();
@@ -236,6 +257,7 @@ public partial class MainViewModel : ViewModelBase
 
     private async void OnItemCreated()
     {
+        DetachCurrentView();
         CurrentView = ItemListViewModel;
         await ItemListViewModel.LoadItemsAsync();
     }
@@ -243,6 +265,7 @@ public partial class MainViewModel : ViewModelBase
     [RelayCommand]
     private void NavigateToList()
     {
+        DetachCurrentView();
         CurrentView = ItemListViewModel;
         SelectedItem = null;
     }
@@ -256,6 +279,7 @@ public partial class MainViewModel : ViewModelBase
     [RelayCommand]
     private void NavigateToSettings()
     {
+        DetachCurrentView();
         var settingsVm = new SettingsViewModel(_settingsService);
         settingsVm.CloseRequested += OnSettingsCloseRequested;
         settingsVm.AddSessionRequested += OnAddSessionRequested;
@@ -264,6 +288,7 @@ public partial class MainViewModel : ViewModelBase
 
     private void OnSettingsCloseRequested()
     {
+        DetachCurrentView();
         CurrentView = ItemListViewModel;
     }
 
