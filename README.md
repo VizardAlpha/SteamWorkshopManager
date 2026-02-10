@@ -11,7 +11,8 @@ Features:
 - Changelog management: add changelogs with each update
 - Auto-fetched tags: Workshop tags are automatically retrieved for each game
 - Custom tags: Add your own tags per game
-- Multi-language: English and French supported
+- Multi-language: English, French,... supported
+- PlainText or BBCode: Customize your description and changelogs with the tags currently offered by Steam.
 
 
 # Requirements
@@ -41,8 +42,6 @@ dotnet publish SteamWorkshopManager/SteamWorkshopManager.csproj -c Release -r wi
 ```
 
 # Localization
-
-Available languages: English, French
 
 Languages are stored as `.axaml` resource files in `%AppData%/SteamWorkshopManager/bundle/`. Built-in languages are automatically extracted on first launch. New languages can be added by dropping a file into the bundle folder — no rebuild required.
 
