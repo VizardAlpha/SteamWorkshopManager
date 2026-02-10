@@ -21,7 +21,7 @@ public interface ISettingsService
 
 public class AppSettings
 {
-    public string Language { get; set; } = "en";
+    public string Language { get; set; } = "en-US";
     public bool DebugMode { get; set; }
 
     /// <summary>

@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -67,6 +68,12 @@ public partial class MainViewModel : ViewModelBase
     public bool IsSuccessNotification => ShowNotification && NotificationType == NotificationType.Success;
     public bool IsErrorNotification => ShowNotification && NotificationType == NotificationType.Error;
 
+    [ObservableProperty]
+    private bool _isUpdateAvailable;
+
+    [ObservableProperty]
+    private UpdateInfo? _updateInfo;
+
     public ItemListViewModel ItemListViewModel { get; }
 
     public IProgress<UploadProgress> UploadProgressReporter { get; }
@@ -117,6 +124,7 @@ public partial class MainViewModel : ViewModelBase
         CurrentView = ItemListViewModel;
 
         InitializeSteamAsync();
+        _ = CheckForUpdatesAsync();
     }
 
     private static string FormatBytes(ulong bytes)
@@ -267,5 +275,31 @@ public partial class MainViewModel : ViewModelBase
     private void OnAddSessionRequested()
     {
         OpenAddSessionWizard?.Invoke();
+    }
+
+    private async Task CheckForUpdatesAsync()
+    {
+        var info = await UpdateCheckerService.CheckForUpdateAsync();
+        if (info is not null)
+        {
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                UpdateInfo = info;
+                IsUpdateAvailable = true;
+            });
+        }
+    }
+
+    [RelayCommand]
+    private void OpenReleasePage()
+    {
+        if (UpdateInfo?.ReleaseUrl is not { } url) return;
+        Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+    }
+
+    [RelayCommand]
+    private void DismissUpdate()
+    {
+        IsUpdateAvailable = false;
     }
 }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -23,10 +24,10 @@ public partial class SettingsViewModel : ViewModelBase
     private readonly ILogService _logService;
 
     [ObservableProperty]
-    private bool _isEnglishSelected;
+    private ObservableCollection<LanguageInfo> _availableLanguages = [];
 
     [ObservableProperty]
-    private bool _isFrenchSelected;
+    private LanguageInfo? _selectedLanguage;
 
     [ObservableProperty]
     private bool _isDebugModeEnabled;
@@ -43,6 +44,12 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isLoadingSessions;
 
+    [ObservableProperty]
+    private bool _isUpdateAvailable;
+
+    [ObservableProperty]
+    private UpdateInfo? _updateInfo;
+
     public event Action? CloseRequested;
     public event Action? AddSessionRequested;
 
@@ -53,17 +60,18 @@ public partial class SettingsViewModel : ViewModelBase
         _sessionManager = new SessionManager(_sessionRepository);
         _logService = LogService.Instance;
 
-        // Initialize selection based on current language
-        var currentLang = _settingsService.Settings.Language;
-        _isEnglishSelected = currentLang == "en";
-        _isFrenchSelected = currentLang == "fr";
+        // Initialize languages from discovered list
+        var languages = LocalizationService.Instance.AvailableLanguages;
+        _availableLanguages = new ObservableCollection<LanguageInfo>(languages);
+        _selectedLanguage = languages.FirstOrDefault(l => l.Code == _settingsService.Settings.Language);
 
         // Initialize debug mode from settings
         _isDebugModeEnabled = _settingsService.Settings.DebugMode;
         _logFilePath = _logService.GetLogFilePath();
 
-        // Load sessions
+        // Load sessions + check for updates
         _ = LoadSessionsAsync();
+        _ = CheckForUpdatesAsync();
     }
 
     private async Task LoadSessionsAsync()
@@ -129,33 +137,36 @@ public partial class SettingsViewModel : ViewModelBase
         _logService.SetDebugMode(value);
     }
 
-    [RelayCommand]
-    private void SelectEnglish()
+    partial void OnSelectedLanguageChanged(LanguageInfo? value)
     {
-        IsEnglishSelected = true;
-        IsFrenchSelected = false;
-        SetLanguage("en");
-    }
+        if (value is null) return;
 
-    [RelayCommand]
-    private void SelectFrench()
-    {
-        IsEnglishSelected = false;
-        IsFrenchSelected = true;
-        SetLanguage("fr");
-    }
-
-    private void SetLanguage(string lang)
-    {
-        _settingsService.Settings.Language = lang;
+        _settingsService.Settings.Language = value.Code;
         _settingsService.Save();
-        LocalizationService.Instance.CurrentLanguage = lang;
+        LocalizationService.Instance.CurrentLanguage = value.Code;
     }
 
     [RelayCommand]
     private void Close()
     {
         CloseRequested?.Invoke();
+    }
+
+    private async Task CheckForUpdatesAsync()
+    {
+        var info = await UpdateCheckerService.CheckForUpdateAsync();
+        if (info is not null)
+        {
+            UpdateInfo = info;
+            IsUpdateAvailable = true;
+        }
+    }
+
+    [RelayCommand]
+    private void OpenReleasePage()
+    {
+        if (UpdateInfo?.ReleaseUrl is not { } url) return;
+        Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
     }
 
     [RelayCommand]

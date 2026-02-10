@@ -6,7 +6,6 @@ using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services;
 using SteamWorkshopManager.Services.Interfaces;
 using SteamWorkshopManager.Services.Log;
 

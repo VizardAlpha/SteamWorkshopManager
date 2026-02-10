@@ -6,9 +6,9 @@
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
 
-        <Version>1.0.0</Version>
-        <AssemblyVersion>1.0.0.0</AssemblyVersion>
-        <FileVersion>1.0.0.0</FileVersion>
+        <Version>1.1.0</Version>
+        <AssemblyVersion>1.1.0.0</AssemblyVersion>
+        <FileVersion>1.1.0.0</FileVersion>
     </PropertyGroup>
 
     <!-- Steam native libraries - copy based on OS or RuntimeIdentifier -->
@@ -48,5 +48,17 @@
 
     <ItemGroup>
       <Folder Include="Properties\" />
+    </ItemGroup>
+
+    <!-- Language files also as EmbeddedResource for bundle extraction -->
+    <ItemGroup>
+      <EmbeddedResource Include="Resources\Languages\en-US.axaml" LogicalName="Languages.en-US.axaml" />
+      <EmbeddedResource Include="Resources\Languages\fr-FR.axaml" LogicalName="Languages.fr-FR.axaml" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Update="Views\Controls\BbCodeEditorControl.axaml.cs">
+        <DependentUpon>BbCodeEditorControl.axaml</DependentUpon>
+      </Compile>
     </ItemGroup>
 </Project>

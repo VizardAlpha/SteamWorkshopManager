@@ -1,5 +1,10 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Language metadata -->
+    <x:String x:Key="LanguageCode">en-US</x:String>
+    <x:String x:Key="LanguageNativeName">English</x:String>
+    <x:String x:Key="LanguageDisplayName">English</x:String>
+
     <!-- Header -->
     <x:String x:Key="AppTitle">Workshop Manager</x:String>
     <x:String x:Key="AppSubtitle">Songs of Syx</x:String>
@@ -216,4 +221,12 @@
     <x:String x:Key="SteamAccountLockedDown">Account is locked down</x:String>
     <x:String x:Key="SteamRateLimitExceeded">Rate limit exceeded, try again later</x:String>
     <x:String x:Key="SteamUnknownError">Unknown Steam error</x:String>
+
+    <!-- BBCode Editor -->
+    <x:String x:Key="BbCodeMode">BBCode</x:String>
+    <x:String x:Key="PlainTextMode">Plain text</x:String>
+
+    <!-- Update Checker -->
+    <x:String x:Key="UpdateAvailable">A new version is available:</x:String>
+    <x:String x:Key="Download">Download</x:String>
 </ResourceDictionary>

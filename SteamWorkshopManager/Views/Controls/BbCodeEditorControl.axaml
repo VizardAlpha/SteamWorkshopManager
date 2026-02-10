@@ -1,0 +1,52 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="300"
+             x:Class="SteamWorkshopManager.Views.Controls.BbCodeEditorControl">
+
+    <StackPanel Spacing="8">
+        <!-- Toggle + Toolbar + Expand -->
+        <Grid ColumnDefinitions="Auto,*,Auto">
+            <ToggleButton x:Name="BbCodeToggle"
+                          IsChecked="False"
+                          Padding="8,4"
+                          CornerRadius="4"
+                          Background="#2a3a4a"
+                          Foreground="White"
+                          FontSize="11"
+                          FontWeight="SemiBold"
+                          Focusable="False"
+                          Content="BBCode"/>
+
+            <!-- BBCode toolbar -->
+            <Border Grid.Column="1"
+                    x:Name="ToolbarPanel"
+                    IsVisible="False"
+                    Margin="12,0,0,0">
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                    <StackPanel x:Name="ToolbarButtons" Orientation="Horizontal" Spacing="2"/>
+                </ScrollViewer>
+            </Border>
+
+            <!-- Expand button -->
+            <Button Grid.Column="2"
+                    x:Name="ExpandButton"
+                    Padding="6,3"
+                    Background="Transparent"
+                    Foreground="#8899a6"
+                    FontSize="14"
+                    CornerRadius="3"
+                    Cursor="Hand"
+                    Focusable="False"
+                    ToolTip.Tip="Expand"
+                    Content="⤢"/>
+        </Grid>
+
+        <!-- TextBox -->
+        <TextBox x:Name="EditorTextBox"
+                 AcceptsReturn="True"
+                 TextWrapping="Wrap"
+                 Height="150"/>
+    </StackPanel>
+</UserControl>

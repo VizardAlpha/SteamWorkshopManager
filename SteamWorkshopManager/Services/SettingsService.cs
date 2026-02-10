@@ -50,12 +50,29 @@ public class SettingsService : ISettingsService
             {
                 var json = File.ReadAllText(SettingsPath);
                 Settings = JsonSerializer.Deserialize(json, SettingsJsonContext.Default.AppSettings) ?? new AppSettings();
+                MigrateLanguageCodes();
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"[ERROR] Failed to load settings: {ex.Message}");
             Settings = new AppSettings();
+        }
+    }
+
+    private void MigrateLanguageCodes()
+    {
+        var migrated = Settings.Language switch
+        {
+            "en" => "en-US",
+            "fr" => "fr-FR",
+            _ => null
+        };
+
+        if (migrated is not null)
+        {
+            Settings.Language = migrated;
+            Save();
         }
     }
 

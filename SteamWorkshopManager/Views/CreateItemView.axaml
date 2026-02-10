@@ -5,6 +5,7 @@
              xmlns:vm="using:SteamWorkshopManager.ViewModels"
              xmlns:models="using:SteamWorkshopManager.Models"
              xmlns:converters="using:SteamWorkshopManager.Converters"
+             xmlns:controls="using:SteamWorkshopManager.Views.Controls"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="SteamWorkshopManager.Views.CreateItemView"
              x:DataType="vm:CreateItemViewModel"
@@ -153,11 +154,9 @@
                     <!-- Description -->
                     <StackPanel Spacing="8">
                         <TextBlock Text="{DynamicResource Description}" Classes="section-header"/>
-                        <TextBox Text="{Binding Description}"
-                                 AcceptsReturn="True"
-                                 TextWrapping="Wrap"
-                                 Height="140"
-                                 Watermark="{DynamicResource DescriptionPlaceholder}"/>
+                        <controls:BbCodeEditorControl Text="{Binding Description}"
+                                                      EditorHeight="140"
+                                                      Watermark="{DynamicResource DescriptionPlaceholder}"/>
                     </StackPanel>
 
                     <!-- Tags -->
@@ -254,11 +253,9 @@
                     <!-- Initial changelog -->
                     <StackPanel Spacing="8">
                         <TextBlock Text="{DynamicResource InitialVersionNotes}" Classes="section-header"/>
-                        <TextBox Text="{Binding InitialChangelog}"
-                                 AcceptsReturn="True"
-                                 TextWrapping="Wrap"
-                                 Height="100"
-                                 Watermark="{DynamicResource InitialVersionPlaceholder}"/>
+                        <controls:BbCodeEditorControl Text="{Binding InitialChangelog}"
+                                                          EditorHeight="100"
+                                                          Watermark="{DynamicResource InitialVersionPlaceholder}"/>
                     </StackPanel>
                 </StackPanel>
             </StackPanel>

@@ -5,6 +5,7 @@
              xmlns:vm="using:SteamWorkshopManager.ViewModels"
              xmlns:models="using:SteamWorkshopManager.Models"
              xmlns:converters="using:SteamWorkshopManager.Converters"
+             xmlns:controls="using:SteamWorkshopManager.Views.Controls"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="SteamWorkshopManager.Views.ItemEditorView"
              x:DataType="vm:ItemEditorViewModel">
@@ -102,11 +103,9 @@
                         <!-- Description -->
                         <StackPanel Spacing="8">
                             <TextBlock Text="{DynamicResource Description}" Classes="section-header"/>
-                            <TextBox Text="{Binding Description}"
-                                     AcceptsReturn="True"
-                                     TextWrapping="Wrap"
-                                     Height="150"
-                                     Watermark="{DynamicResource DescriptionPlaceholder}"/>
+                            <controls:BbCodeEditorControl Text="{Binding Description}"
+                                                          EditorHeight="150"
+                                                          Watermark="{DynamicResource DescriptionPlaceholder}"/>
                         </StackPanel>
 
                         <!-- Content folder -->
@@ -226,11 +225,9 @@
             <TabItem Header="Changelog">
                 <StackPanel Spacing="12" Margin="0,20">
                     <TextBlock Text="{DynamicResource UpdateNotes}" Classes="section-header"/>
-                    <TextBox Text="{Binding NewChangelog}"
-                             AcceptsReturn="True"
-                             TextWrapping="Wrap"
-                             Height="200"
-                             Watermark="{DynamicResource ChangelogPlaceholder}"/>
+                    <controls:BbCodeEditorControl Text="{Binding NewChangelog}"
+                                                      EditorHeight="200"
+                                                      Watermark="{DynamicResource ChangelogPlaceholder}"/>
                     <Border Background="#2a3a4a" Padding="12" CornerRadius="6">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <TextBlock Text="i" Foreground="{StaticResource SteamLightBlueBrush}" FontSize="14" FontWeight="Bold" FontStyle="Italic"/>
