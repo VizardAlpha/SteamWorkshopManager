@@ -6,11 +6,14 @@ using System.Runtime.CompilerServices;
 using Avalonia;
 using Avalonia.Controls;
 using SteamWorkshopManager.Models;
+using SteamWorkshopManager.Services.Interfaces;
+using SteamWorkshopManager.Services.Log;
 
 namespace SteamWorkshopManager.Services;
 
 public class LocalizationService : INotifyPropertyChanged
 {
+    private static readonly Logger Log = LogService.GetLogger<LocalizationService>();
     private static LocalizationService? _instance;
     public static LocalizationService Instance => _instance ??= new LocalizationService();
 
@@ -96,7 +99,7 @@ public class LocalizationService : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[ERROR] Failed to load language resources: {ex.Message}");
+            Log.Error($"Failed to load language resources: {ex.Message}");
         }
     }
 

@@ -218,34 +218,21 @@ public partial class ItemEditorViewModel : ViewModelBase
 
     private async void LoadPreviewImageAsync(string? url)
     {
-        Console.WriteLine($"[DEBUG] LoadPreviewImageAsync called with URL: {url ?? "null"}");
-
         if (string.IsNullOrEmpty(url))
-        {
-            Console.WriteLine("[DEBUG] URL is null or empty, skipping image load");
             return;
-        }
 
         try
         {
-            Console.WriteLine($"[DEBUG] Downloading image from: {url}");
             var response = await HttpClient.GetAsync(url);
-            Console.WriteLine($"[DEBUG] Response status: {response.StatusCode}");
-
             if (response.IsSuccessStatusCode)
             {
                 var stream = await response.Content.ReadAsStreamAsync();
                 PreviewImage = new Bitmap(stream);
-                Console.WriteLine("[DEBUG] Image loaded successfully");
-            }
-            else
-            {
-                Console.WriteLine($"[DEBUG] Failed to download image: {response.StatusCode}");
             }
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"[DEBUG] Exception loading image: {ex.Message}");
+            // Ignore image load failures
         }
     }
 
@@ -514,9 +501,9 @@ public partial class ItemEditorViewModel : ViewModelBase
                 using var stream = new MemoryStream(pngBytes);
                 QrCodeImage = new Bitmap(stream);
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine($"[ERROR] Failed to generate QR code: {ex.Message}");
+                // Ignore QR code generation failures
             }
         }
 
@@ -819,9 +806,9 @@ public partial class ItemEditorViewModel : ViewModelBase
             var sessionRepository = new SessionRepository(settingsService);
             await sessionRepository.SaveSessionAsync(session);
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"[ERROR] Failed to save session: {ex.Message}");
+            // Ignore session save failures in fire-and-forget
         }
     }
 

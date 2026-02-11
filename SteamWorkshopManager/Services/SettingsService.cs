@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using SteamWorkshopManager.Services.Interfaces;
+using SteamWorkshopManager.Services.Log;
 
 namespace SteamWorkshopManager.Services;
 
@@ -14,6 +15,8 @@ internal partial class SettingsJsonContext : JsonSerializerContext;
 
 public class SettingsService : ISettingsService
 {
+    private static readonly Logger Log = LogService.GetLogger<SettingsService>();
+
     private static readonly string SettingsFolder = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
         "SteamWorkshopManager"
@@ -38,7 +41,7 @@ public class SettingsService : ISettingsService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[ERROR] Failed to save settings: {ex.Message}");
+            Log.Error($"Failed to save settings: {ex.Message}");
         }
     }
 
@@ -55,7 +58,7 @@ public class SettingsService : ISettingsService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[ERROR] Failed to load settings: {ex.Message}");
+            Log.Error($"Failed to load settings: {ex.Message}");
             Settings = new AppSettings();
         }
     }

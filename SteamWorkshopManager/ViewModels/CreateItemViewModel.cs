@@ -411,9 +411,9 @@ public partial class CreateItemViewModel : ViewModelBase
             var sessionRepository = new SessionRepository(settingsService);
             await sessionRepository.SaveSessionAsync(session);
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"[ERROR] Failed to save session: {ex.Message}");
+            // Ignore session save failures in fire-and-forget
         }
     }
 
