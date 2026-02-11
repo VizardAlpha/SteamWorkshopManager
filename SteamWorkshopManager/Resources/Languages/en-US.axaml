@@ -248,4 +248,20 @@
     <x:String x:Key="SteamAuthScanQR">Scan this QR code with the Steam Mobile app</x:String>
     <x:String x:Key="SteamAuthCancel">Cancel</x:String>
     <x:String x:Key="SteamAuthSuccess">Steam sign-in successful!</x:String>
+
+    <!-- Dependencies -->
+    <x:String x:Key="Dependencies">Dependencies</x:String>
+    <x:String x:Key="NoDependencies">No dependencies</x:String>
+    <x:String x:Key="AddDependency">Add</x:String>
+    <x:String x:Key="SearchDependency">Search</x:String>
+    <x:String x:Key="DependencyInputPlaceholder">Workshop ID or URL...</x:String>
+    <x:String x:Key="DependencyAlreadyExists">This dependency already exists</x:String>
+    <x:String x:Key="CannotAddSelf">Cannot add self as dependency</x:String>
+    <x:String x:Key="InvalidWorkshopInput">Invalid Workshop ID or URL</x:String>
+    <x:String x:Key="WorkshopItemNotFound">Workshop item not found or not accessible</x:String>
+    <x:String x:Key="AddDependencyFailed">Failed to add dependency</x:String>
+    <x:String x:Key="RemoveDependencyFailed">Failed to remove dependency</x:String>
+    <x:String x:Key="DependencyAdded">Dependency added!</x:String>
+    <x:String x:Key="DependencyRemoved">Dependency removed!</x:String>
+    <x:String x:Key="ConfirmAddDependency">Add this dependency?</x:String>
 </ResourceDictionary>

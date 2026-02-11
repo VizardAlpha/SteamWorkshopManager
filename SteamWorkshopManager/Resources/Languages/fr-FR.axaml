@@ -248,4 +248,20 @@
     <x:String x:Key="SteamAuthScanQR">Scannez ce QR code avec l'application Steam Mobile</x:String>
     <x:String x:Key="SteamAuthCancel">Annuler</x:String>
     <x:String x:Key="SteamAuthSuccess">Connexion Steam réussie !</x:String>
+
+    <!-- Dependencies -->
+    <x:String x:Key="Dependencies">Dépendances</x:String>
+    <x:String x:Key="NoDependencies">Aucune dépendance</x:String>
+    <x:String x:Key="AddDependency">Ajouter</x:String>
+    <x:String x:Key="SearchDependency">Rechercher</x:String>
+    <x:String x:Key="DependencyInputPlaceholder">ID ou URL Workshop...</x:String>
+    <x:String x:Key="DependencyAlreadyExists">Cette dépendance existe déjà</x:String>
+    <x:String x:Key="CannotAddSelf">Impossible de s'ajouter comme dépendance</x:String>
+    <x:String x:Key="InvalidWorkshopInput">ID ou URL Workshop invalide</x:String>
+    <x:String x:Key="WorkshopItemNotFound">Item Workshop introuvable ou inaccessible</x:String>
+    <x:String x:Key="AddDependencyFailed">Échec de l'ajout de la dépendance</x:String>
+    <x:String x:Key="RemoveDependencyFailed">Échec de la suppression de la dépendance</x:String>
+    <x:String x:Key="DependencyAdded">Dépendance ajoutée !</x:String>
+    <x:String x:Key="DependencyRemoved">Dépendance supprimée !</x:String>
+    <x:String x:Key="ConfirmAddDependency">Ajouter cette dépendance ?</x:String>
 </ResourceDictionary>

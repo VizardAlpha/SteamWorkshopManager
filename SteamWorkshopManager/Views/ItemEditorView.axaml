@@ -435,6 +435,142 @@
                     </ScrollViewer>
                 </DockPanel>
             </TabItem>
+
+            <!-- Tab: Dependencies -->
+            <TabItem Header="{DynamicResource Dependencies}">
+                <DockPanel Margin="0,20">
+                    <!-- Add dependency zone -->
+                    <StackPanel DockPanel.Dock="Top" Spacing="12">
+                        <!-- Input + search button -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBox Text="{Binding NewDependencyInput}"
+                                     Watermark="{DynamicResource DependencyInputPlaceholder}"/>
+                            <Button Grid.Column="1"
+                                    Command="{Binding SearchDependencyCommand}"
+                                    Classes="accent"
+                                    Content="{DynamicResource SearchDependency}"
+                                    Margin="12,0,0,0"
+                                    IsEnabled="{Binding !IsSearchingDependency}"/>
+                        </Grid>
+
+                        <!-- Search progress -->
+                        <ProgressBar IsIndeterminate="True"
+                                     IsVisible="{Binding IsSearchingDependency}"
+                                     Height="4"/>
+
+                        <!-- Preview card -->
+                        <Border IsVisible="{Binding PreviewDependency, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                Background="#2a3a4a" Padding="16" CornerRadius="8"
+                                BorderBrush="{StaticResource SteamLightBlueBrush}" BorderThickness="1">
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="{DynamicResource ConfirmAddDependency}"
+                                           Foreground="#8899a6" FontSize="12"/>
+                                <StackPanel Orientation="Horizontal" Spacing="12">
+                                    <TextBlock Text="{Binding PreviewDependency.Title}"
+                                               FontWeight="SemiBold" Foreground="White" FontSize="14"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding PreviewDependency.PublishedFileId}"
+                                               Foreground="#556677" FontSize="11"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Button Command="{Binding ConfirmAddDependencyCommand}"
+                                            Classes="accent"
+                                            Content="{DynamicResource AddDependency}"
+                                            IsEnabled="{Binding !IsAddingDependency}"/>
+                                    <Button Command="{Binding CancelDependencyPreviewCommand}"
+                                            Classes="secondary"
+                                            Content="{DynamicResource Cancel}"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Error message -->
+                        <Border IsVisible="{Binding DependencyError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                Background="#3d2a2a" Padding="8" CornerRadius="4"
+                                BorderBrush="#c23b2e" BorderThickness="1">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="!" FontWeight="Bold" Foreground="#ff8a80" FontSize="12"/>
+                                <TextBlock Text="{Binding DependencyError}"
+                                           Foreground="#ff8a80" FontSize="12"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Loading bar -->
+                        <ProgressBar IsIndeterminate="True"
+                                     IsVisible="{Binding IsLoadingDependencies}"
+                                     Height="4"/>
+                    </StackPanel>
+
+                    <!-- Empty state -->
+                    <TextBlock DockPanel.Dock="Top"
+                               Text="{DynamicResource NoDependencies}"
+                               Foreground="#556677"
+                               FontSize="14"
+                               HorizontalAlignment="Center"
+                               Margin="0,40"
+                               IsVisible="{Binding !Dependencies.Count}"/>
+
+                    <!-- Dependencies list -->
+                    <ScrollViewer>
+                        <ItemsControl ItemsSource="{Binding Dependencies}" Margin="0,12,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="models:DependencyInfo">
+                                    <Border Classes="card" Margin="0,0,0,8" Padding="16">
+                                        <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto">
+                                            <!-- Title + ID -->
+                                            <StackPanel Spacing="4" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Title}"
+                                                           FontWeight="SemiBold" Foreground="White" FontSize="14"/>
+                                                <TextBlock Text="{Binding PublishedFileId}"
+                                                           Foreground="#556677" FontSize="11"/>
+                                            </StackPanel>
+                                            <!-- Move up/down -->
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+                                                <Button Command="{Binding $parent[UserControl].((vm:ItemEditorViewModel)DataContext).MoveDependencyUpCommand}"
+                                                        CommandParameter="{Binding}"
+                                                        Classes="ghost" Padding="6,2"
+                                                        ToolTip.Tip="Move up">
+                                                    <TextBlock Text="&#x25B2;" FontSize="10" Foreground="#8899a6"/>
+                                                </Button>
+                                                <Button Command="{Binding $parent[UserControl].((vm:ItemEditorViewModel)DataContext).MoveDependencyDownCommand}"
+                                                        CommandParameter="{Binding}"
+                                                        Classes="ghost" Padding="6,2"
+                                                        ToolTip.Tip="Move down">
+                                                    <TextBlock Text="&#x25BC;" FontSize="10" Foreground="#8899a6"/>
+                                                </Button>
+                                            </StackPanel>
+                                            <!-- Open in browser -->
+                                            <Button Grid.Column="2"
+                                                    Command="{Binding $parent[UserControl].((vm:ItemEditorViewModel)DataContext).OpenDependencyInBrowserCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    Classes="ghost"
+                                                    Padding="8,4"
+                                                    ToolTip.Tip="{DynamicResource OpenInBrowser}">
+                                                <TextBlock Text="&#x1F310;" FontSize="14"/>
+                                            </Button>
+                                            <!-- Remove button / spinner -->
+                                            <Panel Grid.Column="3" Margin="4,0,0,0">
+                                                <Button Command="{Binding $parent[UserControl].((vm:ItemEditorViewModel)DataContext).RemoveDependencyCommand}"
+                                                        CommandParameter="{Binding}"
+                                                        Classes="ghost"
+                                                        Padding="8,4"
+                                                        Foreground="#ff8a80"
+                                                        IsVisible="{Binding !IsRemoving}">
+                                                    <TextBlock Text="&#x2715;" FontSize="14"/>
+                                                </Button>
+                                                <ProgressBar IsIndeterminate="True"
+                                                             IsVisible="{Binding IsRemoving}"
+                                                             Width="24" Height="24"/>
+                                            </Panel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </DockPanel>
+            </TabItem>
         </TabControl>
 
         <!-- Error message -->

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -10,6 +11,7 @@ using CommunityToolkit.Mvvm.Input;
 using SteamWorkshopManager.Models;
 using SteamWorkshopManager.Services;
 using SteamWorkshopManager.Services.Interfaces;
+using Steamworks;
 
 namespace SteamWorkshopManager.ViewModels;
 
@@ -20,6 +22,7 @@ public partial class CreateItemViewModel : ViewModelBase
     private readonly ISettingsService _settingsService;
     private readonly INotificationService _notificationService;
     private readonly IProgress<UploadProgress>? _uploadProgress;
+    private readonly DependencyService _dependencyService;
     private const long MaxImageSizeBytes = 1024 * 1024; // 1 MB Steam limit
 
     [ObservableProperty]
@@ -62,6 +65,20 @@ public partial class CreateItemViewModel : ViewModelBase
     [ObservableProperty]
     private string _newCustomTag = string.Empty;
 
+    [ObservableProperty]
+    private string _newDependencyInput = "";
+
+    [ObservableProperty]
+    private DependencyInfo? _previewDependency;
+
+    [ObservableProperty]
+    private bool _isSearchingDependency;
+
+    [ObservableProperty]
+    private string? _dependencyError;
+
+    public ObservableCollection<DependencyInfo> Dependencies { get; } = [];
+
     public ObservableCollection<TagCategory> TagCategories { get; } = [];
     public ObservableCollection<WorkshopTag> CustomTags { get; } = [];
 
@@ -79,6 +96,7 @@ public partial class CreateItemViewModel : ViewModelBase
         _settingsService = settingsService;
         _notificationService = notificationService;
         _uploadProgress = uploadProgress;
+        _dependencyService = new DependencyService();
 
         // Load tags by category from current session
         var sessionTags = AppConfig.CurrentSession?.TagsByCategory ?? new Dictionary<string, List<string>>();
@@ -206,6 +224,14 @@ public partial class CreateItemViewModel : ViewModelBase
                 {
                     _settingsService.SetPreviewImagePath((ulong)fileId.Value, PreviewImagePath);
                 }
+
+                // Add collected dependencies
+                foreach (var dep in Dependencies)
+                {
+                    await _dependencyService.AddDependencyAsync(
+                        fileId.Value, new PublishedFileId_t(dep.PublishedFileId));
+                }
+
                 _notificationService.ShowSuccess(Loc["ItemCreatedSuccess"]);
                 ItemCreated?.Invoke();
             }
@@ -224,6 +250,87 @@ public partial class CreateItemViewModel : ViewModelBase
         {
             IsCreating = false;
         }
+    }
+
+    [RelayCommand]
+    private async Task SearchDependencyAsync()
+    {
+        DependencyError = null;
+        PreviewDependency = null;
+
+        var fileId = ItemEditorViewModel.ParseWorkshopInput(NewDependencyInput);
+        if (fileId == 0)
+        {
+            DependencyError = Loc["InvalidWorkshopInput"];
+            return;
+        }
+
+        // Check duplicate
+        if (Dependencies.Any(d => d.PublishedFileId == fileId))
+        {
+            DependencyError = Loc["DependencyAlreadyExists"];
+            return;
+        }
+
+        IsSearchingDependency = true;
+        try
+        {
+            var info = await _dependencyService.GetModDetailsAsync(new PublishedFileId_t(fileId));
+            if (info == null || !info.IsValid)
+            {
+                DependencyError = Loc["WorkshopItemNotFound"];
+                return;
+            }
+            PreviewDependency = info;
+        }
+        catch (Exception ex)
+        {
+            DependencyError = ex.Message;
+        }
+        finally
+        {
+            IsSearchingDependency = false;
+        }
+    }
+
+    [RelayCommand]
+    private void ConfirmAddDependency()
+    {
+        if (PreviewDependency == null) return;
+
+        Dependencies.Add(PreviewDependency);
+        PreviewDependency = null;
+        NewDependencyInput = "";
+        DependencyError = null;
+    }
+
+    [RelayCommand]
+    private void CancelDependencyPreview()
+    {
+        PreviewDependency = null;
+        DependencyError = null;
+    }
+
+    [RelayCommand]
+    private void RemoveDependency(DependencyInfo dep)
+    {
+        Dependencies.Remove(dep);
+    }
+
+    [RelayCommand]
+    private void MoveDependencyUp(DependencyInfo dep)
+    {
+        var index = Dependencies.IndexOf(dep);
+        if (index > 0)
+            Dependencies.Move(index, index - 1);
+    }
+
+    [RelayCommand]
+    private void MoveDependencyDown(DependencyInfo dep)
+    {
+        var index = Dependencies.IndexOf(dep);
+        if (index >= 0 && index < Dependencies.Count - 1)
+            Dependencies.Move(index, index + 1);
     }
 
     [RelayCommand]

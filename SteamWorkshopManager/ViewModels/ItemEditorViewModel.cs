@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
@@ -14,6 +15,7 @@ using QRCoder;
 using SteamWorkshopManager.Models;
 using SteamWorkshopManager.Services;
 using SteamWorkshopManager.Services.Interfaces;
+using Steamworks;
 
 namespace SteamWorkshopManager.ViewModels;
 
@@ -33,7 +35,9 @@ public partial class ItemEditorViewModel : ViewModelBase
     private readonly DateTime _initialImageModified;
     private readonly ChangelogScraperService _changelogScraper;
     private readonly WorkshopDownloadService _workshopDownloader;
+    private readonly DependencyService _dependencyService;
     private bool _changelogHistoryLoaded;
+    private bool _dependenciesLoaded;
     private static readonly HttpClient HttpClient = new();
     private const long MaxImageSizeBytes = 1024 * 1024; // 1 MB Steam limit
 
@@ -104,6 +108,26 @@ public partial class ItemEditorViewModel : ViewModelBase
 
     private CancellationTokenSource? _authCts;
 
+    [ObservableProperty]
+    private bool _isLoadingDependencies;
+
+    [ObservableProperty]
+    private string _newDependencyInput = "";
+
+    [ObservableProperty]
+    private DependencyInfo? _previewDependency;
+
+    [ObservableProperty]
+    private bool _isSearchingDependency;
+
+    [ObservableProperty]
+    private bool _isAddingDependency;
+
+    [ObservableProperty]
+    private string? _dependencyError;
+
+    public ObservableCollection<DependencyInfo> Dependencies { get; } = [];
+
     public ObservableCollection<TagCategory> TagCategories { get; } = [];
     public ObservableCollection<WorkshopTag> CustomTags { get; } = [];
     public ObservableCollection<ItemVersion> Versions { get; } = [];
@@ -127,6 +151,7 @@ public partial class ItemEditorViewModel : ViewModelBase
         _uploadProgress = uploadProgress;
         _changelogScraper = new ChangelogScraperService();
         _workshopDownloader = new WorkshopDownloadService();
+        _dependencyService = new DependencyService();
 
         _title = item.Title;
         _description = item.Description;
@@ -375,6 +400,8 @@ public partial class ItemEditorViewModel : ViewModelBase
     {
         if (value == 3 && !_changelogHistoryLoaded)
             LoadChangelogHistoryCommand.Execute(null);
+        if (value == 4 && !_dependenciesLoaded)
+            LoadDependenciesCommand.Execute(null);
     }
 
     [RelayCommand]
@@ -528,6 +555,190 @@ public partial class ItemEditorViewModel : ViewModelBase
     private void CancelAuth()
     {
         _authCts?.Cancel();
+    }
+
+    [RelayCommand]
+    private async Task LoadDependenciesAsync()
+    {
+        IsLoadingDependencies = true;
+        DependencyError = null;
+        try
+        {
+            var deps = await _dependencyService.GetDependenciesAsync(_originalItem.PublishedFileId);
+            Dependencies.Clear();
+            foreach (var dep in deps)
+                Dependencies.Add(dep);
+            _dependenciesLoaded = true;
+        }
+        catch (Exception ex)
+        {
+            DependencyError = ex.Message;
+        }
+        finally
+        {
+            IsLoadingDependencies = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task SearchDependencyAsync()
+    {
+        DependencyError = null;
+        PreviewDependency = null;
+
+        var fileId = ParseWorkshopInput(NewDependencyInput);
+        if (fileId == 0)
+        {
+            DependencyError = Loc["InvalidWorkshopInput"];
+            return;
+        }
+
+        // Check self-reference
+        if (fileId == (ulong)_originalItem.PublishedFileId)
+        {
+            DependencyError = Loc["CannotAddSelf"];
+            return;
+        }
+
+        // Check duplicate
+        if (Dependencies.Any(d => d.PublishedFileId == fileId))
+        {
+            DependencyError = Loc["DependencyAlreadyExists"];
+            return;
+        }
+
+        IsSearchingDependency = true;
+        try
+        {
+            var info = await _dependencyService.GetModDetailsAsync(new PublishedFileId_t(fileId));
+            if (info == null || !info.IsValid)
+            {
+                DependencyError = Loc["WorkshopItemNotFound"];
+                return;
+            }
+            PreviewDependency = info;
+        }
+        catch (Exception ex)
+        {
+            DependencyError = ex.Message;
+        }
+        finally
+        {
+            IsSearchingDependency = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task ConfirmAddDependencyAsync()
+    {
+        if (PreviewDependency == null) return;
+
+        IsAddingDependency = true;
+        DependencyError = null;
+        try
+        {
+            var childId = new PublishedFileId_t(PreviewDependency.PublishedFileId);
+            var success = await _dependencyService.AddDependencyAsync(_originalItem.PublishedFileId, childId);
+            if (success)
+            {
+                Dependencies.Add(PreviewDependency);
+                PreviewDependency = null;
+                NewDependencyInput = "";
+                _notificationService.ShowSuccess(Loc["DependencyAdded"]);
+            }
+            else
+            {
+                DependencyError = Loc["AddDependencyFailed"];
+            }
+        }
+        catch (Exception ex)
+        {
+            DependencyError = $"{Loc["AddDependencyFailed"]}: {ex.Message}";
+        }
+        finally
+        {
+            IsAddingDependency = false;
+        }
+    }
+
+    [RelayCommand]
+    private void CancelDependencyPreview()
+    {
+        PreviewDependency = null;
+        DependencyError = null;
+    }
+
+    [RelayCommand]
+    private async Task RemoveDependencyAsync(DependencyInfo dep)
+    {
+        if (dep == null) return;
+
+        dep.IsRemoving = true;
+        DependencyError = null;
+        try
+        {
+            var childId = new PublishedFileId_t(dep.PublishedFileId);
+            var success = await _dependencyService.RemoveDependencyAsync(_originalItem.PublishedFileId, childId);
+            if (success)
+            {
+                Dependencies.Remove(dep);
+                _notificationService.ShowSuccess(Loc["DependencyRemoved"]);
+            }
+            else
+            {
+                DependencyError = Loc["RemoveDependencyFailed"];
+            }
+        }
+        catch (Exception ex)
+        {
+            DependencyError = $"{Loc["RemoveDependencyFailed"]}: {ex.Message}";
+        }
+        finally
+        {
+            dep.IsRemoving = false;
+        }
+    }
+
+    [RelayCommand]
+    private void MoveDependencyUp(DependencyInfo dep)
+    {
+        var index = Dependencies.IndexOf(dep);
+        if (index > 0)
+            Dependencies.Move(index, index - 1);
+    }
+
+    [RelayCommand]
+    private void MoveDependencyDown(DependencyInfo dep)
+    {
+        var index = Dependencies.IndexOf(dep);
+        if (index >= 0 && index < Dependencies.Count - 1)
+            Dependencies.Move(index, index + 1);
+    }
+
+    [RelayCommand]
+    private static void OpenDependencyInBrowser(DependencyInfo dep)
+    {
+        if (dep == null) return;
+        Process.Start(new ProcessStartInfo { FileName = dep.WorkshopUrl, UseShellExecute = true });
+    }
+
+    internal static ulong ParseWorkshopInput(string input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+            return 0;
+
+        input = input.Trim();
+
+        // Try as raw numeric ID
+        if (ulong.TryParse(input, out var rawId))
+            return rawId;
+
+        // Try to extract ?id= from URL
+        var match = Regex.Match(input, @"[?&]id=(\d+)");
+        if (match.Success && ulong.TryParse(match.Groups[1].Value, out var urlId))
+            return urlId;
+
+        return 0;
     }
 
     [RelayCommand]

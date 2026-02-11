@@ -257,6 +257,114 @@
                                                           EditorHeight="100"
                                                           Watermark="{DynamicResource InitialVersionPlaceholder}"/>
                     </StackPanel>
+
+                    <!-- Dependencies -->
+                    <Border Classes="card">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="{DynamicResource Dependencies}" Classes="section-header"/>
+
+                            <!-- Input + search button -->
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBox Text="{Binding NewDependencyInput}"
+                                         Watermark="{DynamicResource DependencyInputPlaceholder}"/>
+                                <Button Grid.Column="1"
+                                        Command="{Binding SearchDependencyCommand}"
+                                        Classes="accent"
+                                        Content="{DynamicResource SearchDependency}"
+                                        Margin="12,0,0,0"
+                                        IsEnabled="{Binding !IsSearchingDependency}"/>
+                            </Grid>
+
+                            <!-- Search progress -->
+                            <ProgressBar IsIndeterminate="True"
+                                         IsVisible="{Binding IsSearchingDependency}"
+                                         Height="4"/>
+
+                            <!-- Preview card -->
+                            <Border IsVisible="{Binding PreviewDependency, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                    Background="#2a3a4a" Padding="16" CornerRadius="8"
+                                    BorderBrush="{StaticResource SteamLightBlueBrush}" BorderThickness="1">
+                                <StackPanel Spacing="12">
+                                    <TextBlock Text="{DynamicResource ConfirmAddDependency}"
+                                               Foreground="#8899a6" FontSize="12"/>
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <TextBlock Text="{Binding PreviewDependency.Title}"
+                                                   FontWeight="SemiBold" Foreground="White" FontSize="14"
+                                                   VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding PreviewDependency.PublishedFileId}"
+                                                   Foreground="#556677" FontSize="11"
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Button Command="{Binding ConfirmAddDependencyCommand}"
+                                                Classes="accent"
+                                                Content="{DynamicResource AddDependency}"/>
+                                        <Button Command="{Binding CancelDependencyPreviewCommand}"
+                                                Classes="secondary"
+                                                Content="{DynamicResource Cancel}"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Error message -->
+                            <Border IsVisible="{Binding DependencyError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                    Background="#3d2a2a" Padding="8" CornerRadius="4"
+                                    BorderBrush="#c23b2e" BorderThickness="1">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <TextBlock Text="!" FontWeight="Bold" Foreground="#ff8a80" FontSize="12"/>
+                                    <TextBlock Text="{Binding DependencyError}"
+                                               Foreground="#ff8a80" FontSize="12"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Empty state -->
+                            <TextBlock Text="{DynamicResource NoDependencies}"
+                                       Foreground="#556677"
+                                       FontSize="13"
+                                       IsVisible="{Binding !Dependencies.Count}"/>
+
+                            <!-- Dependencies list -->
+                            <ItemsControl ItemsSource="{Binding Dependencies}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="models:DependencyInfo">
+                                        <Border Background="#2a3a4a" CornerRadius="4" Padding="12,8" Margin="0,0,0,4">
+                                            <Grid ColumnDefinitions="*,Auto,Auto">
+                                                <StackPanel Spacing="2" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Title}"
+                                                               FontWeight="SemiBold" Foreground="White" FontSize="13"/>
+                                                    <TextBlock Text="{Binding PublishedFileId}"
+                                                               Foreground="#556677" FontSize="11"/>
+                                                </StackPanel>
+                                                <!-- Move up/down -->
+                                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+                                                    <Button Command="{Binding $parent[ItemsControl].((vm:CreateItemViewModel)DataContext).MoveDependencyUpCommand}"
+                                                            CommandParameter="{Binding}"
+                                                            Classes="ghost" Padding="6,2"
+                                                            ToolTip.Tip="Move up">
+                                                        <TextBlock Text="&#x25B2;" FontSize="10" Foreground="#8899a6"/>
+                                                    </Button>
+                                                    <Button Command="{Binding $parent[ItemsControl].((vm:CreateItemViewModel)DataContext).MoveDependencyDownCommand}"
+                                                            CommandParameter="{Binding}"
+                                                            Classes="ghost" Padding="6,2"
+                                                            ToolTip.Tip="Move down">
+                                                        <TextBlock Text="&#x25BC;" FontSize="10" Foreground="#8899a6"/>
+                                                    </Button>
+                                                </StackPanel>
+                                                <Button Grid.Column="2"
+                                                        Command="{Binding $parent[ItemsControl].((vm:CreateItemViewModel)DataContext).RemoveDependencyCommand}"
+                                                        CommandParameter="{Binding}"
+                                                        Classes="ghost"
+                                                        Padding="8,4"
+                                                        Foreground="#ff8a80">
+                                                    <TextBlock Text="&#x2715;" FontSize="14"/>
+                                                </Button>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
             </StackPanel>
         </ScrollViewer>
