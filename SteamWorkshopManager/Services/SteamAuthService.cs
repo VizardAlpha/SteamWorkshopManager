@@ -45,6 +45,12 @@ public static class SteamAuthService
         _accountName = settingsService.Settings.SteamAccountName;
         _steamId64 = settingsService.Settings.SteamId64;
 
+        // Register sensitive values for log redaction
+        if (!string.IsNullOrEmpty(_accountName))
+            LogService.Instance.RegisterSensitiveValue(_accountName, "accountName");
+        if (_steamId64 != 0)
+            LogService.Instance.RegisterSensitiveValue(_steamId64.ToString(), "steamId64");
+
         // Restore persisted access token if it hasn't expired
         var savedAccessToken = settingsService.Settings.SteamAccessToken;
         if (!string.IsNullOrEmpty(savedAccessToken) && !IsJwtExpired(savedAccessToken))
@@ -230,6 +236,10 @@ public static class SteamAuthService
             _accountName = pollResult.AccountName;
             _accessToken = pollResult.AccessToken;
             _refreshToken = pollResult.RefreshToken;
+
+            // Register newly authenticated values for log redaction
+            LogService.Instance.RegisterSensitiveValue(_accountName, "accountName");
+            LogService.Instance.RegisterSensitiveValue(_steamId64.ToString(), "steamId64");
 
             SaveTokens();
             Log.Info($"Auth complete. SteamID64={_steamId64}");

@@ -28,11 +28,11 @@ public partial class ItemEditorViewModel : ViewModelBase
     private readonly INotificationService _notificationService;
     private readonly IProgress<UploadProgress>? _uploadProgress;
     private readonly string? _initialContentFolderPath;
-    private readonly long _initialFolderSize;
-    private readonly DateTime _initialFolderModified;
+    private long _initialFolderSize;
+    private DateTime _initialFolderModified;
     private readonly string? _initialPreviewImagePath;
-    private readonly long _initialImageSize;
-    private readonly DateTime _initialImageModified;
+    private long _initialImageSize;
+    private DateTime _initialImageModified;
     private readonly ChangelogScraperService _changelogScraper;
     private readonly WorkshopDownloadService _workshopDownloader;
     private readonly DependencyService _dependencyService;
@@ -157,15 +157,19 @@ public partial class ItemEditorViewModel : ViewModelBase
         _description = item.Description;
         _visibility = item.Visibility;
 
-        // Load saved preview image path from settings (fallback to item's path)
-        _previewImagePath = settingsService.GetPreviewImagePath((ulong)item.PublishedFileId) ?? item.PreviewImagePath;
+        // Load saved preview image info from session (fallback to item's path)
+        var savedImageInfo = settingsService.GetPreviewImageInfo((ulong)item.PublishedFileId);
+        _previewImagePath = savedImageInfo?.Path ?? item.PreviewImagePath;
         _initialPreviewImagePath = _previewImagePath;
-        (_initialImageSize, _initialImageModified) = GetFileInfo(_previewImagePath);
+        _initialImageSize = savedImageInfo?.Size ?? 0;
+        _initialImageModified = savedImageInfo?.LastModifiedUtc ?? DateTime.MinValue;
 
-        // Load saved content folder path from settings
-        _contentFolderPath = settingsService.GetContentFolderPath((ulong)item.PublishedFileId);
+        // Load saved content folder info from session
+        var savedFolderInfo = settingsService.GetContentFolderInfo((ulong)item.PublishedFileId);
+        _contentFolderPath = savedFolderInfo?.Path;
         _initialContentFolderPath = _contentFolderPath;
-        (_initialFolderSize, _initialFolderModified) = GetFolderInfo(_contentFolderPath);
+        _initialFolderSize = savedFolderInfo?.Size ?? 0;
+        _initialFolderModified = savedFolderInfo?.LastModifiedUtc ?? DateTime.MinValue;
 
         // Load tags by category from current session
         var selectedTagNames = item.Tags.Select(t => t.Name).ToHashSet();
@@ -316,6 +320,29 @@ public partial class ItemEditorViewModel : ViewModelBase
 
             if (success)
             {
+                // Save current state as the last uploaded state for change detection
+                var fileId = (ulong)_originalItem.PublishedFileId;
+                if (!string.IsNullOrEmpty(ContentFolderPath))
+                {
+                    var (folderSize, folderModified) = GetFolderInfo(ContentFolderPath);
+                    _settingsService.SetContentFolderInfo(fileId, new ItemFileInfo
+                    {
+                        Path = ContentFolderPath, Size = folderSize, LastModifiedUtc = folderModified
+                    });
+                    _initialFolderSize = folderSize;
+                    _initialFolderModified = folderModified;
+                }
+                if (!string.IsNullOrEmpty(PreviewImagePath))
+                {
+                    var (imgSize, imgModified) = GetFileInfo(PreviewImagePath);
+                    _settingsService.SetPreviewImageInfo(fileId, new ItemFileInfo
+                    {
+                        Path = PreviewImagePath, Size = imgSize, LastModifiedUtc = imgModified
+                    });
+                    _initialImageSize = imgSize;
+                    _initialImageModified = imgModified;
+                }
+
                 NewChangelog = string.Empty;
                 _notificationService.ShowSuccess(Loc["ItemUpdatedSuccess"]);
                 ItemUpdated?.Invoke();

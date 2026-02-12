@@ -15,8 +15,11 @@ public class LogService : ILogService
     private readonly object _lock = new();
     private readonly string _logFilePath;
     private bool _isDebugEnabled;
+    private readonly List<string> _sensitiveValues = [];
 
     public bool IsDebugEnabled => _isDebugEnabled;
+
+    private readonly string _userProfilePath;
 
     private LogService()
     {
@@ -26,6 +29,7 @@ public class LogService : ILogService
         );
         Directory.CreateDirectory(appDataPath);
         _logFilePath = Path.Combine(appDataPath, $"debug_{DateTime.Now:yyyy-MM-dd}.log");
+        _userProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
     }
 
     /// <summary>
@@ -35,6 +39,37 @@ public class LogService : ILogService
     /// private static readonly Logger _log = LogService.GetLogger{MyClass}();
     /// </example>
     public static Logger GetLogger<T>() => new(typeof(T).Name, Instance);
+
+    /// <summary>
+    /// Registers a value that should be redacted from all log output (e.g. account name, SteamID64).
+    /// </summary>
+    public void RegisterSensitiveValue(string value, string replacement)
+    {
+        if (string.IsNullOrEmpty(value)) return;
+        lock (_lock)
+        {
+            _sensitiveValues.Add(value);
+            _sensitiveValues.Add(replacement);
+        }
+    }
+
+    private string SanitizeMessage(string message)
+    {
+        // Replace user profile path with %USERPROFILE%
+        if (!string.IsNullOrEmpty(_userProfilePath))
+            message = message.Replace(_userProfilePath, "%USERPROFILE%", StringComparison.OrdinalIgnoreCase);
+
+        // Redact registered sensitive values
+        lock (_lock)
+        {
+            for (var i = 0; i < _sensitiveValues.Count; i += 2)
+            {
+                message = message.Replace(_sensitiveValues[i], _sensitiveValues[i + 1]);
+            }
+        }
+
+        return message;
+    }
 
     public void SetDebugMode(bool enabled)
     {
@@ -84,8 +119,8 @@ public class LogService : ILogService
             DateTime.Now,
             level,
             source,
-            message,
-            exception?.ToString()
+            SanitizeMessage(message),
+            exception != null ? SanitizeMessage(exception.ToString()) : null
         );
 
         lock (_lock)

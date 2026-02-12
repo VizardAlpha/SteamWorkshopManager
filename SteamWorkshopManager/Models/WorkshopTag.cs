@@ -10,8 +10,6 @@ public partial class WorkshopTag : ObservableObject
     [ObservableProperty]
     private bool _isSelected;
 
-    public WorkshopTag() { }
-
     public WorkshopTag(string name, bool isSelected = false)
     {
         _name = name;

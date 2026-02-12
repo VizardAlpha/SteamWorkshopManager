@@ -16,7 +16,6 @@ public class WorkshopItem : INotifyPropertyChanged
     public string Description { get; set; } = string.Empty;
     public string? PreviewImagePath { get; set; }
     public string? PreviewImageUrl { get; set; }
-    public string? ContentFolderPath { get; set; }
     public VisibilityType Visibility { get; set; } = VisibilityType.Private;
     public List<WorkshopTag> Tags { get; set; } = [];
     public List<ItemVersion> Versions { get; set; } = [];

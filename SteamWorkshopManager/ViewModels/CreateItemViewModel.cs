@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -218,11 +217,28 @@ public partial class CreateItemViewModel : ViewModelBase
 
             if (fileId.HasValue)
             {
-                // Save paths for this new mod
-                _settingsService.SetContentFolderPath((ulong)fileId.Value, ContentFolderPath);
-                if (!string.IsNullOrEmpty(PreviewImagePath))
+                // Save paths + file info for change detection on future updates
+                var id = (ulong)fileId.Value;
+                if (!string.IsNullOrEmpty(ContentFolderPath) && Directory.Exists(ContentFolderPath))
                 {
-                    _settingsService.SetPreviewImagePath((ulong)fileId.Value, PreviewImagePath);
+                    var dirInfo = new DirectoryInfo(ContentFolderPath);
+                    var files = dirInfo.GetFiles("*", SearchOption.AllDirectories);
+                    _settingsService.SetContentFolderInfo(id, new ItemFileInfo
+                    {
+                        Path = ContentFolderPath,
+                        Size = files.Sum(f => f.Length),
+                        LastModifiedUtc = files.Length > 0 ? files.Max(f => f.LastWriteTimeUtc) : dirInfo.LastWriteTimeUtc
+                    });
+                }
+                if (!string.IsNullOrEmpty(PreviewImagePath) && File.Exists(PreviewImagePath))
+                {
+                    var fi = new FileInfo(PreviewImagePath);
+                    _settingsService.SetPreviewImageInfo(id, new ItemFileInfo
+                    {
+                        Path = PreviewImagePath,
+                        Size = fi.Length,
+                        LastModifiedUtc = fi.LastWriteTimeUtc
+                    });
                 }
 
                 // Add collected dependencies

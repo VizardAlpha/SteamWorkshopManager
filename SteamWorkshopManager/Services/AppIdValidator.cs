@@ -104,36 +104,12 @@ public partial class AppIdValidator
             return name;
         }
 
-        // Fallback: <title>Steam Workshop :: GameName</title>
-        match = TitleRegexEn().Match(html);
-        if (match.Success)
-        {
-            var name = match.Groups[1].Value.Trim();
-            Log.Debug($"Extracted game name from title (EN): {name}");
-            return name;
-        }
-
-        // Fallback: French title
-        match = TitleRegexFr().Match(html);
-        if (match.Success)
-        {
-            var name = match.Groups[1].Value.Trim();
-            Log.Debug($"Extracted game name from title (FR): {name}");
-            return name;
-        }
-
         Log.Warning("Could not extract game name from HTML");
         return null;
     }
 
     [GeneratedRegex(@"<div\s+class=""apphub_AppName[^""]*"">([^<]+)</div>", RegexOptions.IgnoreCase)]
     private static partial Regex AppHubNameRegex();
-
-    [GeneratedRegex(@"<title>Steam Workshop\s*::\s*(.+?)</title>", RegexOptions.IgnoreCase | RegexOptions.Singleline)]
-    private static partial Regex TitleRegexEn();
-
-    [GeneratedRegex(@"<title>Atelier Steam\s*::\s*(.+?)</title>", RegexOptions.IgnoreCase | RegexOptions.Singleline)]
-    private static partial Regex TitleRegexFr();
 }
 
 /// <summary>

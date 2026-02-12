@@ -1,9 +1,8 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using SteamWorkshopManager.Models;
 using SteamWorkshopManager.Services.Interfaces;
 using SteamWorkshopManager.Services.Log;
 
@@ -79,67 +78,90 @@ public class SettingsService : ISettingsService
         }
     }
 
-    public string? GetContentFolderPath(ulong publishedFileId)
+    public ItemFileInfo? GetContentFolderInfo(ulong publishedFileId)
     {
         var key = publishedFileId.ToString();
-        return Settings.ContentFolderPaths.TryGetValue(key, out var path) ? path : null;
+        return AppConfig.CurrentSession?.ContentFolderInfos.TryGetValue(key, out var info) == true ? info : null;
     }
 
     public void SetContentFolderPath(ulong publishedFileId, string? path)
     {
         var key = publishedFileId.ToString();
+        var session = AppConfig.CurrentSession;
+        if (session == null) return;
+
         if (string.IsNullOrEmpty(path))
-        {
-            Settings.ContentFolderPaths.Remove(key);
-        }
+            session.ContentFolderInfos.Remove(key);
         else
-        {
-            Settings.ContentFolderPaths[key] = path;
-        }
-        Save();
+            session.ContentFolderInfos[key] = new ItemFileInfo { Path = path };
+
+        SaveSessionAsync(session);
     }
 
-    public string? GetPreviewImagePath(ulong publishedFileId)
+    public void SetContentFolderInfo(ulong publishedFileId, ItemFileInfo? info)
     {
         var key = publishedFileId.ToString();
-        return Settings.PreviewImagePaths.TryGetValue(key, out var path) ? path : null;
+        var session = AppConfig.CurrentSession;
+        if (session == null) return;
+
+        if (info == null)
+            session.ContentFolderInfos.Remove(key);
+        else
+            session.ContentFolderInfos[key] = info;
+
+        SaveSessionAsync(session);
+    }
+
+    public ItemFileInfo? GetPreviewImageInfo(ulong publishedFileId)
+    {
+        var key = publishedFileId.ToString();
+        return AppConfig.CurrentSession?.PreviewImageInfos.TryGetValue(key, out var info) == true ? info : null;
     }
 
     public void SetPreviewImagePath(ulong publishedFileId, string? path)
     {
         var key = publishedFileId.ToString();
+        var session = AppConfig.CurrentSession;
+        if (session == null) return;
+
         if (string.IsNullOrEmpty(path))
-        {
-            Settings.PreviewImagePaths.Remove(key);
-        }
+            session.PreviewImageInfos.Remove(key);
         else
-        {
-            Settings.PreviewImagePaths[key] = path;
-        }
-        Save();
+            session.PreviewImageInfos[key] = new ItemFileInfo { Path = path };
+
+        SaveSessionAsync(session);
     }
 
-    public IReadOnlyList<string> GetCustomTags() => Settings.CustomTags.AsReadOnly();
-
-    public void AddCustomTag(string tag)
+    public void SetPreviewImageInfo(ulong publishedFileId, ItemFileInfo? info)
     {
-        if (string.IsNullOrWhiteSpace(tag)) return;
+        var key = publishedFileId.ToString();
+        var session = AppConfig.CurrentSession;
+        if (session == null) return;
 
-        var trimmed = tag.Trim();
-        if (!Settings.CustomTags.Contains(trimmed, StringComparer.OrdinalIgnoreCase))
-        {
-            Settings.CustomTags.Add(trimmed);
-            Save();
-        }
+        if (info == null)
+            session.PreviewImageInfos.Remove(key);
+        else
+            session.PreviewImageInfos[key] = info;
+
+        SaveSessionAsync(session);
     }
 
-    public void RemoveCustomTag(string tag)
+    private static async void SaveSessionAsync(WorkshopSession session)
     {
-        var index = Settings.CustomTags.FindIndex(t => t.Equals(tag, StringComparison.OrdinalIgnoreCase));
-        if (index >= 0)
+        try
         {
-            Settings.CustomTags.RemoveAt(index);
-            Save();
+            var folder = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "SteamWorkshopManager", "sessions"
+            );
+            var filePath = Path.Combine(folder, $"{session.Id}.json");
+            var json = JsonSerializer.Serialize(session, SessionJsonContext.Default.WorkshopSession);
+            await File.WriteAllTextAsync(filePath, json);
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"Failed to save session: {ex.Message}");
         }
     }
+
 }

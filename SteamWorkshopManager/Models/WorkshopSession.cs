@@ -5,6 +5,16 @@ using System.Text.Json.Serialization;
 namespace SteamWorkshopManager.Models;
 
 /// <summary>
+/// Tracks a file/folder path with size and modification date for change detection.
+/// </summary>
+public class ItemFileInfo
+{
+    public string Path { get; set; } = string.Empty;
+    public long Size { get; set; }
+    public DateTime LastModifiedUtc { get; set; }
+}
+
+/// <summary>
 /// Represents a workshop session/profile for a specific game.
 /// Each session contains all data related to managing mods for one Steam Workshop.
 /// </summary>
@@ -52,16 +62,16 @@ public class WorkshopSession
     public List<string> CustomTags { get; set; } = [];
 
     /// <summary>
-    /// Remembered content folder paths for each published item.
-    /// Key = PublishedFileId as string, Value = folder path.
+    /// Remembered content folder info for each published item.
+    /// Key = PublishedFileId as string.
     /// </summary>
-    public Dictionary<string, string> ContentFolderPaths { get; set; } = new();
+    public Dictionary<string, ItemFileInfo> ContentFolderInfos { get; set; } = new();
 
     /// <summary>
-    /// Remembered preview image paths for each published item.
-    /// Key = PublishedFileId as string, Value = image path.
+    /// Remembered preview image info for each published item.
+    /// Key = PublishedFileId as string.
     /// </summary>
-    public Dictionary<string, string> PreviewImagePaths { get; set; } = new();
+    public Dictionary<string, ItemFileInfo> PreviewImageInfos { get; set; } = new();
 
     /// <summary>
     /// When this session was created.
@@ -78,17 +88,4 @@ public class WorkshopSession
     /// </summary>
     [JsonIgnore]
     public bool IsActive { get; set; }
-
-    /// <summary>
-    /// Gets all tags as a flat list (for backwards compatibility).
-    /// </summary>
-    public List<string> GetAllTags()
-    {
-        var allTags = new List<string>();
-        foreach (var category in TagsByCategory.Values)
-        {
-            allTags.AddRange(category);
-        }
-        return allTags;
-    }
 }
