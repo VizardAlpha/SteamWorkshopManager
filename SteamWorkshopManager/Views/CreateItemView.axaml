@@ -365,6 +365,99 @@
                             </ItemsControl>
                         </StackPanel>
                     </Border>
+
+                    <!-- App Dependencies -->
+                    <Border Classes="card">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="{DynamicResource RequiredApps}" Classes="section-header"/>
+
+                            <!-- AppID input + search -->
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBox Text="{Binding NewAppIdInput}"
+                                         Watermark="{DynamicResource AppIdPlaceholder}"/>
+                                <Button Grid.Column="1"
+                                        Command="{Binding SearchAppCommand}"
+                                        Classes="accent"
+                                        Content="{DynamicResource SearchDependency}"
+                                        Margin="12,0,0,0"
+                                        IsEnabled="{Binding !IsSearchingApp}"/>
+                            </Grid>
+
+                            <!-- Search progress -->
+                            <ProgressBar IsIndeterminate="True"
+                                         IsVisible="{Binding IsSearchingApp}"
+                                         Height="4"/>
+
+                            <!-- App preview card -->
+                            <Border IsVisible="{Binding AppPreviewInfo, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                    Background="#2a3a4a" Padding="16" CornerRadius="8"
+                                    BorderBrush="{StaticResource SteamLightBlueBrush}" BorderThickness="1">
+                                <StackPanel Spacing="12">
+                                    <TextBlock Text="{DynamicResource ConfirmAddApp}"
+                                               Foreground="#8899a6" FontSize="12"/>
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <TextBlock Text="{Binding AppPreviewInfo.DisplayName}"
+                                                   FontWeight="SemiBold" Foreground="White" FontSize="14"
+                                                   VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding AppPreviewInfo.AppId, StringFormat='AppID: {0}'}"
+                                                   Foreground="#556677" FontSize="11"
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Button Command="{Binding ConfirmAddAppCommand}"
+                                                Classes="accent"
+                                                Content="{DynamicResource AddDependency}"/>
+                                        <Button Command="{Binding CancelAppPreviewCommand}"
+                                                Classes="secondary"
+                                                Content="{DynamicResource Cancel}"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- App error message -->
+                            <Border IsVisible="{Binding AddAppError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                    Background="#3d2a2a" Padding="8" CornerRadius="4"
+                                    BorderBrush="#c23b2e" BorderThickness="1">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <TextBlock Text="!" FontWeight="Bold" Foreground="#ff8a80" FontSize="12"/>
+                                    <TextBlock Text="{Binding AddAppError}"
+                                               Foreground="#ff8a80" FontSize="12"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Empty state -->
+                            <TextBlock Text="{DynamicResource NoAppDependencies}"
+                                       Foreground="#556677"
+                                       FontSize="13"
+                                       IsVisible="{Binding !AppDependencies.Count}"/>
+
+                            <!-- App dependencies list -->
+                            <ItemsControl ItemsSource="{Binding AppDependencies}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="models:AppDependencyInfo">
+                                        <Border Background="#2a3a4a" CornerRadius="4" Padding="12,8" Margin="0,0,0,4">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <StackPanel Spacing="2" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding DisplayName}"
+                                                               FontWeight="SemiBold" Foreground="White" FontSize="13"/>
+                                                    <TextBlock Text="{Binding AppId, StringFormat='AppID: {0}'}"
+                                                               Foreground="#556677" FontSize="11"/>
+                                                </StackPanel>
+                                                <Button Grid.Column="1"
+                                                        Command="{Binding $parent[ItemsControl].((vm:CreateItemViewModel)DataContext).RemoveAppDependencyCommand}"
+                                                        CommandParameter="{Binding}"
+                                                        Classes="ghost"
+                                                        Padding="8,4"
+                                                        Foreground="#ff8a80">
+                                                    <TextBlock Text="&#x2715;" FontSize="14"/>
+                                                </Button>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
             </StackPanel>
         </ScrollViewer>

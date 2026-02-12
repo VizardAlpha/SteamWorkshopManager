@@ -264,4 +264,18 @@
     <x:String x:Key="DependencyAdded">Dependency added!</x:String>
     <x:String x:Key="DependencyRemoved">Dependency removed!</x:String>
     <x:String x:Key="ConfirmAddDependency">Add this dependency?</x:String>
+
+    <!-- App Dependencies -->
+    <x:String x:Key="RequiredApps">Required Apps / DLCs</x:String>
+    <x:String x:Key="NoAppDependencies">No required apps</x:String>
+    <x:String x:Key="AppIdPlaceholder">Steam AppID...</x:String>
+    <x:String x:Key="AppDependencyAlreadyExists">This app dependency already exists</x:String>
+    <x:String x:Key="AddAppDependencyFailed">Failed to add app dependency</x:String>
+    <x:String x:Key="RemoveAppDependencyFailed">Failed to remove app dependency</x:String>
+    <x:String x:Key="AppDependencyAdded">App dependency added!</x:String>
+    <x:String x:Key="AppDependencyRemoved">App dependency removed!</x:String>
+    <x:String x:Key="OpenInStore">Open in Store</x:String>
+    <x:String x:Key="CannotAddOwnGame">Cannot add the current game as a dependency</x:String>
+    <x:String x:Key="AppNotFound">App not found</x:String>
+    <x:String x:Key="ConfirmAddApp">Add this app as a dependency?</x:String>
 </ResourceDictionary>

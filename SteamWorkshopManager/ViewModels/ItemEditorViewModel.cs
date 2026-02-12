@@ -36,6 +36,7 @@ public partial class ItemEditorViewModel : ViewModelBase
     private readonly ChangelogScraperService _changelogScraper;
     private readonly WorkshopDownloadService _workshopDownloader;
     private readonly DependencyService _dependencyService;
+    private readonly AppDependencyService _appDependencyService;
     private bool _changelogHistoryLoaded;
     private bool _dependenciesLoaded;
     private static readonly HttpClient HttpClient = new();
@@ -128,6 +129,24 @@ public partial class ItemEditorViewModel : ViewModelBase
 
     public ObservableCollection<DependencyInfo> Dependencies { get; } = [];
 
+    // App dependencies
+    [ObservableProperty]
+    private string _newAppIdInput = "";
+
+    [ObservableProperty]
+    private AppDependencyInfo? _appPreviewInfo;
+
+    [ObservableProperty]
+    private bool _isSearchingApp;
+
+    [ObservableProperty]
+    private bool _isAddingApp;
+
+    [ObservableProperty]
+    private string? _addAppError;
+
+    public ObservableCollection<AppDependencyInfo> AppDependencies { get; } = [];
+
     public ObservableCollection<TagCategory> TagCategories { get; } = [];
     public ObservableCollection<WorkshopTag> CustomTags { get; } = [];
     public ObservableCollection<ItemVersion> Versions { get; } = [];
@@ -152,6 +171,7 @@ public partial class ItemEditorViewModel : ViewModelBase
         _changelogScraper = new ChangelogScraperService();
         _workshopDownloader = new WorkshopDownloadService();
         _dependencyService = new DependencyService();
+        _appDependencyService = new AppDependencyService();
 
         _title = item.Title;
         _description = item.Description;
@@ -388,6 +408,10 @@ public partial class ItemEditorViewModel : ViewModelBase
 
             if (success)
             {
+                var fileId = (ulong)_originalItem.PublishedFileId;
+                _settingsService.SetContentFolderInfo(fileId, null);
+                _settingsService.SetPreviewImageInfo(fileId, null);
+
                 _notificationService.ShowSuccess(Loc["ItemDeletedSuccess"]);
                 ItemDeleted?.Invoke();
             }
@@ -582,6 +606,12 @@ public partial class ItemEditorViewModel : ViewModelBase
             Dependencies.Clear();
             foreach (var dep in deps)
                 Dependencies.Add(dep);
+
+            var appDeps = await _appDependencyService.GetAppDependenciesAsync(_originalItem.PublishedFileId);
+            AppDependencies.Clear();
+            foreach (var appDep in appDeps)
+                AppDependencies.Add(appDep);
+
             _dependenciesLoaded = true;
         }
         catch (Exception ex)
@@ -734,6 +764,132 @@ public partial class ItemEditorViewModel : ViewModelBase
     {
         if (dep == null) return;
         Process.Start(new ProcessStartInfo { FileName = dep.WorkshopUrl, UseShellExecute = true });
+    }
+
+    // App dependency commands
+
+    [RelayCommand]
+    private async Task SearchAppAsync()
+    {
+        AddAppError = null;
+        AppPreviewInfo = null;
+
+        if (!uint.TryParse(NewAppIdInput.Trim(), out var appId) || appId == 0)
+        {
+            AddAppError = Loc["InvalidAppId"];
+            return;
+        }
+
+        // Block adding the current game itself
+        if (appId == AppConfig.AppId)
+        {
+            AddAppError = Loc["CannotAddOwnGame"];
+            return;
+        }
+
+        if (AppDependencies.Any(d => d.AppId == appId))
+        {
+            AddAppError = Loc["AppDependencyAlreadyExists"];
+            return;
+        }
+
+        IsSearchingApp = true;
+        try
+        {
+            var name = await _appDependencyService.ResolveAppNameAsync(appId);
+            if (name == null)
+            {
+                AddAppError = Loc["AppNotFound"];
+                return;
+            }
+            AppPreviewInfo = new AppDependencyInfo { AppId = appId, Name = name };
+        }
+        catch (Exception ex)
+        {
+            AddAppError = ex.Message;
+        }
+        finally
+        {
+            IsSearchingApp = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task ConfirmAddAppAsync()
+    {
+        if (AppPreviewInfo == null) return;
+
+        IsAddingApp = true;
+        AddAppError = null;
+        try
+        {
+            var success = await _appDependencyService.AddAppDependencyAsync(
+                _originalItem.PublishedFileId, new AppId_t(AppPreviewInfo.AppId));
+            if (success)
+            {
+                AppDependencies.Add(AppPreviewInfo);
+                AppPreviewInfo = null;
+                NewAppIdInput = "";
+                _notificationService.ShowSuccess(Loc["AppDependencyAdded"]);
+            }
+            else
+            {
+                AddAppError = Loc["AddAppDependencyFailed"];
+            }
+        }
+        catch (Exception ex)
+        {
+            AddAppError = $"{Loc["AddAppDependencyFailed"]}: {ex.Message}";
+        }
+        finally
+        {
+            IsAddingApp = false;
+        }
+    }
+
+    [RelayCommand]
+    private void CancelAppPreview()
+    {
+        AppPreviewInfo = null;
+        AddAppError = null;
+    }
+
+    [RelayCommand]
+    private async Task RemoveAppDependencyAsync(AppDependencyInfo dep)
+    {
+        if (dep == null) return;
+
+        dep.IsRemoving = true;
+        AddAppError = null;
+        try
+        {
+            var success = await _appDependencyService.RemoveAppDependencyAsync(
+                _originalItem.PublishedFileId, new AppId_t(dep.AppId));
+            if (success)
+            {
+                AppDependencies.Remove(dep);
+                _notificationService.ShowSuccess(Loc["AppDependencyRemoved"]);
+            }
+            else
+            {
+                AddAppError = Loc["RemoveAppDependencyFailed"];
+            }
+        }
+        catch (Exception ex)
+        {
+            AddAppError = $"{Loc["RemoveAppDependencyFailed"]}: {ex.Message}";
+        }
+        finally
+        {
+            dep.IsRemoving = false;
+        }
+    }
+
+    [RelayCommand]
+    private static void OpenAppInStore(AppDependencyInfo dep)
+    {
+        if (dep == null) return;
+        Process.Start(new ProcessStartInfo { FileName = dep.StoreUrl, UseShellExecute = true });
     }
 
     internal static ulong ParseWorkshopInput(string input)

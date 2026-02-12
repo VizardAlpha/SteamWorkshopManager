@@ -22,6 +22,7 @@ public partial class CreateItemViewModel : ViewModelBase
     private readonly INotificationService _notificationService;
     private readonly IProgress<UploadProgress>? _uploadProgress;
     private readonly DependencyService _dependencyService;
+    private readonly AppDependencyService _appDependencyService;
     private const long MaxImageSizeBytes = 1024 * 1024; // 1 MB Steam limit
 
     [ObservableProperty]
@@ -78,6 +79,21 @@ public partial class CreateItemViewModel : ViewModelBase
 
     public ObservableCollection<DependencyInfo> Dependencies { get; } = [];
 
+    // App dependencies
+    [ObservableProperty]
+    private string _newAppIdInput = "";
+
+    [ObservableProperty]
+    private AppDependencyInfo? _appPreviewInfo;
+
+    [ObservableProperty]
+    private bool _isSearchingApp;
+
+    [ObservableProperty]
+    private string? _addAppError;
+
+    public ObservableCollection<AppDependencyInfo> AppDependencies { get; } = [];
+
     public ObservableCollection<TagCategory> TagCategories { get; } = [];
     public ObservableCollection<WorkshopTag> CustomTags { get; } = [];
 
@@ -96,6 +112,7 @@ public partial class CreateItemViewModel : ViewModelBase
         _notificationService = notificationService;
         _uploadProgress = uploadProgress;
         _dependencyService = new DependencyService();
+        _appDependencyService = new AppDependencyService();
 
         // Load tags by category from current session
         var sessionTags = AppConfig.CurrentSession?.TagsByCategory ?? new Dictionary<string, List<string>>();
@@ -248,6 +265,13 @@ public partial class CreateItemViewModel : ViewModelBase
                         fileId.Value, new PublishedFileId_t(dep.PublishedFileId));
                 }
 
+                // Add collected app dependencies
+                foreach (var appDep in AppDependencies)
+                {
+                    await _appDependencyService.AddAppDependencyAsync(
+                        fileId.Value, new AppId_t(appDep.AppId));
+                }
+
                 _notificationService.ShowSuccess(Loc["ItemCreatedSuccess"]);
                 ItemCreated?.Invoke();
             }
@@ -331,6 +355,78 @@ public partial class CreateItemViewModel : ViewModelBase
     private void RemoveDependency(DependencyInfo dep)
     {
         Dependencies.Remove(dep);
+    }
+
+    // App dependency commands
+
+    [RelayCommand]
+    private async Task SearchAppAsync()
+    {
+        AddAppError = null;
+        AppPreviewInfo = null;
+
+        if (!uint.TryParse(NewAppIdInput.Trim(), out var appId) || appId == 0)
+        {
+            AddAppError = Loc["InvalidAppId"];
+            return;
+        }
+
+        // Block adding the current game itself
+        if (appId == AppConfig.AppId)
+        {
+            AddAppError = Loc["CannotAddOwnGame"];
+            return;
+        }
+
+        if (AppDependencies.Any(d => d.AppId == appId))
+        {
+            AddAppError = Loc["AppDependencyAlreadyExists"];
+            return;
+        }
+
+        IsSearchingApp = true;
+        try
+        {
+            var name = await _appDependencyService.ResolveAppNameAsync(appId);
+            if (name == null)
+            {
+                AddAppError = Loc["AppNotFound"];
+                return;
+            }
+            AppPreviewInfo = new AppDependencyInfo { AppId = appId, Name = name };
+        }
+        catch (Exception ex)
+        {
+            AddAppError = ex.Message;
+        }
+        finally
+        {
+            IsSearchingApp = false;
+        }
+    }
+
+    [RelayCommand]
+    private void ConfirmAddApp()
+    {
+        if (AppPreviewInfo == null) return;
+
+        AppDependencies.Add(AppPreviewInfo);
+        AppPreviewInfo = null;
+        NewAppIdInput = "";
+        AddAppError = null;
+    }
+
+    [RelayCommand]
+    private void CancelAppPreview()
+    {
+        AppPreviewInfo = null;
+        AddAppError = null;
+    }
+
+    [RelayCommand]
+    private void RemoveAppDependency(AppDependencyInfo dep)
+    {
+        AppDependencies.Remove(dep);
     }
 
     [RelayCommand]

@@ -264,4 +264,18 @@
     <x:String x:Key="DependencyAdded">Dépendance ajoutée !</x:String>
     <x:String x:Key="DependencyRemoved">Dépendance supprimée !</x:String>
     <x:String x:Key="ConfirmAddDependency">Ajouter cette dépendance ?</x:String>
+
+    <!-- App Dependencies -->
+    <x:String x:Key="RequiredApps">Apps / DLCs requis</x:String>
+    <x:String x:Key="NoAppDependencies">Aucune app requise</x:String>
+    <x:String x:Key="AppIdPlaceholder">AppID Steam...</x:String>
+    <x:String x:Key="AppDependencyAlreadyExists">Cette dépendance d'app existe déjà</x:String>
+    <x:String x:Key="AddAppDependencyFailed">Échec de l'ajout de la dépendance d'app</x:String>
+    <x:String x:Key="RemoveAppDependencyFailed">Échec de la suppression de la dépendance d'app</x:String>
+    <x:String x:Key="AppDependencyAdded">Dépendance d'app ajoutée !</x:String>
+    <x:String x:Key="AppDependencyRemoved">Dépendance d'app supprimée !</x:String>
+    <x:String x:Key="OpenInStore">Ouvrir dans le Store</x:String>
+    <x:String x:Key="CannotAddOwnGame">Impossible d'ajouter le jeu actuel comme dépendance</x:String>
+    <x:String x:Key="AppNotFound">App introuvable</x:String>
+    <x:String x:Key="ConfirmAddApp">Ajouter cette app comme dépendance ?</x:String>
 </ResourceDictionary>

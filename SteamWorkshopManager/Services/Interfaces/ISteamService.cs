@@ -22,7 +22,17 @@ public interface ISteamService
         string? contentFolderPath, string? previewImagePath, VisibilityType? visibility,
         List<string>? tags, string? changelog, IProgress<UploadProgress>? progress = null);
     Task<bool> DeleteItemAsync(PublishedFileId_t fileId);
-    
+
+    /// <summary>
+    /// Gets the list of game branches (betas) available for the current AppId.
+    /// Returns empty list if versioning is not enabled.
+    /// </summary>
+    List<GameBranch> GetGameBranches();
+
+    /// <summary>
+    /// Gets the current active beta branch name. Returns "public" if on default branch.
+    /// </summary>
+    string GetCurrentBranchName();
 }
 
 public record UploadProgress(string Status, ulong BytesProcessed, ulong BytesTotal)

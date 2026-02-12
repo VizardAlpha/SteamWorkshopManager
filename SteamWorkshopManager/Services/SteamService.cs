@@ -66,6 +66,12 @@ public class SteamService : ISteamService
                 {
                     Log.Warning($"AppId mismatch! Expected: {AppConfig.AppId}, Steam reports: {steamAppId.m_AppId}");
                 }
+
+                // Log available game branches for versioning support
+                var currentBranch = GetCurrentBranchName();
+                Log.Info($"Current game branch: {currentBranch}");
+                var branches = GetGameBranches();
+                Log.Info($"Versioning: {branches.Count} branches available (enabled={branches.Count > 0})");
             }
             else
             {
@@ -497,4 +503,66 @@ public class SteamService : ISteamService
                 ERemoteStoragePublishedFileVisibility.k_ERemoteStoragePublishedFileVisibilityUnlisted,
             _ => ERemoteStoragePublishedFileVisibility.k_ERemoteStoragePublishedFileVisibilityPrivate
         };
+
+    public List<GameBranch> GetGameBranches()
+    {
+        var branches = new List<GameBranch>();
+        if (!_isInitialized)
+        {
+            Log.Warning("GetGameBranches called but Steam is not initialized");
+            return branches;
+        }
+
+        try
+        {
+            var totalBetas = SteamApps.GetNumBetas(out var available, out var privateBetas);
+            Log.Info($"Game branches: total={totalBetas}, available={available}, private={privateBetas}");
+
+            for (var i = 0; i < totalBetas; i++)
+            {
+                if (SteamApps.GetBetaInfo(i, out var flags, out var buildId,
+                        out var betaName, 128, out var description, 256))
+                {
+                    Log.Debug($"Branch [{i}]: name='{betaName}', buildId={buildId}, flags={flags}, desc='{description}'");
+                    branches.Add(new GameBranch
+                    {
+                        Name = betaName,
+                        Description = description,
+                        BuildId = buildId,
+                        Flags = flags
+                    });
+                }
+                else
+                {
+                    Log.Warning($"Failed to get beta info for index {i}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error("Failed to get game branches", ex);
+        }
+
+        return branches;
+    }
+
+    public string GetCurrentBranchName()
+    {
+        if (!_isInitialized) return "public";
+
+        try
+        {
+            if (SteamApps.GetCurrentBetaName(out var betaName, 128) && !string.IsNullOrEmpty(betaName))
+            {
+                Log.Debug($"Current beta branch: {betaName}");
+                return betaName;
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error("Failed to get current beta name", ex);
+        }
+
+        return "public";
+    }
 }
