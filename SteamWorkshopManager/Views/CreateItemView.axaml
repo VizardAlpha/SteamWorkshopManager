@@ -162,28 +162,87 @@
                     <!-- Tags -->
                     <Border Classes="card">
                         <StackPanel Spacing="12">
-                            <TextBlock Text="{DynamicResource Tags}" Classes="section-header"/>
-                            <ItemsControl ItemsSource="{Binding TagCategories}">
+                            <Grid ColumnDefinitions="*,Auto,Auto">
+                                <TextBlock Text="{DynamicResource Tags}" Classes="section-header"/>
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding TagsLastUpdatedText}"
+                                           FontSize="11"
+                                           Foreground="White"
+                                           Opacity="0.5"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,8,0"/>
+                                <Button Grid.Column="2"
+                                        Command="{Binding RefreshTagsCommand}"
+                                        Classes="ghost"
+                                        Padding="8,4"
+                                        FontSize="12"
+                                        IsEnabled="{Binding !IsRefreshingTags}">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <TextBlock Text="↻" FontSize="14"/>
+                                        <TextBlock IsVisible="{Binding IsRefreshingTags}"
+                                                   Text="{DynamicResource RefreshingTags}"/>
+                                        <TextBlock IsVisible="{Binding !IsRefreshingTags}"
+                                                   Text="{DynamicResource RefreshTags}"/>
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+                            <!-- No tags message -->
+                            <TextBlock Text="{DynamicResource NoTagsForWorkshop}"
+                                       IsVisible="{Binding !HasTags}"
+                                       Foreground="White"
+                                       Opacity="0.5"
+                                       FontStyle="Italic"/>
+
+                            <ItemsControl ItemsSource="{Binding TagCategories}"
+                                          IsVisible="{Binding HasTags}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate DataType="models:TagCategory">
                                         <Expander Margin="0,0,0,8">
                                             <Expander.Header>
                                                 <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Foreground="White"/>
                                             </Expander.Header>
-                                            <ItemsControl ItemsSource="{Binding Tags}" Margin="8,12,0,0">
-                                                <ItemsControl.ItemsPanel>
-                                                    <ItemsPanelTemplate>
-                                                        <WrapPanel Orientation="Horizontal"/>
-                                                    </ItemsPanelTemplate>
-                                                </ItemsControl.ItemsPanel>
-                                                <ItemsControl.ItemTemplate>
-                                                    <DataTemplate DataType="models:WorkshopTag">
-                                                        <CheckBox Content="{Binding Name}"
-                                                                  IsChecked="{Binding IsSelected}"
-                                                                  Margin="0,0,20,8"/>
-                                                    </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
-                                            </ItemsControl>
+                                            <Panel Margin="8,12,0,0">
+                                                <!-- Dropdown: ComboBox (single-select) -->
+                                                <Grid IsVisible="{Binding IsDropdown}"
+                                                      ColumnDefinitions="Auto,Auto">
+                                                    <ComboBox ItemsSource="{Binding Tags}"
+                                                              SelectedItem="{Binding SelectedTag}"
+                                                              PlaceholderText="—"
+                                                              MinWidth="200">
+                                                        <ComboBox.ItemTemplate>
+                                                            <DataTemplate DataType="models:WorkshopTag">
+                                                                <TextBlock Text="{Binding Name}"/>
+                                                            </DataTemplate>
+                                                        </ComboBox.ItemTemplate>
+                                                    </ComboBox>
+                                                    <Button Grid.Column="1"
+                                                            Command="{Binding ClearSelectedTagCommand}"
+                                                            IsVisible="{Binding SelectedTag, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                                            Classes="ghost"
+                                                            Padding="6,4"
+                                                            Margin="4,0,0,0"
+                                                            FontSize="12"
+                                                            Foreground="#ff8a80">
+                                                        <TextBlock Text="✕"/>
+                                                    </Button>
+                                                </Grid>
+                                                <!-- Checkboxes: WrapPanel (multi-select) -->
+                                                <ItemsControl ItemsSource="{Binding Tags}"
+                                                              IsVisible="{Binding !IsDropdown}">
+                                                    <ItemsControl.ItemsPanel>
+                                                        <ItemsPanelTemplate>
+                                                            <WrapPanel Orientation="Horizontal"/>
+                                                        </ItemsPanelTemplate>
+                                                    </ItemsControl.ItemsPanel>
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate DataType="models:WorkshopTag">
+                                                            <CheckBox Content="{Binding Name}"
+                                                                      IsChecked="{Binding IsSelected}"
+                                                                      Margin="0,0,20,8"/>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </Panel>
                                         </Expander>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
@@ -257,6 +316,69 @@
                                                           EditorHeight="100"
                                                           Watermark="{DynamicResource InitialVersionPlaceholder}"/>
                     </StackPanel>
+
+                    <!-- Versioning -->
+                    <Border Classes="card" IsVisible="{Binding IsVersioningEnabled}">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="{DynamicResource NextUploadVersioning}" Classes="section-header"/>
+
+                            <!-- Current branch info -->
+                            <Border Background="#2a3a4a" Padding="12" CornerRadius="6">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="{DynamicResource CurrentBranch}"
+                                               Foreground="#8899a6" FontSize="13"/>
+                                    <TextBlock Text="{Binding CurrentBranch}"
+                                               Foreground="White" FontWeight="SemiBold" FontSize="13"/>
+                                </StackPanel>
+                            </Border>
+
+                            <CheckBox Content="{DynamicResource TargetAllVersions}"
+                                      IsChecked="{Binding TargetAllVersions}"/>
+
+                            <Grid ColumnDefinitions="*,16,*"
+                                  IsEnabled="{Binding !TargetAllVersions}">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{DynamicResource MinBranch}"
+                                               Foreground="#8899a6" FontSize="12"/>
+                                    <ComboBox ItemsSource="{Binding AvailableBranches}"
+                                              SelectedItem="{Binding SelectedBranchMin}"
+                                              PlaceholderText="{DynamicResource AnyOlderVersion}"
+                                              HorizontalAlignment="Stretch">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate DataType="models:GameBranch">
+                                                <TextBlock Text="{Binding DisplayName}"/>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="4">
+                                    <TextBlock Text="{DynamicResource MaxBranch}"
+                                               Foreground="#8899a6" FontSize="12"/>
+                                    <ComboBox ItemsSource="{Binding AvailableBranches}"
+                                              SelectedItem="{Binding SelectedBranchMax}"
+                                              PlaceholderText="{DynamicResource AnyNewerVersion}"
+                                              HorizontalAlignment="Stretch">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate DataType="models:GameBranch">
+                                                <TextBlock Text="{Binding DisplayName}"/>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Invalid range warning -->
+                            <Border Background="#3d2a2a" Padding="8" CornerRadius="4"
+                                    BorderBrush="#c23b2e" BorderThickness="1"
+                                    IsVisible="{Binding IsBranchRangeInvalid}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <TextBlock Text="!" FontWeight="Bold" Foreground="#ff8a80" FontSize="12"/>
+                                    <TextBlock Text="{DynamicResource InvalidBranchRange}"
+                                               Foreground="#ff8a80" FontSize="12"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
 
                     <!-- Dependencies -->
                     <Border Classes="card">

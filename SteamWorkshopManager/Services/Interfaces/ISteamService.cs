@@ -17,10 +17,11 @@ public interface ISteamService
     Task<List<WorkshopItem>> GetPublishedItemsAsync();
     Task<PublishedFileId_t?> CreateItemAsync(string title, string description, string contentFolderPath,
         string? previewImagePath, VisibilityType visibility, List<string> tags, string? changelog,
-        IProgress<UploadProgress>? progress = null);
+        IProgress<UploadProgress>? progress = null, string? branchMin = null, string? branchMax = null);
     Task<bool> UpdateItemAsync(PublishedFileId_t fileId, string? title, string? description,
         string? contentFolderPath, string? previewImagePath, VisibilityType? visibility,
-        List<string>? tags, string? changelog, IProgress<UploadProgress>? progress = null);
+        List<string>? tags, string? changelog, IProgress<UploadProgress>? progress = null,
+        string? branchMin = null, string? branchMax = null);
     Task<bool> DeleteItemAsync(PublishedFileId_t fileId);
 
     /// <summary>

@@ -1,4 +1,5 @@
 using System;
+using System.Net;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -99,7 +100,7 @@ public partial class AppIdValidator
         var match = AppHubNameRegex().Match(html);
         if (match.Success)
         {
-            var name = match.Groups[1].Value.Trim();
+            var name = WebUtility.HtmlDecode(match.Groups[1].Value.Trim());
             Log.Debug($"Extracted game name from apphub_AppName: {name}");
             return name;
         }

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/01/nuspec.xsd">
+  <metadata>
+    <id>Steamworks.NET</id>
+    <version>2025.163.0</version>
+    <authors>rileylabrecque</authors>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">MIT</license>
+    <projectUrl>https://github.com/rlabrecque/Steamworks.NET</projectUrl>
+    <description>Steamworks.NET - Local build from GitHub release 2025.163.0 (ISteamUGC v021)</description>
+    <dependencies>
+      <group targetFramework=".NETStandard2.1" />
+    </dependencies>
+    <references>
+      <group targetFramework=".NETStandard2.1">
+        <reference file="Steamworks.NET.dll" />
+      </group>
+    </references>
+  </metadata>
+  <files>
+    <!-- Reference assembly (Windows x64 as default) -->
+    <file src="ref\netstandard2.1\Steamworks.NET.dll" target="ref\netstandard2.1" />
+    <!-- Fallback lib -->
+    <file src="lib\netstandard2.1\Steamworks.NET.dll" target="lib\netstandard2.1" />
+    <!-- Per-platform managed DLLs -->
+    <file src="runtimes\win-x64\lib\netstandard2.1\Steamworks.NET.dll" target="runtimes\win-x64\lib\netstandard2.1" />
+    <file src="runtimes\linux-x64\lib\netstandard2.1\Steamworks.NET.dll" target="runtimes\linux-x64\lib\netstandard2.1" />
+    <file src="runtimes\osx-x64\lib\netstandard2.1\Steamworks.NET.dll" target="runtimes\osx-x64\lib\netstandard2.1" />
+  </files>
+</package>

@@ -37,8 +37,10 @@ public partial class ItemEditorViewModel : ViewModelBase
     private readonly WorkshopDownloadService _workshopDownloader;
     private readonly DependencyService _dependencyService;
     private readonly AppDependencyService _appDependencyService;
+    private readonly VersioningService _versioningService;
     private bool _changelogHistoryLoaded;
     private bool _dependenciesLoaded;
+    private bool _versionsLoaded;
     private static readonly HttpClient HttpClient = new();
     private const long MaxImageSizeBytes = 1024 * 1024; // 1 MB Steam limit
 
@@ -147,9 +149,42 @@ public partial class ItemEditorViewModel : ViewModelBase
 
     public ObservableCollection<AppDependencyInfo> AppDependencies { get; } = [];
 
+    // Versioning
+    [ObservableProperty]
+    private bool _isVersioningEnabled;
+
+    [ObservableProperty]
+    private bool _isLoadingVersions;
+
+    [ObservableProperty]
+    private string _currentBranch = "";
+
+    [ObservableProperty]
+    private bool _targetAllVersions = true;
+
+    [ObservableProperty]
+    private GameBranch? _selectedBranchMin;
+
+    [ObservableProperty]
+    private GameBranch? _selectedBranchMax;
+
+    [ObservableProperty]
+    private bool _isBranchRangeInvalid;
+
+    public List<GameBranch> AvailableBranches { get; private set; } = [];
+    public ObservableCollection<ModVersionInfo> ExistingVersions { get; } = [];
+
+    [ObservableProperty]
+    private bool _isRefreshingTags;
+
+    [ObservableProperty]
+    private string _tagsLastUpdatedText = "";
+
+    [ObservableProperty]
+    private bool _hasTags;
+
     public ObservableCollection<TagCategory> TagCategories { get; } = [];
     public ObservableCollection<WorkshopTag> CustomTags { get; } = [];
-    public ObservableCollection<ItemVersion> Versions { get; } = [];
     public ObservableCollection<ChangeLogEntry> ChangeLogHistory { get; } = [];
 
     public static IEnumerable<VisibilityType> VisibilityOptions =>
@@ -172,6 +207,7 @@ public partial class ItemEditorViewModel : ViewModelBase
         _workshopDownloader = new WorkshopDownloadService();
         _dependencyService = new DependencyService();
         _appDependencyService = new AppDependencyService();
+        _versioningService = new VersioningService(steamService);
 
         _title = item.Title;
         _description = item.Description;
@@ -194,21 +230,28 @@ public partial class ItemEditorViewModel : ViewModelBase
         // Load tags by category from current session
         var selectedTagNames = item.Tags.Select(t => t.Name).ToHashSet();
         var sessionTags = AppConfig.CurrentSession?.TagsByCategory ?? new Dictionary<string, List<string>>();
+        var dropdownCategories = AppConfig.CurrentSession?.DropdownCategories ?? [];
         var allPredefinedTags = sessionTags
             .SelectMany(kvp => kvp.Value.Concat(kvp.Value.Select(v => $"{kvp.Key}: {v}")))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         foreach (var (category, tags) in sessionTags)
         {
-            var tagCategory = new TagCategory { Name = category };
+            var tagCategory = new TagCategory
+            {
+                Name = category,
+                IsDropdown = dropdownCategories.Contains(category)
+            };
             foreach (var tag in tags)
             {
                 // Check if tag is selected (with or without category prefix)
                 var isSelected = selectedTagNames.Contains(tag) || selectedTagNames.Contains($"{category}: {tag}");
                 tagCategory.Tags.Add(new WorkshopTag(tag, isSelected));
             }
+            tagCategory.SyncSelectedTag();
             TagCategories.Add(tagCategory);
         }
+        HasTags = TagCategories.Count > 0;
 
         // Load custom tags from current session
         var sessionCustomTags = AppConfig.CurrentSession?.CustomTags ?? [];
@@ -230,14 +273,19 @@ public partial class ItemEditorViewModel : ViewModelBase
             }
         }
 
-        // Load versions
-        foreach (var version in item.Versions)
-        {
-            Versions.Add(version);
-        }
+        // Init tags last updated text
+        UpdateTagsLastUpdatedText();
 
         // Load preview image
         LoadPreviewImageAsync(item.PreviewImageUrl);
+    }
+
+    private void UpdateTagsLastUpdatedText()
+    {
+        var lastUpdated = AppConfig.CurrentSession?.TagsLastUpdated;
+        TagsLastUpdatedText = lastUpdated is { Year: > 2000 }
+            ? $"{LocalizationService.GetString("TagsUpdated")} {lastUpdated.Value.ToLocalTime():g}"
+            : "";
     }
 
     private async void LoadPreviewImageAsync(string? url)
@@ -326,6 +374,14 @@ public partial class ItemEditorViewModel : ViewModelBase
             // Only send preview image if it changed (path, size, or modification date)
             var previewImage = HasPreviewImageChanged() ? PreviewImagePath : null;
 
+            // Versioning: only pass branch range if enabled, not targeting all, and content is being uploaded
+            string? branchMin = null, branchMax = null;
+            if (IsVersioningEnabled && !TargetAllVersions && contentFolder != null)
+            {
+                branchMin = SelectedBranchMin?.Name;
+                branchMax = SelectedBranchMax?.Name;
+            }
+
             var success = await _steamService.UpdateItemAsync(
                 _originalItem.PublishedFileId,
                 Title != _originalItem.Title ? Title : null,
@@ -335,7 +391,9 @@ public partial class ItemEditorViewModel : ViewModelBase
                 Visibility != _originalItem.Visibility ? Visibility : null,
                 selectedTags,
                 string.IsNullOrWhiteSpace(NewChangelog) ? null : NewChangelog,
-                _uploadProgress
+                _uploadProgress,
+                branchMin,
+                branchMax
             );
 
             if (success)
@@ -436,10 +494,61 @@ public partial class ItemEditorViewModel : ViewModelBase
 
     partial void OnSelectedTabIndexChanged(int value)
     {
+        if (value == 2 && !_versionsLoaded)
+            LoadVersionsCommand.Execute(null);
         if (value == 3 && !_changelogHistoryLoaded)
             LoadChangelogHistoryCommand.Execute(null);
         if (value == 4 && !_dependenciesLoaded)
             LoadDependenciesCommand.Execute(null);
+    }
+
+    partial void OnSelectedBranchMinChanged(GameBranch? value) => ValidateBranchRange();
+    partial void OnSelectedBranchMaxChanged(GameBranch? value) => ValidateBranchRange();
+
+    private void ValidateBranchRange()
+    {
+        if (SelectedBranchMin == null || SelectedBranchMax == null)
+        {
+            IsBranchRangeInvalid = false;
+            return;
+        }
+        var minIdx = AvailableBranches.IndexOf(SelectedBranchMin);
+        var maxIdx = AvailableBranches.IndexOf(SelectedBranchMax);
+        IsBranchRangeInvalid = minIdx > maxIdx;
+    }
+
+    [RelayCommand]
+    private async Task LoadVersionsAsync()
+    {
+        IsLoadingVersions = true;
+        try
+        {
+            IsVersioningEnabled = _versioningService.IsVersioningEnabled();
+            if (!IsVersioningEnabled)
+            {
+                _versionsLoaded = true;
+                return;
+            }
+
+            CurrentBranch = _versioningService.GetCurrentBranch();
+            AvailableBranches = _versioningService.GetAvailableBranches();
+            OnPropertyChanged(nameof(AvailableBranches));
+
+            var versions = await _versioningService.GetModVersionsAsync(_originalItem.PublishedFileId);
+            ExistingVersions.Clear();
+            foreach (var v in versions)
+                ExistingVersions.Add(v);
+
+            _versionsLoaded = true;
+        }
+        catch (Exception ex)
+        {
+            _notificationService.ShowError($"Failed to load versions: {ex.Message}");
+        }
+        finally
+        {
+            IsLoadingVersions = false;
+        }
     }
 
     [RelayCommand]
@@ -915,6 +1024,61 @@ public partial class ItemEditorViewModel : ViewModelBase
     private void Close()
     {
         CloseRequested?.Invoke();
+    }
+
+    [RelayCommand]
+    private async Task RefreshTagsAsync()
+    {
+        var session = AppConfig.CurrentSession;
+        if (session == null) return;
+
+        IsRefreshingTags = true;
+        try
+        {
+            // Remember currently selected tags
+            var selectedTags = TagCategories
+                .SelectMany(c => c.Tags)
+                .Where(t => t.IsSelected)
+                .Select(t => t.Name)
+                .Concat(CustomTags.Where(t => t.IsSelected).Select(t => t.Name))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            // Fetch fresh tags from Steam
+            var tagsService = new WorkshopTagsService();
+            var tagsResult = await tagsService.GetTagsForAppAsync(session.AppId, forceRefresh: true);
+
+            // Update session
+            session.TagsByCategory = tagsResult.TagsByCategory;
+            session.DropdownCategories = tagsResult.DropdownCategories;
+            session.TagsLastUpdated = DateTime.UtcNow;
+            AppConfig.UpdateSession(session);
+            SaveSessionAsync(session);
+
+            // Rebuild UI
+            TagCategories.Clear();
+            foreach (var (category, tags) in tagsResult.TagsByCategory)
+            {
+                var tagCategory = new TagCategory
+                {
+                    Name = category,
+                    IsDropdown = tagsResult.DropdownCategories.Contains(category)
+                };
+                foreach (var tag in tags)
+                {
+                    var isSelected = selectedTags.Contains(tag);
+                    tagCategory.Tags.Add(new WorkshopTag(tag, isSelected));
+                }
+                tagCategory.SyncSelectedTag();
+                TagCategories.Add(tagCategory);
+            }
+            HasTags = TagCategories.Count > 0;
+
+            UpdateTagsLastUpdatedText();
+        }
+        finally
+        {
+            IsRefreshingTags = false;
+        }
     }
 
     [RelayCommand]

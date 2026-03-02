@@ -18,7 +18,6 @@ public class WorkshopItem : INotifyPropertyChanged
     public string? PreviewImageUrl { get; set; }
     public VisibilityType Visibility { get; set; } = VisibilityType.Private;
     public List<WorkshopTag> Tags { get; set; } = [];
-    public List<ItemVersion> Versions { get; set; } = [];
     public DateTime CreatedAt { get; init; }
     public DateTime UpdatedAt { get; set; }
 

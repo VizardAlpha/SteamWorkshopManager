@@ -47,8 +47,9 @@ public class SessionManager
         try
         {
             Log.Info($"Fetching tags for new session: {gameName}");
-            var tags = await _tagsService.GetTagsForAppAsync(appId);
-            session.TagsByCategory = tags;
+            var tagsResult = await _tagsService.GetTagsForAppAsync(appId);
+            session.TagsByCategory = tagsResult.TagsByCategory;
+            session.DropdownCategories = tagsResult.DropdownCategories;
             session.TagsLastUpdated = DateTime.UtcNow;
         }
         catch (Exception ex)
@@ -197,8 +198,9 @@ public class SessionManager
     {
         Log.Info($"Refreshing tags for session: {session.Name}");
 
-        var tags = await _tagsService.GetTagsForAppAsync(session.AppId, forceRefresh: true);
-        session.TagsByCategory = tags;
+        var tagsResult = await _tagsService.GetTagsForAppAsync(session.AppId, forceRefresh: true);
+        session.TagsByCategory = tagsResult.TagsByCategory;
+        session.DropdownCategories = tagsResult.DropdownCategories;
         session.TagsLastUpdated = DateTime.UtcNow;
 
         await _sessionRepository.SaveSessionAsync(session);
@@ -209,7 +211,7 @@ public class SessionManager
             AppConfig.UpdateSession(session);
         }
 
-        Log.Info($"Tags refreshed: {tags.Count} categories");
+        Log.Info($"Tags refreshed: {tagsResult.TagsByCategory.Count} categories");
     }
 
     /// <summary>

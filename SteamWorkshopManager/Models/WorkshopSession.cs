@@ -52,6 +52,11 @@ public class WorkshopSession
     public Dictionary<string, List<string>> TagsByCategory { get; set; } = new();
 
     /// <summary>
+    /// Category names that should be displayed as dropdowns (single-select).
+    /// </summary>
+    public List<string> DropdownCategories { get; set; } = [];
+
+    /// <summary>
     /// When the tags were last fetched from Steam.
     /// </summary>
     public DateTime TagsLastUpdated { get; set; }

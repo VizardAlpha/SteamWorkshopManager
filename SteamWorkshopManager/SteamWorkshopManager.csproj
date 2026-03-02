@@ -46,7 +46,7 @@
         
         <PackageReference Include="QRCoder" Version="1.7.0" />
         <PackageReference Include="SteamKit2" Version="3.4.0" />
-        <PackageReference Include="Steamworks.NET" Version="2024.8.0" />
+        <PackageReference Include="Steamworks.NET" Version="2025.163.0" />
     </ItemGroup>
 
     <ItemGroup>

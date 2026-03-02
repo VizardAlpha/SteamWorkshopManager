@@ -201,7 +201,8 @@ public class SteamService : ISteamService
 
     public async Task<PublishedFileId_t?> CreateItemAsync(string title, string description,
         string contentFolderPath, string? previewImagePath, VisibilityType visibility,
-        List<string> tags, string? changelog, IProgress<UploadProgress>? progress = null)
+        List<string> tags, string? changelog, IProgress<UploadProgress>? progress = null,
+        string? branchMin = null, string? branchMax = null)
     {
         if (!_isInitialized)
         {
@@ -274,6 +275,12 @@ public class SteamService : ISteamService
         if (tags.Count > 0)
             SteamUGC.SetItemTags(updateHandle, tags);
 
+        if (branchMin != null || branchMax != null)
+        {
+            var versionResult = SteamUGC.SetRequiredGameVersions(updateHandle, branchMin ?? "", branchMax ?? "");
+            Log.Debug($"SetRequiredGameVersions(min='{branchMin ?? ""}', max='{branchMax ?? ""}'): {versionResult}");
+        }
+
         var submitTcs = new TaskCompletionSource<SubmitItemUpdateResult_t>();
         var submitCallResult = CallResult<SubmitItemUpdateResult_t>.Create((result, failure) =>
         {
@@ -334,7 +341,7 @@ public class SteamService : ISteamService
     public async Task<bool> UpdateItemAsync(PublishedFileId_t fileId, string? title,
         string? description, string? contentFolderPath, string? previewImagePath,
         VisibilityType? visibility, List<string>? tags, string? changelog,
-        IProgress<UploadProgress>? progress = null)
+        IProgress<UploadProgress>? progress = null, string? branchMin = null, string? branchMax = null)
     {
         if (!_isInitialized)
         {
@@ -371,6 +378,12 @@ public class SteamService : ISteamService
         // Always update tags if list is provided (empty list = remove all tags)
         if (tags != null)
             SteamUGC.SetItemTags(updateHandle, tags);
+
+        if (branchMin != null || branchMax != null)
+        {
+            var versionResult = SteamUGC.SetRequiredGameVersions(updateHandle, branchMin ?? "", branchMax ?? "");
+            Log.Debug($"SetRequiredGameVersions(min='{branchMin ?? ""}', max='{branchMax ?? ""}'): {versionResult}");
+        }
 
         var tcs = new TaskCompletionSource<SubmitItemUpdateResult_t>();
         var callResult = CallResult<SubmitItemUpdateResult_t>.Create((result, failure) =>
@@ -516,14 +529,13 @@ public class SteamService : ISteamService
         try
         {
             var totalBetas = SteamApps.GetNumBetas(out var available, out var privateBetas);
-            Log.Info($"Game branches: total={totalBetas}, available={available}, private={privateBetas}");
+            Log.Debug($"Game branches: total={totalBetas}, available={available}, private={privateBetas}");
 
             for (var i = 0; i < totalBetas; i++)
             {
                 if (SteamApps.GetBetaInfo(i, out var flags, out var buildId,
                         out var betaName, 128, out var description, 256))
                 {
-                    Log.Debug($"Branch [{i}]: name='{betaName}', buildId={buildId}, flags={flags}, desc='{description}'");
                     branches.Add(new GameBranch
                     {
                         Name = betaName,

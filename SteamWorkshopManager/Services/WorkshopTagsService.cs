@@ -4,6 +4,7 @@ using System.IO;
 using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Linq;
 using System.Threading.Tasks;
 using AngleSharp;
 using SteamWorkshopManager.Services.Interfaces;
@@ -12,11 +13,19 @@ using SteamWorkshopManager.Services.Log;
 namespace SteamWorkshopManager.Services;
 
 /// <summary>
+/// Result of a tags fetch operation.
+/// </summary>
+public record TagsResult(
+    Dictionary<string, List<string>> TagsByCategory,
+    List<string> DropdownCategories);
+
+/// <summary>
 /// Cache entry for workshop tags.
 /// </summary>
 public class TagsCacheEntry
 {
     public Dictionary<string, List<string>> TagsByCategory { get; set; } = new();
+    public List<string> DropdownCategories { get; set; } = [];
     public DateTime UpdatedAt { get; set; }
 }
 
@@ -52,7 +61,7 @@ public class WorkshopTagsService
     /// <summary>
     /// Gets tags for an app, using cache if available.
     /// </summary>
-    public async Task<Dictionary<string, List<string>>> GetTagsForAppAsync(uint appId, bool forceRefresh = false)
+    public async Task<TagsResult> GetTagsForAppAsync(uint appId, bool forceRefresh = false)
     {
         var cacheFile = GetCacheFilePath(appId);
 
@@ -67,7 +76,7 @@ public class WorkshopTagsService
                 if (cached != null && cached.UpdatedAt > DateTime.UtcNow.AddDays(-_cacheExpirationDays))
                 {
                     Log.Debug($"Using cached tags for AppId {appId} (updated {cached.UpdatedAt})");
-                    return cached.TagsByCategory;
+                    return new TagsResult(cached.TagsByCategory, cached.DropdownCategories);
                 }
             }
             catch (Exception ex)
@@ -78,20 +87,21 @@ public class WorkshopTagsService
 
         // Fetch from Steam
         Log.Info($"Fetching tags from Steam Workshop for AppId {appId}");
-        var tags = await FetchTagsFromSteamAsync(appId);
+        var result = await FetchTagsFromSteamAsync(appId);
 
         // Save to cache
-        await SaveToCacheAsync(appId, tags);
+        await SaveToCacheAsync(appId, result);
 
-        return tags;
+        return result;
     }
 
     /// <summary>
     /// Fetches tags directly from Steam Workshop page.
     /// </summary>
-    private async Task<Dictionary<string, List<string>>> FetchTagsFromSteamAsync(uint appId)
+    private async Task<TagsResult> FetchTagsFromSteamAsync(uint appId)
     {
         var result = new Dictionary<string, List<string>>();
+        var dropdownCategories = new List<string>();
 
         try
         {
@@ -103,50 +113,69 @@ public class WorkshopTagsService
             var context = BrowsingContext.New(config);
             var document = await context.OpenAsync(req => req.Content(html));
 
-            // Find the panel containing tags
+            // Parse tags from div.panel: supports both categorized (div.title + div.filterOption)
+            // and flat (div.filterOption only, no title headers) structures
             var panel = document.QuerySelector("div.panel");
-            if (panel == null)
+            if (panel != null)
             {
-                Log.Warning($"No tags panel found for AppId {appId}");
-                return result;
-            }
+                const string defaultCategory = "Tags";
+                string? currentCategory = null;
 
-            string? currentCategory = null;
-
-            // Iterate through all children of the panel
-            foreach (var element in panel.Children)
-            {
-                // Check if it's a category title
-                if (element.ClassList.Contains("title"))
+                foreach (var element in panel.Children)
                 {
-                    currentCategory = element.TextContent.Trim();
-                    if (!string.IsNullOrEmpty(currentCategory) && !result.ContainsKey(currentCategory))
+                    if (element.ClassList.Contains("title"))
                     {
-                        result[currentCategory] = new List<string>();
+                        currentCategory = element.TextContent.Trim();
+                        if (!string.IsNullOrEmpty(currentCategory) && !result.ContainsKey(currentCategory))
+                            result[currentCategory] = new List<string>();
                     }
-                }
-                // Check if it's a tag filter option
-                else if (element.ClassList.Contains("filterOption") && currentCategory != null)
-                {
-                    var input = element.QuerySelector("input.inputTagsFilter");
-                    if (input != null)
+                    else if (element.ClassList.Contains("filterOption"))
                     {
-                        var tagValue = input.GetAttribute("value");
-                        if (!string.IsNullOrEmpty(tagValue))
-                        {
-                            // Replace + with space (e.g., "Trade+Goods" -> "Trade Goods")
-                            tagValue = tagValue.Replace("+", " ");
+                        // Use current category if set, otherwise default to "Tags"
+                        var category = currentCategory ?? defaultCategory;
+                        if (!result.ContainsKey(category))
+                            result[category] = new List<string>();
 
-                            if (!result[currentCategory].Contains(tagValue))
+                        var input = element.QuerySelector("input.inputTagsFilter");
+                        if (input != null)
+                        {
+                            var tagValue = input.GetAttribute("value");
+                            if (!string.IsNullOrEmpty(tagValue))
                             {
-                                result[currentCategory].Add(tagValue);
+                                tagValue = Uri.UnescapeDataString(tagValue.Replace("+", " "));
+                                if (!result[category].Contains(tagValue))
+                                    result[category].Add(tagValue);
                             }
+                        }
+                    }
+
+                    // Handle dropdown selects (e.g. "Type" on Space Engineers)
+                    var select = element.LocalName == "select"
+                        ? element
+                        : element.QuerySelector("select");
+                    if (select != null)
+                    {
+                        var category = currentCategory ?? defaultCategory;
+                        if (!result.ContainsKey(category))
+                            result[category] = new List<string>();
+
+                        if (!dropdownCategories.Contains(category))
+                            dropdownCategories.Add(category);
+
+                        foreach (var option in select.QuerySelectorAll("option"))
+                        {
+                            var value = option.GetAttribute("value");
+                            if (string.IsNullOrEmpty(value) || value == "-1") continue;
+
+                            value = Uri.UnescapeDataString(value.Replace("+", " "));
+                            if (!result[category].Contains(value))
+                                result[category].Add(value);
                         }
                     }
                 }
             }
 
-            Log.Info($"Found {result.Count} categories with tags for AppId {appId}");
+            Log.Info($"Found {result.Count} categories with {result.Values.Sum(v => v.Count)} tags for AppId {appId}");
             foreach (var category in result)
             {
                 Log.Debug($"  {category.Key}: {category.Value.Count} tags");
@@ -157,19 +186,20 @@ public class WorkshopTagsService
             Log.Error($"Failed to fetch tags for AppId {appId}", ex);
         }
 
-        return result;
+        return new TagsResult(result, dropdownCategories);
     }
 
     /// <summary>
     /// Saves tags to cache.
     /// </summary>
-    private async Task SaveToCacheAsync(uint appId, Dictionary<string, List<string>> tags)
+    private async Task SaveToCacheAsync(uint appId, TagsResult tagsResult)
     {
         try
         {
             var entry = new TagsCacheEntry
             {
-                TagsByCategory = tags,
+                TagsByCategory = tagsResult.TagsByCategory,
+                DropdownCategories = tagsResult.DropdownCategories,
                 UpdatedAt = DateTime.UtcNow
             };
 

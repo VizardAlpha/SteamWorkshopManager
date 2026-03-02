@@ -103,6 +103,12 @@
     <!-- Contributor -->
     <x:String x:Key="Contributor">Contributeur</x:String>
 
+    <!-- Tags -->
+    <x:String x:Key="RefreshTags">Actualiser les tags</x:String>
+    <x:String x:Key="TagsUpdated">Mis à jour :</x:String>
+    <x:String x:Key="RefreshingTags">Actualisation...</x:String>
+    <x:String x:Key="NoTagsForWorkshop">Pas de tags pour ce workshop</x:String>
+
     <!-- Custom Tags -->
     <x:String x:Key="CustomTags">Tags personnalisés</x:String>
     <x:String x:Key="AddCustomTag">Ajouter</x:String>
@@ -264,6 +270,23 @@
     <x:String x:Key="DependencyAdded">Dépendance ajoutée !</x:String>
     <x:String x:Key="DependencyRemoved">Dépendance supprimée !</x:String>
     <x:String x:Key="ConfirmAddDependency">Ajouter cette dépendance ?</x:String>
+
+    <!-- Versioning -->
+    <x:String x:Key="VersioningNotEnabled">Le versioning n'est pas activé pour ce jeu</x:String>
+    <x:String x:Key="VersioningNotEnabledHint">Le développeur du jeu n'a pas activé le versioning par branche. Cette fonctionnalité nécessite que le jeu ait des branches bêta configurées sur Steam.</x:String>
+    <x:String x:Key="CurrentBranch">Branche actuelle :</x:String>
+    <x:String x:Key="ExistingVersions">Versions existantes</x:String>
+    <x:String x:Key="NoVersionsYet">Aucune information de version disponible</x:String>
+    <x:String x:Key="NextUploadVersioning">Compatibilité de version</x:String>
+    <x:String x:Key="TargetAllVersions">Compatible avec toutes les versions</x:String>
+    <x:String x:Key="MinBranch">Branche minimum</x:String>
+    <x:String x:Key="MaxBranch">Branche maximum</x:String>
+    <x:String x:Key="InvalidBranchRange">La branche minimum doit précéder la branche maximum</x:String>
+    <x:String x:Key="VersioningContentRequired">La compatibilité de version ne s'applique que lorsque du contenu est uploadé.</x:String>
+    <x:String x:Key="AnyOlderVersion">(toute version antérieure)</x:String>
+    <x:String x:Key="AnyNewerVersion">(toute version future)</x:String>
+    <x:String x:Key="UpTo">Jusqu'à {0}</x:String>
+    <x:String x:Key="AndLater">{0} et plus récent</x:String>
 
     <!-- App Dependencies -->
     <x:String x:Key="RequiredApps">Apps / DLCs requis</x:String>

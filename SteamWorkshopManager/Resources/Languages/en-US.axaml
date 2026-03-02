@@ -103,6 +103,12 @@
     <!-- Contributor -->
     <x:String x:Key="Contributor">Contributor</x:String>
 
+    <!-- Tags -->
+    <x:String x:Key="RefreshTags">Refresh tags</x:String>
+    <x:String x:Key="TagsUpdated">Updated:</x:String>
+    <x:String x:Key="RefreshingTags">Refreshing...</x:String>
+    <x:String x:Key="NoTagsForWorkshop">No tags available for this workshop</x:String>
+
     <!-- Custom Tags -->
     <x:String x:Key="CustomTags">Custom Tags</x:String>
     <x:String x:Key="AddCustomTag">Add</x:String>
@@ -264,6 +270,23 @@
     <x:String x:Key="DependencyAdded">Dependency added!</x:String>
     <x:String x:Key="DependencyRemoved">Dependency removed!</x:String>
     <x:String x:Key="ConfirmAddDependency">Add this dependency?</x:String>
+
+    <!-- Versioning -->
+    <x:String x:Key="VersioningNotEnabled">Versioning is not enabled for this game</x:String>
+    <x:String x:Key="VersioningNotEnabledHint">The game developer has not enabled branch-based versioning. This feature requires the game to have beta branches configured on Steam.</x:String>
+    <x:String x:Key="CurrentBranch">Current branch:</x:String>
+    <x:String x:Key="ExistingVersions">Existing versions</x:String>
+    <x:String x:Key="NoVersionsYet">No version information available</x:String>
+    <x:String x:Key="NextUploadVersioning">Version compatibility</x:String>
+    <x:String x:Key="TargetAllVersions">Compatible with all versions</x:String>
+    <x:String x:Key="MinBranch">Minimum branch</x:String>
+    <x:String x:Key="MaxBranch">Maximum branch</x:String>
+    <x:String x:Key="InvalidBranchRange">Minimum branch must come before maximum branch</x:String>
+    <x:String x:Key="VersioningContentRequired">Version compatibility only applies when content is uploaded.</x:String>
+    <x:String x:Key="AnyOlderVersion">(any older)</x:String>
+    <x:String x:Key="AnyNewerVersion">(any newer)</x:String>
+    <x:String x:Key="UpTo">Up to {0}</x:String>
+    <x:String x:Key="AndLater">{0} and later</x:String>
 
     <!-- App Dependencies -->
     <x:String x:Key="RequiredApps">Required Apps / DLCs</x:String>
