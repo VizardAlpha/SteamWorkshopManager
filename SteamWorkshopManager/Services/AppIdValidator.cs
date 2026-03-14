@@ -132,7 +132,7 @@ public partial class AppIdValidator
         try
         {
             var url = $"https://steamcommunity.com/app/{appId}/workshop/";
-            var response = await _httpClient.GetAsync(url);
+            using var response = await _httpClient.GetAsync(url);
 
             if (!response.IsSuccessStatusCode)
                 return false;

@@ -135,7 +135,7 @@ public class AppDependencyService
         try
         {
             var url = $"https://store.steampowered.com/api/appdetails?appids={appId}";
-            var response = await HttpClient.GetAsync(url);
+            using var response = await HttpClient.GetAsync(url);
             if (!response.IsSuccessStatusCode)
             {
                 AppNameCache[appId] = null;

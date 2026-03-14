@@ -110,8 +110,8 @@ public class WorkshopTagsService
 
             // Parse HTML with AngleSharp
             var config = Configuration.Default;
-            var context = BrowsingContext.New(config);
-            var document = await context.OpenAsync(req => req.Content(html));
+            using var context = BrowsingContext.New(config);
+            using var document = await context.OpenAsync(req => req.Content(html));
 
             // Parse tags from div.panel: supports both categorized (div.title + div.filterOption)
             // and flat (div.filterOption only, no title headers) structures

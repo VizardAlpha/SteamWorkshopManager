@@ -93,8 +93,8 @@ public class ChangelogScraperService
     {
         var results = new List<ChangeLogEntry>();
         var config = Configuration.Default;
-        var context = BrowsingContext.New(config);
-        var document = await context.OpenAsync(req => req.Content(html));
+        using var context = BrowsingContext.New(config);
+        using var document = await context.OpenAsync(req => req.Content(html));
 
         var containers = document.QuerySelectorAll("div.changeLogCtn");
         Log.Debug($"Found {containers.Length} div.changeLogCtn");
