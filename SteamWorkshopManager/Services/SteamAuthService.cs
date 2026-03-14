@@ -56,11 +56,11 @@ public static class SteamAuthService
         if (!string.IsNullOrEmpty(savedAccessToken) && !IsJwtExpired(savedAccessToken))
         {
             _accessToken = savedAccessToken;
-            Log.Info($"Restored valid access token for account={_accountName}, steamId64={_steamId64}");
+            Log.Info("Restored valid access token");
         }
         else
         {
-            Log.Info($"Initialized: hasRefreshToken={HasRefreshToken}, account={_accountName}, steamId64={_steamId64}, accessToken={(savedAccessToken != null ? "expired" : "none")}");
+            Log.Info($"Initialized: hasRefreshToken={HasRefreshToken}, accessToken={(savedAccessToken != null ? "expired" : "none")}");
         }
     }
 

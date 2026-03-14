@@ -6,12 +6,19 @@ using Steamworks;
 
 namespace SteamWorkshopManager.Services.Interfaces;
 
+public enum SteamInitResult
+{
+    Success,
+    SteamNotRunning,
+    GameNotOwned
+}
+
 public interface ISteamService
 {
     bool IsInitialized { get; }
     CSteamID? CurrentUserId { get; }
 
-    bool Initialize();
+    SteamInitResult Initialize();
     void Shutdown();
 
     Task<List<WorkshopItem>> GetPublishedItemsAsync();

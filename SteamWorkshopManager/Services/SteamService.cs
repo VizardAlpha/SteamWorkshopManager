@@ -17,18 +17,15 @@ public class SteamService : ISteamService
     public bool IsInitialized => _isInitialized;
     public CSteamID? CurrentUserId => _isInitialized ? SteamUser.GetSteamID() : null;
 
-    public bool Initialize()
+    public SteamInitResult Initialize()
     {
-        if (_isInitialized) return true;
+        if (_isInitialized) return SteamInitResult.Success;
 
         try
         {
-            // Log the AppId we'll be using
             Log.Info($"Initializing Steam for AppId: {AppConfig.AppId}");
             Log.Debug($"Current session: {AppConfig.CurrentSession?.GameName ?? "none"}");
 
-            // Ensure environment variables are set for Steam API
-            // This is required when launching the .exe directly (not after session switch)
             var appIdStr = AppConfig.AppId.ToString();
             var envAppId = Environment.GetEnvironmentVariable("SteamAppId");
             var envGameId = Environment.GetEnvironmentVariable("SteamGameId");
@@ -58,7 +55,6 @@ public class SteamService : ISteamService
                 var loggedOn = SteamUser.BLoggedOn();
                 Log.Info($"User logged on: {loggedOn}");
 
-                // Log the AppId that Steam is using
                 var steamAppId = SteamUtils.GetAppID();
                 Log.Info($"Steam AppID from SteamUtils: {steamAppId}");
 
@@ -67,23 +63,27 @@ public class SteamService : ISteamService
                     Log.Warning($"AppId mismatch! Expected: {AppConfig.AppId}, Steam reports: {steamAppId.m_AppId}");
                 }
 
-                // Log available game branches for versioning support
                 var currentBranch = GetCurrentBranchName();
                 Log.Info($"Current game branch: {currentBranch}");
                 var branches = GetGameBranches();
                 Log.Info($"Versioning: {branches.Count} branches available (enabled={branches.Count > 0})");
-            }
-            else
-            {
-                Log.Warning("Steam API initialization failed - Steam may not be running");
+
+                return SteamInitResult.Success;
             }
 
-            return _isInitialized;
+            if (steamRunning)
+            {
+                Log.Warning("Steam is running but API init failed - game likely not owned");
+                return SteamInitResult.GameNotOwned;
+            }
+
+            Log.Warning("Steam API initialization failed - Steam is not running");
+            return SteamInitResult.SteamNotRunning;
         }
         catch (Exception ex)
         {
             Log.Error($"Steam initialization exception", ex);
-            return false;
+            return SteamInitResult.SteamNotRunning;
         }
     }
 

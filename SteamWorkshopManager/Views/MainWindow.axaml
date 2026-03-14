@@ -104,7 +104,7 @@
                 <Grid ColumnDefinitions="Auto,*,Auto">
                     <StackPanel Orientation="Horizontal" Spacing="10">
                         <Border x:Name="StatusIndicator" Width="10" Height="10" CornerRadius="5"
-                                Background="#a4d007"/>
+                                Background="#c23b2e"/>
                         <TextBlock Text="{Binding StatusMessage}"
                                    FontSize="12"
                                    Foreground="#8899a6"

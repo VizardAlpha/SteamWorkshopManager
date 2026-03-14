@@ -177,20 +177,25 @@ public partial class MainViewModel : ViewModelBase
     private async void InitializeSteamAsync()
     {
         SetStatus("ConnectingToSteam");
-        var connected = await Task.Run(() => _steamService.Initialize());
+        var result = await Task.Run(() => _steamService.Initialize());
 
         await Dispatcher.UIThread.InvokeAsync(async () =>
         {
-            IsSteamConnected = connected;
+            IsSteamConnected = result == SteamInitResult.Success;
 
-            if (connected)
+            switch (result)
             {
-                SetStatus("ConnectedToSteam");
-                await ItemListViewModel.LoadItemsAsync();
-            }
-            else
-            {
-                SetStatus("SteamNotAvailable");
+                case SteamInitResult.Success:
+                    SetStatus("ConnectedToSteam");
+                    await ItemListViewModel.LoadItemsAsync();
+                    break;
+                case SteamInitResult.GameNotOwned:
+                    SetStatus("GameNotOwned");
+                    _notificationService.ShowError(Loc["GameNotOwnedMessage"]);
+                    break;
+                default:
+                    SetStatus("SteamNotAvailable");
+                    break;
             }
         });
     }

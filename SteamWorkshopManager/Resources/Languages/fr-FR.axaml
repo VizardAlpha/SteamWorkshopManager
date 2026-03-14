@@ -15,6 +15,8 @@
     <x:String x:Key="ConnectingToSteam">Connexion à Steam...</x:String>
     <x:String x:Key="ConnectedToSteam">Connecté à Steam</x:String>
     <x:String x:Key="SteamNotAvailable">Steam non disponible - Lancez Steam et redémarrez l'application</x:String>
+    <x:String x:Key="GameNotOwned">Jeu non possédé - Publication de mods impossible</x:String>
+    <x:String x:Key="GameNotOwnedMessage">Vous ne possédez pas ce jeu. Vous devez posséder le jeu pour publier des mods sur le Steam Workshop.</x:String>
     <x:String x:Key="SteamNotInitialized">Steam n'est pas initialisé</x:String>
 
     <!-- Item List -->
