@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -52,8 +53,7 @@ public class WorkshopTagsService
 
     public WorkshopTagsService(HttpClient? httpClient = null, int cacheExpirationDays = 7)
     {
-        _httpClient = httpClient ?? new HttpClient();
-        _httpClient.DefaultRequestHeaders.Add("User-Agent", "SteamWorkshopManager/1.0");
+        _httpClient = httpClient ?? SteamHttpClientFactory.Create();
         _cacheExpirationDays = cacheExpirationDays;
         Directory.CreateDirectory(CacheFolder);
     }

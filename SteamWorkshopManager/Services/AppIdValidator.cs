@@ -1,6 +1,8 @@
 using System;
 using System.Net;
 using System.Net.Http;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using SteamWorkshopManager.Services.Interfaces;
@@ -9,7 +11,8 @@ using SteamWorkshopManager.Services.Log;
 namespace SteamWorkshopManager.Services;
 
 /// <summary>
-/// Validates Steam AppIds and retrieves game information from the Workshop page.
+/// Validates Steam AppIds and retrieves game information.
+/// Uses Steam Store API for game name and Workshop page for workshop existence check.
 /// </summary>
 public partial class AppIdValidator
 {
@@ -18,12 +21,12 @@ public partial class AppIdValidator
 
     public AppIdValidator(HttpClient? httpClient = null)
     {
-        _httpClient = httpClient ?? new HttpClient();
-        _httpClient.DefaultRequestHeaders.Add("User-Agent", "SteamWorkshopManager/1.0");
+        _httpClient = httpClient ?? SteamHttpClientFactory.Create();
     }
 
     /// <summary>
-    /// Validates an AppId by checking if its Workshop page exists.
+    /// Validates an AppId by checking if its Workshop page exists
+    /// and fetching the game name from the Steam Store API.
     /// </summary>
     public async Task<AppIdValidationResult> ValidateAsync(uint appId)
     {
@@ -31,12 +34,18 @@ public partial class AppIdValidator
 
         try
         {
-            var url = $"https://steamcommunity.com/app/{appId}/workshop/";
-            var response = await _httpClient.GetAsync(url);
+            // Fetch game name and workshop check in parallel
+            var nameTask = FetchGameNameAsync(appId);
+            var workshopTask = CheckWorkshopExistsAsync(appId);
 
-            if (!response.IsSuccessStatusCode)
+            await Task.WhenAll(nameTask, workshopTask);
+
+            var gameName = nameTask.Result;
+            var hasWorkshop = workshopTask.Result;
+
+            if (gameName == null)
             {
-                Log.Warning($"AppId {appId} validation failed: HTTP {response.StatusCode}");
+                Log.Warning($"AppId {appId} not found on Steam Store");
                 return new AppIdValidationResult
                 {
                     IsValid = false,
@@ -44,15 +53,9 @@ public partial class AppIdValidator
                 };
             }
 
-            var html = await response.Content.ReadAsStringAsync();
-
-            // Check if it's actually a workshop page (not a redirect or error page)
-            if (!html.Contains("workshopBrowseItems") &&
-                !html.Contains("browseTitle") &&
-                !html.Contains("Parcourir par tag") &&
-                !html.Contains("Browse by tag"))
+            if (!hasWorkshop)
             {
-                Log.Warning($"AppId {appId} has no Workshop");
+                Log.Warning($"AppId {appId} ({gameName}) has no Workshop");
                 return new AppIdValidationResult
                 {
                     IsValid = false,
@@ -60,11 +63,7 @@ public partial class AppIdValidator
                 };
             }
 
-            // Extract game name from title: <title>Steam Workshop :: GameName</title>
-            var gameName = ExtractGameName(html);
-
-            Log.Info($"AppId {appId} validated: {gameName ?? "Unknown"}");
-
+            Log.Info($"AppId {appId} validated: {gameName}");
             return new AppIdValidationResult
             {
                 IsValid = true,
@@ -94,23 +93,66 @@ public partial class AppIdValidator
         }
     }
 
-    private static string? ExtractGameName(string html)
+    /// <summary>
+    /// Fetches the game name from the Steam Store API (no age gate).
+    /// </summary>
+    private async Task<string?> FetchGameNameAsync(uint appId)
     {
-        // Primary: <div class="apphub_AppName ellipsis">GameName</div>
-        var match = AppHubNameRegex().Match(html);
-        if (match.Success)
+        try
         {
-            var name = WebUtility.HtmlDecode(match.Groups[1].Value.Trim());
-            Log.Debug($"Extracted game name from apphub_AppName: {name}");
-            return name;
+            var url = $"https://store.steampowered.com/api/appdetails?appids={appId}";
+            var json = await _httpClient.GetStringAsync(url);
+
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+
+            if (root.TryGetProperty(appId.ToString(), out var appData) &&
+                appData.TryGetProperty("success", out var success) && success.GetBoolean() &&
+                appData.TryGetProperty("data", out var data) &&
+                data.TryGetProperty("name", out var name))
+            {
+                var gameName = name.GetString();
+                Log.Debug($"Game name from Store API: {gameName}");
+                return gameName;
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Warning($"Failed to fetch game name from Store API for {appId}: {ex.Message}");
         }
 
-        Log.Warning("Could not extract game name from HTML");
         return null;
     }
 
-    [GeneratedRegex(@"<div\s+class=""apphub_AppName[^""]*"">([^<]+)</div>", RegexOptions.IgnoreCase)]
-    private static partial Regex AppHubNameRegex();
+    /// <summary>
+    /// Checks if the app has a Workshop by looking at the Workshop page.
+    /// </summary>
+    private async Task<bool> CheckWorkshopExistsAsync(uint appId)
+    {
+        try
+        {
+            var url = $"https://steamcommunity.com/app/{appId}/workshop/";
+            var response = await _httpClient.GetAsync(url);
+
+            if (!response.IsSuccessStatusCode)
+                return false;
+
+            var html = await response.Content.ReadAsStringAsync();
+
+            // Any of these markers indicate a valid Workshop page
+            return html.Contains("workshopBrowseItems") ||
+                   html.Contains("browseTitle") ||
+                   html.Contains("Parcourir par tag") ||
+                   html.Contains("Browse by tag") ||
+                   html.Contains("age_gate_container") ||
+                   html.Contains("mature_content");
+        }
+        catch (Exception ex)
+        {
+            Log.Warning($"Failed to check Workshop existence for {appId}: {ex.Message}");
+            return false;
+        }
+    }
 }
 
 /// <summary>
@@ -118,28 +160,9 @@ public partial class AppIdValidator
 /// </summary>
 public record AppIdValidationResult
 {
-    /// <summary>
-    /// Whether the AppId is valid and has a Workshop.
-    /// </summary>
     public bool IsValid { get; init; }
-
-    /// <summary>
-    /// The validated AppId.
-    /// </summary>
     public uint AppId { get; init; }
-
-    /// <summary>
-    /// The game name extracted from the Workshop page.
-    /// </summary>
     public string? GameName { get; init; }
-
-    /// <summary>
-    /// Localization key for the error message (if invalid).
-    /// </summary>
     public string? ErrorKey { get; init; }
-
-    /// <summary>
-    /// Additional error details.
-    /// </summary>
     public string? ErrorMessage { get; init; }
 }
