@@ -46,3 +46,22 @@ dotnet publish SteamWorkshopManager/SteamWorkshopManager.csproj -c Release -r wi
 Languages are stored as `.axaml` resource files in `%AppData%/SteamWorkshopManager/bundle/`. Built-in languages are automatically extracted on first launch. New languages can be added by dropping a file into the bundle folder — no rebuild required.
 
 Want to contribute a translation? See [TRANSLATING.md](TRANSLATING.md) for instructions.
+
+
+## 💙 Support / Donations
+
+This project is free and open-source.
+
+Donations are completely optional and do not unlock any features.
+They are simply a way to support development if you wish.
+
+No goods or services are provided in exchange for donations.
+Donations are considered personal support and not payments for the software.
+
+If you'd like to support the project:
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/V7V6I9EMH)
+
+Every contribution, feedback, or share helps just as much as donations.
+
+Thank you for your support ❤️
