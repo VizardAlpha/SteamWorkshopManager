@@ -152,7 +152,7 @@ public partial class App : Application
                     return;
                 }
 
-                StartWithSession(desktop, telemetry, session);
+                await StartWithSessionAsync(desktop, telemetry, session);
             }
         }
         catch (Exception ex)
@@ -162,30 +162,22 @@ public partial class App : Application
         }
     }
 
-    private static async void StartWithSession(IClassicDesktopStyleApplicationLifetime desktop, ITelemetryService telemetry, Models.WorkshopSession session)
+    private static async Task StartWithSessionAsync(IClassicDesktopStyleApplicationLifetime desktop, ITelemetryService telemetry, Models.WorkshopSession session)
     {
-        try
-        {
-            AppConfig.Initialize(session);
-            Log.Info($"Starting with session: {session.GameName} (AppId: {session.AppId})");
+        AppConfig.Initialize(session);
+        Log.Info($"Starting with session: {session.GameName} (AppId: {session.AppId})");
 
-            // Spawn the Steam worker before the UI queries Steam so the
-            // first ISteamService.Initialize() call returns the live state.
-            await Services.GetRequiredService<SessionHost>().StartSessionAsync(session.AppId);
+        // Spawn the Steam worker before the UI queries Steam so the
+        // first ISteamService.Initialize() call returns the live state.
+        await Services.GetRequiredService<SessionHost>().StartSessionAsync(session.AppId);
 
-            // Consent has already been committed (this run or a prior one).
-            // Track now — the toggle is honored inside Track().
-            telemetry.Track(TelemetryEventTypes.AppStart, session.AppId);
+        // Consent has already been committed (this run or a prior one).
+        // Track now — the toggle is honored inside Track().
+        telemetry.Track(TelemetryEventTypes.AppStart, session.AppId);
 
-            var mainWindow = new MainWindow();
-            desktop.MainWindow = mainWindow;
-            mainWindow.Show();
-        }
-        catch (Exception ex)
-        {
-            Log.Error("Failed to start with session", ex);
-            desktop.Shutdown();
-        }
+        var mainWindow = new MainWindow();
+        desktop.MainWindow = mainWindow;
+        mainWindow.Show();
     }
 
     private static void ShowConsentThenStart(
@@ -198,15 +190,22 @@ public partial class App : Application
         var consentWindow = new TelemetryConsentWindow { DataContext = consentVm };
         var committed = false;
 
-        consentVm.ContinueRequested += () =>
+        consentVm.ContinueRequested += async () =>
         {
             committed = true;
-            // The VM already persisted the user's choice (TelemetryEnabled +
-            // TelemetryConsentVersion). Show the main window then close the
-            // modal — same ordering as the setup wizard, so we never have a
-            // window-less moment where the app could exit.
-            StartWithSession(desktop, telemetry, session);
-            consentWindow.Close();
+            try
+            {
+                // Show the new MainWindow first (and reassign desktop.MainWindow
+                // before closing the modal) so Avalonia never sees a moment
+                // with zero windows — that would auto-shutdown the app.
+                await StartWithSessionAsync(desktop, telemetry, session);
+                consentWindow.Close();
+            }
+            catch (Exception ex)
+            {
+                Log.Error("Failed to start after consent", ex);
+                desktop.Shutdown();
+            }
         };
 
         consentWindow.Closed += (_, _) =>
