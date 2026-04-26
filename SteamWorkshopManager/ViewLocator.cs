@@ -15,6 +15,7 @@ public class ViewLocator : IDataTemplate
         // Map ViewModels
         return param switch
         {
+            HomeViewModel => new HomeView(),
             ItemListViewModel => new ItemListView(),
             ItemEditorViewModel => new ItemEditorView(),
             CreateItemViewModel => new CreateItemView(),

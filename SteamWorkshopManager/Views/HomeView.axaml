@@ -1,0 +1,273 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:SteamWorkshopManager.ViewModels"
+             xmlns:models="using:SteamWorkshopManager.Models"
+             xmlns:icons="using:Material.Icons.Avalonia"
+             mc:Ignorable="d" d:DesignWidth="960" d:DesignHeight="720"
+             x:Class="SteamWorkshopManager.Views.HomeView"
+             x:DataType="vm:HomeViewModel">
+
+    <UserControl.Styles>
+        <!-- KPI card -->
+        <Style Selector="Border.kpi-card">
+            <Setter Property="Background" Value="{DynamicResource SurfaceCardBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtleBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Padding" Value="18,16"/>
+        </Style>
+
+        <!-- Mod card -->
+        <Style Selector="Button.mod-card">
+            <Setter Property="Background" Value="{DynamicResource SurfaceCardBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtleBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.mod-card:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceCardBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentPrimaryBrush}"/>
+        </Style>
+
+        <!-- Section see-all link -->
+        <Style Selector="Button.link">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Foreground" Value="{DynamicResource AccentPrimaryBrush}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.link:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="TextElement.Foreground" Value="{DynamicResource AccentPrimaryHoverBrush}"/>
+        </Style>
+
+        <!-- Status dot (inline in hero) -->
+        <Style Selector="Border.hero-dot">
+            <Setter Property="Width" Value="7"/>
+            <Setter Property="Height" Value="7"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Border.hero-dot.connecting">
+            <Setter Property="Background" Value="{DynamicResource FeedbackWarningBrush}"/>
+        </Style>
+        <Style Selector="Border.hero-dot.connected">
+            <Setter Property="Background" Value="{DynamicResource FeedbackSuccessBrush}"/>
+        </Style>
+        <Style Selector="Border.hero-dot.disconnected">
+            <Setter Property="Background" Value="{DynamicResource FeedbackDangerBrush}"/>
+        </Style>
+    </UserControl.Styles>
+
+    <ScrollViewer>
+        <StackPanel MaxWidth="960" HorizontalAlignment="Stretch" Margin="32,28,32,40" Spacing="24">
+
+            <!-- Hero -->
+            <Border CornerRadius="12" ClipToBounds="True" Height="180"
+                    Background="{DynamicResource SurfaceElevatedBrush}">
+                <Panel>
+                    <Image Source="{Binding HeaderImage}" Stretch="UniformToFill"/>
+
+                    <!-- Dark-to-transparent gradient overlay (left → right) -->
+                    <Border>
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,0%">
+                                <GradientStop Color="#B8000000" Offset="0"/>
+                                <GradientStop Color="#B8000000" Offset="0.4"/>
+                                <GradientStop Color="#1A000000" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                    </Border>
+
+                    <!-- Refresh header image -->
+                    <Button Command="{Binding RefreshHeaderImageCommand}"
+                            IsEnabled="{Binding !IsRefreshingHeader}"
+                            ToolTip.Tip="{DynamicResource RefreshImage}"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Top"
+                            Margin="0,12,12,0"
+                            Width="32" Height="32"
+                            Padding="0"
+                            CornerRadius="16"
+                            Background="#80000000"
+                            BorderThickness="0">
+                        <icons:MaterialIcon Kind="Refresh"
+                                            Width="16" Height="16"
+                                            Foreground="White"/>
+                    </Button>
+
+                    <StackPanel VerticalAlignment="Bottom"
+                                HorizontalAlignment="Left"
+                                Margin="24,0,0,20"
+                                Spacing="4">
+                        <TextBlock Text="{Binding ActiveGameName}"
+                                   FontSize="22"
+                                   FontWeight="Medium"
+                                   Foreground="White"/>
+                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding ActiveAppId, StringFormat='AppID {0}'}"
+                                       FontSize="13"
+                                       Foreground="#8CFFFFFF"
+                                       VerticalAlignment="Center"/>
+                            <TextBlock Text="·"
+                                       FontSize="13"
+                                       Foreground="#8CFFFFFF"
+                                       VerticalAlignment="Center"/>
+                            <Border Classes="hero-dot"
+                                    Classes.connecting="{Binding IsConnecting}"
+                                    Classes.connected="{Binding IsConnected}"
+                                    Classes.disconnected="{Binding IsDisconnected}"/>
+                            <TextBlock Text="{Binding ConnectionText}"
+                                       FontSize="13"
+                                       Foreground="#8CFFFFFF"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Panel>
+            </Border>
+
+            <!-- KPIs -->
+            <UniformGrid Columns="4" ColumnSpacing="12">
+                <Border Classes="kpi-card">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="{DynamicResource KpiModsPublished}"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource TextMutedBrush}"/>
+                        <TextBlock Text="{Binding ModCount}"
+                                   FontSize="22"
+                                   FontWeight="Medium"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Text="{DynamicResource KpiModsPublishedUnit}"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource TextDisabledBrush}"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Classes="kpi-card">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="{DynamicResource KpiSubscribers}"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource TextMutedBrush}"/>
+                        <TextBlock Text="{Binding TotalSubscribersDisplay}"
+                                   FontSize="22"
+                                   FontWeight="Medium"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Text="{DynamicResource KpiSubscribersUnit}"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource TextDisabledBrush}"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Classes="kpi-card">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="{DynamicResource KpiTotalSize}"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource TextMutedBrush}"/>
+                        <TextBlock Text="{Binding TotalSizeDisplay}"
+                                   FontSize="22"
+                                   FontWeight="Medium"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Text="{DynamicResource KpiTotalSizeUnit}"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource TextDisabledBrush}"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Classes="kpi-card">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="{DynamicResource KpiLastUpdate}"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource TextMutedBrush}"/>
+                        <TextBlock Text="{Binding LastUpdateDisplay}"
+                                   FontSize="22"
+                                   FontWeight="Medium"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Text="{DynamicResource KpiLastUpdateUnit}"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource TextDisabledBrush}"/>
+                    </StackPanel>
+                </Border>
+            </UniformGrid>
+
+            <!-- Recent mods (hidden when no mods) -->
+            <StackPanel Spacing="14" IsVisible="{Binding HasMods}">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Text="{DynamicResource LatestMods}"
+                               FontSize="14"
+                               FontWeight="Medium"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               VerticalAlignment="Center"/>
+                    <Button Grid.Column="1"
+                            Classes="link"
+                            Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).NavigateToListCommand, FallbackValue={x:Null}}">
+                        <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                            <TextBlock Text="{DynamicResource SeeAll}" FontSize="13" VerticalAlignment="Center"/>
+                            <icons:MaterialIcon Kind="ChevronRight"
+                                                Width="14" Height="14"
+                                                VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+
+                <ItemsControl ItemsSource="{Binding ItemList.Items}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="4"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="models:WorkshopItem">
+                            <Button Classes="mod-card" Margin="0,0,12,12"
+                                    Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).ItemListViewModel.SelectItemCommand, FallbackValue={x:Null}}"
+                                    CommandParameter="{Binding}">
+                                <Grid RowDefinitions="Auto,Auto">
+                                    <Border Grid.Row="0" CornerRadius="10,10,0,0" ClipToBounds="True"
+                                            Height="100"
+                                            Background="{DynamicResource SurfaceOverlayBrush}">
+                                        <Panel>
+                                            <Image Source="{Binding PreviewBitmap}" Stretch="UniformToFill"
+                                                   IsVisible="{Binding PreviewBitmap, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                            <icons:MaterialIcon Kind="ImageOutline"
+                                                                Width="24" Height="24"
+                                                                Foreground="{DynamicResource TextDisabledBrush}"
+                                                                HorizontalAlignment="Center"
+                                                                VerticalAlignment="Center"
+                                                                IsVisible="{Binding PreviewBitmap, Converter={x:Static ObjectConverters.IsNull}}"/>
+                                        </Panel>
+                                    </Border>
+                                    <StackPanel Grid.Row="1" Spacing="4" Margin="12,10,12,12">
+                                        <TextBlock Text="{Binding Title}"
+                                                   FontSize="13"
+                                                   FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <TextBlock Text="{Binding SubscribersDisplay, StringFormat='{}{0} subs'}"
+                                                       FontSize="11"
+                                                       Foreground="{DynamicResource TextMutedBrush}"/>
+                                            <TextBlock Text="·"
+                                                       FontSize="11"
+                                                       Foreground="{DynamicResource TextDisabledBrush}"/>
+                                            <TextBlock Text="{Binding UpdatedAtDisplay}"
+                                                       FontSize="11"
+                                                       Foreground="{DynamicResource TextMutedBrush}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Grid>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+
+        </StackPanel>
+    </ScrollViewer>
+
+</UserControl>

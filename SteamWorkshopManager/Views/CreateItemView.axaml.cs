@@ -1,6 +1,7 @@
 using System.IO;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Platform.Storage;
 using SteamWorkshopManager.ViewModels;
 
 namespace SteamWorkshopManager.Views;
@@ -20,21 +21,23 @@ public partial class CreateItemView : UserControl
 
     private void DropZone_Drop(object? sender, DragEventArgs e)
     {
-#pragma warning disable CS0618
-        var fileNames = e.Data.GetFileNames();
-#pragma warning restore CS0618
+        e.Handled = true;
 
-        if (fileNames is not null && DataContext is CreateItemViewModel vm)
+        if (DataContext is not CreateItemViewModel vm) return;
+        if (e.DataTransfer is null) return;
+
+        var files = e.DataTransfer.TryGetFiles();
+        if (files is null) return;
+
+        foreach (var item in files)
         {
-            foreach (var file in fileNames)
+            if (item is not IStorageFolder folder) continue;
+            var path = folder.TryGetLocalPath();
+            if (!string.IsNullOrEmpty(path) && Directory.Exists(path))
             {
-                if (Directory.Exists(file))
-                {
-                    vm.HandleFolderDrop(file);
-                    break;
-                }
+                vm.HandleFolderDrop(path);
+                break;
             }
         }
-        e.Handled = true;
     }
 }

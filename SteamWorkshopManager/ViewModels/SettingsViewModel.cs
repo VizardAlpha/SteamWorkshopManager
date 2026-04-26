@@ -5,12 +5,16 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Input.Platform;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services;
-using SteamWorkshopManager.Services.Interfaces;
+using SteamWorkshopManager.Services.Core;
 using SteamWorkshopManager.Services.Log;
+using SteamWorkshopManager.Services.Notifications;
+using SteamWorkshopManager.Services.Telemetry;
 
 namespace SteamWorkshopManager.ViewModels;
 
@@ -18,10 +22,31 @@ public partial class SettingsViewModel : ViewModelBase
 {
     private static readonly Logger Log = LogService.GetLogger<SettingsViewModel>();
 
+    private const string GitHubRepoUrl = "https://github.com/VizardAlpha/SteamWorkshopManager";
+    private const string PrivacyPolicyUrl = "https://swm-stats.com/Privacy";
+    private const string StatsSiteUrl = "https://swm-stats.com";
+
     private readonly ISettingsService _settingsService;
-    private readonly ISessionRepository _sessionRepository;
-    private readonly SessionManager _sessionManager;
     private readonly ILogService _logService;
+
+    /// <summary>
+    /// Which category is currently shown in the right-hand content pane.
+    /// Switching this toggles the <c>IsXxxActive</c> flags below, which the
+    /// view uses to drive nav highlighting and conditional section visibility.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsGeneralActive))]
+    [NotifyPropertyChangedFor(nameof(IsPrivacyActive))]
+    [NotifyPropertyChangedFor(nameof(IsDebugActive))]
+    [NotifyPropertyChangedFor(nameof(IsUpdatesActive))]
+    [NotifyPropertyChangedFor(nameof(IsAboutActive))]
+    private SettingsCategory _activeCategory = SettingsCategory.General;
+
+    public bool IsGeneralActive => ActiveCategory == SettingsCategory.General;
+    public bool IsPrivacyActive => ActiveCategory == SettingsCategory.Privacy;
+    public bool IsDebugActive => ActiveCategory == SettingsCategory.Debug;
+    public bool IsUpdatesActive => ActiveCategory == SettingsCategory.Updates;
+    public bool IsAboutActive => ActiveCategory == SettingsCategory.About;
 
     [ObservableProperty]
     private ObservableCollection<LanguageInfo> _availableLanguages = [];
@@ -33,16 +58,31 @@ public partial class SettingsViewModel : ViewModelBase
     private bool _isDebugModeEnabled;
 
     [ObservableProperty]
+    private bool _isTelemetryEnabled;
+
+    /// <summary>
+    /// Anonymous instance ID surfaced to the user in the Privacy section so
+    /// they can quote it in a GDPR access or deletion request. Comes from
+    /// <see cref="TelemetryService"/>; the app is initialized at startup so
+    /// the instance is already created by the time the settings page opens.
+    /// </summary>
+    public string InstanceId =>
+        (TelemetryService.Instance?.InstanceId ?? Guid.Empty).ToString();
+
+    [ObservableProperty]
+    private bool _isInstanceIdCopied;
+
+    [ObservableProperty]
     private string _logFilePath = string.Empty;
 
-    [ObservableProperty]
-    private WorkshopSession? _activeSession;
-
-    [ObservableProperty]
-    private ObservableCollection<WorkshopSession> _sessions = [];
-
-    [ObservableProperty]
-    private bool _isLoadingSessions;
+    /// <summary>
+    /// Root folder where app-state lives (bundle, settings, sessions, image
+    /// cache, telemetry queue, downloads, tags). Logs live separately under
+    /// LocalApplicationData — that's what <see cref="LogFilePath"/> points to.
+    /// </summary>
+    public string DataFolderPath { get; } = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+        "SteamWorkshopManager");
 
     [ObservableProperty]
     private bool _isUpdateAvailable;
@@ -50,91 +90,54 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     private UpdateInfo? _updateInfo;
 
-    public event Action? CloseRequested;
-    public event Action? AddSessionRequested;
+    [ObservableProperty]
+    private bool _isCheckingUpdates;
 
-    public SettingsViewModel(ISettingsService settingsService, ISessionRepository? sessionRepository = null)
+    public string AppVersion => AppInfo.Version;
+
+    public SettingsViewModel(ISettingsService settingsService)
     {
         _settingsService = settingsService;
-        _sessionRepository = sessionRepository ?? new SessionRepository(settingsService);
-        _sessionManager = new SessionManager(_sessionRepository);
         _logService = LogService.Instance;
 
-        // Initialize languages from discovered list
         var languages = LocalizationService.Instance.AvailableLanguages;
         _availableLanguages = new ObservableCollection<LanguageInfo>(languages);
         _selectedLanguage = languages.FirstOrDefault(l => l.Code == _settingsService.Settings.Language);
 
-        // Initialize debug mode from settings
         _isDebugModeEnabled = _settingsService.Settings.DebugMode;
+        _isTelemetryEnabled = _settingsService.Settings.TelemetryEnabled;
         _logFilePath = _logService.GetLogFilePath();
 
-        // Load sessions + check for updates
-        _ = LoadSessionsAsync();
         _ = CheckForUpdatesAsync();
     }
 
-    private async Task LoadSessionsAsync()
-    {
-        IsLoadingSessions = true;
-        try
-        {
-            var sessions = await _sessionRepository.GetAllSessionsAsync();
-            var activeId = AppConfig.CurrentSession?.Id;
-
-            foreach (var session in sessions)
-            {
-                session.IsActive = session.Id == activeId;
-            }
-
-            Sessions = new ObservableCollection<WorkshopSession>(sessions);
-            ActiveSession = AppConfig.CurrentSession;
-        }
-        catch (Exception ex)
-        {
-            Log.Error("Failed to load sessions", ex);
-        }
-        finally
-        {
-            IsLoadingSessions = false;
-        }
-    }
+    [RelayCommand]
+    private void NavigateToGeneral() => ActiveCategory = SettingsCategory.General;
 
     [RelayCommand]
-    private async Task SwitchSessionAsync(WorkshopSession session)
-    {
-        if (session.Id == ActiveSession?.Id) return;
-
-        Log.Info($"Switching to session: {session.Name}");
-        await _sessionManager.SwitchSessionAsync(session);
-        // App will restart
-    }
+    private void NavigateToPrivacy() => ActiveCategory = SettingsCategory.Privacy;
 
     [RelayCommand]
-    private void AddSession()
-    {
-        AddSessionRequested?.Invoke();
-    }
+    private void NavigateToDebug() => ActiveCategory = SettingsCategory.Debug;
 
     [RelayCommand]
-    private async Task DeleteSessionAsync(WorkshopSession session)
-    {
-        if (session.Id == ActiveSession?.Id)
-        {
-            Log.Warning("Cannot delete active session");
-            return;
-        }
+    private void NavigateToUpdates() => ActiveCategory = SettingsCategory.Updates;
 
-        Log.Info($"Deleting session: {session.Name}");
-        await _sessionRepository.DeleteSessionAsync(session.Id);
-        Sessions.Remove(session);
-    }
+    [RelayCommand]
+    private void NavigateToAbout() => ActiveCategory = SettingsCategory.About;
 
     partial void OnIsDebugModeEnabledChanged(bool value)
     {
         _settingsService.Settings.DebugMode = value;
         _settingsService.Save();
         _logService.SetDebugMode(value);
+    }
+
+    partial void OnIsTelemetryEnabledChanged(bool value)
+    {
+        _settingsService.Settings.TelemetryEnabled = value;
+        _settingsService.Save();
+        _ = TelemetryService.Instance?.FlushAsync();
     }
 
     partial void OnSelectedLanguageChanged(LanguageInfo? value)
@@ -147,33 +150,89 @@ public partial class SettingsViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void Close()
+    private async Task CopyInstanceIdAsync()
     {
-        CloseRequested?.Invoke();
+        var text = InstanceId;
+        if (string.IsNullOrWhiteSpace(text) || text == Guid.Empty.ToString()) return;
+        await CopyToClipboardAsync(text);
+
+        IsInstanceIdCopied = true;
+        try { await Task.Delay(TimeSpan.FromSeconds(2)); }
+        finally { IsInstanceIdCopied = false; }
     }
 
+    private static async Task CopyToClipboardAsync(string text)
+    {
+        try
+        {
+            if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+                && desktop.MainWindow?.Clipboard is { } clipboard)
+            {
+                // Avalonia 12 — `SetTextAsync` is an extension method on
+                // IClipboard from Avalonia.Input.Platform.ClipboardExtensions,
+                // and routes natively on Windows (Win32 clipboard), macOS
+                // (NSPasteboard), and Linux (X11 / Wayland).
+                await clipboard.SetTextAsync(text);
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Debug($"Clipboard copy failed: {ex.Message}");
+        }
+    }
+
+    [RelayCommand]
+    private void OpenPrivacyPolicy() => OpenUrl(PrivacyPolicyUrl);
+
+    [RelayCommand]
+    private void OpenStatsSite() => OpenUrl(StatsSiteUrl);
+
+    [RelayCommand]
+    private void OpenGitHub() => OpenUrl(GitHubRepoUrl);
+
+    [RelayCommand]
+    private void OpenChangelog() => OpenUrl($"{GitHubRepoUrl}/releases");
+
+    [RelayCommand]
     private async Task CheckForUpdatesAsync()
     {
-        var info = await UpdateCheckerService.CheckForUpdateAsync();
-        if (info is not null)
+        IsCheckingUpdates = true;
+        try
         {
+            var info = await UpdateCheckerService.CheckForUpdateAsync();
             UpdateInfo = info;
-            IsUpdateAvailable = true;
+            IsUpdateAvailable = info is not null;
+        }
+        finally
+        {
+            IsCheckingUpdates = false;
         }
     }
 
     [RelayCommand]
     private void OpenReleasePage()
     {
-        if (UpdateInfo?.ReleaseUrl is not { } url) return;
-        Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+        if (UpdateInfo?.ReleaseUrl is { } url) OpenUrl(url);
     }
 
     [RelayCommand]
-    private void OpenLogFolder()
+    private void OpenLogFolder() => RevealInExplorer(LogFilePath);
+
+    [RelayCommand]
+    private void OpenDataFolder()
     {
-        var logFolder = Path.GetDirectoryName(LogFilePath);
-        if (string.IsNullOrEmpty(logFolder) || !Directory.Exists(logFolder)) return;
+        if (Directory.Exists(DataFolderPath)) RevealFolder(DataFolderPath);
+    }
+
+    /// <summary>
+    /// Opens the OS file explorer with the given file highlighted. Falls back
+    /// to opening the containing folder when the selection syntax isn't
+    /// available (Linux).
+    /// </summary>
+    private static void RevealInExplorer(string filePath)
+    {
+        var folder = Path.GetDirectoryName(filePath);
+        if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder)) return;
 
         try
         {
@@ -182,22 +241,62 @@ public partial class SettingsViewModel : ViewModelBase
                 Process.Start(new ProcessStartInfo
                 {
                     FileName = "explorer.exe",
-                    Arguments = $"/select,\"{LogFilePath}\"",
-                    UseShellExecute = true
+                    Arguments = $"/select,\"{filePath}\"",
+                    UseShellExecute = true,
                 });
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
-                Process.Start("open", $"-R \"{LogFilePath}\"");
+                Process.Start("open", $"-R \"{filePath}\"");
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-                Process.Start("xdg-open", logFolder);
+                Process.Start("xdg-open", folder);
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Ignore errors opening folder
+            Log.Debug($"Failed to reveal {filePath}: {ex.Message}");
+        }
+    }
+
+    private static void RevealFolder(string folder)
+    {
+        try
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = "explorer.exe",
+                    Arguments = $"\"{folder}\"",
+                    UseShellExecute = true,
+                });
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                Process.Start("open", $"\"{folder}\"");
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                Process.Start("xdg-open", folder);
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Debug($"Failed to open folder {folder}: {ex.Message}");
+        }
+    }
+
+    private static void OpenUrl(string url)
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            Log.Debug($"Failed to open URL {url}: {ex.Message}");
         }
     }
 }

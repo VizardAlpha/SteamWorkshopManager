@@ -1,5 +1,6 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialIcons="using:Material.Icons.Avalonia"
              x:Class="SteamWorkshopManager.App"
              xmlns:local="using:SteamWorkshopManager"
              RequestedThemeVariant="Dark">
@@ -13,6 +14,8 @@
             <ResourceDictionary.MergedDictionaries>
                 <!-- Default language - English (will be swapped at runtime if user changes) -->
                 <ResourceInclude Source="avares://SteamWorkshopManager/Resources/Languages/en-US.axaml"/>
+                <!-- Semantic theme tokens: Surface/Border/Text/Accent/Feedback + gradients -->
+                <ResourceInclude Source="avares://SteamWorkshopManager/Themes/SemanticTokens.axaml"/>
             </ResourceDictionary.MergedDictionaries>
 
             <!-- Steam-inspired color palette -->
@@ -52,6 +55,30 @@
 
     <Application.Styles>
         <FluentTheme />
+        <materialIcons:MaterialIconStyles />
+
+        <!-- Global cursor for interactive controls — skip disabled state -->
+        <Style Selector="Button:not(:disabled)">
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="ToggleButton:not(:disabled)">
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="ToggleSwitch:not(:disabled)">
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="ListBoxItem:not(:disabled)">
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="ComboBoxItem:not(:disabled)">
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="RadioButton:not(:disabled)">
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="CheckBox:not(:disabled)">
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
 
         <!-- Primary action button style -->
         <Style Selector="Button.accent">

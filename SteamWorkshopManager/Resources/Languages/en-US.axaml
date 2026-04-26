@@ -8,20 +8,45 @@
     <!-- Header -->
     <x:String x:Key="AppTitle">Workshop Manager</x:String>
     <x:String x:Key="AppSubtitle">Songs of Syx</x:String>
-    <x:String x:Key="MyPublications">My publications</x:String>
-    <x:String x:Key="NewItem">+ New</x:String>
+    <x:String x:Key="Home">Home</x:String>
+    <x:String x:Key="MyPublications">My mods</x:String>
+    <x:String x:Key="NewItem">New</x:String>
 
     <!-- Status -->
     <x:String x:Key="ConnectingToSteam">Connecting to Steam...</x:String>
     <x:String x:Key="ConnectedToSteam">Connected to Steam</x:String>
-    <x:String x:Key="SteamNotAvailable">Steam not available - Launch Steam and restart the application</x:String>
+    <x:String x:Key="WorkerRecovered">Steam worker recovered</x:String>
+    <x:String x:Key="WorkerUnrecoverable">Steam worker kept crashing — try switching sessions.</x:String>
+    <x:String x:Key="ViewLiveStats">View live stats</x:String>
+    <x:String x:Key="SteamNotAvailable">Steam isn't running — launch Steam, then switch sessions to reconnect.</x:String>
     <x:String x:Key="GameNotOwned">Game not owned - Cannot publish mods</x:String>
     <x:String x:Key="GameNotOwnedMessage">You do not own this game. You must own the game to publish mods to the Steam Workshop.</x:String>
     <x:String x:Key="SteamNotInitialized">Steam is not initialized</x:String>
 
     <!-- Item List -->
-    <x:String x:Key="MyPublicationsTitle">My publications</x:String>
+    <x:String x:Key="MyPublicationsTitle">My mods</x:String>
     <x:String x:Key="MyPublicationsSubtitle">Manage your mods published on the Workshop</x:String>
+    <x:String x:Key="SearchMods">Search mods...</x:String>
+    <x:String x:Key="ClearSearch">Clear search</x:String>
+
+    <!-- Settings categories -->
+    <x:String x:Key="SettingsGeneral">General</x:String>
+    <x:String x:Key="SettingsPrivacy">Privacy</x:String>
+    <x:String x:Key="SettingsDebug">Debug</x:String>
+    <x:String x:Key="SettingsUpdates">Updates</x:String>
+    <x:String x:Key="SettingsAbout">About</x:String>
+
+    <!-- Settings — Updates -->
+    <x:String x:Key="CurrentVersion">Current version</x:String>
+    <x:String x:Key="CheckForUpdates">Check for updates</x:String>
+    <x:String x:Key="CheckingUpdates">Checking…</x:String>
+    <x:String x:Key="UpToDate">You're on the latest version</x:String>
+    <x:String x:Key="NewVersionAvailable">A new version is available</x:String>
+
+    <!-- Settings — About -->
+    <x:String x:Key="OpenGitHub">View on GitHub</x:String>
+    <x:String x:Key="OpenChangelog">Changelog</x:String>
+    <x:String x:Key="SettingsSubtitle">Customize your Workshop Manager experience</x:String>
     <x:String x:Key="Refresh">Refresh</x:String>
     <x:String x:Key="LoadingPublications">Loading your publications...</x:String>
     <x:String x:Key="NoImage">No image</x:String>
@@ -32,6 +57,26 @@
     <x:String x:Key="Back">Back</x:String>
     <x:String x:Key="Delete">Delete</x:String>
     <x:String x:Key="Save">Save</x:String>
+    <x:String x:Key="SaveChanges">Save changes</x:String>
+    <x:String x:Key="Saving">Saving...</x:String>
+    <x:String x:Key="SaveAsDraft">Save as draft</x:String>
+    <x:String x:Key="DraftSaved">Draft saved</x:String>
+    <x:String x:Key="Drafts">Drafts</x:String>
+    <x:String x:Key="NoDrafts">No saved drafts</x:String>
+    <x:String x:Key="LoadDraft">Load draft</x:String>
+    <x:String x:Key="ModInformation">Mod information</x:String>
+    <x:String x:Key="ModInformationSub">Core details about your mod: folder, preview image, title and description.</x:String>
+    <x:String x:Key="ModFolder">Mod folder</x:String>
+    <x:String x:Key="Details">Details</x:String>
+    <x:String x:Key="PreviewImageMeta">Recommended 512×512, JPG or PNG</x:String>
+    <x:String x:Key="VersionsHeader">Versions &amp; compatibility</x:String>
+    <x:String x:Key="VersionsHeaderSub">Release notes and which game branches this mod targets.</x:String>
+    <x:String x:Key="VersionCompatibility">Version compatibility</x:String>
+    <x:String x:Key="DependenciesHeader">Dependencies &amp; requirements</x:String>
+    <x:String x:Key="DependenciesHeaderSub">Other Workshop items or DLCs required for your mod to work.</x:String>
+    <x:String x:Key="WorkshopDependencies">Workshop dependencies</x:String>
+    <x:String x:Key="HistorySubtitle">Previous updates and downloadable versions of your mod.</x:String>
+    <x:String x:Key="PreviousUpdates">Previous updates</x:String>
     <x:String x:Key="PreviewImage">Preview image</x:String>
     <x:String x:Key="NoImageSelected">No image selected</x:String>
     <x:String x:Key="ChooseImage">Choose an image</x:String>
@@ -128,6 +173,8 @@
     <x:String x:Key="EnableDebugMode">Enable Debug Logging</x:String>
     <x:String x:Key="DebugModeDescription">When enabled, detailed logs are saved to help troubleshoot issues. Share the log file when reporting problems.</x:String>
     <x:String x:Key="LogFileLocation">Log file location:</x:String>
+    <x:String x:Key="AppDataFolder">App data folder</x:String>
+    <x:String x:Key="AppDataFolderDescription">Settings, sessions, cache, telemetry queue, and downloads. Handy when reporting bugs or migrating to another machine.</x:String>
 
     <!-- Sessions -->
     <x:String x:Key="Sessions">Sessions</x:String>
@@ -148,8 +195,39 @@
     <x:String x:Key="CreatingSession">Creating session...</x:String>
     <x:String x:Key="CreateSessionButton">Create Session</x:String>
     <x:String x:Key="SetupWizardHint">Example: 1162750 for Songs of Syx</x:String>
-    <x:String x:Key="AppIdRequired">Please enter an AppId</x:String>
-    <x:String x:Key="AppIdInvalid">Please enter a valid numeric AppId</x:String>
+    <x:String x:Key="AppIdRequired">Please enter an AppId or a Steam link</x:String>
+    <x:String x:Key="AppIdInvalid">Couldn't read an AppId from that input — paste a number or a Steam URL</x:String>
+    <x:String x:Key="AddSessionHeroTitle">Add a Steam game</x:String>
+    <x:String x:Key="AddSessionHeroSubtitle">Paste a Steam store link or enter an AppID. We'll fetch the game info and make its Workshop available in the app.</x:String>
+    <x:String x:Key="AppIdOrUrlLabel">Steam AppID or URL</x:String>
+    <x:String x:Key="AppIdOrUrlPlaceholder">480490 or https://store.steampowered.com/app/480490/…</x:String>
+    <x:String x:Key="WorkshopAvailable">Workshop available</x:String>
+
+    <!-- Home dashboard -->
+    <x:String x:Key="RefreshImage">Refresh image</x:String>
+    <x:String x:Key="KpiModsPublished">Mods published</x:String>
+    <x:String x:Key="KpiModsPublishedUnit">active publications</x:String>
+    <x:String x:Key="KpiSubscribers">Subscribers</x:String>
+    <x:String x:Key="KpiSubscribersUnit">total subscribers</x:String>
+    <x:String x:Key="KpiTotalSize">Total size</x:String>
+    <x:String x:Key="KpiTotalSizeUnit">across all mods</x:String>
+    <x:String x:Key="KpiLastUpdate">Last update</x:String>
+    <x:String x:Key="KpiLastUpdateUnit">most recent mod</x:String>
+    <x:String x:Key="LatestMods">Latest mods</x:String>
+    <x:String x:Key="SeeAll">See all</x:String>
+
+    <!-- Shell overlay + tabs -->
+    <x:String x:Key="SwitchingSession">Switching session…</x:String>
+    <x:String x:Key="InfoTab">Information</x:String>
+    <x:String x:Key="ChangelogTab">Changelog</x:String>
+    <x:String x:Key="VersionsTab">Versions</x:String>
+    <x:String x:Key="MoveUp">Move up</x:String>
+    <x:String x:Key="MoveDown">Move down</x:String>
+    <x:String x:Key="BranchLabel">Branch:</x:String>
+
+    <!-- Inline errors -->
+    <x:String x:Key="SessionSwitchFailed">Session switch failed</x:String>
+    <x:String x:Key="LoadVersionsFailed">Failed to load versions</x:String>
     <x:String x:Key="InvalidAppId">This AppId does not exist</x:String>
     <x:String x:Key="NoWorkshop">This game has no Workshop</x:String>
     <x:String x:Key="NetworkError">Network error during validation</x:String>
@@ -293,7 +371,7 @@
     <!-- App Dependencies -->
     <x:String x:Key="RequiredApps">Required Apps / DLCs</x:String>
     <x:String x:Key="NoAppDependencies">No required apps</x:String>
-    <x:String x:Key="AppIdPlaceholder">Steam AppID...</x:String>
+    <x:String x:Key="AppIdPlaceholder">Steam AppID or Store URL...</x:String>
     <x:String x:Key="AppDependencyAlreadyExists">This app dependency already exists</x:String>
     <x:String x:Key="AddAppDependencyFailed">Failed to add app dependency</x:String>
     <x:String x:Key="RemoveAppDependencyFailed">Failed to remove app dependency</x:String>
@@ -303,4 +381,17 @@
     <x:String x:Key="CannotAddOwnGame">Cannot add the current game as a dependency</x:String>
     <x:String x:Key="AppNotFound">App not found</x:String>
     <x:String x:Key="ConfirmAddApp">Add this app as a dependency?</x:String>
+
+    <!-- Privacy / Telemetry -->
+    <x:String x:Key="Privacy">Privacy</x:String>
+    <x:String x:Key="EnableTelemetry">Share usage statistics</x:String>
+    <x:String x:Key="TelemetryDescription">Help improve the app by sending usage data (OS, app version, mod actions). No personal data, no Steam ID. You can disable this at any time.</x:String>
+    <x:String x:Key="ViewPrivacyPolicy">View privacy policy</x:String>
+    <x:String x:Key="IHaveReadLegal">I have read and accept the Terms of use and the Privacy policy</x:String>
+    <x:String x:Key="TermsOfUse">Terms of use</x:String>
+    <x:String x:Key="PrivacyPolicy">Privacy policy</x:String>
+    <x:String x:Key="YourInstanceId">Your instance ID</x:String>
+    <x:String x:Key="YourInstanceIdDescription">Random identifier for this install. Include it in your deletion or access request so we can find your data — it's the only identifier we have.</x:String>
+    <x:String x:Key="Copy">Copy</x:String>
+    <x:String x:Key="Copied">Copied!</x:String>
 </ResourceDictionary>

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using SteamWorkshopManager.Services.Interfaces;
 
 namespace SteamWorkshopManager.Services.Log;
 

@@ -1,162 +1,266 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:SteamWorkshopManager.ViewModels"
+        xmlns:icons="using:Material.Icons.Avalonia"
         x:Class="SteamWorkshopManager.Views.SetupWizardWindow"
         x:DataType="vm:SetupWizardViewModel"
         Title="{Binding Loc[SetupWizardTitle]}"
-        Width="500"
-        Height="420"
+        Width="560"
+        Height="640"
         WindowStartupLocation="CenterScreen"
-        CanResize="False">
+        CanResize="False"
+        Background="{DynamicResource WindowBackgroundBrush}">
 
-    <Border Background="{DynamicResource SystemChromeLowColor}">
-        <Grid RowDefinitions="Auto,*,Auto">
-            <!-- Header -->
-            <Border Grid.Row="0"
-                    Background="{DynamicResource SystemAccentColor}"
-                    Padding="24,20">
-                <StackPanel>
+    <Panel>
+        <Grid RowDefinitions="Auto,*,Auto" Margin="32,28,32,24">
+
+            <!-- Hero -->
+            <StackPanel Grid.Row="0" Spacing="8">
+                <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                    <Border Width="40" Height="40" CornerRadius="10"
+                            Background="{DynamicResource AccentPrimaryGradientBrush}">
+                        <icons:MaterialIcon Kind="RocketLaunchOutline" Width="22" Height="22"
+                                            Foreground="White"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"/>
+                    </Border>
                     <TextBlock Text="{Binding Loc[SetupWizardTitle]}"
-                               FontSize="24"
-                               FontWeight="SemiBold"
-                               Foreground="White" />
-                    <TextBlock Text="{Binding Loc[SetupWizardSubtitle]}"
-                               FontSize="14"
-                               Foreground="White"
-                               Opacity="0.9"
-                               Margin="0,4,0,0" />
+                               FontSize="22"
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource TextPrimaryBrush}"
+                               VerticalAlignment="Center"/>
                 </StackPanel>
-            </Border>
+                <TextBlock Text="{Binding Loc[SetupWizardSubtitle]}"
+                           FontSize="13"
+                           Foreground="{DynamicResource TextMutedBrush}"
+                           TextWrapping="Wrap"/>
+            </StackPanel>
 
             <!-- Content -->
-            <StackPanel Grid.Row="1"
-                        Margin="24"
-                        Spacing="16">
-                <TextBlock Text="{Binding Loc[SetupWizardInstructions]}"
-                           TextWrapping="Wrap"
-                           Foreground="{DynamicResource SystemBaseHighColor}" />
+            <StackPanel Grid.Row="1" Spacing="16" Margin="0,24,0,0">
 
-                <!-- AppId Input -->
+                <TextBlock Text="{Binding Loc[SetupWizardInstructions]}"
+                           FontSize="13"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           TextWrapping="Wrap"/>
+
+                <!-- AppId / URL input -->
                 <StackPanel Spacing="8">
                     <TextBlock Text="{Binding Loc[AppIdLabel]}"
-                               FontWeight="SemiBold" />
+                               FontSize="12"
+                               FontWeight="Medium"
+                               Foreground="{DynamicResource TextMutedBrush}"/>
                     <Grid ColumnDefinitions="*,Auto">
                         <TextBox Grid.Column="0"
                                  Text="{Binding AppIdInput, Mode=TwoWay}"
-                                 Watermark="480490"
+                                 PlaceholderText="{DynamicResource AppIdOrUrlPlaceholder}"
                                  IsEnabled="{Binding !IsValidating}"
-                                 Margin="0,0,8,0" />
+                                 Padding="12,10"
+                                 Margin="0,0,8,0"
+                                 FontSize="13"/>
                         <Button Grid.Column="1"
-                                Content="{Binding Loc[ValidateButton]}"
                                 Command="{Binding ValidateAppIdCommand}"
-                                IsEnabled="{Binding !IsValidating}"
-                                Width="100" />
+                                MinWidth="100"
+                                Padding="14,10"
+                                Background="{DynamicResource SurfaceOverlayBrush}"
+                                BorderBrush="{DynamicResource BorderStrongBrush}"
+                                Foreground="{DynamicResource TextPrimaryBrush}"
+                                CornerRadius="6"
+                                Content="{Binding Loc[ValidateButton]}"/>
                     </Grid>
                 </StackPanel>
 
-                <!-- Validation Result -->
+                <!-- Validating -->
                 <Border IsVisible="{Binding IsValidating}"
-                        Padding="12"
-                        Background="{DynamicResource SystemListLowColor}"
-                        CornerRadius="4">
-                    <StackPanel Spacing="8">
-                        <ProgressBar IsIndeterminate="True" Height="4" />
+                        Padding="16"
+                        Background="{DynamicResource SurfaceCardBrush}"
+                        BorderBrush="{DynamicResource BorderSubtleBrush}"
+                        BorderThickness="1"
+                        CornerRadius="10">
+                    <StackPanel Spacing="10">
+                        <ProgressBar IsIndeterminate="True"
+                                     Height="3"
+                                     Background="{DynamicResource SurfaceOverlayBrush}"
+                                     Foreground="{DynamicResource AccentPrimaryBrush}"/>
                         <TextBlock Text="{Binding Loc[Validating]}"
-                                   HorizontalAlignment="Center" />
+                                   HorizontalAlignment="Center"
+                                   FontSize="13"
+                                   Foreground="{DynamicResource TextMutedBrush}"/>
                     </StackPanel>
                 </Border>
 
-                <!-- Success -->
+                <!-- Success preview -->
                 <Border IsVisible="{Binding IsValid}"
-                        Padding="12"
-                        Background="#1a4caf50"
-                        BorderBrush="#4caf50"
+                        Background="#1F5EC384"
+                        BorderBrush="{DynamicResource FeedbackSuccessBrush}"
                         BorderThickness="1"
-                        CornerRadius="4">
+                        CornerRadius="10"
+                        Padding="14">
                     <Grid ColumnDefinitions="Auto,*">
-                        <TextBlock Grid.Column="0"
-                                   Text="✓"
-                                   FontSize="20"
-                                   Foreground="#4caf50"
-                                   VerticalAlignment="Center"
-                                   Margin="0,0,12,0" />
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <icons:MaterialIcon Grid.Column="0"
+                                            Kind="CheckCircleOutline" Width="22" Height="22"
+                                            Foreground="{DynamicResource FeedbackSuccessBrush}"
+                                            VerticalAlignment="Center"
+                                            Margin="0,0,12,0"/>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
                             <TextBlock Text="{Binding GameName}"
+                                       FontSize="14"
                                        FontWeight="SemiBold"
-                                       Foreground="#4caf50" />
+                                       Foreground="{DynamicResource TextPrimaryBrush}"/>
                             <TextBlock Text="{Binding Loc[WorkshopFound]}"
                                        FontSize="12"
-                                       Foreground="#4caf50"
-                                       Opacity="0.8" />
+                                       Foreground="{DynamicResource FeedbackSuccessTextBrush}"/>
                         </StackPanel>
                     </Grid>
                 </Border>
 
                 <!-- Error -->
                 <Border IsVisible="{Binding HasError}"
-                        Padding="12"
-                        Background="#1af44336"
-                        BorderBrush="#f44336"
+                        Background="#1FC23B2E"
+                        BorderBrush="{DynamicResource FeedbackDangerBrush}"
                         BorderThickness="1"
-                        CornerRadius="4">
+                        CornerRadius="10"
+                        Padding="14">
                     <Grid ColumnDefinitions="Auto,*">
-                        <TextBlock Grid.Column="0"
-                                   Text="✗"
-                                   FontSize="20"
-                                   Foreground="#f44336"
-                                   VerticalAlignment="Center"
-                                   Margin="0,0,12,0" />
+                        <icons:MaterialIcon Grid.Column="0"
+                                            Kind="AlertCircleOutline" Width="22" Height="22"
+                                            Foreground="{DynamicResource FeedbackDangerBrush}"
+                                            VerticalAlignment="Center"
+                                            Margin="0,0,12,0"/>
                         <TextBlock Grid.Column="1"
                                    Text="{Binding ErrorMessage}"
-                                   Foreground="#f44336"
+                                   FontSize="13"
+                                   Foreground="{DynamicResource FeedbackDangerTextBrush}"
                                    TextWrapping="Wrap"
-                                   VerticalAlignment="Center" />
+                                   VerticalAlignment="Center"/>
                     </Grid>
+                </Border>
+
+                <!-- Telemetry consent — nothing is sent before Create Session.
+                     The Terms/Privacy acknowledgement only appears (and only
+                     gates Validate) when the toggle is on, since opt-out
+                     means no data ever leaves the machine. -->
+                <Border Background="{DynamicResource SurfaceCardBrush}"
+                        BorderBrush="{DynamicResource BorderSubtleBrush}"
+                        BorderThickness="1"
+                        CornerRadius="10"
+                        Padding="14,12">
+                    <StackPanel Spacing="10">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Grid.Column="0" Spacing="6">
+                                <TextBlock Text="{Binding Loc[EnableTelemetry]}"
+                                           FontSize="13"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                <TextBlock Text="{Binding Loc[TelemetryDescription]}"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextMutedBrush}"
+                                           TextWrapping="Wrap"/>
+                                <Button Background="Transparent" BorderThickness="0" Padding="0"
+                                        Margin="0,2,0,0"
+                                        Command="{Binding OpenStatsSiteCommand}">
+                                    <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Loc[ViewLiveStats]}"
+                                                   FontSize="12"
+                                                   Foreground="{DynamicResource AccentPrimaryBrush}"/>
+                                        <icons:MaterialIcon Kind="ChartBar" Width="11" Height="11"
+                                                            Foreground="{DynamicResource AccentPrimaryBrush}"
+                                                            VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                            <ToggleSwitch Grid.Column="1"
+                                          IsChecked="{Binding IsTelemetryEnabled}"
+                                          OnContent="" OffContent=""
+                                          VerticalAlignment="Center"
+                                          Margin="12,0,0,0"/>
+                        </Grid>
+                        <StackPanel IsVisible="{Binding IsTelemetryEnabled}" Spacing="8">
+                            <Border Height="1" Background="{DynamicResource BorderSubtleBrush}"/>
+                            <CheckBox IsChecked="{Binding IsPrivacyAccepted}"
+                                      Content="{Binding Loc[IHaveReadLegal]}"
+                                      FontSize="12"
+                                      Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <StackPanel Orientation="Horizontal" Spacing="16" Margin="26,0,0,0">
+                                <Button Background="Transparent" BorderThickness="0" Padding="0"
+                                        Command="{Binding OpenTermsOfUseCommand}">
+                                    <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Loc[TermsOfUse]}"
+                                                   FontSize="12"
+                                                   Foreground="{DynamicResource AccentPrimaryBrush}"/>
+                                        <icons:MaterialIcon Kind="OpenInNew" Width="11" Height="11"
+                                                            Foreground="{DynamicResource AccentPrimaryBrush}"
+                                                            VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button Background="Transparent" BorderThickness="0" Padding="0"
+                                        Command="{Binding OpenPrivacyPolicyCommand}">
+                                    <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Loc[PrivacyPolicy]}"
+                                                   FontSize="12"
+                                                   Foreground="{DynamicResource AccentPrimaryBrush}"/>
+                                        <icons:MaterialIcon Kind="OpenInNew" Width="11" Height="11"
+                                                            Foreground="{DynamicResource AccentPrimaryBrush}"
+                                                            VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
                 </Border>
             </StackPanel>
 
             <!-- Footer -->
-            <Border Grid.Row="2"
-                    Background="{DynamicResource SystemListLowColor}"
-                    Padding="24,16">
-                <Grid ColumnDefinitions="*,Auto">
-                    <TextBlock Grid.Column="0"
-                               Text="{Binding Loc[SetupWizardHint]}"
-                               FontSize="12"
-                               Foreground="{DynamicResource SystemBaseMediumColor}"
-                               VerticalAlignment="Center"
-                               TextWrapping="Wrap" />
-                    <Button Grid.Column="1"
-                            Content="{Binding Loc[CreateSessionButton]}"
-                            Command="{Binding CreateSessionCommand}"
-                            IsEnabled="{Binding IsValid}"
-                            Classes="accent"
-                            MinWidth="140">
-                        <Button.Styles>
-                            <Style Selector="Button.accent">
-                                <Setter Property="Background" Value="{DynamicResource SystemAccentColor}" />
-                                <Setter Property="Foreground" Value="White" />
-                            </Style>
-                        </Button.Styles>
-                    </Button>
-                </Grid>
-            </Border>
+            <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="0,20,0,0">
+                <TextBlock Grid.Column="0"
+                           Text="{Binding Loc[SetupWizardHint]}"
+                           FontSize="11"
+                           Foreground="{DynamicResource TextMutedBrush}"
+                           TextWrapping="Wrap"
+                           VerticalAlignment="Center"
+                           Margin="0,0,12,0"/>
+                <Button Grid.Column="1"
+                        Command="{Binding CreateSessionCommand}"
+                        IsEnabled="{Binding IsValid}"
+                        Background="{DynamicResource AccentPrimaryGradientBrush}"
+                        Foreground="White"
+                        FontWeight="SemiBold"
+                        BorderThickness="0"
+                        CornerRadius="8"
+                        Padding="18,10"
+                        MinWidth="160">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <icons:MaterialIcon Kind="Plus" Width="14" Height="14"/>
+                        <TextBlock Text="{Binding Loc[CreateSessionButton]}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
 
             <!-- Creating overlay -->
             <Border Grid.Row="0" Grid.RowSpan="3"
                     IsVisible="{Binding IsCreating}"
-                    Background="#80000000">
-                <StackPanel HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            Spacing="16"
-                            Width="200">
-                    <ProgressBar IsIndeterminate="True" Height="6" />
-                    <TextBlock Text="{Binding Loc[CreatingSession]}"
-                               Foreground="White"
-                               FontSize="16"
-                               HorizontalAlignment="Center" />
-                </StackPanel>
+                    Background="#CC000000">
+                <Border Background="{DynamicResource SurfaceCardBrush}"
+                        BorderBrush="{DynamicResource BorderSubtleBrush}"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        Padding="28"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        MinWidth="260">
+                    <StackPanel Spacing="14" HorizontalAlignment="Center">
+                        <ProgressBar IsIndeterminate="True"
+                                     Width="180"
+                                     Height="3"
+                                     Background="{DynamicResource SurfaceOverlayBrush}"
+                                     Foreground="{DynamicResource AccentPrimaryBrush}"/>
+                        <TextBlock Text="{Binding Loc[CreatingSession]}"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   FontSize="14"
+                                   HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
             </Border>
         </Grid>
-    </Border>
+    </Panel>
 </Window>

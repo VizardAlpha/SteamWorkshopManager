@@ -1,6 +1,6 @@
 using System;
 using Avalonia.Controls;
-using SteamWorkshopManager.Services.Interfaces;
+using SteamWorkshopManager.Services.Session;
 using SteamWorkshopManager.ViewModels;
 
 namespace SteamWorkshopManager.Views;
@@ -17,7 +17,11 @@ public partial class AddSessionWindow : Window
     public AddSessionWindow(ISessionRepository sessionRepository) : this()
     {
         var viewModel = new AddSessionViewModel(sessionRepository);
-        viewModel.SessionCreated += () => SessionCreatedAndReady?.Invoke();
+        viewModel.SessionCreated += () =>
+        {
+            SessionCreatedAndReady?.Invoke();
+            Close();
+        };
         viewModel.CancelRequested += () => Close();
         DataContext = viewModel;
     }

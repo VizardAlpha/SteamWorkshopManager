@@ -1,6 +1,8 @@
+using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Media;
-using SteamWorkshopManager.Services;
+using Microsoft.Extensions.DependencyInjection;
+using SteamWorkshopManager.Services.Session;
 using SteamWorkshopManager.ViewModels;
 
 namespace SteamWorkshopManager.Views;
@@ -36,18 +38,26 @@ public partial class MainWindow : Window
 
     private async void OnOpenAddSessionWizard()
     {
-        var settingsService = new SettingsService();
-        var sessionRepository = new SessionRepository(settingsService);
+        var sessionRepository = App.Services.GetRequiredService<ISessionRepository>();
         var addSessionWindow = new AddSessionWindow(sessionRepository);
 
-        // When session is created, switch to it (which restarts the app)
+        // The dialog auto-closes itself on success; here we refresh the pill
+        // collection and route through the ViewModel's SwitchSessionCommand so
+        // the new session flows through the same UI-update path as a manual
+        // switch (items reload, hero image refresh, KPI recalc…).
         addSessionWindow.SessionCreatedAndReady += async () =>
         {
-            var session = await sessionRepository.GetActiveSessionAsync();
-            if (session != null)
+            if (DataContext is not MainViewModel vm) return;
+
+            var newActive = await sessionRepository.GetActiveSessionAsync();
+            if (newActive is null) return;
+
+            await vm.LoadSessionsAsync();
+
+            var sessionInPill = vm.Sessions.FirstOrDefault(s => s.Id == newActive.Id);
+            if (sessionInPill is not null)
             {
-                var sessionManager = new SessionManager(sessionRepository);
-                await sessionManager.SwitchSessionAsync(session);
+                await vm.SwitchSessionCommand.ExecuteAsync(sessionInPill);
             }
         };
 

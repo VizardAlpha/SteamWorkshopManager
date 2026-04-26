@@ -1,4 +1,4 @@
-using static SteamWorkshopManager.Services.LocalizationService;
+using static SteamWorkshopManager.Services.Core.LocalizationService;
 
 namespace SteamWorkshopManager.Models;
 

@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
+using Avalonia.Media.Imaging;
 
 namespace SteamWorkshopManager.Models;
 
@@ -18,8 +21,34 @@ public class ItemFileInfo
 /// Represents a workshop session/profile for a specific game.
 /// Each session contains all data related to managing mods for one Steam Workshop.
 /// </summary>
-public class WorkshopSession
+public class WorkshopSession : INotifyPropertyChanged
 {
+    private Bitmap? _iconBitmap;
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null) =>
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+
+    /// <summary>
+    /// Cached Steam header image for the pill/flyout icons. Populated lazily,
+    /// not serialized.
+    /// </summary>
+    [JsonIgnore]
+    public Bitmap? IconBitmap
+    {
+        get => _iconBitmap;
+        set
+        {
+            if (_iconBitmap == value) return;
+
+            // Dispose the previous bitmap so repeated icon refreshes don't
+            // accumulate native SkiaSharp surfaces between session switches.
+            _iconBitmap?.Dispose();
+            _iconBitmap = value;
+            OnPropertyChanged();
+        }
+    }
+
     /// <summary>
     /// Unique identifier for this session.
     /// </summary>
@@ -39,11 +68,6 @@ public class WorkshopSession
     /// Game name retrieved automatically from Steam Workshop page.
     /// </summary>
     public string? GameName { get; set; }
-
-    /// <summary>
-    /// URL to the game's icon/logo.
-    /// </summary>
-    public string? GameIconUrl { get; set; }
 
     /// <summary>
     /// Workshop tags organized by category.
@@ -88,9 +112,22 @@ public class WorkshopSession
     /// </summary>
     public DateTime LastUsedAt { get; set; } = DateTime.UtcNow;
 
+    private bool _isActive;
+
     /// <summary>
     /// Whether this session is currently active (not serialized).
     /// </summary>
     [JsonIgnore]
-    public bool IsActive { get; set; }
+    public bool IsActive
+    {
+        get => _isActive;
+        set
+        {
+            if (_isActive != value)
+            {
+                _isActive = value;
+                OnPropertyChanged();
+            }
+        }
+    }
 }

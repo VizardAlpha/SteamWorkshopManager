@@ -19,8 +19,8 @@ public partial class BbCodeEditorControl : UserControl
     public static readonly StyledProperty<double> EditorHeightProperty =
         AvaloniaProperty.Register<BbCodeEditorControl, double>(nameof(EditorHeight), 150);
 
-    public static readonly StyledProperty<string> WatermarkProperty =
-        AvaloniaProperty.Register<BbCodeEditorControl, string>(nameof(Watermark), string.Empty);
+    public static readonly StyledProperty<string> PlaceholderTextProperty =
+        AvaloniaProperty.Register<BbCodeEditorControl, string>(nameof(PlaceholderText), string.Empty);
 
     public string Text
     {
@@ -34,10 +34,10 @@ public partial class BbCodeEditorControl : UserControl
         set => SetValue(EditorHeightProperty, value);
     }
 
-    public string Watermark
+    public string PlaceholderText
     {
-        get => GetValue(WatermarkProperty);
-        set => SetValue(WatermarkProperty, value);
+        get => GetValue(PlaceholderTextProperty);
+        set => SetValue(PlaceholderTextProperty, value);
     }
 
     private int _savedSelectionStart;
@@ -95,10 +95,10 @@ public partial class BbCodeEditorControl : UserControl
             if (EditorTextBox != null)
                 EditorTextBox.Height = EditorHeight;
         }
-        else if (change.Property == WatermarkProperty)
+        else if (change.Property == PlaceholderTextProperty)
         {
             if (EditorTextBox != null)
-                EditorTextBox.Watermark = Watermark;
+                EditorTextBox.PlaceholderText = PlaceholderText;
         }
     }
 
@@ -106,7 +106,7 @@ public partial class BbCodeEditorControl : UserControl
     {
         base.OnLoaded(e);
         EditorTextBox.Height = EditorHeight;
-        EditorTextBox.Watermark = Watermark;
+        EditorTextBox.PlaceholderText = PlaceholderText;
         if (EditorTextBox.Text != Text)
             EditorTextBox.Text = Text;
     }
@@ -271,7 +271,7 @@ public partial class BbCodeEditorControl : UserControl
             Text = Text,
             AcceptsReturn = true,
             TextWrapping = TextWrapping.Wrap,
-            Watermark = Watermark,
+            PlaceholderText = PlaceholderText,
             VerticalAlignment = VerticalAlignment.Stretch,
             HorizontalAlignment = HorizontalAlignment.Stretch,
         };

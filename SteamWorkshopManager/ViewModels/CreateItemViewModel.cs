@@ -7,10 +7,16 @@ using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.DependencyInjection;
 using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services;
-using SteamWorkshopManager.Services.Interfaces;
 using Steamworks;
+using SteamWorkshopManager.Services.Core;
+using SteamWorkshopManager.Services.Notifications;
+using SteamWorkshopManager.Services.Session;
+using SteamWorkshopManager.Services.Steam;
+using SteamWorkshopManager.Services.Telemetry;
+using SteamWorkshopManager.Services.UI;
+using SteamWorkshopManager.Services.Workshop;
 
 namespace SteamWorkshopManager.ViewModels;
 
@@ -24,9 +30,19 @@ public partial class CreateItemViewModel : ViewModelBase
     private readonly DependencyService _dependencyService;
     private readonly AppDependencyService _appDependencyService;
     private readonly VersioningService _versioningService;
+    private readonly DraftService _draftService;
     private const long MaxImageSizeBytes = 1024 * 1024; // 1 MB Steam limit
 
+    /// <summary>
+    /// If non-null, the user is editing a previously saved draft. Further
+    /// <see cref="SaveAsDraftAsync"/> calls overwrite its folder, and a
+    /// successful publish deletes it.
+    /// </summary>
+    private string? _currentDraftId;
+    private DateTime? _draftCreatedAt;
+
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsInfoComplete))]
     private string _title = string.Empty;
 
     [ObservableProperty]
@@ -35,13 +51,22 @@ public partial class CreateItemViewModel : ViewModelBase
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(PreviewImageSize))]
     [NotifyPropertyChangedFor(nameof(IsImageTooLarge))]
+    [NotifyPropertyChangedFor(nameof(IsInfoComplete))]
     private string? _previewImagePath;
 
     [ObservableProperty]
     private Bitmap? _previewImage;
 
+    /// <summary>
+    /// Dispose the previous bitmap before the setter replaces it, so the
+    /// SkiaSharp native surface is released immediately instead of waiting on
+    /// GC. Runs between every user preview change.
+    /// </summary>
+    partial void OnPreviewImageChanging(Bitmap? value) => _previewImage?.Dispose();
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ContentFolderSize))]
+    [NotifyPropertyChangedFor(nameof(IsInfoComplete))]
     private string? _contentFolderPath;
 
     public string ContentFolderSize => FormatFolderSize(ContentFolderPath);
@@ -112,7 +137,20 @@ public partial class CreateItemViewModel : ViewModelBase
     private GameBranch? _selectedBranchMax;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsVersionsComplete))]
     private bool _isBranchRangeInvalid;
+
+    /// <summary>
+    /// Section-ready flags for the left nav's green check icon. A section
+    /// gets a check once it has no blocking validation error and enough data
+    /// to submit. Optional sections stay at true as long as no explicit
+    /// error is present.
+    /// </summary>
+    public bool IsInfoComplete => !string.IsNullOrWhiteSpace(Title)
+                                  && !string.IsNullOrEmpty(ContentFolderPath)
+                                  && !IsImageTooLarge;
+    public bool IsVersionsComplete => !IsBranchRangeInvalid;
+    public bool IsDependenciesComplete => true;
 
     public List<GameBranch> AvailableBranches { get; private set; } = [];
 
@@ -128,10 +166,163 @@ public partial class CreateItemViewModel : ViewModelBase
     public ObservableCollection<TagCategory> TagCategories { get; } = [];
     public ObservableCollection<WorkshopTag> CustomTags { get; } = [];
 
+    /// <summary>
+    /// Side-panel nav. Creation only has three meaningful sections:
+    /// Info (source + form), Versions (changelog + branch range),
+    /// Dependencies (mods + apps). History + Changelog-only views don't
+    /// apply here so they're not exposed.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsInfoActive))]
+    [NotifyPropertyChangedFor(nameof(IsVersionsActive))]
+    [NotifyPropertyChangedFor(nameof(IsDependenciesActive))]
+    private EditorSection _activeSection = EditorSection.Info;
+
+    public bool IsInfoActive => ActiveSection == EditorSection.Info;
+    public bool IsVersionsActive => ActiveSection == EditorSection.Versions;
+    public bool IsDependenciesActive => ActiveSection == EditorSection.Dependencies;
+
+    [RelayCommand] private void NavigateToInfo() => ActiveSection = EditorSection.Info;
+    [RelayCommand] private void NavigateToVersions() => ActiveSection = EditorSection.Versions;
+    [RelayCommand] private void NavigateToDependencies() => ActiveSection = EditorSection.Dependencies;
+
+    /// <summary>
+    /// Saved drafts for the current AppId, ordered by most recently updated.
+    /// Rebuilt each time <see cref="RefreshDrafts"/> runs (construction + after
+    /// save / delete), so the sidebar flyout always reflects disk state.
+    /// </summary>
+    public ObservableCollection<CreateDraft> AvailableDrafts { get; } = [];
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasDrafts))]
+    private int _draftsCount;
+
+    public bool HasDrafts => DraftsCount > 0;
+
+    private void RefreshDrafts()
+    {
+        AvailableDrafts.Clear();
+        foreach (var d in _draftService.ListForApp(AppConfig.AppId))
+            AvailableDrafts.Add(d);
+        DraftsCount = AvailableDrafts.Count;
+    }
+
+    [RelayCommand]
+    private void SaveAsDraft()
+    {
+        var createdAt = _draftCreatedAt ?? DateTime.UtcNow;
+
+        // Persist every user-added custom tag (whether checked or not) so the
+        // chip list survives a reload, and the flat list of currently-checked
+        // names across both sources so ticks can be restored.
+        var customNames = CustomTags.Select(t => t.Name).ToList();
+        var selectedNames = TagCategories
+            .SelectMany(c => c.Tags)
+            .Where(t => t.IsSelected)
+            .Select(t => t.Name)
+            .Concat(CustomTags.Where(t => t.IsSelected).Select(t => t.Name))
+            .Distinct()
+            .ToList();
+
+        var draft = new CreateDraft(
+            TempId: _currentDraftId ?? string.Empty,
+            AppId: AppConfig.AppId,
+            Title: Title,
+            Description: Description,
+            ContentFolderPath: ContentFolderPath,
+            PreviewImagePath: PreviewImagePath,
+            Visibility: Visibility,
+            InitialChangelog: InitialChangelog,
+            TargetAllVersions: TargetAllVersions,
+            BranchMin: SelectedBranchMin?.Name,
+            BranchMax: SelectedBranchMax?.Name,
+            CreatedAt: createdAt,
+            UpdatedAt: DateTime.UtcNow,
+            CustomTags: customNames,
+            SelectedTags: selectedNames);
+
+        _currentDraftId = _draftService.Save(draft);
+        _draftCreatedAt = createdAt;
+        _notificationService.ShowSuccess(Loc["DraftSaved"]);
+        RefreshDrafts();
+    }
+
+    [RelayCommand]
+    private void LoadDraft(CreateDraft draft)
+    {
+        Title = draft.Title;
+        Description = draft.Description;
+        ContentFolderPath = draft.ContentFolderPath;
+        PreviewImagePath = draft.PreviewImagePath;
+        Visibility = draft.Visibility;
+        InitialChangelog = draft.InitialChangelog;
+        TargetAllVersions = draft.TargetAllVersions;
+        SelectedBranchMin = AvailableBranches.FirstOrDefault(b => b.Name == draft.BranchMin);
+        SelectedBranchMax = AvailableBranches.FirstOrDefault(b => b.Name == draft.BranchMax);
+
+        RestoreTagsFromDraft(draft);
+
+        _currentDraftId = draft.TempId;
+        _draftCreatedAt = draft.CreatedAt;
+
+        // Reload preview bitmap from disk if the path is still valid.
+        if (!string.IsNullOrEmpty(PreviewImagePath) && File.Exists(PreviewImagePath))
+        {
+            try { PreviewImage = new Bitmap(PreviewImagePath); }
+            catch { /* path may be on another machine — ignore */ }
+        }
+    }
+
+    /// <summary>
+    /// Reapplies the draft's tag selection over the current tag model, without
+    /// blowing away session-scoped custom tags the user has accumulated.
+    /// Merges the draft's custom-tag names in (dedup by name), then resets
+    /// every tag's IsSelected from the flat SelectedTags list. Selected names
+    /// that match nothing known are promoted to new custom tags — so a draft
+    /// survives a Steam category reshuffle.
+    /// </summary>
+    private void RestoreTagsFromDraft(CreateDraft draft)
+    {
+        // Merge: keep existing custom tags, add any draft-only ones.
+        foreach (var name in draft.CustomTags ?? [])
+        {
+            if (!CustomTags.Any(t => string.Equals(t.Name, name, StringComparison.OrdinalIgnoreCase)))
+                CustomTags.Add(new WorkshopTag(name));
+        }
+
+        var selected = new HashSet<string>(draft.SelectedTags ?? [], StringComparer.OrdinalIgnoreCase);
+
+        // Reset every known tag's checked state from the draft.
+        foreach (var tag in TagCategories.SelectMany(c => c.Tags))
+            tag.IsSelected = selected.Contains(tag.Name);
+        foreach (var tag in CustomTags)
+            tag.IsSelected = selected.Contains(tag.Name);
+
+        // Any selected name that still has no home → custom tag, pre-checked.
+        var knownNames = new HashSet<string>(
+            TagCategories.SelectMany(c => c.Tags).Select(t => t.Name)
+                .Concat(CustomTags.Select(t => t.Name)),
+            StringComparer.OrdinalIgnoreCase);
+
+        foreach (var name in selected.Where(n => !knownNames.Contains(n)))
+            CustomTags.Add(new WorkshopTag(name, isSelected: true));
+    }
+
+    [RelayCommand]
+    private void DeleteDraft(CreateDraft draft)
+    {
+        _draftService.Delete(draft.TempId);
+        if (_currentDraftId == draft.TempId)
+        {
+            _currentDraftId = null;
+            _draftCreatedAt = null;
+        }
+        RefreshDrafts();
+    }
+
     public static IEnumerable<VisibilityType> VisibilityOptions =>
         Enum.GetValues<VisibilityType>();
-
-    public event Action? CloseRequested;
+    
     public event Action? ItemCreated;
 
     public CreateItemViewModel(ISteamService steamService, IFileDialogService fileDialogService,
@@ -142,19 +333,59 @@ public partial class CreateItemViewModel : ViewModelBase
         _settingsService = settingsService;
         _notificationService = notificationService;
         _uploadProgress = uploadProgress;
-        _dependencyService = new DependencyService();
-        _appDependencyService = new AppDependencyService();
-        _versioningService = new VersioningService(steamService);
+        _dependencyService = App.Services.GetRequiredService<DependencyService>();
+        _appDependencyService = App.Services.GetRequiredService<AppDependencyService>();
+        _versioningService = App.Services.GetRequiredService<VersioningService>();
+        _draftService = App.Services.GetRequiredService<DraftService>();
 
-        // Load versioning info
+        RefreshDrafts();
+        ReloadVersioningFromCurrentSession();
+        ReloadTagsFromCurrentSession();
+        UpdateTagsLastUpdatedText();
+    }
+
+    /// <summary>
+    /// Called by <c>MainViewModel</c> after a session switch so the Create
+    /// form can re-derive its catalog (tags, branches, drafts) from the new
+    /// session without being rebuilt from scratch. Any draft currently being
+    /// edited is discarded since drafts are scoped per-AppId.
+    /// </summary>
+    public void OnSessionChanged()
+    {
+        _currentDraftId = null;
+        _draftCreatedAt = null;
+
+        RefreshDrafts();
+        ReloadVersioningFromCurrentSession();
+        ReloadTagsFromCurrentSession();
+        UpdateTagsLastUpdatedText();
+    }
+
+    private void ReloadVersioningFromCurrentSession()
+    {
         IsVersioningEnabled = _versioningService.IsVersioningEnabled();
         if (IsVersioningEnabled)
         {
             CurrentBranch = _versioningService.GetCurrentBranch();
             AvailableBranches = _versioningService.GetAvailableBranches();
         }
+        else
+        {
+            CurrentBranch = string.Empty;
+            AvailableBranches = [];
+        }
+        SelectedBranchMin = null;
+        SelectedBranchMax = null;
+        TargetAllVersions = true;
+        IsBranchRangeInvalid = false;
+        OnPropertyChanged(nameof(AvailableBranches));
+    }
 
-        // Load tags by category from current session
+    private void ReloadTagsFromCurrentSession()
+    {
+        TagCategories.Clear();
+        CustomTags.Clear();
+
         var sessionTags = AppConfig.CurrentSession?.TagsByCategory ?? new Dictionary<string, List<string>>();
         var dropdownCategories = AppConfig.CurrentSession?.DropdownCategories ?? [];
         foreach (var (category, tags) in sessionTags)
@@ -162,26 +393,17 @@ public partial class CreateItemViewModel : ViewModelBase
             var tagCategory = new TagCategory
             {
                 Name = category,
-                IsDropdown = dropdownCategories.Contains(category)
+                IsDropdown = dropdownCategories.Contains(category),
             };
             foreach (var tag in tags)
-            {
                 tagCategory.Tags.Add(new WorkshopTag(tag, false));
-            }
             tagCategory.SyncSelectedTag();
             TagCategories.Add(tagCategory);
         }
         HasTags = TagCategories.Count > 0;
 
-        // Load custom tags from current session
-        var sessionCustomTags = AppConfig.CurrentSession?.CustomTags ?? [];
-        foreach (var customTag in sessionCustomTags)
-        {
+        foreach (var customTag in AppConfig.CurrentSession?.CustomTags ?? [])
             CustomTags.Add(new WorkshopTag(customTag, false));
-        }
-
-        // Init tags last updated text
-        UpdateTagsLastUpdatedText();
     }
 
     private void UpdateTagsLastUpdatedText()
@@ -225,7 +447,7 @@ public partial class CreateItemViewModel : ViewModelBase
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
             // Fetch fresh tags from Steam
-            var tagsService = new WorkshopTagsService();
+            var tagsService = App.Services.GetRequiredService<WorkshopTagsService>();
             var tagsResult = await tagsService.GetTagsForAppAsync(session.AppId, forceRefresh: true);
 
             // Update session
@@ -372,6 +594,8 @@ public partial class CreateItemViewModel : ViewModelBase
 
             if (fileId.HasValue)
             {
+                TelemetryService.Instance?.Track(TelemetryEventTypes.ModCreated, AppConfig.AppId);
+
                 // Save paths + file info for change detection on future updates
                 var id = (ulong)fileId.Value;
                 if (!string.IsNullOrEmpty(ContentFolderPath) && Directory.Exists(ContentFolderPath))
@@ -408,6 +632,16 @@ public partial class CreateItemViewModel : ViewModelBase
                 {
                     await _appDependencyService.AddAppDependencyAsync(
                         fileId.Value, new AppId_t(appDep.AppId));
+                }
+
+                // Publish succeeded — discard the draft folder if this session
+                // was editing one, so "Tempo/" stays clean.
+                if (!string.IsNullOrEmpty(_currentDraftId))
+                {
+                    _draftService.Delete(_currentDraftId);
+                    _currentDraftId = null;
+                    _draftCreatedAt = null;
+                    RefreshDrafts();
                 }
 
                 _notificationService.ShowSuccess(Loc["ItemCreatedSuccess"]);
@@ -503,7 +737,7 @@ public partial class CreateItemViewModel : ViewModelBase
         AddAppError = null;
         AppPreviewInfo = null;
 
-        if (!uint.TryParse(NewAppIdInput.Trim(), out var appId) || appId == 0)
+        if (!AppIdValidator.TryParseAppId(NewAppIdInput, out var appId))
         {
             AddAppError = Loc["InvalidAppId"];
             return;
@@ -584,12 +818,6 @@ public partial class CreateItemViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void Cancel()
-    {
-        CloseRequested?.Invoke();
-    }
-
-    [RelayCommand]
     private void AddCustomTag()
     {
         if (string.IsNullOrWhiteSpace(NewCustomTag))
@@ -657,8 +885,7 @@ public partial class CreateItemViewModel : ViewModelBase
     {
         try
         {
-            var settingsService = new SettingsService();
-            var sessionRepository = new SessionRepository(settingsService);
+            var sessionRepository = App.Services.GetRequiredService<ISessionRepository>();
             await sessionRepository.SaveSessionAsync(session);
         }
         catch

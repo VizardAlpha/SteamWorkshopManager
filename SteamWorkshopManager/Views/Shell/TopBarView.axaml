@@ -1,0 +1,259 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:SteamWorkshopManager.ViewModels"
+             xmlns:models="using:SteamWorkshopManager.Models"
+             xmlns:icons="using:Material.Icons.Avalonia"
+             mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="72"
+             x:Class="SteamWorkshopManager.Views.Shell.TopBarView"
+             x:DataType="vm:MainViewModel">
+
+    <UserControl.Styles>
+        <!-- Tab button: vertical layout (icon on top, label below), centered -->
+        <Style Selector="Button.tab">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="14,8"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="MinWidth" Value="72"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Button.tab:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceOverlayBrush}"/>
+            <Setter Property="TextElement.Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+        </Style>
+        <Style Selector="Button.tab.active">
+            <Setter Property="Background" Value="{DynamicResource SurfaceOverlayBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource AccentPrimaryBrush}"/>
+        </Style>
+        <Style Selector="Button.tab.active:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceOverlayBrush}"/>
+        </Style>
+
+        <!-- Flyout list items (sessions + add action) -->
+        <Style Selector="Button.flyout-item">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.flyout-item /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style Selector="Button.flyout-item:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceOverlayBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style Selector="Button.flyout-item:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceOverlayBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+
+        <!-- Session pill -->
+        <Style Selector="Button.session-pill">
+            <Setter Property="Background" Value="{DynamicResource SurfaceCardBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtleBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="4,4,12,4"/>
+            <Setter Property="CornerRadius" Value="20"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.session-pill:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceOverlayBrush}"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Border Background="{DynamicResource SurfaceElevatedBrush}"
+            BorderBrush="{DynamicResource BorderSubtleBrush}"
+            BorderThickness="0,0,0,1"
+            Padding="16,10"
+            MinHeight="72">
+        <Grid ColumnDefinitions="*,Auto,*" VerticalAlignment="Center">
+
+            <!-- Tabs: vertical layout (icon above, label below), centered in the top bar -->
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4"
+                        HorizontalAlignment="Center" VerticalAlignment="Center">
+
+                <Button Classes="tab"
+                            Classes.active="{Binding IsHomeActive}"
+                            Command="{Binding NavigateToHomeCommand}">
+                        <StackPanel Spacing="2" HorizontalAlignment="Center">
+                            <icons:MaterialIcon Kind="HomeVariantOutline"
+                                                Width="20" Height="20"
+                                                HorizontalAlignment="Center"/>
+                            <TextBlock Text="{DynamicResource Home}"
+                                       FontSize="11"
+                                       HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                <Button Classes="tab"
+                        Classes.active="{Binding IsMyModsActive}"
+                        Command="{Binding NavigateToListCommand}">
+                    <StackPanel Spacing="2" HorizontalAlignment="Center">
+                        <icons:MaterialIcon Kind="PackageVariantClosed"
+                                            Width="20" Height="20"
+                                            HorizontalAlignment="Center"/>
+                        <TextBlock Text="{DynamicResource MyPublications}"
+                                   FontSize="11"
+                                   HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+
+                <Button Classes="tab"
+                        Classes.active="{Binding IsCreateActive}"
+                        Command="{Binding NavigateToCreateCommand}">
+                    <StackPanel Spacing="2" HorizontalAlignment="Center">
+                        <icons:MaterialIcon Kind="PlusBoxOutline"
+                                            Width="20" Height="20"
+                                            HorizontalAlignment="Center"/>
+                        <TextBlock Text="{DynamicResource NewItem}"
+                                   FontSize="11"
+                                   HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+
+                <Button Classes="tab"
+                        Classes.active="{Binding IsSettingsActive}"
+                        Command="{Binding NavigateToSettingsCommand}">
+                    <StackPanel Spacing="2" HorizontalAlignment="Center">
+                        <icons:MaterialIcon Kind="CogOutline"
+                                            Width="20" Height="20"
+                                            HorizontalAlignment="Center"/>
+                        <TextBlock Text="{DynamicResource Settings}"
+                                   FontSize="11"
+                                   HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+
+            </StackPanel>
+
+            <!-- Session pill (with dropdown flyout) -->
+            <Button Grid.Column="2"
+                    Classes="session-pill"
+                    IsVisible="{Binding HasActiveSession}"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Border Width="24" Height="24" CornerRadius="12"
+                            ClipToBounds="True"
+                            Background="{DynamicResource SurfaceOverlayBrush}">
+                        <Panel>
+                            <Image Source="{Binding ActiveSessionIcon}" Stretch="UniformToFill"/>
+                            <TextBlock Text="{Binding ActiveGameInitial}"
+                                       FontSize="12"
+                                       FontWeight="Bold"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       IsVisible="{Binding ActiveSessionIcon, Converter={x:Static ObjectConverters.IsNull}}"/>
+                        </Panel>
+                    </Border>
+                    <TextBlock Text="{Binding ActiveGameName}"
+                               FontSize="13"
+                               FontWeight="Medium"
+                               Foreground="{DynamicResource TextPrimaryBrush}"
+                               VerticalAlignment="Center"/>
+                    <icons:MaterialIcon Kind="ChevronDown"
+                                        Width="14" Height="14"
+                                        Foreground="{DynamicResource TextMutedBrush}"
+                                        VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <Button.Flyout>
+                    <Flyout Placement="BottomEdgeAlignedRight">
+                        <Border MinWidth="280" MaxWidth="360"
+                                Background="{DynamicResource SurfaceCardBrush}"
+                                BorderBrush="{DynamicResource BorderSubtleBrush}"
+                                BorderThickness="1"
+                                CornerRadius="10"
+                                Padding="6">
+                            <StackPanel Spacing="2">
+                                <TextBlock Text="{DynamicResource Sessions}"
+                                           FontSize="11"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextMutedBrush}"
+                                           Margin="10,8,10,4"/>
+
+                                <ItemsControl ItemsSource="{Binding Sessions}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="models:WorkshopSession">
+                                            <Button Classes="flyout-item"
+                                                    Command="{Binding $parent[ItemsControl].((vm:MainViewModel)DataContext).SwitchSessionCommand, FallbackValue={x:Null}}"
+                                                    CommandParameter="{Binding}">
+                                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                                    <Border Grid.Column="0"
+                                                            Width="28" Height="28" CornerRadius="14"
+                                                            ClipToBounds="True"
+                                                            Background="{DynamicResource SurfaceOverlayBrush}"
+                                                            Margin="0,0,10,0">
+                                                        <Panel>
+                                                            <Image Source="{Binding IconBitmap}" Stretch="UniformToFill"/>
+                                                            <icons:MaterialIcon Kind="GamepadVariantOutline"
+                                                                                Width="14" Height="14"
+                                                                                Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                                HorizontalAlignment="Center"
+                                                                                VerticalAlignment="Center"
+                                                                                IsVisible="{Binding IconBitmap, Converter={x:Static ObjectConverters.IsNull}}"/>
+                                                        </Panel>
+                                                    </Border>
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding GameName}"
+                                                                   FontSize="13"
+                                                                   FontWeight="Medium"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                   TextTrimming="CharacterEllipsis"/>
+                                                        <TextBlock Text="{Binding AppId, StringFormat='AppID: {0}'}"
+                                                                   FontSize="11"
+                                                                   Foreground="{DynamicResource TextMutedBrush}"/>
+                                                    </StackPanel>
+                                                    <icons:MaterialIcon Grid.Column="2"
+                                                                        Kind="Check"
+                                                                        Width="16" Height="16"
+                                                                        Foreground="{DynamicResource AccentSecondaryBrush}"
+                                                                        VerticalAlignment="Center"
+                                                                        IsVisible="{Binding IsActive}"/>
+                                                </Grid>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <Border Height="1"
+                                        Background="{DynamicResource BorderSubtleBrush}"
+                                        Margin="6,4"/>
+
+                                <Button Classes="flyout-item"
+                                        Command="{Binding AddSessionCommand}"
+                                        HorizontalContentAlignment="Left">
+                                    <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                                        <icons:MaterialIcon Kind="PlusCircleOutline"
+                                                            Width="20" Height="20"
+                                                            Foreground="{DynamicResource AccentPrimaryBrush}"/>
+                                        <TextBlock Text="{DynamicResource AddSession}"
+                                                   FontSize="13"
+                                                   FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Border>
+                    </Flyout>
+                </Button.Flyout>
+            </Button>
+
+        </Grid>
+    </Border>
+
+</UserControl>

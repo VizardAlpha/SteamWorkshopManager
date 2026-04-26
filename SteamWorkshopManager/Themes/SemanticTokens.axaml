@@ -1,0 +1,131 @@
+<!--
+  Semantic theme tokens.
+
+  Views should reference these via StaticResource so the theme variant can be
+  swapped at runtime. A `Light` dictionary slot is reserved below but intentionally
+  left empty for now — Phase A delivers only the Dark variant; Phase B (or later)
+  will populate Light and wire a toggle in Settings.
+
+  Naming convention:
+    Surface.*        — container backgrounds, ordered from flat to elevated
+    Border.*         — strokes and outlines
+    Text.*           — text colors on standard surfaces
+    Accent.*         — primary/secondary brand hues
+    Feedback.*       — semantic status colors (success/warning/danger)
+    Brush.*          — SolidColorBrush or LinearGradientBrush wrappers
+-->
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <ResourceDictionary.ThemeDictionaries>
+
+        <!-- =================== DARK =================== -->
+        <ResourceDictionary x:Key="Dark">
+
+            <!-- Surfaces -->
+            <Color x:Key="SurfaceSunken">#0a0f14</Color>
+            <Color x:Key="SurfaceBackground">#0e141b</Color>
+            <Color x:Key="SurfaceElevated">#171a21</Color>
+            <Color x:Key="SurfaceCard">#1e2328</Color>
+            <Color x:Key="SurfaceOverlay">#2a2e33</Color>
+
+            <!-- Borders -->
+            <Color x:Key="BorderSubtle">#2a3440</Color>
+            <Color x:Key="BorderStrong">#3a4a5a</Color>
+            <Color x:Key="BorderFocus">#66c0f4</Color>
+
+            <!-- Text -->
+            <Color x:Key="TextPrimary">#ffffff</Color>
+            <Color x:Key="TextSecondary">#c7d5e0</Color>
+            <Color x:Key="TextMuted">#8899a6</Color>
+            <Color x:Key="TextDisabled">#556677</Color>
+            <Color x:Key="TextOnAccent">#ffffff</Color>
+
+            <!-- Accents -->
+            <Color x:Key="AccentPrimary">#66c0f4</Color>
+            <Color x:Key="AccentPrimaryHover">#8bcdf4</Color>
+            <Color x:Key="AccentPrimaryActive">#4b9cd3</Color>
+            <Color x:Key="AccentSecondary">#a4d007</Color>
+            <Color x:Key="AccentSecondaryHover">#b5e108</Color>
+            <Color x:Key="AccentSecondaryActive">#8bb305</Color>
+
+            <!-- Feedback -->
+            <Color x:Key="FeedbackSuccess">#5ec384</Color>
+            <Color x:Key="FeedbackSuccessText">#93dfad</Color>
+            <Color x:Key="FeedbackWarning">#f2b949</Color>
+            <Color x:Key="FeedbackDanger">#c23b2e</Color>
+            <Color x:Key="FeedbackDangerHover">#d44b3e</Color>
+            <Color x:Key="FeedbackDangerText">#ff8a80</Color>
+            <Color x:Key="FeedbackInfo">#4b9cd3</Color>
+
+            <!-- Solid brushes -->
+            <SolidColorBrush x:Key="SurfaceSunkenBrush" Color="{StaticResource SurfaceSunken}"/>
+            <SolidColorBrush x:Key="SurfaceBackgroundBrush" Color="{StaticResource SurfaceBackground}"/>
+            <SolidColorBrush x:Key="SurfaceElevatedBrush" Color="{StaticResource SurfaceElevated}"/>
+            <SolidColorBrush x:Key="SurfaceCardBrush" Color="{StaticResource SurfaceCard}"/>
+            <SolidColorBrush x:Key="SurfaceOverlayBrush" Color="{StaticResource SurfaceOverlay}"/>
+
+            <SolidColorBrush x:Key="BorderSubtleBrush" Color="{StaticResource BorderSubtle}"/>
+            <SolidColorBrush x:Key="BorderStrongBrush" Color="{StaticResource BorderStrong}"/>
+            <SolidColorBrush x:Key="BorderFocusBrush" Color="{StaticResource BorderFocus}"/>
+
+            <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimary}"/>
+            <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondary}"/>
+            <SolidColorBrush x:Key="TextMutedBrush" Color="{StaticResource TextMuted}"/>
+            <SolidColorBrush x:Key="TextDisabledBrush" Color="{StaticResource TextDisabled}"/>
+            <SolidColorBrush x:Key="TextOnAccentBrush" Color="{StaticResource TextOnAccent}"/>
+
+            <SolidColorBrush x:Key="AccentPrimaryBrush" Color="{StaticResource AccentPrimary}"/>
+            <SolidColorBrush x:Key="AccentPrimaryHoverBrush" Color="{StaticResource AccentPrimaryHover}"/>
+            <SolidColorBrush x:Key="AccentPrimaryActiveBrush" Color="{StaticResource AccentPrimaryActive}"/>
+            <SolidColorBrush x:Key="AccentSecondaryBrush" Color="{StaticResource AccentSecondary}"/>
+            <SolidColorBrush x:Key="AccentSecondaryHoverBrush" Color="{StaticResource AccentSecondaryHover}"/>
+            <SolidColorBrush x:Key="AccentSecondaryActiveBrush" Color="{StaticResource AccentSecondaryActive}"/>
+
+            <SolidColorBrush x:Key="FeedbackSuccessBrush" Color="{StaticResource FeedbackSuccess}"/>
+            <SolidColorBrush x:Key="FeedbackSuccessTextBrush" Color="{StaticResource FeedbackSuccessText}"/>
+            <SolidColorBrush x:Key="FeedbackWarningBrush" Color="{StaticResource FeedbackWarning}"/>
+            <SolidColorBrush x:Key="FeedbackDangerBrush" Color="{StaticResource FeedbackDanger}"/>
+            <SolidColorBrush x:Key="FeedbackDangerHoverBrush" Color="{StaticResource FeedbackDangerHover}"/>
+            <SolidColorBrush x:Key="FeedbackDangerTextBrush" Color="{StaticResource FeedbackDangerText}"/>
+            <SolidColorBrush x:Key="FeedbackInfoBrush" Color="{StaticResource FeedbackInfo}"/>
+
+            <!-- Steam-inspired vertical gradient used as the main window background -->
+            <LinearGradientBrush x:Key="WindowBackgroundBrush" StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Color="#1b2838" Offset="0"/>
+                <GradientStop Color="#141922" Offset="0.5"/>
+                <GradientStop Color="#0e141b" Offset="1"/>
+            </LinearGradientBrush>
+
+            <!-- Horizontal accent gradient used on primary action buttons -->
+            <LinearGradientBrush x:Key="AccentPrimaryGradientBrush" StartPoint="0%,0%" EndPoint="100%,0%">
+                <GradientStop Color="#4b9cd3" Offset="0"/>
+                <GradientStop Color="#66c0f4" Offset="1"/>
+            </LinearGradientBrush>
+
+            <!-- Green variant for "confirm" / success actions -->
+            <LinearGradientBrush x:Key="AccentSecondaryGradientBrush" StartPoint="0%,0%" EndPoint="100%,0%">
+                <GradientStop Color="#5c7e10" Offset="0"/>
+                <GradientStop Color="#a4d007" Offset="1"/>
+            </LinearGradientBrush>
+
+            <!-- Header band gradient (topbar, page headers) -->
+            <LinearGradientBrush x:Key="HeaderBackgroundBrush" StartPoint="0%,0%" EndPoint="100%,0%">
+                <GradientStop Color="#1b2838" Offset="0"/>
+                <GradientStop Color="#2a475e" Offset="1"/>
+            </LinearGradientBrush>
+
+            <!-- Shadows -->
+            <BoxShadows x:Key="ShadowCard">0 2 8 0 #40000000</BoxShadows>
+            <BoxShadows x:Key="ShadowCardHover">0 4 16 0 #60000000</BoxShadows>
+            <BoxShadows x:Key="ShadowOverlay">0 8 32 0 #80000000</BoxShadows>
+
+        </ResourceDictionary>
+
+        <!-- =================== LIGHT (placeholder) =================== -->
+        <!-- Intentionally left empty. Phase B or later will populate these. -->
+        <ResourceDictionary x:Key="Light"/>
+
+    </ResourceDictionary.ThemeDictionaries>
+
+</ResourceDictionary>

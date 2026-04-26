@@ -6,10 +6,19 @@
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
 
-        <Version>1.4.3</Version>
-        <AssemblyVersion>1.4.3.0</AssemblyVersion>
-        <FileVersion>1.4.3.0</FileVersion>
+        <Version>1.5.0</Version>
+        <AssemblyVersion>1.5.0.0</AssemblyVersion>
+        <FileVersion>1.5.0.0</FileVersion>
+        
+        <TelemetryEndpoint Condition="'$(SWM_TELEMETRY_URL)' != ''">$(SWM_TELEMETRY_URL)</TelemetryEndpoint>
     </PropertyGroup>
+
+    <ItemGroup>
+        <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+            <_Parameter1>TelemetryEndpoint</_Parameter1>
+            <_Parameter2>$(TelemetryEndpoint)</_Parameter2>
+        </AssemblyAttribute>
+    </ItemGroup>
 
     <!-- Steam native libraries - copy based on OS or RuntimeIdentifier -->
     <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows')) Or '$(RuntimeIdentifier)' == 'win-x64'">
@@ -27,26 +36,30 @@
     <ItemGroup>
         <AvaloniaResource Include="Assets\**" />
         <AvaloniaResource Include="Resources\**" />
+        <AvaloniaResource Include="Themes\**" />
     </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="AngleSharp" Version="1.4.0" />
-        <PackageReference Include="Avalonia" Version="11.3.10" />
-        <PackageReference Include="Avalonia.Desktop" Version="11.3.10" />
-        <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.10" />
-        <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.10" />
+        <PackageReference Include="Avalonia" Version="12.0.1" />
+        <PackageReference Include="Avalonia.Desktop" Version="12.0.1" />
+        <PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.1" />
+        <PackageReference Include="Avalonia.Fonts.Inter" Version="12.0.1" />
+        <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.1" />
         
         <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
-        <PackageReference Include="Avalonia.Diagnostics" Version="11.3.10">
-            <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
-            <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
-        </PackageReference>
         
-        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.1" />
+        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
         
-        <PackageReference Include="QRCoder" Version="1.7.0" />
+        <PackageReference Include="Material.Icons.Avalonia" Version="3.0.2" />
+        
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.6" />
+        
+        <PackageReference Include="QRCoder" Version="1.8.0" />
         <PackageReference Include="SteamKit2" Version="3.4.0" />
         <PackageReference Include="Steamworks.NET" Version="2025.163.0" />
+        <PackageReference Include="StreamJsonRpc" Version="2.24.84" />
+        <PackageReference Include="Tmds.DBus.Protocol" Version="0.92.0" />
     </ItemGroup>
 
     <ItemGroup>
@@ -62,6 +75,12 @@
     <ItemGroup>
       <Compile Update="Views\Controls\BbCodeEditorControl.axaml.cs">
         <DependentUpon>BbCodeEditorControl.axaml</DependentUpon>
+      </Compile>
+      <Compile Update="Views\HomeView.axaml.cs">
+        <DependentUpon>HomeView.axaml</DependentUpon>
+      </Compile>
+      <Compile Update="Views\Shell\FooterView.axaml.cs">
+        <DependentUpon>FooterView.axaml</DependentUpon>
       </Compile>
     </ItemGroup>
 </Project>

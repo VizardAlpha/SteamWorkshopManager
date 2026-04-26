@@ -1,16 +1,15 @@
 using System;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
-using Steamworks;
-using SteamWorkshopManager.Services;
-using SteamWorkshopManager.Views;
-using System.Linq;
-using System.Threading.Tasks;
-using SteamWorkshopManager.Services.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
 using SteamWorkshopManager.Services.Log;
+using SteamWorkshopManager.Views;
+using System.Threading.Tasks;
+using SteamWorkshopManager.Services.Core;
+using SteamWorkshopManager.Services.Session;
+using SteamWorkshopManager.Services.Telemetry;
 
 namespace SteamWorkshopManager;
 
@@ -18,37 +17,63 @@ public partial class App : Application
 {
     private static readonly Logger Log = LogService.GetLogger<App>();
 
+    /// <summary>
+    /// Root DI container for the application. Built in <see cref="Program.Main"/> before the
+    /// Avalonia runtime starts so that any service can be resolved from anywhere in the app.
+    /// </summary>
+    public static IServiceProvider Services { get; set; } = null!;
+
+    /// <summary>
+    /// Dev flag set by <c>--force-setup-wizard</c> on the CLI. Startup then
+    /// bypasses the "existing session" branch and always renders the wizard,
+    /// so UI work on the wizard can iterate without wiping disk state.
+    /// </summary>
+    public static bool ForceSetupWizard { get; set; }
+
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
+
+#if DEBUG
+        this.AttachDeveloperTools();
+#endif
     }
 
     public override void OnFrameworkInitializationCompleted()
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            // Initialize debug mode from settings
-            var settingsService = new SettingsService();
+            var settingsService = Services.GetRequiredService<ISettingsService>();
             LogService.Instance.SetDebugMode(settingsService.Settings.DebugMode);
-            DisableAvaloniaDataAnnotationValidation();
+
+            // Force eager instantiation so its static Initialize factory runs now
+            Services.GetRequiredService<ITelemetryService>();
 
             desktop.ShutdownRequested += OnShutdownRequested;
 
             // Start async initialization after framework is ready
-            Dispatcher.UIThread.Post(() => InitializeAppAsync(desktop, settingsService));
+            Dispatcher.UIThread.Post(() => InitializeAppAsync(desktop));
         }
 
         base.OnFrameworkInitializationCompleted();
     }
 
-    private async void InitializeAppAsync(IClassicDesktopStyleApplicationLifetime desktop, ISettingsService settingsService)
+    private async void InitializeAppAsync(IClassicDesktopStyleApplicationLifetime desktop)
     {
         try
         {
-            var sessionRepository = new SessionRepository(settingsService);
+            var sessionRepository = Services.GetRequiredService<ISessionRepository>();
+            var telemetry = Services.GetRequiredService<ITelemetryService>();
 
-            // Check if we have an active session
-            var session = await InitializeSessionAsync(sessionRepository);
+            // Check if we have an active session. The --force-setup-wizard flag
+            // pretends there's none so we always land on the wizard UI.
+            var session = ForceSetupWizard
+                ? null
+                : await InitializeSessionAsync(sessionRepository);
+
+            // Track AppStart is deferred: fired only after the wizard closes
+            // (or immediately in the existing-session branch) so first-run
+            // users never see anything leave the process before they opt in.
 
             if (session == null)
             {
@@ -74,6 +99,14 @@ public partial class App : Application
                         // Initialize AppConfig and show main window FIRST
                         AppConfig.Initialize(newSession);
                         Log.Info($"Starting with session: {newSession.GameName} (AppId: {newSession.AppId})");
+
+                        // Spawn the Steam worker for the newly-created session.
+                        await Services.GetRequiredService<SessionHost>().StartSessionAsync(newSession.AppId);
+
+                        // The wizard committed the user's telemetry choice to
+                        // settings. AppStart fires now (post-consent) and
+                        // respects the toggle.
+                        telemetry.Track(TelemetryEventTypes.AppStart, newSession.AppId);
 
                         var mainWindow = new MainWindow();
                         desktop.MainWindow = mainWindow;
@@ -106,6 +139,13 @@ public partial class App : Application
                 // Initialize AppConfig with the session
                 AppConfig.Initialize(session);
                 Log.Info($"Starting with session: {session.GameName} (AppId: {session.AppId})");
+
+                // Spawn the Steam worker before the UI queries Steam so the
+                // first ISteamService.Initialize() call returns the live state.
+                await Services.GetRequiredService<SessionHost>().StartSessionAsync(session.AppId);
+
+                // Existing session = consent already given a previous run. Track.
+                telemetry.Track(TelemetryEventTypes.AppStart, session.AppId);
 
                 desktop.MainWindow = new MainWindow();
                 desktop.MainWindow.Show();
@@ -146,7 +186,7 @@ public partial class App : Application
             }
 
             // Try to migrate from legacy steam_appid.txt
-            var sessionManager = new SessionManager(sessionRepository);
+            var sessionManager = Services.GetRequiredService<SessionManager>();
             session = await sessionManager.EnsureSessionFromAppIdFileAsync();
             if (session != null)
             {
@@ -165,32 +205,23 @@ public partial class App : Application
 
     private void OnShutdownRequested(object? sender, ShutdownRequestedEventArgs e)
     {
-        // Only shutdown if Steam API is still initialized
-        // (May have been shut down already by SessionManager during restart)
         try
         {
-            if (SteamAPI.IsSteamRunning())
-            {
-                Log.Debug("Shutting down Steam API on app exit");
-                SteamAPI.Shutdown();
-            }
+            TelemetryService.ShutdownAsync().GetAwaiter().GetResult();
         }
         catch (Exception ex)
         {
-            Log.Debug($"Steam shutdown during app exit: {ex.Message}");
+            Log.Debug($"Telemetry shutdown: {ex.Message}");
         }
-    }
-
-#pragma warning disable IL2026
-    private static void DisableAvaloniaDataAnnotationValidation()
-    {
-        var dataValidationPluginsToRemove =
-            BindingPlugins.DataValidators.OfType<DataAnnotationsValidationPlugin>().ToArray();
-
-        foreach (var plugin in dataValidationPluginsToRemove)
+        
+        try
         {
-            BindingPlugins.DataValidators.Remove(plugin);
+            Services.GetService<SessionHost>()?.DisposeAsync().AsTask().GetAwaiter().GetResult();
+        }
+        catch (Exception ex)
+        {
+            Log.Debug($"SessionHost shutdown: {ex.Message}");
         }
     }
-#pragma warning restore IL2026
+
 }

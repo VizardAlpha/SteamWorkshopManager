@@ -2,7 +2,7 @@ using System;
 using System.Globalization;
 using Avalonia.Data.Converters;
 using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services;
+using static SteamWorkshopManager.Services.Core.LocalizationService;
 
 namespace SteamWorkshopManager.Converters;
 
@@ -16,10 +16,10 @@ public class VisibilityTypeConverter : IValueConverter
         {
             return visibility switch
             {
-                VisibilityType.Public => LocalizationService.GetString("Public"),
-                VisibilityType.FriendsOnly => LocalizationService.GetString("FriendsOnly"),
-                VisibilityType.Private => LocalizationService.GetString("Private"),
-                VisibilityType.Unlisted => LocalizationService.GetString("Unlisted"),
+                VisibilityType.Public => GetString("Public"),
+                VisibilityType.FriendsOnly => GetString("FriendsOnly"),
+                VisibilityType.Private => GetString("Private"),
+                VisibilityType.Unlisted => GetString("Unlisted"),
                 _ => value.ToString()
             };
         }

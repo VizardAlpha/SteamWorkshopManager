@@ -8,13 +8,17 @@
     <!-- Header -->
     <x:String x:Key="AppTitle">Workshop Manager</x:String>
     <x:String x:Key="AppSubtitle">Songs of Syx</x:String>
+    <x:String x:Key="Home">Accueil</x:String>
     <x:String x:Key="MyPublications">Mes publications</x:String>
-    <x:String x:Key="NewItem">+ Nouveau</x:String>
+    <x:String x:Key="NewItem">Nouveau</x:String>
 
     <!-- Status -->
     <x:String x:Key="ConnectingToSteam">Connexion à Steam...</x:String>
     <x:String x:Key="ConnectedToSteam">Connecté à Steam</x:String>
-    <x:String x:Key="SteamNotAvailable">Steam non disponible - Lancez Steam et redémarrez l'application</x:String>
+    <x:String x:Key="WorkerRecovered">Steam worker redémarré</x:String>
+    <x:String x:Key="WorkerUnrecoverable">Le worker Steam plante en boucle — essaie de changer de session.</x:String>
+    <x:String x:Key="ViewLiveStats">Voir les stats en direct</x:String>
+    <x:String x:Key="SteamNotAvailable">Steam n'est pas lancé ? — Relancer Steam, puis changer de session pour se reconnecter.</x:String>
     <x:String x:Key="GameNotOwned">Jeu non possédé - Publication de mods impossible</x:String>
     <x:String x:Key="GameNotOwnedMessage">Vous ne possédez pas ce jeu. Vous devez posséder le jeu pour publier des mods sur le Steam Workshop.</x:String>
     <x:String x:Key="SteamNotInitialized">Steam n'est pas initialisé</x:String>
@@ -22,6 +26,27 @@
     <!-- Item List -->
     <x:String x:Key="MyPublicationsTitle">Mes publications</x:String>
     <x:String x:Key="MyPublicationsSubtitle">Gérez vos mods publiés sur le Workshop</x:String>
+    <x:String x:Key="SearchMods">Rechercher des mods...</x:String>
+    <x:String x:Key="ClearSearch">Effacer la recherche</x:String>
+
+    <!-- Catégories Settings -->
+    <x:String x:Key="SettingsGeneral">Général</x:String>
+    <x:String x:Key="SettingsPrivacy">Confidentialité</x:String>
+    <x:String x:Key="SettingsDebug">Débogage</x:String>
+    <x:String x:Key="SettingsUpdates">Mises à jour</x:String>
+    <x:String x:Key="SettingsAbout">À propos</x:String>
+
+    <!-- Settings — Mises à jour -->
+    <x:String x:Key="CurrentVersion">Version actuelle</x:String>
+    <x:String x:Key="CheckForUpdates">Vérifier les mises à jour</x:String>
+    <x:String x:Key="CheckingUpdates">Vérification…</x:String>
+    <x:String x:Key="UpToDate">Tu es à la dernière version</x:String>
+    <x:String x:Key="NewVersionAvailable">Une nouvelle version est disponible</x:String>
+
+    <!-- Settings — À propos -->
+    <x:String x:Key="OpenGitHub">Voir sur GitHub</x:String>
+    <x:String x:Key="OpenChangelog">Changelog</x:String>
+    <x:String x:Key="SettingsSubtitle">Personnalise ton expérience Workshop Manager</x:String>
     <x:String x:Key="Refresh">Actualiser</x:String>
     <x:String x:Key="LoadingPublications">Chargement de vos publications...</x:String>
     <x:String x:Key="NoImage">Pas d'image</x:String>
@@ -32,6 +57,26 @@
     <x:String x:Key="Back">Retour</x:String>
     <x:String x:Key="Delete">Supprimer</x:String>
     <x:String x:Key="Save">Enregistrer</x:String>
+    <x:String x:Key="SaveChanges">Enregistrer les modifications</x:String>
+    <x:String x:Key="Saving">Enregistrement…</x:String>
+    <x:String x:Key="SaveAsDraft">Enregistrer comme brouillon</x:String>
+    <x:String x:Key="DraftSaved">Brouillon enregistré</x:String>
+    <x:String x:Key="Drafts">Brouillons</x:String>
+    <x:String x:Key="NoDrafts">Aucun brouillon</x:String>
+    <x:String x:Key="LoadDraft">Charger le brouillon</x:String>
+    <x:String x:Key="ModInformation">Informations du mod</x:String>
+    <x:String x:Key="ModInformationSub">Détails principaux de votre mod : dossier, image de preview, titre et description.</x:String>
+    <x:String x:Key="ModFolder">Dossier du mod</x:String>
+    <x:String x:Key="Details">Détails</x:String>
+    <x:String x:Key="PreviewImageMeta">Recommandé 512×512, JPG ou PNG</x:String>
+    <x:String x:Key="VersionsHeader">Versions et compatibilité</x:String>
+    <x:String x:Key="VersionsHeaderSub">Notes de version et branches du jeu ciblées par ce mod.</x:String>
+    <x:String x:Key="VersionCompatibility">Compatibilité des versions</x:String>
+    <x:String x:Key="DependenciesHeader">Dépendances et prérequis</x:String>
+    <x:String x:Key="DependenciesHeaderSub">Autres items Workshop ou DLC requis pour faire fonctionner votre mod.</x:String>
+    <x:String x:Key="WorkshopDependencies">Dépendances Workshop</x:String>
+    <x:String x:Key="HistorySubtitle">Mises à jour précédentes et versions téléchargeables de votre mod.</x:String>
+    <x:String x:Key="PreviousUpdates">Mises à jour précédentes</x:String>
     <x:String x:Key="PreviewImage">Image de prévisualisation</x:String>
     <x:String x:Key="NoImageSelected">Aucune image sélectionnée</x:String>
     <x:String x:Key="ChooseImage">Choisir une image</x:String>
@@ -128,6 +173,8 @@
     <x:String x:Key="EnableDebugMode">Activer les logs de debug</x:String>
     <x:String x:Key="DebugModeDescription">Lorsqu'activé, des logs détaillés sont enregistrés pour aider au diagnostic. Partagez le fichier de logs lors du signalement de problèmes.</x:String>
     <x:String x:Key="LogFileLocation">Emplacement du fichier de logs :</x:String>
+    <x:String x:Key="AppDataFolder">Dossier de données de l'application</x:String>
+    <x:String x:Key="AppDataFolderDescription">Paramètres, sessions, cache, file de télémétrie et téléchargements. Utile pour signaler un bug ou migrer vers une autre machine.</x:String>
 
     <!-- Sessions -->
     <x:String x:Key="Sessions">Sessions</x:String>
@@ -148,8 +195,39 @@
     <x:String x:Key="CreatingSession">Création de la session...</x:String>
     <x:String x:Key="CreateSessionButton">Créer la session</x:String>
     <x:String x:Key="SetupWizardHint">Exemple : 1162750 pour Songs of Syx</x:String>
-    <x:String x:Key="AppIdRequired">Veuillez entrer un AppId</x:String>
-    <x:String x:Key="AppIdInvalid">Veuillez entrer un AppId numérique valide</x:String>
+    <x:String x:Key="AppIdRequired">Entrez un AppId ou un lien Steam</x:String>
+    <x:String x:Key="AppIdInvalid">Aucun AppId détecté — collez un numéro ou une URL Steam</x:String>
+    <x:String x:Key="AddSessionHeroTitle">Ajouter un jeu Steam</x:String>
+    <x:String x:Key="AddSessionHeroSubtitle">Collez un lien Steam Store ou entrez un AppID. Les infos du jeu seront récupérées et son Workshop rendu accessible dans l'app.</x:String>
+    <x:String x:Key="AppIdOrUrlLabel">AppID Steam ou URL</x:String>
+    <x:String x:Key="AppIdOrUrlPlaceholder">480490 ou https://store.steampowered.com/app/480490/…</x:String>
+    <x:String x:Key="WorkshopAvailable">Workshop disponible</x:String>
+
+    <!-- Home dashboard -->
+    <x:String x:Key="RefreshImage">Rafraîchir l'image</x:String>
+    <x:String x:Key="KpiModsPublished">Mods publiés</x:String>
+    <x:String x:Key="KpiModsPublishedUnit">publications actives</x:String>
+    <x:String x:Key="KpiSubscribers">Abonnés</x:String>
+    <x:String x:Key="KpiSubscribersUnit">abonnés au total</x:String>
+    <x:String x:Key="KpiTotalSize">Taille totale</x:String>
+    <x:String x:Key="KpiTotalSizeUnit">tous mods confondus</x:String>
+    <x:String x:Key="KpiLastUpdate">Dernière mise à jour</x:String>
+    <x:String x:Key="KpiLastUpdateUnit">mod le plus récent</x:String>
+    <x:String x:Key="LatestMods">Derniers mods</x:String>
+    <x:String x:Key="SeeAll">Voir tout</x:String>
+
+    <!-- Shell overlay + onglets -->
+    <x:String x:Key="SwitchingSession">Changement de session…</x:String>
+    <x:String x:Key="InfoTab">Informations</x:String>
+    <x:String x:Key="ChangelogTab">Changelog</x:String>
+    <x:String x:Key="VersionsTab">Versions</x:String>
+    <x:String x:Key="MoveUp">Monter</x:String>
+    <x:String x:Key="MoveDown">Descendre</x:String>
+    <x:String x:Key="BranchLabel">Branche :</x:String>
+
+    <!-- Erreurs inline -->
+    <x:String x:Key="SessionSwitchFailed">Échec du changement de session</x:String>
+    <x:String x:Key="LoadVersionsFailed">Échec du chargement des versions</x:String>
     <x:String x:Key="InvalidAppId">Cet AppId n'existe pas</x:String>
     <x:String x:Key="NoWorkshop">Ce jeu n'a pas de Workshop</x:String>
     <x:String x:Key="NetworkError">Erreur réseau lors de la validation</x:String>
@@ -293,7 +371,7 @@
     <!-- App Dependencies -->
     <x:String x:Key="RequiredApps">Apps / DLCs requis</x:String>
     <x:String x:Key="NoAppDependencies">Aucune app requise</x:String>
-    <x:String x:Key="AppIdPlaceholder">AppID Steam...</x:String>
+    <x:String x:Key="AppIdPlaceholder">AppID Steam ou URL du Store...</x:String>
     <x:String x:Key="AppDependencyAlreadyExists">Cette dépendance d'app existe déjà</x:String>
     <x:String x:Key="AddAppDependencyFailed">Échec de l'ajout de la dépendance d'app</x:String>
     <x:String x:Key="RemoveAppDependencyFailed">Échec de la suppression de la dépendance d'app</x:String>
@@ -303,4 +381,17 @@
     <x:String x:Key="CannotAddOwnGame">Impossible d'ajouter le jeu actuel comme dépendance</x:String>
     <x:String x:Key="AppNotFound">App introuvable</x:String>
     <x:String x:Key="ConfirmAddApp">Ajouter cette app comme dépendance ?</x:String>
+
+    <!-- Confidentialité / Télémétrie -->
+    <x:String x:Key="Privacy">Confidentialité</x:String>
+    <x:String x:Key="EnableTelemetry">Partager les statistiques d'usage</x:String>
+    <x:String x:Key="TelemetryDescription">Aidez à améliorer l'application en envoyant des données d'usage (OS, version de l'app, actions sur les mods). Aucune donnée personnelle, aucun identifiant Steam. Vous pouvez désactiver cela à tout moment.</x:String>
+    <x:String x:Key="ViewPrivacyPolicy">Voir la politique de confidentialité</x:String>
+    <x:String x:Key="IHaveReadLegal">J'ai lu et j'accepte les Conditions d'utilisation et la Politique de confidentialité</x:String>
+    <x:String x:Key="TermsOfUse">Conditions d'utilisation</x:String>
+    <x:String x:Key="PrivacyPolicy">Politique de confidentialité</x:String>
+    <x:String x:Key="YourInstanceId">Votre identifiant d'instance</x:String>
+    <x:String x:Key="YourInstanceIdDescription">Identifiant aléatoire de cette installation. Incluez-le dans votre demande d'accès ou de suppression pour qu'on puisse retrouver vos données — c'est le seul identifiant dont nous disposons.</x:String>
+    <x:String x:Key="Copy">Copier</x:String>
+    <x:String x:Key="Copied">Copié !</x:String>
 </ResourceDictionary>

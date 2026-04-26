@@ -11,11 +11,17 @@ using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.DependencyInjection;
 using QRCoder;
 using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services;
-using SteamWorkshopManager.Services.Interfaces;
 using Steamworks;
+using SteamWorkshopManager.Services.Core;
+using SteamWorkshopManager.Services.Notifications;
+using SteamWorkshopManager.Services.Session;
+using SteamWorkshopManager.Services.Steam;
+using SteamWorkshopManager.Services.Telemetry;
+using SteamWorkshopManager.Services.UI;
+using SteamWorkshopManager.Services.Workshop;
 
 namespace SteamWorkshopManager.ViewModels;
 
@@ -45,6 +51,7 @@ public partial class ItemEditorViewModel : ViewModelBase
     private const long MaxImageSizeBytes = 1024 * 1024; // 1 MB Steam limit
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsInfoComplete))]
     private string _title;
 
     [ObservableProperty]
@@ -53,10 +60,14 @@ public partial class ItemEditorViewModel : ViewModelBase
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(PreviewImageSize))]
     [NotifyPropertyChangedFor(nameof(IsImageTooLarge))]
+    [NotifyPropertyChangedFor(nameof(IsInfoComplete))]
     private string? _previewImagePath;
 
     [ObservableProperty]
     private Bitmap? _previewImage;
+
+    /// <summary>Release the previous preview's native surface before swapping.</summary>
+    partial void OnPreviewImageChanging(Bitmap? value) => _previewImage?.Dispose();
 
     public string PreviewImageSize => FormatImageSize(PreviewImagePath);
     public bool IsImageTooLarge => GetImageSize(PreviewImagePath) > MaxImageSizeBytes;
@@ -85,8 +96,30 @@ public partial class ItemEditorViewModel : ViewModelBase
     [ObservableProperty]
     private string? _errorMessage;
 
+    /// <summary>
+    /// Side-panel nav: tracks which editor section is currently visible.
+    /// OnActiveSectionChanged triggers lazy-loads for Versions / History /
+    /// Dependencies the first time each one is opened.
+    /// </summary>
     [ObservableProperty]
-    private int _selectedTabIndex;
+    [NotifyPropertyChangedFor(nameof(IsInfoActive))]
+    [NotifyPropertyChangedFor(nameof(IsChangelogActive))]
+    [NotifyPropertyChangedFor(nameof(IsVersionsActive))]
+    [NotifyPropertyChangedFor(nameof(IsHistoryActive))]
+    [NotifyPropertyChangedFor(nameof(IsDependenciesActive))]
+    private EditorSection _activeSection = EditorSection.Info;
+
+    public bool IsInfoActive => ActiveSection == EditorSection.Info;
+    public bool IsChangelogActive => ActiveSection == EditorSection.Changelog;
+    public bool IsVersionsActive => ActiveSection == EditorSection.Versions;
+    public bool IsHistoryActive => ActiveSection == EditorSection.History;
+    public bool IsDependenciesActive => ActiveSection == EditorSection.Dependencies;
+
+    [RelayCommand] private void NavigateToInfo() => ActiveSection = EditorSection.Info;
+    [RelayCommand] private void NavigateToChangelog() => ActiveSection = EditorSection.Changelog;
+    [RelayCommand] private void NavigateToVersions() => ActiveSection = EditorSection.Versions;
+    [RelayCommand] private void NavigateToHistory() => ActiveSection = EditorSection.History;
+    [RelayCommand] private void NavigateToDependencies() => ActiveSection = EditorSection.Dependencies;
 
     [ObservableProperty]
     private string _newCustomTag = string.Empty;
@@ -108,6 +141,13 @@ public partial class ItemEditorViewModel : ViewModelBase
 
     [ObservableProperty]
     private Bitmap? _qrCodeImage;
+
+    /// <summary>
+    /// Release the previous QR bitmap. Steam rotates the challenge URL every
+    /// few seconds while waiting for the scan; without this, every rotation
+    /// would leak a bitmap for the duration of the auth session.
+    /// </summary>
+    partial void OnQrCodeImageChanging(Bitmap? value) => _qrCodeImage?.Dispose();
 
     private CancellationTokenSource? _authCts;
 
@@ -169,7 +209,18 @@ public partial class ItemEditorViewModel : ViewModelBase
     private GameBranch? _selectedBranchMax;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsVersionsComplete))]
     private bool _isBranchRangeInvalid;
+
+    /// <summary>
+    /// Section-ready flags driving the green check in the left nav.
+    /// A section is "complete" when it has no blocking error and enough data
+    /// to be submitted safely. Optional sections default to true so they get
+    /// a check as long as the user hasn't introduced a validation error.
+    /// </summary>
+    public bool IsInfoComplete => !string.IsNullOrWhiteSpace(Title) && !IsImageTooLarge;
+    public bool IsVersionsComplete => !IsBranchRangeInvalid;
+    public bool IsDependenciesComplete => true;
 
     public List<GameBranch> AvailableBranches { get; private set; } = [];
     public ObservableCollection<ModVersionInfo> ExistingVersions { get; } = [];
@@ -190,7 +241,7 @@ public partial class ItemEditorViewModel : ViewModelBase
     public static IEnumerable<VisibilityType> VisibilityOptions =>
         Enum.GetValues<VisibilityType>();
 
-    public event Action? CloseRequested;
+
     public event Action? ItemUpdated;
     public event Action? ItemDeleted;
 
@@ -203,11 +254,11 @@ public partial class ItemEditorViewModel : ViewModelBase
         _settingsService = settingsService;
         _notificationService = notificationService;
         _uploadProgress = uploadProgress;
-        _changelogScraper = new ChangelogScraperService();
-        _workshopDownloader = new WorkshopDownloadService();
-        _dependencyService = new DependencyService();
-        _appDependencyService = new AppDependencyService();
-        _versioningService = new VersioningService(steamService);
+        _changelogScraper = App.Services.GetRequiredService<ChangelogScraperService>();
+        _workshopDownloader = App.Services.GetRequiredService<WorkshopDownloadService>();
+        _dependencyService = App.Services.GetRequiredService<DependencyService>();
+        _appDependencyService = App.Services.GetRequiredService<AppDependencyService>();
+        _versioningService = App.Services.GetRequiredService<VersioningService>();
 
         _title = item.Title;
         _description = item.Description;
@@ -422,6 +473,7 @@ public partial class ItemEditorViewModel : ViewModelBase
                 }
 
                 NewChangelog = string.Empty;
+                TelemetryService.Instance?.Track(TelemetryEventTypes.ModUpdated, AppConfig.AppId);
                 _notificationService.ShowSuccess(Loc["ItemUpdatedSuccess"]);
                 ItemUpdated?.Invoke();
             }
@@ -470,6 +522,7 @@ public partial class ItemEditorViewModel : ViewModelBase
                 _settingsService.SetContentFolderInfo(fileId, null);
                 _settingsService.SetPreviewImageInfo(fileId, null);
 
+                TelemetryService.Instance?.Track(TelemetryEventTypes.ModDeleted, AppConfig.AppId);
                 _notificationService.ShowSuccess(Loc["ItemDeletedSuccess"]);
                 ItemDeleted?.Invoke();
             }
@@ -492,14 +545,20 @@ public partial class ItemEditorViewModel : ViewModelBase
         }
     }
 
-    partial void OnSelectedTabIndexChanged(int value)
+    partial void OnActiveSectionChanged(EditorSection value)
     {
-        if (value == 2 && !_versionsLoaded)
-            LoadVersionsCommand.Execute(null);
-        if (value == 3 && !_changelogHistoryLoaded)
-            LoadChangelogHistoryCommand.Execute(null);
-        if (value == 4 && !_dependenciesLoaded)
-            LoadDependenciesCommand.Execute(null);
+        switch (value)
+        {
+            case EditorSection.Versions when !_versionsLoaded:
+                LoadVersionsCommand.Execute(null);
+                break;
+            case EditorSection.History when !_changelogHistoryLoaded:
+                LoadChangelogHistoryCommand.Execute(null);
+                break;
+            case EditorSection.Dependencies when !_dependenciesLoaded:
+                LoadDependenciesCommand.Execute(null);
+                break;
+        }
     }
 
     partial void OnSelectedBranchMinChanged(GameBranch? value) => ValidateBranchRange();
@@ -543,7 +602,7 @@ public partial class ItemEditorViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            _notificationService.ShowError($"Failed to load versions: {ex.Message}");
+            _notificationService.ShowError($"{Loc["LoadVersionsFailed"]}: {ex.Message}");
         }
         finally
         {
@@ -694,6 +753,7 @@ public partial class ItemEditorViewModel : ViewModelBase
             SteamAuthService.QrChallengeUrlChanged -= OnQrUrlChanged;
             IsAuthenticating = false;
             QrCodeImage = null;
+            _authCts?.Dispose();
             _authCts = null;
         }
     }
@@ -883,7 +943,7 @@ public partial class ItemEditorViewModel : ViewModelBase
         AddAppError = null;
         AppPreviewInfo = null;
 
-        if (!uint.TryParse(NewAppIdInput.Trim(), out var appId) || appId == 0)
+        if (!AppIdValidator.TryParseAppId(NewAppIdInput, out var appId))
         {
             AddAppError = Loc["InvalidAppId"];
             return;
@@ -1021,12 +1081,6 @@ public partial class ItemEditorViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void Close()
-    {
-        CloseRequested?.Invoke();
-    }
-
-    [RelayCommand]
     private async Task RefreshTagsAsync()
     {
         var session = AppConfig.CurrentSession;
@@ -1044,7 +1098,7 @@ public partial class ItemEditorViewModel : ViewModelBase
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
             // Fetch fresh tags from Steam
-            var tagsService = new WorkshopTagsService();
+            var tagsService = App.Services.GetRequiredService<WorkshopTagsService>();
             var tagsResult = await tagsService.GetTagsForAppAsync(session.AppId, forceRefresh: true);
 
             // Update session
@@ -1149,8 +1203,7 @@ public partial class ItemEditorViewModel : ViewModelBase
     {
         try
         {
-            var settingsService = new SettingsService();
-            var sessionRepository = new SessionRepository(settingsService);
+            var sessionRepository = App.Services.GetRequiredService<ISessionRepository>();
             await sessionRepository.SaveSessionAsync(session);
         }
         catch

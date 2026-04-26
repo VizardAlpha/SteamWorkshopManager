@@ -1,12 +1,20 @@
 using System;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.DependencyInjection;
 using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services;
-using SteamWorkshopManager.Services.Interfaces;
+using SteamWorkshopManager.Services.Core;
+using SteamWorkshopManager.Services.Log;
+using SteamWorkshopManager.Services.Notifications;
+using SteamWorkshopManager.Services.Session;
+using SteamWorkshopManager.Services.Steam;
+using SteamWorkshopManager.Services.UI;
+using ShellTab = SteamWorkshopManager.Models.ShellTab;
 
 namespace SteamWorkshopManager.ViewModels;
 
@@ -16,6 +24,9 @@ public partial class MainViewModel : ViewModelBase
     private readonly IFileDialogService _fileDialogService;
     private readonly ISettingsService _settingsService;
     private readonly INotificationService _notificationService;
+    private readonly ISessionRepository _sessionRepository;
+    private readonly SessionManager _sessionManager;
+    private readonly SessionHost _sessionHost;
     private string _statusKey = "ConnectingToSteam";
 
     [ObservableProperty]
@@ -24,10 +35,44 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isSteamConnected;
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsConnecting))]
+    [NotifyPropertyChangedFor(nameof(IsConnected))]
+    [NotifyPropertyChangedFor(nameof(IsDisconnected))]
+    private SteamConnectionState _connectionState = SteamConnectionState.Connecting;
+
+    public bool IsConnecting => ConnectionState == SteamConnectionState.Connecting;
+    public bool IsConnected => ConnectionState == SteamConnectionState.Connected;
+    public bool IsDisconnected => ConnectionState == SteamConnectionState.Disconnected;
+
+    public string AppVersionDisplay => AppInfo.VersionWithPrefix;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsHomeActive))]
+    [NotifyPropertyChangedFor(nameof(IsMyModsActive))]
+    [NotifyPropertyChangedFor(nameof(IsCreateActive))]
+    [NotifyPropertyChangedFor(nameof(IsSettingsActive))]
+    private ShellTab _activeTab = ShellTab.Home;
+
+    public bool IsHomeActive => ActiveTab == ShellTab.Home;
+    public bool IsMyModsActive => ActiveTab == ShellTab.MyMods;
+    public bool IsCreateActive => ActiveTab == ShellTab.Create;
+    public bool IsSettingsActive => ActiveTab == ShellTab.Settings;
+
     /// <summary>
-    /// The name of the currently active game/session for display in the header.
+    /// The name of the currently active game/session for display in the shell.
     /// </summary>
-    public string ActiveGameName => AppConfig.CurrentSession?.GameName ?? "Workshop Manager";
+    public string ActiveGameName => AppConfig.CurrentSession?.GameName ?? Loc["AppTitle"];
+
+    /// <summary>
+    /// Single-character avatar for the session pill (first letter of the game name).
+    /// </summary>
+    public string ActiveGameInitial =>
+        string.IsNullOrEmpty(AppConfig.CurrentSession?.GameName)
+            ? "?"
+            : AppConfig.CurrentSession.GameName![..1].ToUpperInvariant();
+
+    public bool HasActiveSession => AppConfig.CurrentSession is not null;
 
     /// <summary>
     /// The window title including the active game name.
@@ -74,18 +119,57 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     private UpdateInfo? _updateInfo;
 
+    /// <summary>
+    /// True while <see cref="SwitchSessionAsync"/> is in flight — drives a
+    /// full-window overlay so the user sees "something is happening" instead
+    /// of a stale UI during the worker swap + item reload.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isSwitchingSession;
+
     public ItemListViewModel ItemListViewModel { get; }
+
+    public HomeViewModel HomeViewModel { get; }
+
+    [ObservableProperty]
+    private ObservableCollection<WorkshopSession> _sessions = [];
+
+    [ObservableProperty]
+    private Avalonia.Media.Imaging.Bitmap? _activeSessionIcon;
 
     public IProgress<UploadProgress> UploadProgressReporter { get; }
 
-    public MainViewModel() : this(new SteamService(), new FileDialogService(), new SettingsService(), new NotificationService()) { }
+    public MainViewModel() : this(
+        App.Services.GetRequiredService<ISteamService>(),
+        App.Services.GetRequiredService<IFileDialogService>(),
+        App.Services.GetRequiredService<ISettingsService>(),
+        App.Services.GetRequiredService<INotificationService>(),
+        App.Services.GetRequiredService<ISessionRepository>(),
+        App.Services.GetRequiredService<SessionManager>(),
+        App.Services.GetRequiredService<SessionHost>())
+    { }
 
-    public MainViewModel(ISteamService steamService, IFileDialogService fileDialogService, ISettingsService settingsService, INotificationService notificationService)
+    public MainViewModel(
+        ISteamService steamService,
+        IFileDialogService fileDialogService,
+        ISettingsService settingsService,
+        INotificationService notificationService,
+        ISessionRepository sessionRepository,
+        SessionManager sessionManager,
+        SessionHost sessionHost)
     {
         _steamService = steamService;
         _fileDialogService = fileDialogService;
         _settingsService = settingsService;
         _notificationService = notificationService;
+        _sessionRepository = sessionRepository;
+        _sessionManager = sessionManager;
+        _sessionHost = sessionHost;
+
+        // Worker auto-recovery feedback: refresh UI state on successful respawn,
+        // or surface a persistent disconnected banner when we've given up.
+        _sessionHost.WorkerRecovered += OnWorkerRecovered;
+        _sessionHost.WorkerUnrecoverable += OnWorkerUnrecoverable;
 
         // Subscribe to notification events
         _notificationService.StateChanged += OnNotificationStateChanged;
@@ -124,11 +208,106 @@ public partial class MainViewModel : ViewModelBase
         ItemListViewModel.ItemSelected += OnItemSelected;
         ItemListViewModel.CreateRequested += OnCreateRequested;
 
-        CurrentView = ItemListViewModel;
+        HomeViewModel = new HomeViewModel(ItemListViewModel);
+
+        CurrentView = HomeViewModel;
+        ActiveTab = ShellTab.Home;
 
         InitializeSteamAsync();
         _ = CheckForUpdatesAsync();
+        _ = LoadSessionsAsync();
     }
+
+    public async Task LoadSessionsAsync()
+    {
+        try
+        {
+            var sessions = await _sessionRepository.GetAllSessionsAsync();
+            var activeId = AppConfig.CurrentSession?.Id;
+            foreach (var session in sessions)
+                session.IsActive = session.Id == activeId;
+
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                Sessions = new ObservableCollection<WorkshopSession>(sessions);
+            });
+
+            // Kick off icon loads right away so the pill/flyout paint quickly
+            // with whatever is already cached on disk (or the header fallback).
+            foreach (var session in sessions)
+            {
+                _ = LoadSessionIconAsync(session);
+            }
+
+            // Sessions missing a resolved GameIconUrl go through PICS in a
+            // single batched round-trip, then persist + refresh the bitmap.
+            _ = EnsureIconUrlsAsync(sessions);
+        }
+        catch (Exception ex)
+        {
+            Log.Debug($"Failed to load sessions in MainViewModel: {ex.Message}");
+        }
+    }
+
+    private async Task LoadSessionIconAsync(WorkshopSession session)
+    {
+        try
+        {
+            // Cache-only lookup: no URL needed when the icon is already on disk.
+            var bitmap = await Helpers.SteamImageCache.GetIconAsync(session.AppId, iconUrl: null);
+
+            // Fallback to the wide header while PICS is still resolving the icon hash.
+            bitmap ??= await Helpers.SteamImageCache.GetHeaderAsync(session.AppId);
+            if (bitmap is null) return;
+
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                session.IconBitmap = bitmap;
+                if (session.IsActive)
+                    ActiveSessionIcon = bitmap;
+            });
+        }
+        catch (Exception ex)
+        {
+            Log.Debug($"LoadSessionIconAsync failed for AppId {session.AppId}: {ex.Message}");
+        }
+    }
+
+    private async Task EnsureIconUrlsAsync(System.Collections.Generic.List<WorkshopSession> sessions)
+    {
+        // Only sessions whose icon isn't on disk yet need a PICS round-trip.
+        var missing = sessions
+            .Where(s => s.AppId > 0 && !System.IO.File.Exists(Helpers.SteamImageCache.IconCacheFilePath(s.AppId)))
+            .ToList();
+        if (missing.Count == 0) return;
+
+        try
+        {
+            var metadata = App.Services.GetRequiredService<SteamAppMetadataService>();
+            var urls = await metadata.GetIconUrlsAsync(missing.Select(s => s.AppId));
+
+            foreach (var session in missing)
+            {
+                if (!urls.TryGetValue(session.AppId, out var url)) continue;
+
+                var bitmap = await Helpers.SteamImageCache.GetIconAsync(session.AppId, url);
+                if (bitmap is null) continue;
+
+                await Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    session.IconBitmap = bitmap;
+                    if (session.IsActive)
+                        ActiveSessionIcon = bitmap;
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Debug($"EnsureIconUrlsAsync failed: {ex.Message}");
+        }
+    }
+
+    private static readonly Logger Log = LogService.GetLogger<MainViewModel>();
 
     private static string FormatBytes(ulong bytes)
     {
@@ -144,6 +323,38 @@ public partial class MainViewModel : ViewModelBase
     private void OnLanguageChanged()
     {
         StatusMessage = Loc[_statusKey];
+    }
+
+    private void OnWorkerRecovered()
+    {
+        // Marshal back to the UI thread: SessionHost fires these from the
+        // threadpool after Process.Exited bubbles through the respawn pipeline.
+        Dispatcher.UIThread.Post(() =>
+        {
+            IsSteamConnected = _sessionHost.LastInitResult == SteamInitResult.Success;
+            ConnectionState = IsSteamConnected
+                ? SteamConnectionState.Connected
+                : SteamConnectionState.Disconnected;
+            HomeViewModel.ConnectionState = ConnectionState;
+            SetStatus(IsSteamConnected ? "ConnectedToSteam" : "SteamNotAvailable");
+            _notificationService.ShowSuccess(Loc["WorkerRecovered"]);
+
+            // Rehydrate what the dead worker had served: items list.
+            if (IsSteamConnected)
+                _ = ItemListViewModel.LoadItemsAsync();
+        });
+    }
+
+    private void OnWorkerUnrecoverable()
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            IsSteamConnected = false;
+            ConnectionState = SteamConnectionState.Disconnected;
+            HomeViewModel.ConnectionState = SteamConnectionState.Disconnected;
+            SetStatus("SteamNotAvailable");
+            _notificationService.ShowError(Loc["WorkerUnrecoverable"]);
+        });
     }
 
     private void OnNotificationStateChanged(NotificationState state)
@@ -177,11 +388,16 @@ public partial class MainViewModel : ViewModelBase
     private async void InitializeSteamAsync()
     {
         SetStatus("ConnectingToSteam");
+        ConnectionState = SteamConnectionState.Connecting;
         var result = await Task.Run(() => _steamService.Initialize());
 
         await Dispatcher.UIThread.InvokeAsync(async () =>
         {
             IsSteamConnected = result == SteamInitResult.Success;
+            ConnectionState = result == SteamInitResult.Success
+                ? SteamConnectionState.Connected
+                : SteamConnectionState.Disconnected;
+            HomeViewModel.ConnectionState = ConnectionState;
 
             switch (result)
             {
@@ -205,17 +421,15 @@ public partial class MainViewModel : ViewModelBase
         switch (CurrentView)
         {
             case ItemEditorViewModel editor:
-                editor.CloseRequested -= OnEditorCloseRequested;
                 editor.ItemUpdated -= OnItemUpdated;
                 editor.ItemDeleted -= OnItemDeleted;
                 break;
             case CreateItemViewModel creator:
-                creator.CloseRequested -= OnEditorCloseRequested;
                 creator.ItemCreated -= OnItemCreated;
                 break;
-            case SettingsViewModel settings:
-                settings.CloseRequested -= OnSettingsCloseRequested;
-                settings.AddSessionRequested -= OnAddSessionRequested;
+            case SettingsViewModel:
+                // SettingsViewModel no longer raises close/add-session events
+                // since those UX affordances moved to the topbar / session pill.
                 break;
         }
     }
@@ -225,7 +439,6 @@ public partial class MainViewModel : ViewModelBase
         DetachCurrentView();
         SelectedItem = item;
         var editor = new ItemEditorViewModel(item, _steamService, _fileDialogService, _settingsService, _notificationService, UploadProgressReporter);
-        editor.CloseRequested += OnEditorCloseRequested;
         editor.ItemUpdated += OnItemUpdated;
         editor.ItemDeleted += OnItemDeleted;
         CurrentView = editor;
@@ -235,16 +448,8 @@ public partial class MainViewModel : ViewModelBase
     {
         DetachCurrentView();
         var creator = new CreateItemViewModel(_steamService, _fileDialogService, _settingsService, _notificationService, UploadProgressReporter);
-        creator.CloseRequested += OnEditorCloseRequested;
         creator.ItemCreated += OnItemCreated;
         CurrentView = creator;
-    }
-
-    private void OnEditorCloseRequested()
-    {
-        DetachCurrentView();
-        CurrentView = ItemListViewModel;
-        SelectedItem = null;
     }
 
     private async void OnItemUpdated()
@@ -271,10 +476,20 @@ public partial class MainViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void NavigateToHome()
+    {
+        DetachCurrentView();
+        CurrentView = HomeViewModel;
+        ActiveTab = ShellTab.Home;
+        SelectedItem = null;
+    }
+
+    [RelayCommand]
     private void NavigateToList()
     {
         DetachCurrentView();
         CurrentView = ItemListViewModel;
+        ActiveTab = ShellTab.MyMods;
         SelectedItem = null;
     }
 
@@ -282,22 +497,113 @@ public partial class MainViewModel : ViewModelBase
     private void NavigateToCreate()
     {
         OnCreateRequested();
+        ActiveTab = ShellTab.Create;
     }
 
     [RelayCommand]
     private void NavigateToSettings()
     {
         DetachCurrentView();
-        var settingsVm = new SettingsViewModel(_settingsService);
-        settingsVm.CloseRequested += OnSettingsCloseRequested;
-        settingsVm.AddSessionRequested += OnAddSessionRequested;
-        CurrentView = settingsVm;
+        CurrentView = new SettingsViewModel(_settingsService);
+        ActiveTab = ShellTab.Settings;
     }
 
-    private void OnSettingsCloseRequested()
+    [RelayCommand]
+    private async Task SwitchSessionAsync(WorkshopSession? session)
     {
-        DetachCurrentView();
-        CurrentView = ItemListViewModel;
+        if (session is null || session.Id == AppConfig.CurrentSession?.Id) return;
+
+        Log.Info($"Switching to session: {session.Name}");
+        IsSwitchingSession = true;
+
+        try
+        {
+            // Drop transient state so the UI re-derives from the new worker.
+            ItemListViewModel.DisposeAndClearItems();
+            HomeViewModel.HeaderImage = null;
+            ActiveSessionIcon = null;
+            SelectedItem = null;
+            IsSteamConnected = false;
+            ConnectionState = SteamConnectionState.Connecting;
+            HomeViewModel.ConnectionState = SteamConnectionState.Connecting;
+            SetStatus("ConnectingToSteam");
+
+            // Swap the worker + update AppConfig to the new session.
+            var initResult = await _sessionManager.SwitchSessionAsync(session);
+
+            // Reconcile the Sessions pill checkmark across all entries.
+            foreach (var s in Sessions)
+                s.IsActive = s.Id == session.Id;
+
+            // Push the new session's cached icon into the pill immediately.
+            var active = Sessions.FirstOrDefault(s => s.Id == session.Id);
+            if (active is not null)
+            {
+                ActiveSessionIcon = active.IconBitmap;
+                // Kick off the icon load in case the switch exposed a stale bitmap.
+                _ = LoadSessionIconAsync(active);
+            }
+
+            // Steam state + status copy follow the worker's init result.
+            IsSteamConnected = initResult == SteamInitResult.Success;
+            ConnectionState = initResult == SteamInitResult.Success
+                ? SteamConnectionState.Connected
+                : SteamConnectionState.Disconnected;
+            HomeViewModel.ConnectionState = ConnectionState;
+            SetStatus(initResult switch
+            {
+                SteamInitResult.Success => "ConnectedToSteam",
+                SteamInitResult.GameNotOwned => "GameNotOwned",
+                _ => "SteamNotAvailable",
+            });
+
+            // Notify header / pill / window title bindings that read AppConfig.
+            OnPropertyChanged(nameof(ActiveGameName));
+            OnPropertyChanged(nameof(ActiveGameInitial));
+            OnPropertyChanged(nameof(HasActiveSession));
+            OnPropertyChanged(nameof(WindowTitle));
+            HomeViewModel.OnSessionChanged();
+
+            // Propagate the switch to whichever editor/creator is currently
+            // mounted. Create-view re-derives tags/branches/drafts from the new
+            // AppId in place; the item editor is closed because the mod it was
+            // displaying belongs to the previous session.
+            switch (CurrentView)
+            {
+                case CreateItemViewModel creator:
+                    creator.OnSessionChanged();
+                    break;
+                case ItemEditorViewModel:
+                    DetachCurrentView();
+                    CurrentView = ItemListViewModel;
+                    SelectedItem = null;
+                    break;
+            }
+
+            // Kick off the published-items reload without awaiting: the
+            // RelayCommand disables the flyout as long as this handler runs,
+            // and the reload can easily take several seconds (Steam query).
+            // The ItemListViewModel's own IsLoading flag drives the spinner.
+            if (initResult == SteamInitResult.Success)
+            {
+                _ = ItemListViewModel.LoadItemsAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error("Session switch failed", ex);
+            _notificationService.ShowError($"{Loc["SessionSwitchFailed"]}: {ex.Message}");
+        }
+        finally
+        {
+            IsSwitchingSession = false;
+        }
+    }
+
+    [RelayCommand]
+    private void AddSession()
+    {
+        OnAddSessionRequested();
     }
 
     /// <summary>

@@ -1,16 +1,29 @@
 using System;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using SteamWorkshopManager.Services;
-using SteamWorkshopManager.Services.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
+using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Services.Log;
+using SteamWorkshopManager.Services.Session;
+using SteamWorkshopManager.Services.Steam;
+using SteamWorkshopManager.Services.Telemetry;
 
 namespace SteamWorkshopManager.ViewModels;
 
 public partial class AddSessionViewModel : ViewModelBase
 {
     private static readonly Logger Log = LogService.GetLogger<AddSessionViewModel>();
+
+    /// <summary>
+    /// Matches the AppId in any common Steam URL variant: store, community hub,
+    /// community workshop pages, and the short <c>s.team</c> shape.
+    /// </summary>
+    private static readonly Regex SteamUrlRegex = new(
+        @"(?:store\.steampowered\.com/app|steamcommunity\.com/app|s\.team/a)/(\d+)",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     private readonly AppIdValidator _validator;
     private readonly ISessionRepository _sessionRepository;
@@ -37,7 +50,17 @@ public partial class AddSessionViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isCreating;
 
+    [ObservableProperty]
     private uint _validatedAppId;
+
+    [ObservableProperty]
+    private Bitmap? _gameHeaderImage;
+
+    /// <summary>
+    /// Dispose the previous preview bitmap — the validate+preview flow can
+    /// refetch multiple times in the same session (user edits the AppId).
+    /// </summary>
+    partial void OnGameHeaderImageChanging(Bitmap? value) => _gameHeaderImage?.Dispose();
 
     public event Action? SessionCreated;
     public event Action? CancelRequested;
@@ -45,8 +68,40 @@ public partial class AddSessionViewModel : ViewModelBase
     public AddSessionViewModel(ISessionRepository sessionRepository)
     {
         _sessionRepository = sessionRepository;
-        _validator = new AppIdValidator();
-        _sessionManager = new SessionManager(sessionRepository);
+        _validator = App.Services.GetRequiredService<AppIdValidator>();
+        _sessionManager = App.Services.GetRequiredService<SessionManager>();
+    }
+
+    /// <summary>
+    /// Extracts an AppId from either a plain numeric string or a Steam URL
+    /// (<c>store.steampowered.com/app/…</c>, <c>steamcommunity.com/app/…</c>,
+    /// <c>s.team/a/…</c>). Returns <c>false</c> when nothing recognisable is found.
+    /// </summary>
+    private static bool TryExtractAppId(string input, out uint appId)
+    {
+        appId = 0;
+        if (string.IsNullOrWhiteSpace(input)) return false;
+
+        var trimmed = input.Trim();
+        if (uint.TryParse(trimmed, out appId)) return true;
+
+        var match = SteamUrlRegex.Match(trimmed);
+        return match.Success && uint.TryParse(match.Groups[1].Value, out appId);
+    }
+
+    partial void OnAppIdInputChanged(string value)
+    {
+        // Any edit invalidates the last preview — resets the card + unlocks the
+        // Validate button so the user can't submit a mismatched pair.
+        if (IsValid || HasError)
+        {
+            IsValid = false;
+            HasError = false;
+            ErrorMessage = null;
+            GameName = null;
+            GameHeaderImage = null;
+            ValidatedAppId = 0;
+        }
     }
 
     [RelayCommand]
@@ -59,7 +114,7 @@ public partial class AddSessionViewModel : ViewModelBase
             return;
         }
 
-        if (!uint.TryParse(AppIdInput.Trim(), out var appId))
+        if (!TryExtractAppId(AppIdInput, out var appId))
         {
             HasError = true;
             ErrorMessage = Loc["AppIdInvalid"];
@@ -71,6 +126,7 @@ public partial class AddSessionViewModel : ViewModelBase
         IsValid = false;
         ErrorMessage = null;
         GameName = null;
+        GameHeaderImage = null;
 
         try
         {
@@ -81,8 +137,12 @@ public partial class AddSessionViewModel : ViewModelBase
             {
                 IsValid = true;
                 GameName = !string.IsNullOrEmpty(result.GameName) ? result.GameName : $"Game {appId}";
-                _validatedAppId = appId;
+                ValidatedAppId = appId;
                 Log.Info($"AppId valid: {GameName}");
+
+                // Fire-and-forget the header image so the preview card paints
+                // the big picture without blocking the validation spinner.
+                _ = LoadHeaderPreviewAsync(appId);
             }
             else
             {
@@ -103,10 +163,22 @@ public partial class AddSessionViewModel : ViewModelBase
         }
     }
 
+    private async Task LoadHeaderPreviewAsync(uint appId)
+    {
+        try
+        {
+            GameHeaderImage = await SteamImageCache.GetHeaderAsync(appId);
+        }
+        catch (Exception ex)
+        {
+            Log.Debug($"Preview image load failed for AppId {appId}: {ex.Message}");
+        }
+    }
+
     [RelayCommand]
     private async Task CreateSessionAsync()
     {
-        if (!IsValid || _validatedAppId == 0 || string.IsNullOrEmpty(GameName))
+        if (!IsValid || ValidatedAppId == 0 || string.IsNullOrEmpty(GameName))
         {
             return;
         }
@@ -115,20 +187,16 @@ public partial class AddSessionViewModel : ViewModelBase
 
         try
         {
-            Log.Info($"Creating session for {GameName} (AppId: {_validatedAppId})");
+            Log.Info($"Creating session for {GameName} (AppId: {ValidatedAppId})");
 
-            // Create the session
-            var session = await _sessionManager.CreateSessionAsync(_validatedAppId, GameName);
-
-            // Set it as active
+            var session = await _sessionManager.CreateSessionAsync(ValidatedAppId, GameName);
             await _sessionRepository.SetActiveSessionAsync(session.Id);
-
-            // Update steam_appid.txt
-            await SessionManager.UpdateSteamAppIdFileAsync(_validatedAppId);
+            await SessionManager.UpdateSteamAppIdFileAsync(ValidatedAppId);
 
             Log.Info("Session created successfully");
 
-            // Notify that session was created
+            TelemetryService.Instance?.Track(TelemetryEventTypes.SessionAdded, ValidatedAppId);
+
             SessionCreated?.Invoke();
         }
         catch (Exception ex)

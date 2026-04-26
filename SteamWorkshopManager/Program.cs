@@ -1,5 +1,10 @@
-﻿using Avalonia;
+using Avalonia;
+using Microsoft.Extensions.DependencyInjection;
+using SteamWorkshopManager.Services;
+using SteamWorkshopManager.Services.Steam.Worker.Contracts;
+using SteamWorkshopManager.Services.Steam.Worker.Host;
 using System;
+using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Threading;
 
@@ -16,6 +21,30 @@ sealed class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        // Pin the UI culture to en-US so .NET runtime exception messages
+        // (sockets, IO, parsing) render in English regardless of the host
+        // OS locale. Our user-facing strings are served by LocalizationService
+        // from XAML resources, not by .NET satellite assemblies, so this
+        // doesn't affect the app's visible language. CurrentCulture is left
+        // untouched, so number/date formatting still follows the user's OS.
+        var enUs = CultureInfo.GetCultureInfo("en-US");
+        CultureInfo.DefaultThreadCurrentUICulture = enUs;
+        Thread.CurrentThread.CurrentUICulture = enUs;
+
+        // Worker mode: the same binary bifurcates on --steam-worker, skipping Avalonia entirely.
+        // Session switching kills and respawns this process without touching the shell.
+        if (SteamWorkerArgs.TryParse(args, out var workerArgs))
+        {
+            SteamWorkerHost.RunAsync(workerArgs).GetAwaiter().GetResult();
+            return;
+        }
+
+        // Dev affordance: `--force-setup-wizard` makes startup treat the session
+        // repository as empty so the wizard is shown even when a session exists.
+        // Useful for iterating on the wizard UI without wiping the sessions file.
+        App.ForceSetupWizard = Array.Exists(args, a =>
+            string.Equals(a, "--force-setup-wizard", StringComparison.OrdinalIgnoreCase));
+
         // Ensure STA thread for drag and drop on Windows
         if (OperatingSystem.IsWindows())
         {
@@ -24,11 +53,15 @@ sealed class Program
             OleInitialize(IntPtr.Zero);
         }
 
+        App.Services = new ServiceCollection()
+            .AddAppServices()
+            .BuildServiceProvider();
+
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
     }
 
     // Avalonia configuration, don't remove; also used by visual designer.
-    public static AppBuilder BuildAvaloniaApp()
+    private static AppBuilder BuildAvaloniaApp()
         => AppBuilder.Configure<App>()
             .UsePlatformDetect()
             .WithInterFont()

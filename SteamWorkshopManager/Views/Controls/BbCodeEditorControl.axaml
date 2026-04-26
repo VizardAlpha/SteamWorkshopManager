@@ -37,7 +37,6 @@
                     Foreground="#8899a6"
                     FontSize="14"
                     CornerRadius="3"
-                    Cursor="Hand"
                     Focusable="False"
                     ToolTip.Tip="{DynamicResource Expand}"
                     Content="⤢"/>

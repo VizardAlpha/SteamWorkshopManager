@@ -1,10 +1,13 @@
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using SteamWorkshopManager.Services;
-using SteamWorkshopManager.Services.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
+using SteamWorkshopManager.Services.Core;
 using SteamWorkshopManager.Services.Log;
+using SteamWorkshopManager.Services.Session;
+using SteamWorkshopManager.Services.Steam;
 
 namespace SteamWorkshopManager.ViewModels;
 
@@ -12,15 +15,30 @@ public partial class SetupWizardViewModel : ViewModelBase
 {
     private static readonly Logger Log = LogService.GetLogger<SetupWizardViewModel>();
 
+    private const string StatsSiteUrl = "https://swm-stats.com";
+    private const string PrivacyPolicyUrl = "https://swm-stats.com/Privacy";
+    private const string TermsOfUseUrl = "https://swm-stats.com/Terms";
+
     private readonly AppIdValidator _validator;
     private readonly ISessionRepository _sessionRepository;
     private readonly SessionManager _sessionManager;
+    private readonly ISettingsService _settingsService;
 
     [ObservableProperty]
     private string _appIdInput = string.Empty;
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ValidateAppIdCommand))]
     private bool _isValidating;
+
+    /// <summary>
+    /// Gate inside the Telemetry consent box. Only required when telemetry
+    /// is enabled — if the user opts out, no data leaves the machine, so
+    /// the Terms/Privacy acknowledgement does not apply to validation.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ValidateAppIdCommand))]
+    private bool _isPrivacyAccepted;
 
     [ObservableProperty]
     private bool _isValid;
@@ -37,6 +55,15 @@ public partial class SetupWizardViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isCreating;
 
+    /// <summary>
+    /// First-run telemetry consent. Committed to settings only when the user
+    /// clicks "Create session" — until then, no state leaks out of the wizard
+    /// and no Track/Flush call can fire (App.axaml.cs defers AppStart).
+    /// </summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ValidateAppIdCommand))]
+    private bool _isTelemetryEnabled = true;
+
     private uint _validatedAppId;
 
     public event Action? SessionCreated;
@@ -44,11 +71,33 @@ public partial class SetupWizardViewModel : ViewModelBase
     public SetupWizardViewModel(ISessionRepository sessionRepository)
     {
         _sessionRepository = sessionRepository;
-        _validator = new AppIdValidator();
-        _sessionManager = new SessionManager(sessionRepository);
+        _validator = App.Services.GetRequiredService<AppIdValidator>();
+        _sessionManager = App.Services.GetRequiredService<SessionManager>();
+        _settingsService = App.Services.GetRequiredService<ISettingsService>();
+
+        // Mirror the existing stored preference so reopening the wizard
+        // (via --force-setup-wizard) pre-fills the user's last choice.
+        _isTelemetryEnabled = _settingsService.Settings.TelemetryEnabled;
     }
 
     [RelayCommand]
+    private static void OpenStatsSite() => OpenUrl(StatsSiteUrl);
+
+    [RelayCommand]
+    private static void OpenPrivacyPolicy() => OpenUrl(PrivacyPolicyUrl);
+
+    [RelayCommand]
+    private static void OpenTermsOfUse() => OpenUrl(TermsOfUseUrl);
+
+    private static void OpenUrl(string url)
+    {
+        try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); }
+        catch (Exception ex) { Log.Debug($"Failed to open URL {url}: {ex.Message}"); }
+    }
+
+    private bool CanValidate => !IsValidating && (!IsTelemetryEnabled || IsPrivacyAccepted);
+
+    [RelayCommand(CanExecute = nameof(CanValidate))]
     private async Task ValidateAppIdAsync()
     {
         if (string.IsNullOrWhiteSpace(AppIdInput))
@@ -58,7 +107,9 @@ public partial class SetupWizardViewModel : ViewModelBase
             return;
         }
 
-        if (!uint.TryParse(AppIdInput.Trim(), out var appId))
+        // Accept either a raw AppID or a Steam Store URL so first-time users
+        // can paste the full store link and not hunt for the numeric id.
+        if (!AppIdValidator.TryParseAppId(AppIdInput, out var appId))
         {
             HasError = true;
             ErrorMessage = Loc["AppIdInvalid"];
@@ -115,6 +166,11 @@ public partial class SetupWizardViewModel : ViewModelBase
         try
         {
             Log.Info($"Creating session for {GameName} (AppId: {_validatedAppId})");
+
+            // Commit the user's telemetry choice BEFORE anything else so the
+            // AppStart event that App.axaml.cs fires next honors consent.
+            _settingsService.Settings.TelemetryEnabled = IsTelemetryEnabled;
+            _settingsService.Save();
 
             // Create the session
             var session = await _sessionManager.CreateSessionAsync(_validatedAppId, GameName);

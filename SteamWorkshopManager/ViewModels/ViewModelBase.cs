@@ -1,5 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using SteamWorkshopManager.Services;
+using SteamWorkshopManager.Services.Core;
 
 namespace SteamWorkshopManager.ViewModels;
 

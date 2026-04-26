@@ -4,73 +4,257 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:SteamWorkshopManager.ViewModels"
              xmlns:models="using:SteamWorkshopManager.Models"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             xmlns:icons="using:Material.Icons.Avalonia"
+             mc:Ignorable="d" d:DesignWidth="960" d:DesignHeight="640"
              x:Class="SteamWorkshopManager.Views.ItemListView"
              x:DataType="vm:ItemListViewModel">
 
-    <Grid RowDefinitions="Auto,*">
-        <!-- Toolbar -->
-        <Border Grid.Row="0" Padding="24,20" Background="Transparent">
-            <Grid ColumnDefinitions="*,Auto">
-                <StackPanel>
-                    <TextBlock Text="{DynamicResource MyPublicationsTitle}"
-                               Classes="page-title"/>
-                    <TextBlock Text="{DynamicResource MyPublicationsSubtitle}"
-                               FontSize="13"
-                               Foreground="#8899a6"
-                               Margin="0,4,0,0"/>
-                </StackPanel>
-                <Button Grid.Column="1"
-                        Command="{Binding LoadItemsCommand}"
-                        Classes="secondary"
-                        Content="{DynamicResource Refresh}"
-                        IsEnabled="{Binding !IsLoading}"/>
-            </Grid>
-        </Border>
+    <UserControl.Styles>
+        <!-- Search bar container -->
+        <Style Selector="Border.search-bar">
+            <Setter Property="Background" Value="{DynamicResource SurfaceElevatedBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtleBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Width" Value="300"/>
+        </Style>
+        <!-- Inner TextBox: no border, no focus adorner, placeholder vertically centered -->
+        <Style Selector="Border.search-bar TextBox">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="6,0"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+            <Setter Property="VerticalAlignment" Value="Stretch"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="FocusAdorner" Value="{x:Null}"/>
+        </Style>
+        <Style Selector="Border.search-bar TextBox /template/ Border#PART_BorderElement">
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style Selector="Border.search-bar TextBox:pointerover /template/ Border#PART_BorderElement">
+            <Setter Property="BorderBrush" Value="Transparent"/>
+        </Style>
+        <Style Selector="Border.search-bar TextBox:focus /template/ Border#PART_BorderElement">
+            <Setter Property="BorderBrush" Value="Transparent"/>
+        </Style>
+        <Style Selector="Border.search-bar TextBox:focus-within /template/ Border#PART_BorderElement">
+            <Setter Property="BorderBrush" Value="Transparent"/>
+        </Style>
 
-        <!-- Content -->
-        <Grid Grid.Row="1">
+        <!-- Action button ghost-style -->
+        <Style Selector="Button.action">
+            <Setter Property="Background" Value="{DynamicResource SurfaceElevatedBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtleBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="14,0"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+        </Style>
+        <Style Selector="Button.action:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceCardBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}"/>
+        </Style>
+
+        <!-- Mod card -->
+        <Style Selector="Button.mod-card">
+            <Setter Property="Background" Value="{DynamicResource SurfaceElevatedBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtleBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+        </Style>
+        <Style Selector="Button.mod-card:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceCardBrush}"/>
+            <Setter Property="BorderBrush" Value="#5B9CF6"/>
+        </Style>
+
+        <!-- Visibility badge (top-right overlay on thumb).
+             Stronger bg opacity + drop shadow so it stays legible on bright
+             Steam header images (orange/red cover art), not just dark thumbs. -->
+        <Style Selector="Border.vis-badge">
+            <Setter Property="CornerRadius" Value="20"/>
+            <Setter Property="Padding" Value="7,3"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BoxShadow" Value="0 2 6 0 #99000000"/>
+        </Style>
+        <Style Selector="Border.vis-badge.public">
+            <Setter Property="Background" Value="#CC0F3A22"/>
+            <Setter Property="BorderBrush" Value="#CC3DBA76"/>
+        </Style>
+        <Style Selector="Border.vis-badge.public TextBlock">
+            <Setter Property="Foreground" Value="#5BDB92"/>
+        </Style>
+        <Style Selector="Border.vis-badge.public icons|MaterialIcon">
+            <Setter Property="Foreground" Value="#5BDB92"/>
+        </Style>
+        <Style Selector="Border.vis-badge.friends">
+            <Setter Property="Background" Value="#CC122647"/>
+            <Setter Property="BorderBrush" Value="#CC5B9CF6"/>
+        </Style>
+        <Style Selector="Border.vis-badge.friends TextBlock">
+            <Setter Property="Foreground" Value="#7FB3FA"/>
+        </Style>
+        <Style Selector="Border.vis-badge.friends icons|MaterialIcon">
+            <Setter Property="Foreground" Value="#7FB3FA"/>
+        </Style>
+        <Style Selector="Border.vis-badge.private">
+            <Setter Property="Background" Value="#CC3A1414"/>
+            <Setter Property="BorderBrush" Value="#CCE04A4A"/>
+        </Style>
+        <Style Selector="Border.vis-badge.private TextBlock">
+            <Setter Property="Foreground" Value="#F36E6E"/>
+        </Style>
+        <Style Selector="Border.vis-badge.private icons|MaterialIcon">
+            <Setter Property="Foreground" Value="#F36E6E"/>
+        </Style>
+        <Style Selector="Border.vis-badge.unlisted">
+            <Setter Property="Background" Value="#CC3A2D0D"/>
+            <Setter Property="BorderBrush" Value="#CCC8A43C"/>
+        </Style>
+        <Style Selector="Border.vis-badge.unlisted TextBlock">
+            <Setter Property="Foreground" Value="#E5BE5A"/>
+        </Style>
+        <Style Selector="Border.vis-badge.unlisted icons|MaterialIcon">
+            <Setter Property="Foreground" Value="#E5BE5A"/>
+        </Style>
+
+        <!-- Contributor badge — shown when IsOwner is false. -->
+        <Style Selector="Border.contributor-badge">
+            <Setter Property="Background" Value="#CC2A1A5C"/>
+            <Setter Property="BorderBrush" Value="#CC8B5CF6"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="20"/>
+            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="BoxShadow" Value="0 2 6 0 #99000000"/>
+        </Style>
+        <Style Selector="Border.contributor-badge icons|MaterialIcon">
+            <Setter Property="Foreground" Value="#B89CFA"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- Page header -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="32,28,32,24" VerticalAlignment="Top">
+
+            <StackPanel Grid.Column="0" Spacing="4">
+                <TextBlock Text="{DynamicResource MyPublicationsTitle}"
+                           FontSize="20"
+                           FontWeight="Medium"
+                           Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <TextBlock Text="{DynamicResource MyPublicationsSubtitle}"
+                           FontSize="13"
+                           Foreground="{DynamicResource TextMutedBrush}"/>
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <!-- Search bar -->
+                <Border Classes="search-bar">
+                    <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                        <icons:MaterialIcon Grid.Column="0"
+                                            Kind="Magnify"
+                                            Width="14" Height="14"
+                                            Foreground="{DynamicResource TextMutedBrush}"
+                                            VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="1"
+                                 Text="{Binding SearchQuery, Mode=TwoWay}"
+                                 PlaceholderText="{DynamicResource SearchMods}"
+                                 VerticalAlignment="Center"/>
+                        <!-- Clear button — visible only when something is typed -->
+                        <Button Grid.Column="2"
+                                Classes="search-clear"
+                                Command="{Binding ClearSearchCommand}"
+                                IsVisible="{Binding SearchQuery, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                Width="22" Height="22"
+                                Padding="0"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                VerticalAlignment="Center"
+                                ToolTip.Tip="{DynamicResource ClearSearch}">
+                            <icons:MaterialIcon Kind="CloseCircle"
+                                                Width="14" Height="14"
+                                                Foreground="{DynamicResource TextMutedBrush}"/>
+                        </Button>
+                    </Grid>
+                </Border>
+                <!-- Refresh -->
+                <Button Classes="action"
+                        Command="{Binding LoadItemsCommand}"
+                        IsEnabled="{Binding !IsLoading}">
+                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                        <icons:MaterialIcon Kind="Refresh" Width="14" Height="14"/>
+                        <TextBlock Text="{DynamicResource Refresh}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- Body -->
+        <Grid Grid.Row="1" Margin="32,0,32,40">
+
             <!-- Loading -->
             <StackPanel IsVisible="{Binding IsLoading}"
                         VerticalAlignment="Center" HorizontalAlignment="Center"
-                        Spacing="16">
-                <ProgressBar IsIndeterminate="True" Width="200" Height="4"
-                             Foreground="{StaticResource AccentGradient}"/>
+                        Spacing="14">
+                <ProgressBar IsIndeterminate="True" Width="220" Height="3"
+                             Background="{DynamicResource SurfaceCardBrush}"
+                             Foreground="{DynamicResource AccentPrimaryBrush}"/>
                 <TextBlock Text="{DynamicResource LoadingPublications}"
                            HorizontalAlignment="Center"
-                           Foreground="#8899a6"/>
+                           FontSize="13"
+                           Foreground="{DynamicResource TextMutedBrush}"/>
             </StackPanel>
 
             <!-- Error -->
             <Border IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                    Background="#3d2a2a" Padding="16" Margin="24"
-                    CornerRadius="8" VerticalAlignment="Top"
-                    BorderBrush="#c23b2e" BorderThickness="1">
+                    Background="{DynamicResource SurfaceCardBrush}"
+                    BorderBrush="{DynamicResource FeedbackDangerBrush}"
+                    BorderThickness="1"
+                    CornerRadius="10"
+                    Padding="14"
+                    VerticalAlignment="Top">
                 <StackPanel Orientation="Horizontal" Spacing="12">
-                    <TextBlock Text="!" FontWeight="Bold" Foreground="#c23b2e" FontSize="16"/>
-                    <TextBlock Text="{Binding ErrorMessage}" Foreground="#ff8a80"/>
+                    <icons:MaterialIcon Kind="AlertCircleOutline"
+                                        Width="20" Height="20"
+                                        Foreground="{DynamicResource FeedbackDangerBrush}"
+                                        VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding ErrorMessage}"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               VerticalAlignment="Center"/>
                 </StackPanel>
             </Border>
 
-            <!-- Empty state -->
-            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
-                        Spacing="16">
+            <!-- Empty -->
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="12">
                 <StackPanel.IsVisible>
                     <MultiBinding Converter="{x:Static BoolConverters.And}">
                         <Binding Path="!IsLoading"/>
                         <Binding Path="HasNoItems"/>
                     </MultiBinding>
                 </StackPanel.IsVisible>
-                <TextBlock Text="📦" FontSize="48" HorizontalAlignment="Center" Opacity="0.5"/>
+                <icons:MaterialIcon Kind="PackageVariantClosed"
+                                    Width="56" Height="56"
+                                    Foreground="{DynamicResource TextDisabledBrush}"
+                                    HorizontalAlignment="Center"/>
                 <TextBlock Text="{DynamicResource NoPublications}"
-                           FontSize="16"
-                           Foreground="#8899a6"
+                           FontSize="15"
+                           Foreground="{DynamicResource TextMutedBrush}"
                            HorizontalAlignment="Center"/>
             </StackPanel>
 
-            <!-- Items grid -->
-            <ScrollViewer IsVisible="{Binding !IsLoading}" Padding="16,0">
-                <ItemsControl ItemsSource="{Binding Items}" Margin="8">
+            <!-- Grid -->
+            <ScrollViewer IsVisible="{Binding !IsLoading}">
+                <ItemsControl ItemsSource="{Binding FilteredItems}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <WrapPanel Orientation="Horizontal"/>
@@ -78,91 +262,106 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="models:WorkshopItem">
-                            <Button Command="{Binding $parent[ItemsControl].((vm:ItemListViewModel)DataContext).SelectItemCommand}"
+                            <Button Classes="mod-card"
+                                    Command="{Binding $parent[ItemsControl].((vm:ItemListViewModel)DataContext).SelectItemCommand, FallbackValue={x:Null}}"
                                     CommandParameter="{Binding}"
-                                    Margin="8"
-                                    Padding="0"
-                                    Background="Transparent"
-                                    BorderThickness="0"
-                                    Cursor="Hand">
-                                <Border Width="220"
-                                        Background="#2a2e33"
-                                        CornerRadius="12"
-                                        ClipToBounds="True"
-                                        BoxShadow="{StaticResource CardShadow}">
-                                    <Border.Transitions>
-                                        <Transitions>
-                                            <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.2"/>
-                                            <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2"/>
-                                        </Transitions>
-                                    </Border.Transitions>
-                                    <StackPanel>
-                                        <!-- Preview image -->
-                                        <Border Height="130" Background="#1e2328" ClipToBounds="True">
-                                            <Panel>
-                                                <Image Source="{Binding PreviewBitmap}" Stretch="UniformToFill"
-                                                       IsVisible="{Binding PreviewBitmap, Converter={x:Static ObjectConverters.IsNotNull}}"/>
-                                                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                            IsVisible="{Binding PreviewBitmap, Converter={x:Static ObjectConverters.IsNull}}"
-                                                            Spacing="8">
-                                                    <TextBlock Text="[IMG]" FontSize="14" HorizontalAlignment="Center" Opacity="0.3"/>
-                                                    <TextBlock Text="{DynamicResource NoImage}"
-                                                               FontSize="11"
-                                                               Foreground="#556677"
-                                                               HorizontalAlignment="Center"/>
-                                                </StackPanel>
-                                                <!-- Badges -->
-                                                <StackPanel Orientation="Horizontal" Spacing="4"
-                                                            HorizontalAlignment="Right"
-                                                            VerticalAlignment="Top"
-                                                            Margin="8">
-                                                    <!-- Contributor badge -->
-                                                    <Border Background="#CC8b5cf6"
-                                                            CornerRadius="4"
-                                                            Padding="5,2"
-                                                            MinWidth="18"
-                                                            MinHeight="18"
-                                                            IsVisible="{Binding !IsOwner}"
-                                                            ToolTip.Tip="{DynamicResource Contributor}">
-                                                        <TextBlock Text="C"
-                                                                   FontSize="10"
-                                                                   FontWeight="Bold"
-                                                                   Foreground="White"
-                                                                   HorizontalAlignment="Center"
-                                                                   VerticalAlignment="Center"/>
-                                                    </Border>
-                                                    <!-- Visibility badge -->
-                                                    <Border Background="#CC1e2328"
-                                                            CornerRadius="4"
-                                                            Padding="8,4">
-                                                        <TextBlock Text="{Binding VisibilityIcon}"
-                                                                   FontSize="12"
-                                                                   ToolTip.Tip="{Binding Visibility}"/>
-                                                    </Border>
-                                                </StackPanel>
-                                            </Panel>
-                                        </Border>
-                                        <!-- Info -->
-                                        <StackPanel Margin="14" Spacing="6">
-                                            <TextBlock Text="{Binding Title}"
-                                                       FontWeight="SemiBold"
-                                                       FontSize="14"
-                                                       Foreground="White"
-                                                       TextTrimming="CharacterEllipsis"
-                                                       MaxLines="1"/>
-                                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                                                                                <TextBlock Text="{Binding UpdatedAt, StringFormat='{}{0:dd MMM yyyy}'}"
-                                                           FontSize="11"
-                                                           Foreground="#8899a6"/>
+                                    Width="220"
+                                    Margin="0,0,14,14">
+                                <StackPanel>
+                                    <!-- Thumbnail -->
+                                    <Border Height="124"
+                                            Background="{DynamicResource SurfaceCardBrush}"
+                                            ClipToBounds="True"
+                                            CornerRadius="10,10,0,0">
+                                        <Panel>
+                                            <Image Source="{Binding PreviewBitmap}" Stretch="UniformToFill"
+                                                   IsVisible="{Binding PreviewBitmap, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                            <icons:MaterialIcon Kind="ImageOutline"
+                                                                Width="28" Height="28"
+                                                                Foreground="{DynamicResource TextDisabledBrush}"
+                                                                HorizontalAlignment="Center"
+                                                                VerticalAlignment="Center"
+                                                                IsVisible="{Binding PreviewBitmap, Converter={x:Static ObjectConverters.IsNull}}"/>
+
+                                            <!-- Badges row (contributor + visibility) -->
+                                            <StackPanel Orientation="Horizontal" Spacing="6"
+                                                        HorizontalAlignment="Right"
+                                                        VerticalAlignment="Top"
+                                                        Margin="0,8,8,0">
+                                                <!-- Contributor — only when the user isn't the owner -->
+                                                <Border Classes="contributor-badge"
+                                                        IsVisible="{Binding !IsOwner}"
+                                                        ToolTip.Tip="{DynamicResource Contributor}">
+                                                    <icons:MaterialIcon Kind="HandshakeOutline"
+                                                                        Width="13" Height="13"
+                                                                        VerticalAlignment="Center"
+                                                                        HorizontalAlignment="Center"/>
+                                                </Border>
+
+                                                <!-- Visibility badge -->
+                                                <Border Classes="vis-badge"
+                                                        Classes.public="{Binding IsVisibilityPublic}"
+                                                        Classes.friends="{Binding IsVisibilityFriends}"
+                                                        Classes.private="{Binding IsVisibilityPrivate}"
+                                                        Classes.unlisted="{Binding IsVisibilityUnlisted}">
+                                                    <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                                        <icons:MaterialIcon Width="11" Height="11" VerticalAlignment="Center"
+                                                                            Kind="Eye"
+                                                                            IsVisible="{Binding IsVisibilityPublic}"/>
+                                                        <icons:MaterialIcon Width="11" Height="11" VerticalAlignment="Center"
+                                                                            Kind="AccountGroup"
+                                                                            IsVisible="{Binding IsVisibilityFriends}"/>
+                                                        <icons:MaterialIcon Width="11" Height="11" VerticalAlignment="Center"
+                                                                            Kind="Lock"
+                                                                            IsVisible="{Binding IsVisibilityPrivate}"/>
+                                                        <icons:MaterialIcon Width="11" Height="11" VerticalAlignment="Center"
+                                                                            Kind="EyeOff"
+                                                                            IsVisible="{Binding IsVisibilityUnlisted}"/>
+                                                        <TextBlock Text="{DynamicResource Public}" FontSize="11" FontWeight="Medium"
+                                                                   VerticalAlignment="Center"
+                                                                   IsVisible="{Binding IsVisibilityPublic}"/>
+                                                        <TextBlock Text="{DynamicResource FriendsOnly}" FontSize="11" FontWeight="Medium"
+                                                                   VerticalAlignment="Center"
+                                                                   IsVisible="{Binding IsVisibilityFriends}"/>
+                                                        <TextBlock Text="{DynamicResource Private}" FontSize="11" FontWeight="Medium"
+                                                                   VerticalAlignment="Center"
+                                                                   IsVisible="{Binding IsVisibilityPrivate}"/>
+                                                        <TextBlock Text="{DynamicResource Unlisted}" FontSize="11" FontWeight="Medium"
+                                                                   VerticalAlignment="Center"
+                                                                   IsVisible="{Binding IsVisibilityUnlisted}"/>
+                                                    </StackPanel>
+                                                </Border>
                                             </StackPanel>
+                                        </Panel>
+                                    </Border>
+
+                                    <!-- Info -->
+                                    <StackPanel Margin="12,10" Spacing="4">
+                                        <TextBlock Text="{Binding Title}"
+                                                   FontSize="13"
+                                                   FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   MaxLines="1"/>
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <TextBlock Text="{Binding SubscribersDisplay, StringFormat='{}{0} subs'}"
+                                                       FontSize="11"
+                                                       Foreground="{DynamicResource TextMutedBrush}"/>
+                                            <TextBlock Text="·"
+                                                       FontSize="11"
+                                                       Foreground="{DynamicResource TextDisabledBrush}"/>
+                                            <TextBlock Text="{Binding UpdatedAt, StringFormat='{}{0:dd MMM yyyy}'}"
+                                                       FontSize="11"
+                                                       Foreground="{DynamicResource TextMutedBrush}"/>
                                         </StackPanel>
                                     </StackPanel>
-                                </Border>
+                                </StackPanel>
                             </Button>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </ScrollViewer>
+
         </Grid>
     </Grid>
 </UserControl>
