@@ -1,5 +1,3 @@
-using System;
-using System.Diagnostics;
 using System.IO.Pipes;
 using System.Threading.Tasks;
 using StreamJsonRpc;
@@ -20,14 +18,20 @@ public static class SteamWorkerHost
 {
     /// <summary>
     /// Runs the worker loop. Blocks until the RPC connection is terminated.
-    /// Unhandled failures are swallowed because surfacing them to stdout would
-    /// spawn a console window on Windows; the shell-side client detects the
-    /// dead pipe and reports the failure in its own logs.
+    ///
+    /// The worker's lifetime is tied to the shell purely through the named
+    /// pipe: when the shell process exits (clean shutdown, crash, force-kill,
+    /// even BSOD), the OS releases its end of the pipe, which makes
+    /// <see cref="JsonRpc.Completion"/> resolve and unwinds back here. No
+    /// extra parent-watch is needed — the pipe is the same mechanism that
+    /// signals every other RPC end-of-life.
+    ///
+    /// Failures are swallowed because surfacing them to stdout would spawn a
+    /// console window on Windows; the shell-side client detects the dead
+    /// pipe and reports the failure in its own logs.
     /// </summary>
     public static async Task RunAsync(SteamWorkerArgs args)
     {
-        WatchParentProcess(args.ParentPid);
-
         // The worker has its own process-local AppConfig (static classes live
         // per process). Steamworks wrappers inside SteamService read
         // AppConfig.AppId when building UGC queries — if it's zero, every
@@ -48,29 +52,9 @@ public static class SteamWorkerHost
             using var rpc = JsonRpc.Attach(pipe, target);
             await rpc.Completion;
         }
-        catch (Exception ex)
-        {
-            Debug.WriteLine(ex);
-        }
-    }
-
-    /// <summary>
-    /// Ties the worker's lifetime to the shell: if the shell process dies
-    /// (clean exit, crash, force-kill), the worker terminates too so it
-    /// doesn't linger as an orphan in Task Manager.
-    /// </summary>
-    private static void WatchParentProcess(int parentPid)
-    {
-        if (parentPid <= 0) return;
-
-        try
-        {
-            var parent = Process.GetProcessById(parentPid);
-            _ = parent.WaitForExitAsync().ContinueWith(_ => Environment.Exit(0));
-        }
         catch
         {
-            Environment.Exit(0);
+            // Intentionally silent — see RunAsync XML doc.
         }
     }
 }

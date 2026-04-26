@@ -266,25 +266,51 @@ public partial class App : Application
         return null;
     }
 
-    private void OnShutdownRequested(object? sender, ShutdownRequestedEventArgs e)
+    private bool _shutdownStarted;
+
+    /// <summary>
+    /// Avalonia raises ShutdownRequested on the UI thread. We cancel the
+    /// initial request, run cleanup asynchronously (so the UI thread is not
+    /// blocked by <c>.GetAwaiter().GetResult()</c>, which deadlocks when the
+    /// awaited continuations capture the UI sync context), then call
+    /// <see cref="Environment.Exit"/> directly.
+    ///
+    /// We use Environment.Exit instead of <c>desktop.Shutdown()</c> because
+    /// the latter only signals Avalonia to wind down — any non-daemon
+    /// foreground thread (HttpClient internals, COM thread, etc.) can keep
+    /// the process alive afterwards, and as long as the shell process lives
+    /// the Steam worker keeps its pipe open and stays in Task Manager.
+    /// Environment.Exit terminates the CLR unconditionally, the OS releases
+    /// the pipe handle, and rpc.Completion in the worker fires → worker
+    /// exits.
+    /// </summary>
+    private async void OnShutdownRequested(object? sender, ShutdownRequestedEventArgs e)
     {
+        if (_shutdownStarted) return;
+        _shutdownStarted = true;
+        Log.Info("Shutdown requested, running cleanup");
+        e.Cancel = true;
+
+        // Hard floor: if any awaited disposer hangs (stuck HTTP flush, wedged
+        // pipe), we still exit within 5 s.
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(TimeSpan.FromSeconds(5));
+            try { Environment.Exit(0); } catch { /* already exiting */ }
+        });
+
+        try { await TelemetryService.ShutdownAsync(); }
+        catch (Exception ex) { Log.Debug($"Telemetry shutdown: {ex.Message}"); }
+
         try
         {
-            TelemetryService.ShutdownAsync().GetAwaiter().GetResult();
+            var host = Services.GetService<SessionHost>();
+            if (host is not null) await host.DisposeAsync();
         }
-        catch (Exception ex)
-        {
-            Log.Debug($"Telemetry shutdown: {ex.Message}");
-        }
-        
-        try
-        {
-            Services.GetService<SessionHost>()?.DisposeAsync().AsTask().GetAwaiter().GetResult();
-        }
-        catch (Exception ex)
-        {
-            Log.Debug($"SessionHost shutdown: {ex.Message}");
-        }
+        catch (Exception ex) { Log.Debug($"SessionHost shutdown: {ex.Message}"); }
+
+        Log.Info("Cleanup done, exiting process");
+        Environment.Exit(0);
     }
 
 }
