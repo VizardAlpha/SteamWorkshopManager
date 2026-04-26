@@ -46,13 +46,20 @@ public class TelemetryService : ITelemetryService, IDisposable
     
     private static string ResolveEndpoint()
     {
+        // Priority: explicit env var (manual override) > Debug local > baked Release URL.
+        // The env var still wins in Debug, so a dev can opt to hit prod from
+        // a debug build by exporting SWM_TELEMETRY_URL.
         var runtime = Environment.GetEnvironmentVariable("SWM_TELEMETRY_URL");
         if (!string.IsNullOrWhiteSpace(runtime)) return runtime.Trim();
 
+#if DEBUG
+        return "http://localhost:5000/ingest";
+#else
         var baked = typeof(TelemetryService).Assembly
             .GetCustomAttributes<AssemblyMetadataAttribute>()
             .FirstOrDefault(a => a.Key == "TelemetryEndpoint")?.Value;
         return string.IsNullOrWhiteSpace(baked) ? string.Empty : baked.Trim();
+#endif
     }
 
     private static readonly string StateFolder = Path.Combine(
