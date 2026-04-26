@@ -263,7 +263,7 @@
                                     Background="{DynamicResource BorderSubtleBrush}"
                                     Margin="16,0"/>
 
-                            <!-- Instance ID (anonymous identifier, for GDPR requests) -->
+                            <!-- Instance ID (pseudonymous identifier, for GDPR requests) -->
                             <Grid Classes="row" ColumnDefinitions="*,Auto">
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock Classes="row-label" Text="{DynamicResource YourInstanceId}"/>

@@ -61,8 +61,8 @@ public partial class SettingsViewModel : ViewModelBase
     private bool _isTelemetryEnabled;
 
     /// <summary>
-    /// Anonymous instance ID surfaced to the user in the Privacy section so
-    /// they can quote it in a GDPR access or deletion request. Comes from
+    /// Pseudonymous instance ID surfaced to the user in the Privacy section
+    /// so they can quote it in a GDPR access or deletion request. Comes from
     /// <see cref="TelemetryService"/>; the app is initialized at startup so
     /// the instance is already created by the time the settings page opens.
     /// </summary>

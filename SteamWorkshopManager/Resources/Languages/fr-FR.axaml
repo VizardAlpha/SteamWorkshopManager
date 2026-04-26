@@ -390,6 +390,11 @@
     <x:String x:Key="IHaveReadLegal">J'ai lu et j'accepte les Conditions d'utilisation et la Politique de confidentialité</x:String>
     <x:String x:Key="TermsOfUse">Conditions d'utilisation</x:String>
     <x:String x:Key="PrivacyPolicy">Politique de confidentialité</x:String>
+    <x:String x:Key="TelemetryConsentTitle">Préférences de confidentialité</x:String>
+    <x:String x:Key="TelemetryConsentSubtitle">Une vérification rapide avant de continuer</x:String>
+    <x:String x:Key="TelemetryConsentBody">SteamWorkshopManager 1.5.0 introduit un tableau de bord public de statistiques sur swm-stats.com. Les données d'usage pseudonymes — système d'exploitation, version de l'application, actions sur les mods — sont partagées par défaut pour aider à prioriser le développement. Aucun identifiant Steam, aucune information personnelle. Vous pouvez modifier ce choix à tout moment dans Paramètres → Confidentialité.</x:String>
+    <x:String x:Key="TelemetryConsentFooter">Vous pourrez modifier ce choix dans Paramètres → Confidentialité.</x:String>
+    <x:String x:Key="Continue">Continuer</x:String>
     <x:String x:Key="YourInstanceId">Votre identifiant d'instance</x:String>
     <x:String x:Key="YourInstanceIdDescription">Identifiant aléatoire de cette installation. Incluez-le dans votre demande d'accès ou de suppression pour qu'on puisse retrouver vos données — c'est le seul identifiant dont nous disposons.</x:String>
     <x:String x:Key="Copy">Copier</x:String>

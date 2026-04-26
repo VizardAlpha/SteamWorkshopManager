@@ -47,8 +47,19 @@ public class AppSettings
     public ulong SteamId64 { get; set; }
 
     /// <summary>
-    /// Whether anonymous usage statistics are sent to stats.minesr.com.
-    /// Opt-out: default is true; users can disable from Settings.
+    /// Whether usage statistics are sent to swm-stats.com.
+    /// Default is true, but new installs and upgrades from older versions
+    /// must pass through an explicit consent screen before any data is sent
+    /// (see <see cref="TelemetryConsentVersion"/>).
     /// </summary>
     public bool TelemetryEnabled { get; set; } = true;
+
+    /// <summary>
+    /// Tracks which version of the telemetry consent UI the user has been
+    /// shown and acknowledged. 0 = never seen (legacy or fresh install).
+    /// When the running build's required version is higher, the app must
+    /// show the consent modal again before any telemetry is dispatched.
+    /// Bumped whenever the data we collect or the destination changes.
+    /// </summary>
+    public int TelemetryConsentVersion { get; set; }
 }

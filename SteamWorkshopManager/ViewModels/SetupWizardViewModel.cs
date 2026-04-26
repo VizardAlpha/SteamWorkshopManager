@@ -8,6 +8,7 @@ using SteamWorkshopManager.Services.Core;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Session;
 using SteamWorkshopManager.Services.Steam;
+using SteamWorkshopManager.Services.Telemetry;
 
 namespace SteamWorkshopManager.ViewModels;
 
@@ -169,7 +170,11 @@ public partial class SetupWizardViewModel : ViewModelBase
 
             // Commit the user's telemetry choice BEFORE anything else so the
             // AppStart event that App.axaml.cs fires next honors consent.
+            // The consent version is stamped here too so the upgrade modal in
+            // App.axaml.cs does not fire at the very first launch right after
+            // the wizard closes.
             _settingsService.Settings.TelemetryEnabled = IsTelemetryEnabled;
+            _settingsService.Settings.TelemetryConsentVersion = TelemetryConsent.RequiredVersion;
             _settingsService.Save();
 
             // Create the session

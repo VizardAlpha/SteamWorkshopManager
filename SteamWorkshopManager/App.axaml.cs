@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using SteamWorkshopManager.Services.Core;
 using SteamWorkshopManager.Services.Session;
 using SteamWorkshopManager.Services.Telemetry;
+using SteamWorkshopManager.ViewModels;
 
 namespace SteamWorkshopManager;
 
@@ -64,6 +65,7 @@ public partial class App : Application
         {
             var sessionRepository = Services.GetRequiredService<ISessionRepository>();
             var telemetry = Services.GetRequiredService<ITelemetryService>();
+            var settingsService = Services.GetRequiredService<ISettingsService>();
 
             // Check if we have an active session. The --force-setup-wizard flag
             // pretends there's none so we always land on the wizard UI.
@@ -136,19 +138,21 @@ public partial class App : Application
             }
             else
             {
-                // Initialize AppConfig with the session
-                AppConfig.Initialize(session);
-                Log.Info($"Starting with session: {session.GameName} (AppId: {session.AppId})");
+                // Existing session — but the user may be upgrading from a build
+                // that predates the public stats dashboard. If their stored
+                // consent version is below the current requirement, show the
+                // consent modal first and only continue once they have
+                // explicitly committed a choice. Closing the modal without
+                // clicking Continue exits the app.
+                var settings = settingsService.Settings;
+                if (settings.TelemetryConsentVersion < TelemetryConsent.RequiredVersion)
+                {
+                    Log.Info($"Telemetry consent version {settings.TelemetryConsentVersion} < required {TelemetryConsent.RequiredVersion}, showing consent modal");
+                    ShowConsentThenStart(desktop, settingsService, telemetry, session);
+                    return;
+                }
 
-                // Spawn the Steam worker before the UI queries Steam so the
-                // first ISteamService.Initialize() call returns the live state.
-                await Services.GetRequiredService<SessionHost>().StartSessionAsync(session.AppId);
-
-                // Existing session = consent already given a previous run. Track.
-                telemetry.Track(TelemetryEventTypes.AppStart, session.AppId);
-
-                desktop.MainWindow = new MainWindow();
-                desktop.MainWindow.Show();
+                StartWithSession(desktop, telemetry, session);
             }
         }
         catch (Exception ex)
@@ -156,6 +160,66 @@ public partial class App : Application
             Log.Error("Failed to initialize application", ex);
             desktop.Shutdown();
         }
+    }
+
+    private static async void StartWithSession(IClassicDesktopStyleApplicationLifetime desktop, ITelemetryService telemetry, Models.WorkshopSession session)
+    {
+        try
+        {
+            AppConfig.Initialize(session);
+            Log.Info($"Starting with session: {session.GameName} (AppId: {session.AppId})");
+
+            // Spawn the Steam worker before the UI queries Steam so the
+            // first ISteamService.Initialize() call returns the live state.
+            await Services.GetRequiredService<SessionHost>().StartSessionAsync(session.AppId);
+
+            // Consent has already been committed (this run or a prior one).
+            // Track now — the toggle is honored inside Track().
+            telemetry.Track(TelemetryEventTypes.AppStart, session.AppId);
+
+            var mainWindow = new MainWindow();
+            desktop.MainWindow = mainWindow;
+            mainWindow.Show();
+        }
+        catch (Exception ex)
+        {
+            Log.Error("Failed to start with session", ex);
+            desktop.Shutdown();
+        }
+    }
+
+    private static void ShowConsentThenStart(
+        IClassicDesktopStyleApplicationLifetime desktop,
+        ISettingsService settingsService,
+        ITelemetryService telemetry,
+        Models.WorkshopSession session)
+    {
+        var consentVm = new TelemetryConsentViewModel(settingsService);
+        var consentWindow = new TelemetryConsentWindow { DataContext = consentVm };
+        var committed = false;
+
+        consentVm.ContinueRequested += () =>
+        {
+            committed = true;
+            // The VM already persisted the user's choice (TelemetryEnabled +
+            // TelemetryConsentVersion). Show the main window then close the
+            // modal — same ordering as the setup wizard, so we never have a
+            // window-less moment where the app could exit.
+            StartWithSession(desktop, telemetry, session);
+            consentWindow.Close();
+        };
+
+        consentWindow.Closed += (_, _) =>
+        {
+            if (!committed)
+            {
+                Log.Info("Consent modal closed without committing, exiting");
+                desktop.Shutdown();
+            }
+        };
+
+        desktop.MainWindow = consentWindow;
+        consentWindow.Show();
     }
 
     private static async Task<Models.WorkshopSession?> InitializeSessionAsync(ISessionRepository sessionRepository)

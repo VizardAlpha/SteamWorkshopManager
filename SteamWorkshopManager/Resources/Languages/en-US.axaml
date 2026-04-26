@@ -390,6 +390,11 @@
     <x:String x:Key="IHaveReadLegal">I have read and accept the Terms of use and the Privacy policy</x:String>
     <x:String x:Key="TermsOfUse">Terms of use</x:String>
     <x:String x:Key="PrivacyPolicy">Privacy policy</x:String>
+    <x:String x:Key="TelemetryConsentTitle">Privacy preferences</x:String>
+    <x:String x:Key="TelemetryConsentSubtitle">A quick check before we continue</x:String>
+    <x:String x:Key="TelemetryConsentBody">SteamWorkshopManager 1.5.0 introduces a public statistics dashboard at swm-stats.com. Pseudonymous usage data — operating system, app version, mod actions — is shared by default to help prioritise development. No Steam ID, no personal information. You can change this choice at any time from Settings → Privacy.</x:String>
+    <x:String x:Key="TelemetryConsentFooter">You can change this later in Settings → Privacy.</x:String>
+    <x:String x:Key="Continue">Continue</x:String>
     <x:String x:Key="YourInstanceId">Your instance ID</x:String>
     <x:String x:Key="YourInstanceIdDescription">Random identifier for this install. Include it in your deletion or access request so we can find your data — it's the only identifier we have.</x:String>
     <x:String x:Key="Copy">Copy</x:String>

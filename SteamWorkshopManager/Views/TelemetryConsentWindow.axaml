@@ -1,0 +1,124 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:SteamWorkshopManager.ViewModels"
+        xmlns:icons="using:Material.Icons.Avalonia"
+        x:Class="SteamWorkshopManager.Views.TelemetryConsentWindow"
+        x:DataType="vm:TelemetryConsentViewModel"
+        Title="{Binding Loc[TelemetryConsentTitle]}"
+        Width="560"
+        Height="500"
+        WindowStartupLocation="CenterScreen"
+        CanResize="False"
+        Background="{DynamicResource WindowBackgroundBrush}">
+
+    <Grid RowDefinitions="Auto,*,Auto" Margin="32,28,32,24">
+
+        <!-- Hero -->
+        <StackPanel Grid.Row="0" Spacing="8">
+            <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                <Border Width="40" Height="40" CornerRadius="10"
+                        Background="{DynamicResource AccentPrimaryGradientBrush}">
+                    <icons:MaterialIcon Kind="ShieldCheckOutline" Width="22" Height="22"
+                                        Foreground="White"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"/>
+                </Border>
+                <TextBlock Text="{Binding Loc[TelemetryConsentTitle]}"
+                           FontSize="22"
+                           FontWeight="Bold"
+                           Foreground="{DynamicResource TextPrimaryBrush}"
+                           VerticalAlignment="Center"/>
+            </StackPanel>
+            <TextBlock Text="{Binding Loc[TelemetryConsentSubtitle]}"
+                       FontSize="13"
+                       Foreground="{DynamicResource TextMutedBrush}"
+                       TextWrapping="Wrap"/>
+        </StackPanel>
+
+        <!-- Body -->
+        <StackPanel Grid.Row="1" Spacing="16" Margin="0,24,0,0">
+            <TextBlock Text="{Binding Loc[TelemetryConsentBody]}"
+                       FontSize="13"
+                       Foreground="{DynamicResource TextSecondaryBrush}"
+                       TextWrapping="Wrap"/>
+
+            <Border Background="{DynamicResource SurfaceCardBrush}"
+                    BorderBrush="{DynamicResource BorderSubtleBrush}"
+                    BorderThickness="1"
+                    CornerRadius="10"
+                    Padding="14,12">
+                <StackPanel Spacing="10">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock Text="{Binding Loc[EnableTelemetry]}"
+                                       FontSize="13"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <TextBlock Text="{Binding Loc[TelemetryDescription]}"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource TextMutedBrush}"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="1"
+                                      IsChecked="{Binding IsTelemetryEnabled}"
+                                      OnContent="" OffContent=""
+                                      VerticalAlignment="Center"
+                                      Margin="12,0,0,0"/>
+                    </Grid>
+                    <StackPanel IsVisible="{Binding IsTelemetryEnabled}" Spacing="8">
+                        <Border Height="1" Background="{DynamicResource BorderSubtleBrush}"/>
+                        <CheckBox IsChecked="{Binding IsPrivacyAccepted}"
+                                  Content="{Binding Loc[IHaveReadLegal]}"
+                                  FontSize="12"
+                                  Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <StackPanel Orientation="Horizontal" Spacing="16" Margin="26,0,0,0">
+                            <Button Background="Transparent" BorderThickness="0" Padding="0"
+                                    Command="{Binding OpenTermsOfUseCommand}">
+                                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Loc[TermsOfUse]}"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource AccentPrimaryBrush}"/>
+                                    <icons:MaterialIcon Kind="OpenInNew" Width="11" Height="11"
+                                                        Foreground="{DynamicResource AccentPrimaryBrush}"
+                                                        VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Background="Transparent" BorderThickness="0" Padding="0"
+                                    Command="{Binding OpenPrivacyPolicyCommand}">
+                                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Loc[PrivacyPolicy]}"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource AccentPrimaryBrush}"/>
+                                    <icons:MaterialIcon Kind="OpenInNew" Width="11" Height="11"
+                                                        Foreground="{DynamicResource AccentPrimaryBrush}"
+                                                        VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+
+        <!-- Footer -->
+        <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="0,16,0,0">
+            <TextBlock Grid.Column="0"
+                       Text="{Binding Loc[TelemetryConsentFooter]}"
+                       FontSize="11"
+                       Foreground="{DynamicResource TextMutedBrush}"
+                       TextWrapping="Wrap"
+                       VerticalAlignment="Center"
+                       Margin="0,0,12,0"/>
+            <Button Grid.Column="1"
+                    Command="{Binding ContinueCommand}"
+                    Background="{DynamicResource AccentPrimaryGradientBrush}"
+                    Foreground="White"
+                    FontWeight="SemiBold"
+                    BorderThickness="0"
+                    CornerRadius="8"
+                    Padding="18,10"
+                    MinWidth="140"
+                    Content="{Binding Loc[Continue]}"/>
+        </Grid>
+    </Grid>
+</Window>
