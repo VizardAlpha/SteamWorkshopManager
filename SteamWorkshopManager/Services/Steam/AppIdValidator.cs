@@ -26,7 +26,7 @@ public partial class AppIdValidator
 
     public AppIdValidator(HttpClient? httpClient = null)
     {
-        _httpClient = httpClient ?? SteamHttpClientFactory.Create();
+        _httpClient = httpClient ?? SteamHttpClientFactory.Create(withAgeGateCookies: true);
     }
 
     private static readonly Regex StoreUrlAppIdRegex = new(

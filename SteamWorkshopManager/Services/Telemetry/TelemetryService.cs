@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
-using System.Reflection;
+using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using SteamWorkshopManager.Models;
 using SteamWorkshopManager.Services.Core;
 using SteamWorkshopManager.Services.Log;
+using SteamWorkshopManager.Services.Steam;
 
 namespace SteamWorkshopManager.Services.Telemetry;
 
@@ -69,10 +70,7 @@ public class TelemetryService : ITelemetryService, IDisposable
 
     private static readonly string StatePath = Path.Combine(StateFolder, "telemetry.json");
 
-    private static readonly HttpClient Http = new()
-    {
-        Timeout = TimeSpan.FromSeconds(10),
-    };
+    private static readonly HttpClient Http = SteamHttpClientFactory.Create(timeout: TimeSpan.FromSeconds(10));
 
     private readonly ISettingsService _settingsService;
     private readonly string _endpoint;
@@ -167,7 +165,9 @@ public class TelemetryService : ITelemetryService, IDisposable
         }
         catch (Exception ex)
         {
-            Log.Debug($"Telemetry POST failed: {ex.Message}");
+            var socketCode = (ex as SocketException ?? ex.InnerException as SocketException)?.SocketErrorCode;
+            var detail = socketCode is { } code ? $" ({code})" : "";
+            Log.Debug($"Telemetry POST failed: {ex.GetType().Name}{detail}");
             return;
         }
 

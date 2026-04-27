@@ -4,14 +4,14 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using AngleSharp;
 using SteamWorkshopManager.Models;
 using SteamWorkshopManager.Services.Log;
+using SteamWorkshopManager.Services.Session;
 using SteamWorkshopManager.Services.Steam;
 
 namespace SteamWorkshopManager.Services.Workshop;
 
-public class ChangelogScraperService
+public class ChangelogScraperService(SessionHost host)
 {
     private static readonly Logger Log = LogService.GetLogger<ChangelogScraperService>();
 
@@ -21,106 +21,88 @@ public class ChangelogScraperService
 
     public async Task<List<ChangeLogEntry>> GetChangeLogsAsync(ulong publishedFileId)
     {
-        var results = new List<ChangeLogEntry>();
+        var url = $"https://steamcommunity.com/sharedfiles/filedetails/changelog/{publishedFileId}";
+        Log.Info($"Fetching changelogs from {url}");
 
         try
         {
-            var url = $"https://steamcommunity.com/sharedfiles/filedetails/changelog/{publishedFileId}";
-            Log.Info($"Fetching changelogs from {url}");
-
-            string? html;
-
-            if (SteamAuthService.IsAuthenticated)
+            var entries = await FetchAndParseAsync(url);
+            if (entries.Count > 0)
             {
-                Log.Debug("Using authenticated HttpClient for changelog fetch");
-                using var httpClient = SteamAuthService.CreateAuthenticatedHttpClient();
-                html = await httpClient.GetStringAsync(url);
-            }
-            else
-            {
-                Log.Debug("Using unauthenticated SteamWebClient for changelog fetch");
-                await SteamWebClient.InitializeAsync();
-                html = await SteamWebClient.GetStringAsync(url);
+                Log.Info($"Parsed {entries.Count} changelog entries for file {publishedFileId}");
+                return entries.OrderByDescending(e => e.Timestamp).ToList();
             }
 
-            if (html == null)
+            // No manifest entries, but we *were* authenticated when we tried —
+            // means Steam silently invalidated the cookie (post-download session
+            // consumption, server-side TTL shorter than the JWT exp, etc.).
+            // Force-mint a new access token from the refresh token and retry once.
+            if (SteamAuthService.IsAuthenticated && SteamAuthService.HasRefreshToken)
             {
-                Log.Warning("Returned null for changelog page");
-                return results;
-            }
-
-            // First try: extract from <script> tags via regex (authenticated HTML has full JSON with manifest_id)
-            var matches = ChangeLogRegex.Matches(html);
-            Log.Debug($"Regex found {matches.Count} changelog entries");
-
-            if (matches.Count > 0)
-            {
-                foreach (Match match in matches)
+                Log.Warning("Authenticated scrape returned no manifest entries — refreshing access token and retrying");
+                if (await SteamAuthService.TryRefreshAccessTokenAsync(forceRefresh: true))
                 {
-                    try
+                    var retry = await FetchAndParseAsync(url);
+                    if (retry.Count > 0)
                     {
-                        var json = match.Groups[1].Value;
-                        json = json.Replace("\\/", "/");
-                        var entry = JsonSerializer.Deserialize<ChangeLogEntry>(json);
-                        if (entry != null)
-                            results.Add(entry);
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Warning($"Failed to deserialize changelog JSON: {ex.Message}");
+                        Log.Info($"Parsed {retry.Count} changelog entries for file {publishedFileId} after refresh");
+                        return retry.OrderByDescending(e => e.Timestamp).ToList();
                     }
                 }
             }
-            else
-            {
-                // Fallback: parse HTML divs (no manifest_id — download disabled)
-                Log.Debug("Falling back to HTML div parsing (no manifest_id available)");
-                results = await ParseHtmlDivsAsync(html);
-            }
 
-            results = results.OrderByDescending(e => e.Timestamp).ToList();
-            Log.Info($"Parsed {results.Count} changelog entries for file {publishedFileId}");
+            return [];
         }
         catch (Exception ex)
         {
             Log.Error($"Failed to fetch changelogs for file {publishedFileId}", ex);
+            return [];
         }
-
-        return results;
     }
 
-    private static async Task<List<ChangeLogEntry>> ParseHtmlDivsAsync(string html)
+    private async Task<List<ChangeLogEntry>> FetchAndParseAsync(string url)
     {
-        var results = new List<ChangeLogEntry>();
-        var config = Configuration.Default;
-        using var context = BrowsingContext.New(config);
-        using var document = await context.OpenAsync(req => req.Content(html));
+        string? html;
+        if (SteamAuthService.IsAuthenticated)
+        {
+            Log.Debug("Using authenticated HttpClient for changelog fetch");
+            using var httpClient = SteamAuthService.CreateAuthenticatedHttpClient();
+            html = await httpClient.GetStringAsync(url);
+        }
+        else
+        {
+            // Anonymous path goes through the worker so SteamHTTP (with the
+            // session's cookie jar) can issue the request — Steamworks is only
+            // initialised in the worker process.
+            Log.Debug("Routing unauthenticated changelog fetch through worker");
+            html = host.Worker is null ? null : await host.Worker.FetchSteamWebAsync(url);
+        }
 
-        var containers = document.QuerySelectorAll("div.changeLogCtn");
-        Log.Debug($"Found {containers.Length} div.changeLogCtn");
+        if (html == null)
+        {
+            Log.Warning("Returned null for changelog page");
+            return [];
+        }
 
-        foreach (var container in containers)
+        var matches = ChangeLogRegex.Matches(html);
+        Log.Debug($"Regex found {matches.Count} changelog entries");
+
+        var entries = new List<ChangeLogEntry>();
+        foreach (Match match in matches)
         {
             try
             {
-                var paragraph = container.QuerySelector("p[id]");
-                if (paragraph == null) continue;
-
-                var idStr = paragraph.GetAttribute("id") ?? "";
-                if (!long.TryParse(idStr, out var timestamp)) continue;
-
-                results.Add(new ChangeLogEntry
-                {
-                    Timestamp = timestamp,
-                    ChangeDescription = paragraph.InnerHtml.Trim()
-                });
+                var json = match.Groups[1].Value.Replace("\\/", "/");
+                var entry = JsonSerializer.Deserialize<ChangeLogEntry>(json);
+                if (entry != null)
+                    entries.Add(entry);
             }
             catch (Exception ex)
             {
-                Log.Warning($"Failed to parse changelog div: {ex.Message}");
+                Log.Warning($"Failed to deserialize changelog JSON: {ex.Message}");
             }
         }
 
-        return results;
+        return entries;
     }
 }

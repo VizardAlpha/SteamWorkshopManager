@@ -93,4 +93,12 @@ public partial interface ISteamWorker
     /// feature or the item has no explicit version range.
     /// </summary>
     Task<List<ModVersionInfoDto>> GetSupportedGameVersionsAsync(ulong fileId);
+
+    /// <summary>
+    /// Issues a GET via the Steamworks HTTP API (anonymous, age-gate cookies
+    /// applied). Lets the shell scrape Workshop pages without spinning up its
+    /// own Steamworks instance — only the worker process has SteamAPI loaded.
+    /// Returns the response body as UTF-8 string, or null on failure/timeout.
+    /// </summary>
+    Task<string?> FetchSteamWebAsync(string url);
 }

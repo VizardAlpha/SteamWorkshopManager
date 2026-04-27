@@ -442,6 +442,7 @@ public partial class MainViewModel : ViewModelBase
         editor.ItemUpdated += OnItemUpdated;
         editor.ItemDeleted += OnItemDeleted;
         CurrentView = editor;
+        ActiveTab = ShellTab.MyMods;
     }
 
     private void OnCreateRequested()

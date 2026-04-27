@@ -21,16 +21,6 @@ sealed class Program
     [STAThread]
     public static void Main(string[] args)
     {
-        // Pin the UI culture to en-US so .NET runtime exception messages
-        // (sockets, IO, parsing) render in English regardless of the host
-        // OS locale. Our user-facing strings are served by LocalizationService
-        // from XAML resources, not by .NET satellite assemblies, so this
-        // doesn't affect the app's visible language. CurrentCulture is left
-        // untouched, so number/date formatting still follows the user's OS.
-        var enUs = CultureInfo.GetCultureInfo("en-US");
-        CultureInfo.DefaultThreadCurrentUICulture = enUs;
-        Thread.CurrentThread.CurrentUICulture = enUs;
-
         // Worker mode: the same binary bifurcates on --steam-worker, skipping Avalonia entirely.
         // Session switching kills and respawns this process without touching the shell.
         if (SteamWorkerArgs.TryParse(args, out var workerArgs))

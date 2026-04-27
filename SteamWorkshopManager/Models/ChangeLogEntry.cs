@@ -1,9 +1,10 @@
 using System;
 using System.Text.Json.Serialization;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace SteamWorkshopManager.Models;
 
-public class ChangeLogEntry
+public partial class ChangeLogEntry : ObservableObject
 {
     [JsonPropertyName("timestamp")]
     public long Timestamp { get; set; }
@@ -32,8 +33,9 @@ public class ChangeLogEntry
     [JsonIgnore]
     public DateTime Date => DateTimeOffset.FromUnixTimeSeconds(Timestamp).LocalDateTime;
 
-    [JsonIgnore]
-    public bool IsDownloaded { get; set; }
+    [ObservableProperty]
+    [property: JsonIgnore]
+    private bool _isDownloaded;
 
     [JsonIgnore]
     public bool HasManifestId => !string.IsNullOrEmpty(ManifestId);

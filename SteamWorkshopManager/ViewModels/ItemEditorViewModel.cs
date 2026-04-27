@@ -616,19 +616,17 @@ public partial class ItemEditorViewModel : ViewModelBase
         IsLoadingChangelogs = true;
         try
         {
-            // Try to refresh access token if we have a stored refresh token
+            // Refresh the access token if we have a stored refresh token but no
+            // live access token — keeps "already downloaded" badges accurate
+            // across restarts without forcing a fresh QR scan.
             if (!SteamAuthService.IsAuthenticated && SteamAuthService.HasRefreshToken)
                 await SteamAuthService.TryRefreshAccessTokenAsync();
 
-            // Not authenticated → show auth banner, don't scrape
-            if (!SteamAuthService.IsAuthenticated)
-            {
-                NeedsSteamAuth = true;
-                _changelogHistoryLoaded = true;
-                return;
-            }
-
-            NeedsSteamAuth = false;
+            // The auth banner is shown alongside the entries (not in place of
+            // them) so the user can still see which versions they've already
+            // pulled, even when the manifest_ids needed for fresh downloads
+            // require authentication.
+            NeedsSteamAuth = !SteamAuthService.IsAuthenticated;
 
             var entries = await _changelogScraper.GetChangeLogsAsync((ulong)_originalItem.PublishedFileId);
             ChangeLogHistory.Clear();
@@ -664,13 +662,6 @@ public partial class ItemEditorViewModel : ViewModelBase
             if (path != null)
             {
                 entry.IsDownloaded = true;
-                // Force UI refresh by replacing the entry
-                var index = ChangeLogHistory.IndexOf(entry);
-                if (index >= 0)
-                {
-                    ChangeLogHistory.RemoveAt(index);
-                    ChangeLogHistory.Insert(index, entry);
-                }
                 _notificationService.ShowSuccess(Loc["DownloadComplete"]);
             }
             else

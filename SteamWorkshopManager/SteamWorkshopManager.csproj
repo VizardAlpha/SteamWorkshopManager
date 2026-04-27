@@ -6,9 +6,9 @@
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
 
-        <Version>1.5.1</Version>
-        <AssemblyVersion>1.5.1.0</AssemblyVersion>
-        <FileVersion>1.5.1.0</FileVersion>
+        <Version>1.6.0</Version>
+        <AssemblyVersion>1.6.0.0</AssemblyVersion>
+        <FileVersion>1.6.0.0</FileVersion>
         
         <!-- Default ingest URL baked into every build (incl. CI release builds).
              Overridable via SWM_TELEMETRY_URL env var/MSBuild prop for local dev. -->
@@ -43,7 +43,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="AngleSharp" Version="1.4.0" />
         <PackageReference Include="Avalonia" Version="12.0.1" />
         <PackageReference Include="Avalonia.Desktop" Version="12.0.1" />
         <PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.1" />
@@ -56,7 +55,7 @@
         
         <PackageReference Include="Material.Icons.Avalonia" Version="3.0.2" />
         
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.6" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.7" />
         
         <PackageReference Include="QRCoder" Version="1.8.0" />
         <PackageReference Include="SteamKit2" Version="3.4.0" />

@@ -258,6 +258,14 @@ internal sealed class SteamWorkerImpl : ISteamWorker
         return versions;
     }
 
+    public async Task<string?> FetchSteamWebAsync(string url)
+    {
+        // Routed here so the SteamHTTP cookie container & request lifecycle stay
+        // inside the worker process — only here is SteamAPI initialised.
+        await SteamWebClient.InitializeAsync();
+        return await SteamWebClient.GetStringAsync(url);
+    }
+
     // ---- Steam UGC query helpers (worker-local) ----
 
     private static async Task<List<PublishedFileId_t>> GetChildIdsAsync(PublishedFileId_t parentId)

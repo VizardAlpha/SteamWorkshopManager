@@ -65,7 +65,7 @@ public class WorkshopTagsService
 
     public WorkshopTagsService(HttpClient? httpClient = null, int cacheExpirationDays = 7)
     {
-        _httpClient = httpClient ?? SteamHttpClientFactory.Create();
+        _httpClient = httpClient ?? SteamHttpClientFactory.Create(withAgeGateCookies: true);
         _cacheExpirationDays = cacheExpirationDays;
         Directory.CreateDirectory(CacheFolder);
     }

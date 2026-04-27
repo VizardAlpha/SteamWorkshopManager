@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using SteamWorkshopManager.Models;
 using SteamWorkshopManager.Services.Log;
+using SteamWorkshopManager.Services.Session;
 using SteamWorkshopManager.Services.Steam;
 
 namespace SteamWorkshopManager.Services.Workshop;
@@ -15,6 +16,7 @@ public class WorkshopDownloadService
 {
     private static readonly Logger Log = LogService.GetLogger<WorkshopDownloadService>();
     private readonly HttpClient _httpClient;
+    private readonly SessionHost _host;
 
     private static readonly string WorkshopBasePath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
@@ -22,10 +24,10 @@ public class WorkshopDownloadService
         "workshop"
     );
 
-    public WorkshopDownloadService(HttpClient? httpClient = null)
+    public WorkshopDownloadService(SessionHost host, HttpClient? httpClient = null)
     {
-        _httpClient = httpClient ?? new HttpClient();
-        _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "SteamWorkshopManager/1.0");
+        _host = host;
+        _httpClient = httpClient ?? SteamHttpClientFactory.Create();
     }
 
     public async Task<string?> GetDownloadUrlAsync(ulong publishedFileId, long revision, string manifestId)
@@ -45,9 +47,11 @@ public class WorkshopDownloadService
             }
             else
             {
-                Log.Debug("Using unauthenticated SteamWebClient for download URL request");
-                await SteamWebClient.InitializeAsync();
-                json = await SteamWebClient.GetStringAsync(url);
+                // Anonymous Steam URL fetches go through the worker because
+                // SteamHTTP (with the session's cookie jar) is only available
+                // in the process that owns Steamworks.
+                Log.Debug("Routing unauthenticated download URL request through worker");
+                json = _host.Worker is null ? null : await _host.Worker.FetchSteamWebAsync(url);
             }
 
             if (json == null)

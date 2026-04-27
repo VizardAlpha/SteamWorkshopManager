@@ -27,7 +27,8 @@ public static class SteamAuthService
     private static ulong _steamId64;
     private static ISettingsService? _settingsService;
 
-    public static bool IsAuthenticated => _accessToken != null && _steamId64 != 0;
+    public static bool IsAuthenticated =>
+        _accessToken != null && _steamId64 != 0 && !IsJwtExpired(_accessToken);
     public static bool HasRefreshToken => !string.IsNullOrEmpty(_refreshToken) && !string.IsNullOrEmpty(_accountName);
 
     /// <summary>
@@ -68,10 +69,13 @@ public static class SteamAuthService
     /// Try to refresh the access token using the stored refresh token.
     /// Connects to CM, logs on with the refresh token, then generates a new web access token.
     /// Returns true if a valid access token is now available.
+    /// Pass <paramref name="forceRefresh"/> when the in-memory token looks
+    /// JWT-valid but Steam is rejecting it (silent invalidation after a
+    /// download, server-side TTL shorter than the JWT exp, etc.).
     /// </summary>
-    public static async Task<bool> TryRefreshAccessTokenAsync()
+    public static async Task<bool> TryRefreshAccessTokenAsync(bool forceRefresh = false)
     {
-        if (IsAuthenticated)
+        if (!forceRefresh && IsAuthenticated)
             return true;
 
         if (!HasRefreshToken || _steamId64 == 0)
@@ -234,8 +238,13 @@ public static class SteamAuthService
 
             _steamId64 = logOnResult.ClientSteamID!.ConvertToUInt64();
             _accountName = pollResult.AccountName;
-            _accessToken = pollResult.AccessToken;
             _refreshToken = pollResult.RefreshToken;
+            
+            var tokenResult = await client.Authentication.GenerateAccessTokenForAppAsync(
+                logOnResult.ClientSteamID!, _refreshToken!, true);
+            _accessToken = tokenResult.AccessToken;
+            if (!string.IsNullOrEmpty(tokenResult.RefreshToken))
+                _refreshToken = tokenResult.RefreshToken;
 
             // Register newly authenticated values for log redaction
             LogService.Instance.RegisterSensitiveValue(_accountName, "accountName");
@@ -270,7 +279,7 @@ public static class SteamAuthService
 
         var handler = new HttpClientHandler { CookieContainer = cookieContainer };
         var httpClient = new HttpClient(handler);
-        httpClient.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "SteamWorkshopManager/1.0");
+        httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(SteamHttpClientFactory.UserAgent);
         return httpClient;
     }
 
