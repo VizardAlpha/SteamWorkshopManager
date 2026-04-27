@@ -204,7 +204,7 @@ public partial class MainViewModel : ViewModelBase
             });
         });
 
-        ItemListViewModel = new ItemListViewModel(_steamService);
+        ItemListViewModel = new ItemListViewModel(_steamService, _notificationService);
         ItemListViewModel.ItemSelected += OnItemSelected;
         ItemListViewModel.CreateRequested += OnCreateRequested;
 

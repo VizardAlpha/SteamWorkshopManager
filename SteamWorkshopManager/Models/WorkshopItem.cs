@@ -11,6 +11,7 @@ namespace SteamWorkshopManager.Models;
 public class WorkshopItem : INotifyPropertyChanged
 {
     private Bitmap? _previewBitmap;
+    private bool _isSelected;
 
     public required PublishedFileId_t PublishedFileId { get; init; }
     public required string Title { get; set; }
@@ -31,6 +32,22 @@ public class WorkshopItem : INotifyPropertyChanged
     // Owner information
     public CSteamID OwnerId { get; init; }
     public bool IsOwner { get; init; }
+
+    /// <summary>
+    /// Drives the bulk-action selection state in the item list. Lives on the
+    /// model rather than a parallel collection so the checkbox overlay binds
+    /// directly to the same instance the list iterates.
+    /// </summary>
+    public bool IsSelected
+    {
+        get => _isSelected;
+        set
+        {
+            if (_isSelected == value) return;
+            _isSelected = value;
+            OnPropertyChanged();
+        }
+    }
 
     public Bitmap? PreviewBitmap
     {

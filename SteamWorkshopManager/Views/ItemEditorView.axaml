@@ -1306,6 +1306,19 @@
                                        Foreground="{DynamicResource FeedbackDangerTextBrush}" FontSize="12"/>
                         </StackPanel>
                     </Border>
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="{DynamicResource DeleteTypeToConfirm}"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   FontSize="13"/>
+                        <TextBox Text="{Binding DeleteTypedConfirmation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 PlaceholderText="DELETE"
+                                 FontFamily="Consolas, Menlo, monospace"
+                                 IsEnabled="{Binding !IsDeleting}"/>
+                        <TextBlock Text="{DynamicResource DeleteTypeToConfirmHint}"
+                                   Foreground="{DynamicResource TextDisabledBrush}"
+                                   FontSize="11"
+                                   IsVisible="{Binding !IsDeleteConfirmed}"/>
+                    </StackPanel>
                     <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Right">
                         <Button Command="{Binding CancelDeleteCommand}"
                                 Classes="secondary"
@@ -1314,7 +1327,7 @@
                         <Button Command="{Binding ConfirmDeleteCommand}"
                                 Classes="danger"
                                 Content="{DynamicResource DeletePermanently}"
-                                IsEnabled="{Binding !IsDeleting}"/>
+                                IsEnabled="{Binding IsDeleteConfirmed}"/>
                     </StackPanel>
                 </StackPanel>
             </Border>

@@ -121,6 +121,22 @@
     <x:String x:Key="DeletePermanently">Delete permanently</x:String>
     <x:String x:Key="DeleteFailed">Failed to delete</x:String>
     <x:String x:Key="UpdateFailed">Failed to update</x:String>
+    <x:String x:Key="DeleteTypeToConfirm">Type DELETE to confirm</x:String>
+    <x:String x:Key="DeleteTypeToConfirmHint">Enter DELETE in capitals to enable the destructive action.</x:String>
+
+    <!-- Bulk actions -->
+    <x:String x:Key="Select">Select</x:String>
+    <x:String x:Key="SelectAll">Select all</x:String>
+    <x:String x:Key="ClearSelection">Clear</x:String>
+    <x:String x:Key="SelectedCount">{0} selected</x:String>
+    <x:String x:Key="ChangeVisibility">Change visibility</x:String>
+    <x:String x:Key="DeleteSelected">Delete selected</x:String>
+    <x:String x:Key="ConfirmBulkDelete">Delete {0} mods?</x:String>
+    <x:String x:Key="BulkDeleteWarning">This will permanently delete the selected mods from Steam Workshop. This action is irreversible.</x:String>
+    <x:String x:Key="BulkVisibilityUpdated">{0} mods updated</x:String>
+    <x:String x:Key="BulkVisibilityPartialFail">Updated {0}/{1} — some failed</x:String>
+    <x:String x:Key="BulkDeleteSuccess">{0} mods deleted</x:String>
+    <x:String x:Key="BulkDeletePartialFail">Deleted {0}/{1} — some failed</x:String>
 
     <!-- Settings -->
     <x:String x:Key="Settings">Settings</x:String>

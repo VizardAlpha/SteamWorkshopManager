@@ -91,7 +91,22 @@ public partial class ItemEditorViewModel : ViewModelBase
     private bool _isDeleting;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsDeleteConfirmed))]
     private bool _showDeleteConfirmation;
+
+    /// <summary>
+    /// Forces the user to type the literal "DELETE" before the destructive
+    /// button enables — same pattern GitHub uses for repo deletion. Mirrors
+    /// the bulk-delete flow in <see cref="ItemListViewModel"/>.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsDeleteConfirmed))]
+    private string _deleteTypedConfirmation = string.Empty;
+
+    private const string DeletePassphrase = "DELETE";
+
+    public bool IsDeleteConfirmed =>
+        ShowDeleteConfirmation && string.Equals(DeleteTypedConfirmation, DeletePassphrase, StringComparison.Ordinal);
 
     [ObservableProperty]
     private string? _errorMessage;
@@ -497,6 +512,7 @@ public partial class ItemEditorViewModel : ViewModelBase
     [RelayCommand]
     private void ShowDeleteDialog()
     {
+        DeleteTypedConfirmation = string.Empty;
         ShowDeleteConfirmation = true;
     }
 
@@ -504,11 +520,14 @@ public partial class ItemEditorViewModel : ViewModelBase
     private void CancelDelete()
     {
         ShowDeleteConfirmation = false;
+        DeleteTypedConfirmation = string.Empty;
     }
 
     [RelayCommand]
     private async Task ConfirmDeleteAsync()
     {
+        if (!IsDeleteConfirmed) return;
+
         IsDeleting = true;
         ErrorMessage = null;
 

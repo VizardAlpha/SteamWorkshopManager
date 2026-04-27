@@ -5,6 +5,7 @@
              xmlns:vm="using:SteamWorkshopManager.ViewModels"
              xmlns:models="using:SteamWorkshopManager.Models"
              xmlns:icons="using:Material.Icons.Avalonia"
+             xmlns:enums="using:SteamWorkshopManager.Models"
              mc:Ignorable="d" d:DesignWidth="960" d:DesignHeight="640"
              x:Class="SteamWorkshopManager.Views.ItemListView"
              x:DataType="vm:ItemListViewModel">
@@ -56,6 +57,8 @@
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
         </Style>
         <Style Selector="Button.action:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource SurfaceCardBrush}"/>
@@ -75,6 +78,29 @@
         </Style>
         <Style Selector="Button.mod-card:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource SurfaceCardBrush}"/>
+            <Setter Property="BorderBrush" Value="#5B9CF6"/>
+        </Style>
+        <!-- Selected state — strong accent border so the user can scan picks
+             at a glance without checking every checkbox individually. -->
+        <Style Selector="Button.mod-card.selected /template/ ContentPresenter">
+            <Setter Property="BorderBrush" Value="#5B9CF6"/>
+            <Setter Property="BorderThickness" Value="2"/>
+        </Style>
+
+        <!-- Selection check overlay shown only in selection mode -->
+        <Style Selector="Border.select-check">
+            <Setter Property="CornerRadius" Value="14"/>
+            <Setter Property="Width" Value="26"/>
+            <Setter Property="Height" Value="26"/>
+            <Setter Property="Background" Value="#CC101418"/>
+            <Setter Property="BorderBrush" Value="#80FFFFFF"/>
+            <Setter Property="BorderThickness" Value="1.5"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="VerticalAlignment" Value="Top"/>
+            <Setter Property="Margin" Value="8,8,0,0"/>
+        </Style>
+        <Style Selector="Border.select-check.checked">
+            <Setter Property="Background" Value="#5B9CF6"/>
             <Setter Property="BorderBrush" Value="#5B9CF6"/>
         </Style>
 
@@ -158,7 +184,8 @@
             </StackPanel>
 
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                <!-- Search bar -->
+                <!-- Search bar — kept visible in selection mode so the user can
+                     filter the grid before picking. -->
                 <Border Classes="search-bar">
                     <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
                         <icons:MaterialIcon Grid.Column="0"
@@ -187,15 +214,94 @@
                         </Button>
                     </Grid>
                 </Border>
-                <!-- Refresh -->
-                <Button Classes="action"
-                        Command="{Binding LoadItemsCommand}"
-                        IsEnabled="{Binding !IsLoading}">
-                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                        <icons:MaterialIcon Kind="Refresh" Width="14" Height="14"/>
-                        <TextBlock Text="{DynamicResource Refresh}" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
+
+                <!-- Normal-mode actions -->
+                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"
+                            IsVisible="{Binding IsNotInSelectionMode}">
+                    <Button Classes="action"
+                            Command="{Binding LoadItemsCommand}"
+                            IsEnabled="{Binding !IsLoading}">
+                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                            <icons:MaterialIcon Kind="Refresh" Width="14" Height="14"/>
+                            <TextBlock Text="{DynamicResource Refresh}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="action"
+                            Command="{Binding EnterSelectionModeCommand}"
+                            IsEnabled="{Binding !IsLoading}">
+                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                            <icons:MaterialIcon Kind="CheckboxMultipleOutline" Width="14" Height="14"/>
+                            <TextBlock Text="{DynamicResource Select}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+
+                <!-- Selection-mode actions -->
+                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"
+                            IsVisible="{Binding SelectionMode}">
+                    <TextBlock Text="{Binding SelectedCount, StringFormat={}{0} selected}"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               FontSize="13"
+                               VerticalAlignment="Center"
+                               Margin="0,0,8,0"/>
+                    <Button Classes="action"
+                            Command="{Binding SelectAllCommand}"
+                            Content="{DynamicResource SelectAll}"/>
+                    <Button Classes="action"
+                            Command="{Binding ClearSelectionCommand}"
+                            IsEnabled="{Binding HasSelection}"
+                            Content="{DynamicResource ClearSelection}"/>
+                    <!-- Visibility split via a flyout — one button per option keeps
+                         the click count to two and avoids nesting a ComboBox here. -->
+                    <Button Classes="action" IsEnabled="{Binding HasSelection}">
+                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                            <icons:MaterialIcon Kind="Eye" Width="14" Height="14"/>
+                            <TextBlock Text="{DynamicResource ChangeVisibility}" VerticalAlignment="Center"/>
+                            <icons:MaterialIcon Kind="ChevronDown" Width="12" Height="12"/>
+                        </StackPanel>
+                        <Button.Flyout>
+                            <MenuFlyout>
+                                <MenuItem Header="{DynamicResource Public}"
+                                          Command="{Binding SetSelectedVisibilityCommand}">
+                                    <MenuItem.CommandParameter>
+                                        <enums:VisibilityType>Public</enums:VisibilityType>
+                                    </MenuItem.CommandParameter>
+                                </MenuItem>
+                                <MenuItem Header="{DynamicResource FriendsOnly}"
+                                          Command="{Binding SetSelectedVisibilityCommand}">
+                                    <MenuItem.CommandParameter>
+                                        <enums:VisibilityType>FriendsOnly</enums:VisibilityType>
+                                    </MenuItem.CommandParameter>
+                                </MenuItem>
+                                <MenuItem Header="{DynamicResource Private}"
+                                          Command="{Binding SetSelectedVisibilityCommand}">
+                                    <MenuItem.CommandParameter>
+                                        <enums:VisibilityType>Private</enums:VisibilityType>
+                                    </MenuItem.CommandParameter>
+                                </MenuItem>
+                                <MenuItem Header="{DynamicResource Unlisted}"
+                                          Command="{Binding SetSelectedVisibilityCommand}">
+                                    <MenuItem.CommandParameter>
+                                        <enums:VisibilityType>Unlisted</enums:VisibilityType>
+                                    </MenuItem.CommandParameter>
+                                </MenuItem>
+                            </MenuFlyout>
+                        </Button.Flyout>
+                    </Button>
+                    <Button Classes="action"
+                            Command="{Binding RequestBulkDeleteCommand}"
+                            IsEnabled="{Binding HasSelection}"
+                            Foreground="{DynamicResource FeedbackDangerTextBrush}"
+                            BorderBrush="{DynamicResource FeedbackDangerBrush}">
+                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                            <icons:MaterialIcon Kind="TrashCanOutline" Width="14" Height="14"/>
+                            <TextBlock Text="{DynamicResource DeleteSelected}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="action"
+                            Command="{Binding ExitSelectionModeCommand}"
+                            Content="{DynamicResource Cancel}"/>
+                </StackPanel>
             </StackPanel>
         </Grid>
 
@@ -263,6 +369,7 @@
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="models:WorkshopItem">
                             <Button Classes="mod-card"
+                                    Classes.selected="{Binding IsSelected}"
                                     Command="{Binding $parent[ItemsControl].((vm:ItemListViewModel)DataContext).SelectItemCommand, FallbackValue={x:Null}}"
                                     CommandParameter="{Binding}"
                                     Width="220"
@@ -282,6 +389,20 @@
                                                                 HorizontalAlignment="Center"
                                                                 VerticalAlignment="Center"
                                                                 IsVisible="{Binding PreviewBitmap, Converter={x:Static ObjectConverters.IsNull}}"/>
+
+                                            <!-- Selection check overlay — only paints in selection mode.
+                                                 The card button itself toggles IsSelected, the visual is
+                                                 read-only here. -->
+                                            <Border Classes="select-check"
+                                                    Classes.checked="{Binding IsSelected}"
+                                                    IsVisible="{Binding $parent[ItemsControl].((vm:ItemListViewModel)DataContext).SelectionMode, FallbackValue=False}">
+                                                <icons:MaterialIcon Kind="Check"
+                                                                    Width="16" Height="16"
+                                                                    Foreground="White"
+                                                                    HorizontalAlignment="Center"
+                                                                    VerticalAlignment="Center"
+                                                                    IsVisible="{Binding IsSelected}"/>
+                                            </Border>
 
                                             <!-- Badges row (contributor + visibility) -->
                                             <StackPanel Orientation="Horizontal" Spacing="6"
@@ -363,5 +484,68 @@
             </ScrollViewer>
 
         </Grid>
+
+        <!-- Bulk delete confirmation overlay — same type-DELETE gate as the
+             single-mod path so the destructive action stays explicit. -->
+        <Border Grid.RowSpan="2"
+                IsVisible="{Binding ShowBulkDeleteConfirmation}"
+                Background="#CC000000">
+            <Border Background="{DynamicResource SurfaceOverlayBrush}"
+                    Padding="28" CornerRadius="12"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    MinWidth="420">
+                <StackPanel Spacing="20">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="{Binding SelectedCount, StringFormat={}Delete {0} mods?}"
+                                   FontSize="20" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Text="{DynamicResource BulkDeleteWarning}"
+                                   TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextMutedBrush}"
+                                   FontSize="13"/>
+                    </StackPanel>
+                    <Border Background="#1FC23B2E" Padding="12" CornerRadius="6"
+                            BorderBrush="{DynamicResource FeedbackDangerBrush}" BorderThickness="1">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <icons:MaterialIcon Kind="AlertCircleOutline" Width="14" Height="14"
+                                                Foreground="{DynamicResource FeedbackDangerTextBrush}"
+                                                VerticalAlignment="Center"/>
+                            <TextBlock Text="{DynamicResource DeleteWarning}"
+                                       Foreground="{DynamicResource FeedbackDangerTextBrush}"
+                                       FontSize="12"/>
+                        </StackPanel>
+                    </Border>
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="{DynamicResource DeleteTypeToConfirm}"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   FontSize="13"/>
+                        <TextBox Text="{Binding BulkDeleteTypedConfirmation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 PlaceholderText="DELETE"
+                                 FontFamily="Consolas, Menlo, monospace"
+                                 IsEnabled="{Binding !IsBulkProcessing}"/>
+                        <TextBlock Text="{DynamicResource DeleteTypeToConfirmHint}"
+                                   Foreground="{DynamicResource TextDisabledBrush}"
+                                   FontSize="11"
+                                   IsVisible="{Binding !IsBulkDeleteConfirmed}"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Right">
+                        <Button Command="{Binding CancelBulkDeleteCommand}"
+                                Classes="action"
+                                Content="{DynamicResource Cancel}"
+                                IsEnabled="{Binding !IsBulkProcessing}"/>
+                        <Button Command="{Binding ConfirmBulkDeleteCommand}"
+                                Background="{DynamicResource FeedbackDangerBrush}"
+                                Foreground="White"
+                                CornerRadius="6"
+                                Padding="14,0"
+                                Height="34"
+                                FontWeight="Medium"
+                                FontSize="13"
+                                Content="{DynamicResource DeletePermanently}"
+                                IsEnabled="{Binding IsBulkDeleteConfirmed}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Border>
     </Grid>
 </UserControl>

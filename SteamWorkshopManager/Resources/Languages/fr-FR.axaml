@@ -121,6 +121,22 @@
     <x:String x:Key="DeletePermanently">Supprimer définitivement</x:String>
     <x:String x:Key="DeleteFailed">Échec de la suppression</x:String>
     <x:String x:Key="UpdateFailed">Échec de la mise à jour</x:String>
+    <x:String x:Key="DeleteTypeToConfirm">Tapez DELETE pour confirmer</x:String>
+    <x:String x:Key="DeleteTypeToConfirmHint">Entrez DELETE en majuscules pour activer le bouton de suppression.</x:String>
+
+    <!-- Bulk actions -->
+    <x:String x:Key="Select">Sélectionner</x:String>
+    <x:String x:Key="SelectAll">Tout sélectionner</x:String>
+    <x:String x:Key="ClearSelection">Effacer</x:String>
+    <x:String x:Key="SelectedCount">{0} sélectionnés</x:String>
+    <x:String x:Key="ChangeVisibility">Changer la visibilité</x:String>
+    <x:String x:Key="DeleteSelected">Supprimer la sélection</x:String>
+    <x:String x:Key="ConfirmBulkDelete">Supprimer {0} mods ?</x:String>
+    <x:String x:Key="BulkDeleteWarning">Cela supprimera définitivement les mods sélectionnés du Steam Workshop. Action irréversible.</x:String>
+    <x:String x:Key="BulkVisibilityUpdated">{0} mods mis à jour</x:String>
+    <x:String x:Key="BulkVisibilityPartialFail">{0}/{1} mis à jour — certains ont échoué</x:String>
+    <x:String x:Key="BulkDeleteSuccess">{0} mods supprimés</x:String>
+    <x:String x:Key="BulkDeletePartialFail">{0}/{1} supprimés — certains ont échoué</x:String>
 
     <!-- Settings -->
     <x:String x:Key="Settings">Paramètres</x:String>
