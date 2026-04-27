@@ -23,4 +23,5 @@ riderModule.iml
 dist
 .idea
 build_test
+build_test_release
 docs
