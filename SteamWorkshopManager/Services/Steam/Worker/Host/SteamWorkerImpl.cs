@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Steamworks;
 using SteamWorkshopManager.Services.Log;
@@ -27,8 +28,53 @@ internal sealed class SteamWorkerImpl : ISteamWorker
     private static readonly Dictionary<uint, string?> AppNameCache = new();
 
     private readonly SteamService _steam = new();
+    private CancellationTokenSource? _logSinkCts;
 
     public Task<string> PingAsync() => Task.FromResult("pong");
+
+    public async Task SetLogSinkAsync(IProgress<LogEntryDto>? sink, bool debugEnabled)
+    {
+        LogService.Instance.SetDebugMode(debugEnabled);
+
+        _logSinkCts?.Cancel();
+        _logSinkCts?.Dispose();
+        _logSinkCts = null;
+
+        if (sink == null)
+        {
+            LogService.Instance.SetRemoteSink(null);
+            return;
+        }
+
+        LogService.Instance.SetRemoteSink(entry => sink.Report(new LogEntryDto(
+            (int)entry.Level,
+            entry.Source,
+            entry.Message,
+            entry.Exception,
+            entry.Timestamp.ToUniversalTime())));
+
+        // StreamJsonRpc IProgress<T> only stays alive for the duration of the
+        // call that received it — return now and the sink dies. Hold the call
+        // open until cancellation so every subsequent worker log keeps flowing.
+        _logSinkCts = new CancellationTokenSource();
+        try
+        {
+            await Task.Delay(Timeout.Infinite, _logSinkCts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        finally
+        {
+            LogService.Instance.SetRemoteSink(null);
+        }
+    }
+
+    public Task SetDebugModeAsync(bool enabled)
+    {
+        LogService.Instance.SetDebugMode(enabled);
+        return Task.CompletedTask;
+    }
 
     public Task<SteamInitResult> InitializeAsync() =>
         Task.FromResult(_steam.Initialize());
@@ -67,7 +113,8 @@ internal sealed class SteamWorkerImpl : ISteamWorker
             request.Changelog,
             bridge,
             request.BranchMin,
-            request.BranchMax);
+            request.BranchMax,
+            request.PreviewOps?.Select(FromDto).ToList());
         return fileId?.m_PublishedFileId ?? 0UL;
     }
 
@@ -85,8 +132,17 @@ internal sealed class SteamWorkerImpl : ISteamWorker
             request.Changelog,
             bridge,
             request.BranchMin,
-            request.BranchMax);
+            request.BranchMax,
+            request.PreviewOps?.Select(FromDto).ToList());
     }
+
+    private static PreviewOp FromDto(PreviewOpDto dto) => dto.Kind switch
+    {
+        PreviewOpKind.Remove => new PreviewOp.Remove(dto.RemoveIndex ?? 0u),
+        PreviewOpKind.AddImage => new PreviewOp.AddImage(dto.FilePath ?? ""),
+        PreviewOpKind.AddVideo => new PreviewOp.AddVideo(dto.YouTubeId ?? ""),
+        _ => throw new ArgumentOutOfRangeException(nameof(dto)),
+    };
 
     /// <summary>
     /// Adapts the shell-bound <see cref="UploadProgressDto"/> channel back to
@@ -98,7 +154,7 @@ internal sealed class SteamWorkerImpl : ISteamWorker
     {
         if (sink is null) return null;
         return new Progress<UploadProgress>(p =>
-            sink.Report(new UploadProgressDto(p.Status, p.BytesProcessed, p.BytesTotal)));
+            sink.Report(new UploadProgressDto(p.Status, p.BytesProcessed, p.BytesTotal, p.PercentHint)));
     }
 
     public async Task<List<DependencyInfoDto>> GetDependenciesAsync(ulong parentId)
@@ -424,6 +480,8 @@ internal sealed class SteamWorkerImpl : ISteamWorker
         SubscriberCount: item.SubscriberCount,
         FileSize: item.FileSize,
         OwnerId: item.OwnerId.m_SteamID,
-        IsOwner: item.IsOwner
+        IsOwner: item.IsOwner,
+        AdditionalPreviews: item.AdditionalPreviews.Select(p => new WorkshopPreviewDto(
+            (int)p.PreviewType, p.OriginalIndex, p.RemoteUrl, p.OriginalFilename)).ToList()
     );
 }

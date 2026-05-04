@@ -35,28 +35,53 @@ public class FileDialogService : IFileDialogService
         var window = GetMainWindow();
         if (window is null) return null;
 
-        var fileTypeFilter = new List<FilePickerFileType>();
-        foreach (var filter in filters)
-        {
-            fileTypeFilter.Add(new FilePickerFileType(filter)
-            {
-                Patterns = [$"*{filter}"]
-            });
-        }
-
-        if (fileTypeFilter.Count == 0)
-        {
-            fileTypeFilter.Add(FilePickerFileTypes.All);
-        }
-
         var files = await window.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
             Title = title,
             AllowMultiple = false,
-            FileTypeFilter = fileTypeFilter
+            FileTypeFilter = BuildFileTypeFilter(filters),
         });
 
         return files.Count > 0 ? files[0].Path.LocalPath : null;
+    }
+
+    public async Task<IReadOnlyList<string>> OpenFilesAsync(string title, params string[] filters)
+    {
+        var window = GetMainWindow();
+        if (window is null) return [];
+
+        var files = await window.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = title,
+            AllowMultiple = true,
+            FileTypeFilter = BuildFileTypeFilter(filters),
+        });
+
+        var paths = new List<string>(files.Count);
+        foreach (var f in files)
+            paths.Add(f.Path.LocalPath);
+        return paths;
+    }
+
+    /// <summary>
+    /// Collapses the caller's extension list into a single "Files" entry that
+    /// matches all of them at once, then appends "All files (*.*)". This
+    /// avoids the prior UX where every extension showed up as its own filter
+    /// row (".png", ".jpg", ".jpeg", ".gif") and the user had to click the
+    /// dropdown for each one.
+    /// </summary>
+    private static List<FilePickerFileType> BuildFileTypeFilter(string[] extensions)
+    {
+        var result = new List<FilePickerFileType>();
+        if (extensions.Length > 0)
+        {
+            var patterns = new List<string>(extensions.Length);
+            foreach (var ext in extensions)
+                patterns.Add($"*{ext}");
+            result.Add(new FilePickerFileType("Files") { Patterns = patterns });
+        }
+        result.Add(FilePickerFileTypes.All);
+        return result;
     }
 
     public async Task<string?> SaveFileAsync(string title, string defaultFileName, params string[] filters)

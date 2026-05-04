@@ -11,9 +11,11 @@ using Avalonia.Input.Platform;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SteamWorkshopManager.Models;
+using Microsoft.Extensions.DependencyInjection;
 using SteamWorkshopManager.Services.Core;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Notifications;
+using SteamWorkshopManager.Services.Session;
 using SteamWorkshopManager.Services.Telemetry;
 
 namespace SteamWorkshopManager.ViewModels;
@@ -131,6 +133,12 @@ public partial class SettingsViewModel : ViewModelBase
         _settingsService.Settings.DebugMode = value;
         _settingsService.Save();
         _logService.SetDebugMode(value);
+
+        // Mirror the toggle into the running worker so it stops emitting at
+        // the source instead of relying on the shell to drop entries.
+        var sessionHost = App.Services.GetService<SessionHost>();
+        if (sessionHost?.Worker is { } worker)
+            _ = worker.SetDebugModeAsync(value);
     }
 
     partial void OnIsTelemetryEnabledChanged(bool value)

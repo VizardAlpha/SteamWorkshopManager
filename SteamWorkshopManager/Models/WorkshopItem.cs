@@ -20,6 +20,14 @@ public class WorkshopItem : INotifyPropertyChanged
     public string? PreviewImageUrl { get; set; }
     public VisibilityType Visibility { get; set; } = VisibilityType.Private;
     public List<WorkshopTag> Tags { get; set; } = [];
+
+    /// <summary>
+    /// Additional previews (images and YouTube videos) that show up in the
+    /// Workshop carousel beyond the main thumbnail. Populated by
+    /// <c>SteamService.GetPublishedItemsAsync</c> when the query opts into
+    /// <c>SetReturnAdditionalPreviews</c>.
+    /// </summary>
+    public List<WorkshopPreview> AdditionalPreviews { get; set; } = [];
     public DateTime CreatedAt { get; init; }
     public DateTime UpdatedAt { get; set; }
 
@@ -35,7 +43,7 @@ public class WorkshopItem : INotifyPropertyChanged
 
     /// <summary>
     /// Drives the bulk-action selection state in the item list. Lives on the
-    /// model rather than a parallel collection so the checkbox overlay binds
+    /// model rather than a parallel collection, so the checkbox overlay binds
     /// directly to the same instance the list iterates.
     /// </summary>
     public bool IsSelected

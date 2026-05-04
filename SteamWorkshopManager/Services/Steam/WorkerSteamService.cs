@@ -133,13 +133,15 @@ public sealed class WorkerSteamService(SessionHost host) : ISteamService
     public async Task<PublishedFileId_t?> CreateItemAsync(
         string title, string description, string contentFolderPath,
         string? previewImagePath, VisibilityType visibility, List<string> tags, string? changelog,
-        IProgress<UploadProgress>? progress = null, string? branchMin = null, string? branchMax = null)
+        IProgress<UploadProgress>? progress = null, string? branchMin = null, string? branchMax = null,
+        IReadOnlyList<PreviewOp>? previewOps = null)
     {
         if (host.Worker is null) return null;
 
         var request = new CreateItemRequestDto(
             title, description, contentFolderPath, previewImagePath,
-            visibility, tags, changelog, branchMin, branchMax);
+            visibility, tags, changelog, branchMin, branchMax,
+            previewOps?.Select(ToDto).ToList());
 
         try
         {
@@ -157,13 +159,15 @@ public sealed class WorkerSteamService(SessionHost host) : ISteamService
         PublishedFileId_t fileId, string? title, string? description,
         string? contentFolderPath, string? previewImagePath, VisibilityType? visibility,
         List<string>? tags, string? changelog, IProgress<UploadProgress>? progress = null,
-        string? branchMin = null, string? branchMax = null)
+        string? branchMin = null, string? branchMax = null,
+        IReadOnlyList<PreviewOp>? previewOps = null)
     {
         if (host.Worker is null) return false;
 
         var request = new UpdateItemRequestDto(
             fileId.m_PublishedFileId, title, description, contentFolderPath,
-            previewImagePath, visibility, tags, changelog, branchMin, branchMax);
+            previewImagePath, visibility, tags, changelog, branchMin, branchMax,
+            previewOps?.Select(ToDto).ToList());
 
         try
         {
@@ -176,6 +180,14 @@ public sealed class WorkerSteamService(SessionHost host) : ISteamService
         }
     }
 
+    private static PreviewOpDto ToDto(PreviewOp op) => op switch
+    {
+        PreviewOp.Remove r => new PreviewOpDto(PreviewOpKind.Remove, r.Index, null, null),
+        PreviewOp.AddImage img => new PreviewOpDto(PreviewOpKind.AddImage, null, img.FilePath, null),
+        PreviewOp.AddVideo vid => new PreviewOpDto(PreviewOpKind.AddVideo, null, null, vid.YouTubeId),
+        _ => throw new ArgumentOutOfRangeException(nameof(op)),
+    };
+
     /// <summary>
     /// Wraps the caller's progress observer into the DTO channel that crosses
     /// the RPC boundary. Returning null when there's nothing to report avoids
@@ -185,7 +197,7 @@ public sealed class WorkerSteamService(SessionHost host) : ISteamService
     {
         if (sink is null) return null;
         return new Progress<UploadProgressDto>(p =>
-            sink.Report(new UploadProgress(p.Status, p.BytesProcessed, p.BytesTotal)));
+            sink.Report(new UploadProgress(p.Status, p.BytesProcessed, p.BytesTotal, p.PercentHint)));
     }
 
     private static WorkshopItem FromDto(WorkshopItemDto dto) => new()
@@ -203,5 +215,15 @@ public sealed class WorkerSteamService(SessionHost host) : ISteamService
         FileSize = dto.FileSize,
         OwnerId = new CSteamID(dto.OwnerId),
         IsOwner = dto.IsOwner,
+        AdditionalPreviews = dto.AdditionalPreviews.Select(FromDto).ToList(),
+    };
+
+    private static WorkshopPreview FromDto(WorkshopPreviewDto dto) => new()
+    {
+        Source = WorkshopPreviewSource.Existing,
+        PreviewType = (EItemPreviewType)dto.PreviewType,
+        OriginalIndex = dto.OriginalIndex,
+        RemoteUrl = dto.RemoteUrl,
+        OriginalFilename = dto.OriginalFilename,
     };
 }

@@ -17,5 +17,6 @@ public sealed record CreateItemRequestDto(
     List<string> Tags,
     string? Changelog,
     string? BranchMin,
-    string? BranchMax
+    string? BranchMax,
+    List<PreviewOpDto>? PreviewOps
 );

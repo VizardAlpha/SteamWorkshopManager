@@ -6,4 +6,4 @@ namespace SteamWorkshopManager.Services.Steam.Worker.Contracts.Dtos;
 /// IProgress across the pipe as notifications, so every worker-side Report
 /// lands on the shell-side handler with sub-ms latency.
 /// </summary>
-public sealed record UploadProgressDto(string Status, ulong BytesProcessed, ulong BytesTotal);
+public sealed record UploadProgressDto(string Status, ulong BytesProcessed, ulong BytesTotal, double PercentHint = 0);

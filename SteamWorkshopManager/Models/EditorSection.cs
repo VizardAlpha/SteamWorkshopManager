@@ -11,4 +11,5 @@ public enum EditorSection
     Versions,
     History,
     Dependencies,
+    Previews,
 }

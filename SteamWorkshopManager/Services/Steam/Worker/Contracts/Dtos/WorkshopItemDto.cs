@@ -24,5 +24,6 @@ public sealed record WorkshopItemDto(
     ulong SubscriberCount,
     long FileSize,
     ulong OwnerId,
-    bool IsOwner
+    bool IsOwner,
+    List<WorkshopPreviewDto> AdditionalPreviews
 );

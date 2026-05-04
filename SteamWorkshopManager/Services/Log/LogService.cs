@@ -16,6 +16,13 @@ public class LogService : ILogService
     private bool _isDebugEnabled;
     private readonly List<string> _sensitiveValues = [];
 
+    // Worker-side log forwarding: when enabled, file writes are skipped and
+    // entries go through _remoteSink (or buffer until it's attached).
+    private bool _useRemoteForwarding;
+    private Action<LogEntry>? _remoteSink;
+    private readonly Queue<LogEntry> _preSinkBuffer = new();
+    private const int MaxBufferedPreSink = 500;
+
     public bool IsDebugEnabled => _isDebugEnabled;
 
     private readonly string _userProfilePath;
@@ -29,6 +36,48 @@ public class LogService : ILogService
         Directory.CreateDirectory(appDataPath);
         _logFilePath = Path.Combine(appDataPath, $"debug_{DateTime.Now:yyyy-MM-dd}.log");
         _userProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+    }
+
+    /// <summary>Switches this process into worker mode: writes are forwarded
+    /// to the shell via <see cref="SetRemoteSink"/> instead of hitting disk.</summary>
+    public void EnableRemoteForwarding()
+    {
+        lock (_lock) _useRemoteForwarding = true;
+    }
+
+    /// <summary>Attaches/detaches the shell-side sink. Flushes any entries
+    /// produced before the sink was available.</summary>
+    public void SetRemoteSink(Action<LogEntry>? sink)
+    {
+        List<LogEntry>? toFlush = null;
+        lock (_lock)
+        {
+            _remoteSink = sink;
+            if (sink != null && _preSinkBuffer.Count > 0)
+            {
+                toFlush = new List<LogEntry>(_preSinkBuffer);
+                _preSinkBuffer.Clear();
+            }
+        }
+        if (toFlush == null || sink == null) return;
+        foreach (var entry in toFlush)
+        {
+            try { sink(entry); } catch { /* swallow sink failures */ }
+        }
+    }
+
+    /// <summary>Writes a forwarded entry from another process to this
+    /// LogService's file + memory ring. Bypasses remote-sink forwarding.</summary>
+    public void IngestRemote(LogLevel level, string source, string message, string? exception, DateTime timestampUtc)
+    {
+        if (!_isDebugEnabled) return;
+        var entry = new LogEntry(timestampUtc.ToLocalTime(), level, source, message, exception);
+        lock (_lock)
+        {
+            _logs.Add(entry);
+            if (_logs.Count > 1000) _logs.RemoveAt(0);
+        }
+        WriteEntryToDisk(entry);
     }
 
     /// <summary>
@@ -138,6 +187,32 @@ public class LogService : ILogService
 
     private void WriteToFile(LogEntry entry)
     {
+        Action<LogEntry>? sink;
+        bool buffer;
+        lock (_lock)
+        {
+            sink = _remoteSink;
+            buffer = _useRemoteForwarding && sink == null;
+            if (buffer)
+            {
+                _preSinkBuffer.Enqueue(entry);
+                while (_preSinkBuffer.Count > MaxBufferedPreSink)
+                    _preSinkBuffer.Dequeue();
+            }
+        }
+
+        if (sink != null)
+        {
+            try { sink(entry); } catch { /* swallow sink failures */ }
+            return;
+        }
+        if (buffer) return;
+
+        WriteEntryToDisk(entry);
+    }
+
+    private void WriteEntryToDisk(LogEntry entry)
+    {
         try
         {
             var levelStr = entry.Level switch
@@ -148,13 +223,9 @@ public class LogService : ILogService
                 LogLevel.Error => "ERROR",
                 _ => "?????"
             };
-
-            // Format: [timestamp] [LEVEL] [SourceClass] Message
             var line = $"[{entry.Timestamp:yyyy-MM-dd HH:mm:ss.fff}] [{levelStr}] [{entry.Source}] {entry.Message}";
             if (entry.Exception != null)
-            {
                 line += Environment.NewLine + entry.Exception;
-            }
 
             lock (_lock)
             {

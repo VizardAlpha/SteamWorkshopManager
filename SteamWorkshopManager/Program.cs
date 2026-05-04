@@ -25,6 +25,11 @@ sealed class Program
         // Session switching kills and respawns this process without touching the shell.
         if (SteamWorkerArgs.TryParse(args, out var workerArgs))
         {
+            // Route worker logs to the shell. Debug starts on so init logs
+            // get buffered; SetLogSinkAsync overrides this with the user's
+            // setting once the shell connects.
+            SteamWorkshopManager.Services.Log.LogService.Instance.EnableRemoteForwarding();
+            SteamWorkshopManager.Services.Log.LogService.Instance.SetDebugMode(true);
             SteamWorkerHost.RunAsync(workerArgs).GetAwaiter().GetResult();
             return;
         }

@@ -26,6 +26,14 @@ public partial interface ISteamWorker
     /// <summary>Liveness probe.</summary>
     Task<string> PingAsync();
 
+    /// <summary>Attaches the shell-side log sink and aligns the worker's
+    /// debug-mode flag with the user's setting. Pass <c>null</c> to detach.</summary>
+    Task SetLogSinkAsync(IProgress<LogEntryDto>? sink, bool debugEnabled);
+
+    /// <summary>Updates the worker's debug-mode flag at runtime when the
+    /// user toggles it from settings.</summary>
+    Task SetDebugModeAsync(bool enabled);
+
     /// <summary>Calls <c>SteamAPI.Init()</c> with the AppId the worker was spawned for.</summary>
     Task<SteamInitResult> InitializeAsync();
 

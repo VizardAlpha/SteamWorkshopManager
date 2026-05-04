@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using StreamJsonRpc;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Steam.Worker.Contracts;
+using SteamWorkshopManager.Services.Steam.Worker.Contracts.Dtos;
 
 namespace SteamWorkshopManager.Services.Steam.Worker.Client;
 
@@ -105,7 +106,21 @@ public sealed class SteamWorkerClient : IAsyncDisposable
         Proxy = _rpc.Attach<ISteamWorker>();
 
         Log.Info("Steam worker RPC channel attached");
+
+        // Fire-and-forget: the worker holds this call open for the lifetime
+        // of the session so its IProgress<LogEntryDto> sink stays valid.
+        _ = Proxy.SetLogSinkAsync(
+            new Progress<LogEntryDto>(IngestWorkerLog),
+            LogService.Instance.IsDebugEnabled);
     }
+
+    private static void IngestWorkerLog(LogEntryDto dto) =>
+        LogService.Instance.IngestRemote(
+            (LogLevel)dto.Level,
+            $"{dto.Source}:worker",
+            dto.Message,
+            dto.Exception,
+            dto.TimestampUtc);
 
     public async ValueTask DisposeAsync()
     {

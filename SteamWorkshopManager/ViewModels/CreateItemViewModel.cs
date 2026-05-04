@@ -176,15 +176,129 @@ public partial class CreateItemViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(IsInfoActive))]
     [NotifyPropertyChangedFor(nameof(IsVersionsActive))]
     [NotifyPropertyChangedFor(nameof(IsDependenciesActive))]
+    [NotifyPropertyChangedFor(nameof(IsPreviewsActive))]
     private EditorSection _activeSection = EditorSection.Info;
 
     public bool IsInfoActive => ActiveSection == EditorSection.Info;
     public bool IsVersionsActive => ActiveSection == EditorSection.Versions;
     public bool IsDependenciesActive => ActiveSection == EditorSection.Dependencies;
+    public bool IsPreviewsActive => ActiveSection == EditorSection.Previews;
 
     [RelayCommand] private void NavigateToInfo() => ActiveSection = EditorSection.Info;
     [RelayCommand] private void NavigateToVersions() => ActiveSection = EditorSection.Versions;
     [RelayCommand] private void NavigateToDependencies() => ActiveSection = EditorSection.Dependencies;
+    [RelayCommand] private void NavigateToPreviews() => ActiveSection = EditorSection.Previews;
+
+    /// <summary>Carousel sub-lists; mirrors the Workshop UI's per-type
+    /// sections. Everything is "new" since there's nothing on Steam yet.</summary>
+    public ObservableCollection<WorkshopPreview> ImagePreviews { get; } = [];
+    public ObservableCollection<WorkshopPreview> VideoPreviews { get; } = [];
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsYouTubeInputValid))]
+    private string _newYouTubeInput = string.Empty;
+
+    [ObservableProperty]
+    private string? _previewError;
+
+    public bool IsYouTubeInputValid => !string.IsNullOrWhiteSpace(ItemEditorViewModel.ParseYouTubeId(NewYouTubeInput));
+
+    [RelayCommand]
+    private async Task AddImagePreviewAsync()
+    {
+        PreviewError = null;
+        var paths = await _fileDialogService.OpenFilesAsync(
+            Loc["SelectPreviewImage"],
+            ".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp"
+        );
+        if (paths.Count == 0) return;
+
+        foreach (var path in paths)
+        {
+            var preview = new WorkshopPreview
+            {
+                Source = WorkshopPreviewSource.NewImage,
+                PreviewType = EItemPreviewType.k_EItemPreviewType_Image,
+                LocalPath = path,
+            };
+            try { preview.Thumbnail = new Bitmap(path); } catch { /* ignore */ }
+            ImagePreviews.Add(preview);
+        }
+    }
+
+    [RelayCommand]
+    private void AddYouTubeVideo()
+    {
+        PreviewError = null;
+        var id = ItemEditorViewModel.ParseYouTubeId(NewYouTubeInput);
+        if (string.IsNullOrEmpty(id))
+        {
+            PreviewError = Loc["InvalidYouTubeInput"];
+            return;
+        }
+        if (VideoPreviews.Any(p => p.VideoId == id))
+        {
+            PreviewError = Loc["YouTubeAlreadyAdded"];
+            return;
+        }
+
+        VideoPreviews.Add(new WorkshopPreview
+        {
+            Source = WorkshopPreviewSource.NewVideo,
+            PreviewType = EItemPreviewType.k_EItemPreviewType_YouTubeVideo,
+            VideoId = id,
+        });
+        NewYouTubeInput = string.Empty;
+    }
+
+    [RelayCommand]
+    private void RemovePreview(WorkshopPreview preview)
+    {
+        if (preview == null) return;
+        preview.Thumbnail?.Dispose();
+        FindContainingList(preview)?.Remove(preview);
+    }
+
+    [RelayCommand]
+    private void MovePreviewUp(WorkshopPreview preview)
+    {
+        var list = FindContainingList(preview);
+        if (list == null) return;
+        var index = list.IndexOf(preview);
+        if (index > 0) list.Move(index, index - 1);
+    }
+
+    [RelayCommand]
+    private void MovePreviewDown(WorkshopPreview preview)
+    {
+        var list = FindContainingList(preview);
+        if (list == null) return;
+        var index = list.IndexOf(preview);
+        if (index >= 0 && index < list.Count - 1) list.Move(index, index + 1);
+    }
+
+    private ObservableCollection<WorkshopPreview>? FindContainingList(WorkshopPreview p)
+    {
+        if (ImagePreviews.Contains(p)) return ImagePreviews;
+        if (VideoPreviews.Contains(p)) return VideoPreviews;
+        return null;
+    }
+
+    private List<PreviewOp> BuildPreviewOps()
+    {
+        var ops = new List<PreviewOp>();
+        foreach (var p in ImagePreviews)
+        {
+            if (!string.IsNullOrEmpty(p.LocalPath))
+                ops.Add(new PreviewOp.AddImage(p.LocalPath));
+        }
+        foreach (var p in VideoPreviews)
+        {
+            if (!string.IsNullOrEmpty(p.VideoId))
+                ops.Add(new PreviewOp.AddVideo(p.VideoId));
+        }
+        return ops;
+    }
 
     /// <summary>
     /// Saved drafts for the current AppId, ordered by most recently updated.
@@ -579,6 +693,8 @@ public partial class CreateItemViewModel : ViewModelBase
                 branchMax = SelectedBranchMax?.Name;
             }
 
+            var previewOps = BuildPreviewOps();
+
             var fileId = await _steamService.CreateItemAsync(
                 Title,
                 Description,
@@ -589,7 +705,8 @@ public partial class CreateItemViewModel : ViewModelBase
                 string.IsNullOrWhiteSpace(InitialChangelog) ? "Initial version" : InitialChangelog,
                 _uploadProgress,
                 branchMin,
-                branchMax
+                branchMax,
+                previewOps.Count > 0 ? previewOps : null
             );
 
             if (fileId.HasValue)

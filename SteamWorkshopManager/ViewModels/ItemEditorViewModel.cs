@@ -122,6 +122,7 @@ public partial class ItemEditorViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(IsVersionsActive))]
     [NotifyPropertyChangedFor(nameof(IsHistoryActive))]
     [NotifyPropertyChangedFor(nameof(IsDependenciesActive))]
+    [NotifyPropertyChangedFor(nameof(IsPreviewsActive))]
     private EditorSection _activeSection = EditorSection.Info;
 
     public bool IsInfoActive => ActiveSection == EditorSection.Info;
@@ -129,12 +130,14 @@ public partial class ItemEditorViewModel : ViewModelBase
     public bool IsVersionsActive => ActiveSection == EditorSection.Versions;
     public bool IsHistoryActive => ActiveSection == EditorSection.History;
     public bool IsDependenciesActive => ActiveSection == EditorSection.Dependencies;
+    public bool IsPreviewsActive => ActiveSection == EditorSection.Previews;
 
     [RelayCommand] private void NavigateToInfo() => ActiveSection = EditorSection.Info;
     [RelayCommand] private void NavigateToChangelog() => ActiveSection = EditorSection.Changelog;
     [RelayCommand] private void NavigateToVersions() => ActiveSection = EditorSection.Versions;
     [RelayCommand] private void NavigateToHistory() => ActiveSection = EditorSection.History;
     [RelayCommand] private void NavigateToDependencies() => ActiveSection = EditorSection.Dependencies;
+    [RelayCommand] private void NavigateToPreviews() => ActiveSection = EditorSection.Previews;
 
     [ObservableProperty]
     private string _newCustomTag = string.Empty;
@@ -253,6 +256,31 @@ public partial class ItemEditorViewModel : ViewModelBase
     public ObservableCollection<WorkshopTag> CustomTags { get; } = [];
     public ObservableCollection<ChangeLogEntry> ChangeLogHistory { get; } = [];
 
+    /// <summary>Carousel sub-lists shown in the Workshop UI as separate
+    /// sections; reorder is per-list, not interleaved.</summary>
+    public ObservableCollection<WorkshopPreview> ImagePreviews { get; } = [];
+    public ObservableCollection<WorkshopPreview> VideoPreviews { get; } = [];
+    public ObservableCollection<WorkshopPreview> ModelPreviews { get; } = [];
+
+    private readonly List<uint> _removedExistingIndices = [];
+
+    /// <summary>
+    /// Original Steam-side indices captured at load. Lets us issue
+    /// <see cref="PreviewOp.Remove"/> for *all* existing previews when a
+    /// reorder forces a full rebuild — the alternative would be to read the
+    /// current Steam state again at save time, which we want to avoid.
+    /// </summary>
+    private readonly List<uint> _originalExistingIndices = [];
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsYouTubeInputValid))]
+    private string _newYouTubeInput = string.Empty;
+
+    [ObservableProperty]
+    private string? _previewError;
+
+    public bool IsYouTubeInputValid => !string.IsNullOrWhiteSpace(ParseYouTubeId(NewYouTubeInput));
+
     public static IEnumerable<VisibilityType> VisibilityOptions =>
         Enum.GetValues<VisibilityType>();
 
@@ -344,6 +372,48 @@ public partial class ItemEditorViewModel : ViewModelBase
 
         // Load preview image
         LoadPreviewImageAsync(item.PreviewImageUrl);
+
+        // Split existing previews into the three Workshop sections (images,
+        // videos, 3D models). New entries are appended to the matching list.
+        foreach (var preview in item.AdditionalPreviews)
+        {
+            ListFor(preview).Add(preview);
+            _originalExistingIndices.Add(preview.OriginalIndex);
+            if (preview.IsImage && !string.IsNullOrEmpty(preview.RemoteUrl))
+                LoadPreviewThumbnailAsync(preview);
+        }
+    }
+
+    private ObservableCollection<WorkshopPreview> ListFor(WorkshopPreview p)
+    {
+        if (p.IsVideo) return VideoPreviews;
+        if (p.IsSketchfab) return ModelPreviews;
+        return ImagePreviews;
+    }
+
+    private ObservableCollection<WorkshopPreview>? FindContainingList(WorkshopPreview p)
+    {
+        if (ImagePreviews.Contains(p)) return ImagePreviews;
+        if (VideoPreviews.Contains(p)) return VideoPreviews;
+        if (ModelPreviews.Contains(p)) return ModelPreviews;
+        return null;
+    }
+
+    private async void LoadPreviewThumbnailAsync(WorkshopPreview preview)
+    {
+        try
+        {
+            var response = await HttpClient.GetAsync(preview.RemoteUrl);
+            if (response.IsSuccessStatusCode)
+            {
+                var stream = await response.Content.ReadAsStreamAsync();
+                preview.Thumbnail = new Bitmap(stream);
+            }
+        }
+        catch
+        {
+            // Ignore preview thumbnail failures
+        }
     }
 
     private void UpdateTagsLastUpdatedText()
@@ -448,6 +518,8 @@ public partial class ItemEditorViewModel : ViewModelBase
                 branchMax = SelectedBranchMax?.Name;
             }
 
+            var previewOps = await BuildPreviewOpsAsync();
+
             var success = await _steamService.UpdateItemAsync(
                 _originalItem.PublishedFileId,
                 Title != _originalItem.Title ? Title : null,
@@ -459,7 +531,8 @@ public partial class ItemEditorViewModel : ViewModelBase
                 string.IsNullOrWhiteSpace(NewChangelog) ? null : NewChangelog,
                 _uploadProgress,
                 branchMin,
-                branchMax
+                branchMax,
+                previewOps.Count > 0 ? previewOps : null
             );
 
             if (success)
@@ -1088,6 +1161,237 @@ public partial class ItemEditorViewModel : ViewModelBase
             return urlId;
 
         return 0;
+    }
+
+    [RelayCommand]
+    private async Task AddImagePreviewAsync()
+    {
+        PreviewError = null;
+        var paths = await _fileDialogService.OpenFilesAsync(
+            Loc["SelectPreviewImage"],
+            ".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp"
+        );
+        if (paths.Count == 0) return;
+
+        foreach (var path in paths)
+        {
+            var preview = new WorkshopPreview
+            {
+                Source = WorkshopPreviewSource.NewImage,
+                PreviewType = EItemPreviewType.k_EItemPreviewType_Image,
+                LocalPath = path,
+            };
+            try { preview.Thumbnail = new Bitmap(path); } catch { /* ignore */ }
+            ImagePreviews.Add(preview);
+        }
+    }
+
+    [RelayCommand]
+    private void AddYouTubeVideo()
+    {
+        PreviewError = null;
+        var id = ParseYouTubeId(NewYouTubeInput);
+        if (string.IsNullOrEmpty(id))
+        {
+            PreviewError = Loc["InvalidYouTubeInput"];
+            return;
+        }
+        if (VideoPreviews.Any(p => p.VideoId == id || p.RemoteUrl == id))
+        {
+            PreviewError = Loc["YouTubeAlreadyAdded"];
+            return;
+        }
+
+        VideoPreviews.Add(new WorkshopPreview
+        {
+            Source = WorkshopPreviewSource.NewVideo,
+            PreviewType = EItemPreviewType.k_EItemPreviewType_YouTubeVideo,
+            VideoId = id,
+        });
+        NewYouTubeInput = string.Empty;
+    }
+
+    [RelayCommand]
+    private void RemovePreview(WorkshopPreview preview)
+    {
+        if (preview == null) return;
+        if (preview.Source == WorkshopPreviewSource.Existing)
+            _removedExistingIndices.Add(preview.OriginalIndex);
+
+        preview.Thumbnail?.Dispose();
+        FindContainingList(preview)?.Remove(preview);
+    }
+
+    [RelayCommand]
+    private void MovePreviewUp(WorkshopPreview preview)
+    {
+        var list = FindContainingList(preview);
+        if (list == null) return;
+        var index = list.IndexOf(preview);
+        if (index > 0) list.Move(index, index - 1);
+    }
+
+    [RelayCommand]
+    private void MovePreviewDown(WorkshopPreview preview)
+    {
+        var list = FindContainingList(preview);
+        if (list == null) return;
+        var index = list.IndexOf(preview);
+        if (index >= 0 && index < list.Count - 1) list.Move(index, index + 1);
+    }
+
+    /// <summary>
+    /// Pulls the 11-character video ID out of a YouTube URL or returns the
+    /// input itself when it already looks like a bare ID. Returns null when
+    /// nothing matches the expected shape.
+    /// </summary>
+    internal static string? ParseYouTubeId(string? input)
+    {
+        if (string.IsNullOrWhiteSpace(input)) return null;
+        input = input.Trim();
+
+        if (Regex.IsMatch(input, @"^[A-Za-z0-9_-]{11}$"))
+            return input;
+
+        var v = Regex.Match(input, @"[?&]v=([A-Za-z0-9_-]{11})");
+        if (v.Success) return v.Groups[1].Value;
+
+        var shortLink = Regex.Match(input, @"youtu\.be/([A-Za-z0-9_-]{11})");
+        if (shortLink.Success) return shortLink.Groups[1].Value;
+
+        var embed = Regex.Match(input, @"youtube\.com/embed/([A-Za-z0-9_-]{11})");
+        if (embed.Success) return embed.Groups[1].Value;
+
+        return null;
+    }
+
+    /// <summary>
+    /// Steam's UGC API has no "move" verb, so any per-list reorder forces a
+    /// full rebuild. A list is "in order" when existing entries appear in
+    /// OriginalIndex-ascending order with new entries appended at the end.
+    /// Models are read-only so they're skipped.
+    /// </summary>
+    private bool IsReorderNeeded() =>
+        IsListOutOfOrder(ImagePreviews) || IsListOutOfOrder(VideoPreviews);
+
+    private static bool IsListOutOfOrder(IEnumerable<WorkshopPreview> list)
+    {
+        var seenNew = false;
+        uint? lastIdx = null;
+        foreach (var p in list)
+        {
+            if (p.Source == WorkshopPreviewSource.Existing)
+            {
+                if (seenNew) return true;
+                if (lastIdx is { } prev && p.OriginalIndex < prev) return true;
+                lastIdx = p.OriginalIndex;
+            }
+            else
+            {
+                seenNew = true;
+            }
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Builds the preview-op list passed to the Steam update RPC. Hits the
+    /// fast path (single Remove/Add ops) when the user only added or removed
+    /// entries; falls back to a full rebuild — including downloading any
+    /// existing image we still want to keep — when the in-list order no
+    /// longer matches what Steam will hold after a naive replay.
+    /// </summary>
+    private async Task<List<PreviewOp>> BuildPreviewOpsAsync()
+    {
+        if (IsReorderNeeded())
+            return await BuildRebuildOpsAsync();
+
+        var ops = new List<PreviewOp>();
+        foreach (var idx in _removedExistingIndices)
+            ops.Add(new PreviewOp.Remove(idx));
+        foreach (var p in ImagePreviews) AppendNewPreviewOp(ops, p);
+        foreach (var p in VideoPreviews) AppendNewPreviewOp(ops, p);
+        return ops;
+    }
+
+    /// <summary>
+    /// Common emit point for a preview entry the user has just added. Picks
+    /// the right Steam UGC entrypoint based on the preview type — local
+    /// image, YouTube video, or Sketchfab model ID.
+    /// </summary>
+    private static void AppendNewPreviewOp(List<PreviewOp> ops, WorkshopPreview p)
+    {
+        switch (p.Source)
+        {
+            case WorkshopPreviewSource.NewImage when !string.IsNullOrEmpty(p.LocalPath):
+                ops.Add(new PreviewOp.AddImage(p.LocalPath));
+                break;
+            case WorkshopPreviewSource.NewVideo when !string.IsNullOrEmpty(p.VideoId):
+                ops.Add(new PreviewOp.AddVideo(p.VideoId));
+                break;
+        }
+    }
+
+    private async Task<List<PreviewOp>> BuildRebuildOpsAsync()
+    {
+        var ops = new List<PreviewOp>();
+
+        // Sketchfabs the user kept stay on Steam untouched — the SDK doesn't
+        // let us re-add them, so wiping them here would silently delete data.
+        var preserve = ModelPreviews
+            .Where(m => m.Source == WorkshopPreviewSource.Existing)
+            .Select(m => m.OriginalIndex)
+            .ToHashSet();
+
+        foreach (var idx in _originalExistingIndices)
+        {
+            if (preserve.Contains(idx)) continue;
+            ops.Add(new PreviewOp.Remove(idx));
+        }
+
+        var tempDir = Path.Combine(Path.GetTempPath(), "SteamWorkshopManager", "previews", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempDir);
+
+        foreach (var p in ImagePreviews)
+        {
+            var path = p.LocalPath;
+            if (string.IsNullOrEmpty(path) && !string.IsNullOrEmpty(p.RemoteUrl))
+                path = await DownloadPreviewToTempAsync(p.RemoteUrl, tempDir);
+            if (!string.IsNullOrEmpty(path))
+                ops.Add(new PreviewOp.AddImage(path));
+        }
+
+        foreach (var p in VideoPreviews)
+        {
+            var id = p.Source == WorkshopPreviewSource.NewVideo ? p.VideoId : p.RemoteUrl;
+            if (!string.IsNullOrEmpty(id))
+                ops.Add(new PreviewOp.AddVideo(id));
+        }
+
+        return ops;
+    }
+
+    private static async Task<string?> DownloadPreviewToTempAsync(string url, string tempDir)
+    {
+        try
+        {
+            using var response = await HttpClient.GetAsync(url);
+            if (!response.IsSuccessStatusCode) return null;
+
+            // Steam CDN URLs typically end in .png/.jpg; fall back to .jpg
+            // when there's no extension we recognize.
+            var ext = Path.GetExtension(new Uri(url).AbsolutePath);
+            if (string.IsNullOrEmpty(ext) || ext.Length > 5) ext = ".jpg";
+
+            var path = Path.Combine(tempDir, Guid.NewGuid().ToString("N") + ext);
+            await using var fs = File.Create(path);
+            await response.Content.CopyToAsync(fs);
+            return path;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     [RelayCommand]

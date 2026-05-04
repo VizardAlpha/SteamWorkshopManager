@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using SteamWorkshopManager.Models;
 using Steamworks;
@@ -119,6 +120,7 @@ public class SteamService : ISteamService
 
         SteamUGC.SetReturnLongDescription(query, true);
         SteamUGC.SetReturnMetadata(query, true);
+        SteamUGC.SetReturnAdditionalPreviews(query, true);
 
         var tcs = new TaskCompletionSource<SteamUGCQueryCompleted_t>();
         var callResult = CallResult<SteamUGCQueryCompleted_t>.Create((result, failure) =>
@@ -183,6 +185,8 @@ public class SteamService : ISteamService
                 SteamUGC.GetQueryUGCStatistic(queryResult.m_handle, i,
                     EItemStatistic.k_EItemStatistic_NumSubscriptions, out subscribers);
 
+                var additionalPreviews = ReadAdditionalPreviews(queryResult.m_handle, i);
+
                 items.Add(new WorkshopItem
                 {
                     PublishedFileId = details.m_nPublishedFileId,
@@ -196,7 +200,8 @@ public class SteamService : ISteamService
                     SubscriberCount = subscribers,
                     FileSize = details.m_nFileSize,
                     OwnerId = ownerId,
-                    IsOwner = ownerId == currentUserId
+                    IsOwner = ownerId == currentUserId,
+                    AdditionalPreviews = additionalPreviews,
                 });
             }
         }
@@ -209,11 +214,13 @@ public class SteamService : ISteamService
     public async Task<PublishedFileId_t?> CreateItemAsync(string title, string description,
         string contentFolderPath, string? previewImagePath, VisibilityType visibility,
         List<string> tags, string? changelog, IProgress<UploadProgress>? progress = null,
-        string? branchMin = null, string? branchMax = null)
+        string? branchMin = null, string? branchMax = null,
+        IReadOnlyList<PreviewOp>? previewOps = null)
     {
         if (!_isInitialized)
         {
             Log.Warning("CreateItemAsync called but Steam is not initialized");
+            EnsureProgressDismissed(progress, "");
             return null;
         }
 
@@ -221,7 +228,11 @@ public class SteamService : ISteamService
         Log.Debug($"Content folder: {contentFolderPath}, Preview: {previewImagePath ?? "none"}, Visibility: {visibility}");
         Log.Debug($"Tags: {string.Join(", ", tags)}");
 
-        progress?.Report(new UploadProgress(GetString("CreatingItem"), 0, 100));
+        var expectedTotal = ComputeExpectedTotalBytes(contentFolderPath, previewImagePath, previewOps);
+        ReportProgress(progress, GetString("CreatingItem"), 0, expectedTotal, 0);
+
+        try
+        {
 
         // Create item
         var createTcs = new TaskCompletionSource<CreateItemResult_t>();
@@ -263,7 +274,7 @@ public class SteamService : ISteamService
         var fileId = createResult.m_nPublishedFileId;
         Log.Info($"Item created successfully with FileId: {fileId}");
 
-        progress?.Report(new UploadProgress(GetString("ConfiguringItem"), 10, 100));
+        ReportProgress(progress, GetString("ConfiguringItem"), 0, expectedTotal, 5);
 
         // Update with content
         var updateHandle = SteamUGC.StartItemUpdate(
@@ -288,6 +299,8 @@ public class SteamService : ISteamService
             Log.Debug($"SetRequiredGameVersions(min='{branchMin ?? ""}', max='{branchMax ?? ""}'): {versionResult}");
         }
 
+        ApplyPreviewOps(updateHandle, previewOps);
+
         var submitTcs = new TaskCompletionSource<SubmitItemUpdateResult_t>();
         var submitCallResult = CallResult<SubmitItemUpdateResult_t>.Create((result, failure) =>
         {
@@ -297,7 +310,7 @@ public class SteamService : ISteamService
                 submitTcs.SetResult(result);
         });
 
-        progress?.Report(new UploadProgress(GetString("Uploading"), 20, 100));
+        ReportProgress(progress, GetString("Uploading"), 0, expectedTotal, 10);
 
         var submitHandle = SteamUGC.SubmitItemUpdate(updateHandle, changelog ?? "Initial version");
         submitCallResult.Set(submitHandle);
@@ -306,23 +319,7 @@ public class SteamService : ISteamService
         while (!submitTcs.Task.IsCompleted && DateTime.UtcNow < timeout)
         {
             SteamAPI.RunCallbacks();
-
-            // Get upload progress
-            var status = SteamUGC.GetItemUpdateProgress(updateHandle, out var bytesProcessed, out var bytesTotal);
-            if (bytesTotal > 0)
-            {
-                var statusText = status switch
-                {
-                    EItemUpdateStatus.k_EItemUpdateStatusPreparingConfig => GetString("Preparing"),
-                    EItemUpdateStatus.k_EItemUpdateStatusPreparingContent => GetString("PreparingContent"),
-                    EItemUpdateStatus.k_EItemUpdateStatusUploadingContent => GetString("UploadingContent"),
-                    EItemUpdateStatus.k_EItemUpdateStatusUploadingPreviewFile => GetString("UploadingImage"),
-                    EItemUpdateStatus.k_EItemUpdateStatusCommittingChanges => GetString("Finalizing"),
-                    _ => GetString("Uploading")
-                };
-                progress?.Report(new UploadProgress(statusText, bytesProcessed, bytesTotal));
-            }
-
+            PollAndReportProgress(updateHandle, progress, expectedTotal);
             await Task.Delay(100);
         }
 
@@ -336,23 +333,30 @@ public class SteamService : ISteamService
         if (submitResult.m_eResult == EResult.k_EResultOK)
         {
             Log.Info($"Item '{title}' published successfully");
-            progress?.Report(new UploadProgress(GetString("Done"), 100, 100));
+            ReportProgress(progress, GetString("Done"), expectedTotal, expectedTotal, 100);
             return fileId;
         }
 
         Log.Error($"Failed to submit item: {SteamErrorMapper.GetTechnicalDescription(submitResult.m_eResult)}");
         Log.Error($"User message: {SteamErrorMapper.GetErrorMessage(submitResult.m_eResult)}");
         return null;
+        }
+        finally
+        {
+            EnsureProgressDismissed(progress, GetString("OperationFailed"));
+        }
     }
 
     public async Task<bool> UpdateItemAsync(PublishedFileId_t fileId, string? title,
         string? description, string? contentFolderPath, string? previewImagePath,
         VisibilityType? visibility, List<string>? tags, string? changelog,
-        IProgress<UploadProgress>? progress = null, string? branchMin = null, string? branchMax = null)
+        IProgress<UploadProgress>? progress = null, string? branchMin = null, string? branchMax = null,
+        IReadOnlyList<PreviewOp>? previewOps = null)
     {
         if (!_isInitialized)
         {
             Log.Warning("UpdateItemAsync called but Steam is not initialized");
+            EnsureProgressDismissed(progress, "");
             return false;
         }
 
@@ -360,7 +364,11 @@ public class SteamService : ISteamService
         Log.Debug($"Content folder: {contentFolderPath ?? "(unchanged)"}, Preview: {previewImagePath ?? "(unchanged)"}");
         if (tags != null) Log.Debug($"Tags: {string.Join(", ", tags)}");
 
-        progress?.Report(new UploadProgress(GetString("PreparingUpdate"), 0, 100));
+        var expectedTotal = ComputeExpectedTotalBytes(contentFolderPath, previewImagePath, previewOps);
+        ReportProgress(progress, GetString("PreparingUpdate"), 0, expectedTotal, 0);
+
+        try
+        {
 
         var updateHandle = SteamUGC.StartItemUpdate(
             new AppId_t(AppConfig.AppId),
@@ -392,6 +400,8 @@ public class SteamService : ISteamService
             Log.Debug($"SetRequiredGameVersions(min='{branchMin ?? ""}', max='{branchMax ?? ""}'): {versionResult}");
         }
 
+        ApplyPreviewOps(updateHandle, previewOps);
+
         var tcs = new TaskCompletionSource<SubmitItemUpdateResult_t>();
         var callResult = CallResult<SubmitItemUpdateResult_t>.Create((result, failure) =>
         {
@@ -401,7 +411,7 @@ public class SteamService : ISteamService
                 tcs.SetResult(result);
         });
 
-        progress?.Report(new UploadProgress(GetString("Uploading"), 10, 100));
+        ReportProgress(progress, GetString("Uploading"), 0, expectedTotal, 5);
 
         var handle = SteamUGC.SubmitItemUpdate(updateHandle, changelog ?? "");
         callResult.Set(handle);
@@ -410,23 +420,7 @@ public class SteamService : ISteamService
         while (!tcs.Task.IsCompleted && DateTime.UtcNow < timeout)
         {
             SteamAPI.RunCallbacks();
-
-            // Get upload progress
-            var status = SteamUGC.GetItemUpdateProgress(updateHandle, out var bytesProcessed, out var bytesTotal);
-            if (bytesTotal > 0)
-            {
-                var statusText = status switch
-                {
-                    EItemUpdateStatus.k_EItemUpdateStatusPreparingConfig => GetString("Preparing"),
-                    EItemUpdateStatus.k_EItemUpdateStatusPreparingContent => GetString("PreparingContent"),
-                    EItemUpdateStatus.k_EItemUpdateStatusUploadingContent => GetString("UploadingContent"),
-                    EItemUpdateStatus.k_EItemUpdateStatusUploadingPreviewFile => GetString("UploadingImage"),
-                    EItemUpdateStatus.k_EItemUpdateStatusCommittingChanges => GetString("Finalizing"),
-                    _ => GetString("Uploading")
-                };
-                progress?.Report(new UploadProgress(statusText, bytesProcessed, bytesTotal));
-            }
-
+            PollAndReportProgress(updateHandle, progress, expectedTotal);
             await Task.Delay(100);
         }
 
@@ -440,13 +434,18 @@ public class SteamService : ISteamService
         if (result.m_eResult == EResult.k_EResultOK)
         {
             Log.Info($"Item {fileId} updated successfully");
-            progress?.Report(new UploadProgress(GetString("Done"), 100, 100));
+            ReportProgress(progress, GetString("Done"), expectedTotal, expectedTotal, 100);
             return true;
         }
 
         Log.Error($"Failed to update item: {SteamErrorMapper.GetTechnicalDescription(result.m_eResult)}");
         Log.Error($"User message: {SteamErrorMapper.GetErrorMessage(result.m_eResult)}");
         return false;
+        }
+        finally
+        {
+            EnsureProgressDismissed(progress, GetString("OperationFailed"));
+        }
     }
 
     public async Task<bool> DeleteItemAsync(PublishedFileId_t fileId)
@@ -496,6 +495,191 @@ public class SteamService : ISteamService
         return false;
     }
     
+    /// <summary>
+    /// Sum the sizes of every artifact actually being shipped to Steam: the
+    /// content folder, the main preview image, and any local image files in
+    /// the preview-ops list. Returns 0 for metadata-only updates (tags,
+    /// title, visibility…) so the UI doesn't display a phantom "0 / 0 MB".
+    /// </summary>
+    private static ulong ComputeExpectedTotalBytes(
+        string? contentFolderPath, string? previewImagePath, IReadOnlyList<PreviewOp>? previewOps)
+    {
+        ulong total = 0;
+        if (!string.IsNullOrEmpty(contentFolderPath) && Directory.Exists(contentFolderPath))
+        {
+            try
+            {
+                foreach (var f in new DirectoryInfo(contentFolderPath).GetFiles("*", SearchOption.AllDirectories))
+                    total += (ulong)f.Length;
+            }
+            catch { /* ignore filesystem errors — surface 0 */ }
+        }
+        if (!string.IsNullOrEmpty(previewImagePath) && File.Exists(previewImagePath))
+        {
+            try { total += (ulong)new FileInfo(previewImagePath).Length; } catch { /* ignore */ }
+        }
+        if (previewOps != null)
+        {
+            foreach (var op in previewOps)
+            {
+                if (op is PreviewOp.AddImage img && File.Exists(img.FilePath))
+                {
+                    try { total += (ulong)new FileInfo(img.FilePath).Length; } catch { /* ignore */ }
+                }
+            }
+        }
+        return total;
+    }
+
+    /// <summary>
+    /// Single emit point for upload progress so we can keep a stable
+    /// presentation: bytes shown only when we're really uploading something
+    /// (<paramref name="expectedTotal"/> &gt; 0); otherwise the UI only
+    /// shows the percentage hint, avoiding the "0 / 0 MB" artifact for
+    /// metadata-only updates.
+    /// </summary>
+    private static void ReportProgress(IProgress<UploadProgress>? progress,
+        string status, ulong bytesProcessed, ulong expectedTotal, double percentHint)
+    {
+        if (progress is null) return;
+        if (expectedTotal > 0)
+            progress.Report(new UploadProgress(status, bytesProcessed, expectedTotal, percentHint));
+        else
+            progress.Report(new UploadProgress(status, 0, 0, percentHint));
+    }
+
+    /// <summary>Final progress report so the UI banner clears on every exit
+    /// path, including timeouts and Steam-side failures.</summary>
+    private static void EnsureProgressDismissed(IProgress<UploadProgress>? progress, string status)
+    {
+        progress?.Report(new UploadProgress(status, 0, 0, 100));
+    }
+
+    /// <summary>
+    /// Translates Steam's per-phase <c>GetItemUpdateProgress</c> readout into
+    /// a single, stable progress signal. We report bytes against the
+    /// pre-computed <paramref name="expectedTotal"/> rather than Steam's
+    /// per-phase total so the user doesn't see the displayed total jump
+    /// between phases (preview file = 1 MB, content = 100 MB, etc.).
+    /// </summary>
+    private static void PollAndReportProgress(UGCUpdateHandle_t updateHandle,
+        IProgress<UploadProgress>? progress, ulong expectedTotal)
+    {
+        if (progress is null) return;
+
+        var status = SteamUGC.GetItemUpdateProgress(updateHandle, out var bytesProcessed, out var bytesTotal);
+        var statusText = status switch
+        {
+            EItemUpdateStatus.k_EItemUpdateStatusPreparingConfig => GetString("Preparing"),
+            EItemUpdateStatus.k_EItemUpdateStatusPreparingContent => GetString("PreparingContent"),
+            EItemUpdateStatus.k_EItemUpdateStatusUploadingContent => GetString("UploadingContent"),
+            EItemUpdateStatus.k_EItemUpdateStatusUploadingPreviewFile => GetString("UploadingImage"),
+            EItemUpdateStatus.k_EItemUpdateStatusCommittingChanges => GetString("Finalizing"),
+            _ => GetString("Uploading")
+        };
+
+        // During the actual content upload, Steam reports bytes against the
+        // content size — close enough to expectedTotal that we can use the
+        // raw values directly and watch them flow.
+        if (status == EItemUpdateStatus.k_EItemUpdateStatusUploadingContent && bytesTotal > 0)
+        {
+            progress.Report(new UploadProgress(statusText, bytesProcessed, bytesTotal));
+            return;
+        }
+
+        // Other phases: keep the total stable and drive the bar by hint
+        // alone, rather than briefly flashing a different scale (e.g. the
+        // preview file phase reports a sub-MB total that would replace a
+        // multi-GB content total on screen).
+        var hint = status switch
+        {
+            EItemUpdateStatus.k_EItemUpdateStatusPreparingConfig => 5.0,
+            EItemUpdateStatus.k_EItemUpdateStatusPreparingContent => 10.0,
+            EItemUpdateStatus.k_EItemUpdateStatusUploadingPreviewFile => 15.0,
+            EItemUpdateStatus.k_EItemUpdateStatusCommittingChanges => 95.0,
+            _ => 0.0,
+        };
+        ReportProgress(progress, statusText, 0, expectedTotal, hint);
+    }
+
+    /// <summary>
+    /// Apply staged preview mutations (add image / add video / remove by
+    /// index) to an open update handle. Removals run first, sorted by
+    /// descending index so the in-flight reindexing Steam performs after
+    /// each <c>RemoveItemPreview</c> doesn't shift indices we still need to
+    /// reference.
+    /// </summary>
+    private static void ApplyPreviewOps(UGCUpdateHandle_t handle, IReadOnlyList<PreviewOp>? ops)
+    {
+        if (ops == null || ops.Count == 0) return;
+
+        Log.Info($"Applying {ops.Count} preview op(s) — final list will reflect Add order below");
+
+        var removes = new List<uint>();
+        foreach (var op in ops)
+        {
+            if (op is PreviewOp.Remove r) removes.Add(r.Index);
+        }
+        removes.Sort((a, b) => b.CompareTo(a));
+        foreach (var idx in removes)
+        {
+            var ok = SteamUGC.RemoveItemPreview(handle, idx);
+            Log.Info($"  RemoveItemPreview(index={idx}) = {ok}");
+        }
+
+        var addPosition = 0;
+        foreach (var op in ops)
+        {
+            switch (op)
+            {
+                case PreviewOp.AddImage img:
+                    var imgOk = SteamUGC.AddItemPreviewFile(handle, img.FilePath,
+                        EItemPreviewType.k_EItemPreviewType_Image);
+                    Log.Info($"  [pos {addPosition++}] AddItemPreviewFile(Image, '{img.FilePath}') = {imgOk}");
+                    break;
+                case PreviewOp.AddVideo vid:
+                    var vidOk = SteamUGC.AddItemPreviewVideo(handle, vid.YouTubeId);
+                    Log.Info($"  [pos {addPosition++}] AddItemPreviewVideo('{vid.YouTubeId}') = {vidOk}");
+                    break;
+            }
+        }
+    }
+
+    private static List<WorkshopPreview> ReadAdditionalPreviews(UGCQueryHandle_t handle, uint itemIndex)
+    {
+        var result = new List<WorkshopPreview>();
+        var count = SteamUGC.GetQueryUGCNumAdditionalPreviews(handle, itemIndex);
+        Log.Debug($"Item {itemIndex}: {count} additional preview(s)");
+
+        for (uint p = 0; p < count; p++)
+        {
+            if (!SteamUGC.GetQueryUGCAdditionalPreview(handle, itemIndex, p,
+                    out var urlOrVideoId, 1024,
+                    out var originalFilename, 256,
+                    out var previewType))
+            {
+                Log.Debug($"GetQueryUGCAdditionalPreview failed at item={itemIndex} preview={p}");
+                continue;
+            }
+            Log.Debug($"  preview {p}: type={previewType}, url='{urlOrVideoId}', file='{originalFilename}'");
+
+            result.Add(new WorkshopPreview
+            {
+                Source = WorkshopPreviewSource.Existing,
+                PreviewType = previewType,
+                OriginalIndex = p,
+                RemoteUrl = urlOrVideoId,
+                OriginalFilename = originalFilename,
+            });
+        }
+
+        // Sort defensively in case Steam ever returns previews out of order;
+        // every downstream consumer (editor list, reorder detection, save-time
+        // ops) assumes the list is OriginalIndex-ascending.
+        result.Sort((a, b) => a.OriginalIndex.CompareTo(b.OriginalIndex));
+        return result;
+    }
+
     private static VisibilityType MapVisibility(ERemoteStoragePublishedFileVisibility visibility) =>
         visibility switch
         {
