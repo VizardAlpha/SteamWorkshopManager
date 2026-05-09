@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Models;
 using SteamWorkshopManager.Services.Core;
 using SteamWorkshopManager.Services.Log;
@@ -116,9 +117,8 @@ public class SessionManager
             var appIdContent = appId.ToString();
 
             // Write to AppContext.BaseDirectory
-            var basePath = Path.Combine(AppContext.BaseDirectory, "steam_appid.txt");
-            await File.WriteAllTextAsync(basePath, appIdContent);
-            Log.Info($"Updated steam_appid.txt to {appId} at {basePath}");
+            await File.WriteAllTextAsync(AppPaths.SteamAppIdFile, appIdContent);
+            Log.Info($"Updated steam_appid.txt to {appId} at {AppPaths.SteamAppIdFile}");
 
             // Also write to current working directory if different
             var workingDir = Environment.CurrentDirectory;
@@ -167,13 +167,12 @@ public class SessionManager
     {
         try
         {
-            var appIdPath = Path.Combine(AppContext.BaseDirectory, "steam_appid.txt");
-            if (!File.Exists(appIdPath))
+            if (!File.Exists(AppPaths.SteamAppIdFile))
             {
                 return null;
             }
 
-            var content = await File.ReadAllTextAsync(appIdPath);
+            var content = await File.ReadAllTextAsync(AppPaths.SteamAppIdFile);
             if (!uint.TryParse(content.Trim(), out var appId))
             {
                 return null;

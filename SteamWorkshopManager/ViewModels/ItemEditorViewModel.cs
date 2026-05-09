@@ -8,11 +8,15 @@ using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Input.Platform;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using QRCoder;
+using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Models;
 using Steamworks;
 using SteamWorkshopManager.Services.Core;
@@ -95,21 +99,24 @@ public partial class ItemEditorViewModel : ViewModelBase
     private bool _showDeleteConfirmation;
 
     /// <summary>
-    /// Forces the user to type the literal "DELETE" before the destructive
-    /// button enables — same pattern GitHub uses for repo deletion. Mirrors
-    /// the bulk-delete flow in <see cref="ItemListViewModel"/>.
+    /// Forces the user to type the shared <see cref="DangerousActions.ConfirmationPassphrase"/>
+    /// before the destructive button enables — same pattern GitHub uses for
+    /// repo deletion. Mirrors the bulk-delete and delete-session flows.
     /// </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsDeleteConfirmed))]
     private string _deleteTypedConfirmation = string.Empty;
 
-    private const string DeletePassphrase = "DELETE";
-
     public bool IsDeleteConfirmed =>
-        ShowDeleteConfirmation && string.Equals(DeleteTypedConfirmation, DeletePassphrase, StringComparison.Ordinal);
+        ShowDeleteConfirmation && string.Equals(DeleteTypedConfirmation, DangerousActions.ConfirmationPassphrase, StringComparison.Ordinal);
 
     [ObservableProperty]
     private string? _errorMessage;
+
+    [ObservableProperty]
+    private bool _isModIdCopied;
+
+    public string ModId => ((ulong)_originalItem.PublishedFileId).ToString();
 
     /// <summary>
     /// Side-panel nav: tracks which editor section is currently visible.
@@ -138,6 +145,31 @@ public partial class ItemEditorViewModel : ViewModelBase
     [RelayCommand] private void NavigateToHistory() => ActiveSection = EditorSection.History;
     [RelayCommand] private void NavigateToDependencies() => ActiveSection = EditorSection.Dependencies;
     [RelayCommand] private void NavigateToPreviews() => ActiveSection = EditorSection.Previews;
+
+    [RelayCommand]
+    private async Task CopyModIdAsync()
+    {
+        await CopyToClipboardAsync(ModId);
+        IsModIdCopied = true;
+        try { await Task.Delay(TimeSpan.FromSeconds(2)); }
+        finally { IsModIdCopied = false; }
+    }
+
+    private static async Task CopyToClipboardAsync(string text)
+    {
+        try
+        {
+            if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+                && desktop.MainWindow?.Clipboard is { } clipboard)
+            {
+                await clipboard.SetTextAsync(text);
+            }
+        }
+        catch
+        {
+            // Clipboard failures are not actionable for the user
+        }
+    }
 
     [ObservableProperty]
     private string _newCustomTag = string.Empty;
@@ -1349,7 +1381,7 @@ public partial class ItemEditorViewModel : ViewModelBase
             ops.Add(new PreviewOp.Remove(idx));
         }
 
-        var tempDir = Path.Combine(Path.GetTempPath(), "SteamWorkshopManager", "previews", Guid.NewGuid().ToString("N"));
+        var tempDir = AppPaths.TempPreviewDir();
         Directory.CreateDirectory(tempDir);
 
         foreach (var p in ImagePreviews)

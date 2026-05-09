@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
+using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Models;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Session;
@@ -18,11 +19,6 @@ public class WorkshopDownloadService
     private readonly HttpClient _httpClient;
     private readonly SessionHost _host;
 
-    private static readonly string WorkshopBasePath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "SteamWorkshopManager",
-        "workshop"
-    );
 
     public WorkshopDownloadService(SessionHost host, HttpClient? httpClient = null)
     {
@@ -88,7 +84,7 @@ public class WorkshopDownloadService
                 return null;
 
             var sanitizedName = SanitizeModName(modName);
-            var versionFolder = Path.Combine(WorkshopBasePath, appId.ToString(), $"{sanitizedName}_{entry.Timestamp}");
+            var versionFolder = Path.Combine(AppPaths.WorkshopForApp(appId), $"{sanitizedName}_{entry.Timestamp}");
             Directory.CreateDirectory(versionFolder);
 
             var filePath = Path.Combine(versionFolder, $"{sanitizedName}_{entry.Timestamp}.zip");
@@ -130,7 +126,7 @@ public class WorkshopDownloadService
     public bool IsVersionDownloaded(uint appId, string modName, long timestamp)
     {
         var sanitizedName = SanitizeModName(modName);
-        var versionFolder = Path.Combine(WorkshopBasePath, appId.ToString(), $"{sanitizedName}_{timestamp}");
+        var versionFolder = Path.Combine(AppPaths.WorkshopForApp(appId), $"{sanitizedName}_{timestamp}");
         return Directory.Exists(versionFolder) &&
                Directory.GetFiles(versionFolder, "*.zip").Length > 0;
     }
@@ -138,7 +134,7 @@ public class WorkshopDownloadService
     public void OpenVersionFolder(uint appId, string modName, long timestamp)
     {
         var sanitizedName = SanitizeModName(modName);
-        var versionFolder = Path.Combine(WorkshopBasePath, appId.ToString(), $"{sanitizedName}_{timestamp}");
+        var versionFolder = Path.Combine(AppPaths.WorkshopForApp(appId), $"{sanitizedName}_{timestamp}");
 
         if (!Directory.Exists(versionFolder))
             return;

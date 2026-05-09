@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Threading.Tasks;
@@ -48,6 +49,13 @@ public partial class HomeViewModel : ViewModelBase
 
     public bool HasMods => ItemList.Items.Count > 0;
 
+    /// <summary>Capped to two rows (4 cols × 2) — the dashboard is a snapshot;
+    /// "See all" routes to the full list view.</summary>
+    private const int RecentModsLimit = 8;
+
+    public IEnumerable<WorkshopItem> RecentMods =>
+        ItemList.Items.OrderByDescending(i => i.UpdatedAt).Take(RecentModsLimit);
+
     public string TotalSubscribersDisplay =>
         Formatters.CompactNumber(ItemList.Items.Sum(i => (long)i.SubscriberCount));
 
@@ -84,6 +92,7 @@ public partial class HomeViewModel : ViewModelBase
         {
             OnPropertyChanged(nameof(ModCount));
             OnPropertyChanged(nameof(HasMods));
+            OnPropertyChanged(nameof(RecentMods));
             OnPropertyChanged(nameof(TotalSubscribersDisplay));
             OnPropertyChanged(nameof(TotalSizeDisplay));
             OnPropertyChanged(nameof(LastUpdateDisplay));
@@ -102,6 +111,7 @@ public partial class HomeViewModel : ViewModelBase
         OnPropertyChanged(nameof(HasActiveSession));
         OnPropertyChanged(nameof(ModCount));
         OnPropertyChanged(nameof(HasMods));
+        OnPropertyChanged(nameof(RecentMods));
         OnPropertyChanged(nameof(TotalSubscribersDisplay));
         OnPropertyChanged(nameof(TotalSizeDisplay));
         OnPropertyChanged(nameof(LastUpdateDisplay));

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Models;
 using SteamWorkshopManager.Services.Log;
 
@@ -20,10 +21,7 @@ public sealed class DraftService
 {
     private static readonly Logger Log = LogService.GetLogger<DraftService>();
 
-    private static readonly string DraftsRoot = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "SteamWorkshopManager",
-        "tempo");
+    private static readonly string DraftsRoot = AppPaths.Drafts;
 
     private const string FileName = "draft.json";
 

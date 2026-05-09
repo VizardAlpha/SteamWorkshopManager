@@ -3,6 +3,8 @@
         xmlns:vm="using:SteamWorkshopManager.ViewModels"
         xmlns:shell="using:SteamWorkshopManager.Views.Shell"
         xmlns:local="using:SteamWorkshopManager"
+        xmlns:helpers="using:SteamWorkshopManager.Helpers"
+        xmlns:icons="using:Material.Icons.Avalonia"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="700"
@@ -207,6 +209,143 @@
                            FontSize="14"
                            VerticalAlignment="Center"/>
             </StackPanel>
+        </Border>
+
+        <!-- Delete-session confirmation modal: same type-to-confirm pattern
+             as the per-mod delete in ItemEditorView. -->
+        <Border IsVisible="{Binding ShowDeleteSessionConfirmation}"
+                Background="#CC0E141B"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch">
+            <Border MaxWidth="520"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Background="{DynamicResource SurfaceCardBrush}"
+                    BorderBrush="{DynamicResource BorderSubtleBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Padding="24"
+                    BoxShadow="{DynamicResource ShadowOverlay}">
+                <StackPanel Spacing="14">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <icons:MaterialIcon Kind="AlertOctagonOutline"
+                                            Width="22" Height="22"
+                                            Foreground="{DynamicResource FeedbackDangerTextBrush}"
+                                            VerticalAlignment="Center"/>
+                        <TextBlock Text="{DynamicResource DeleteSessionTitle}"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <TextBlock Text="{Binding DeleteSessionIntroText}"
+                               TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               FontSize="13"/>
+
+                    <StackPanel Spacing="6" Margin="4,0,0,0">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <icons:MaterialIcon Kind="CircleSmall" Width="14" Height="14"
+                                                Foreground="{DynamicResource TextMutedBrush}"
+                                                VerticalAlignment="Center"/>
+                            <TextBlock Text="{DynamicResource DeleteSessionItemSession}"
+                                       FontSize="13"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="8"
+                                    IsVisible="{Binding SessionDeleteReport.HasCache}">
+                            <icons:MaterialIcon Kind="CircleSmall" Width="14" Height="14"
+                                                Foreground="{DynamicResource TextMutedBrush}"
+                                                VerticalAlignment="Center"/>
+                            <TextBlock Text="{DynamicResource DeleteSessionItemCache}"
+                                       FontSize="13"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="8"
+                                    IsVisible="{Binding SessionDeleteReport.HasDownloads}">
+                            <icons:MaterialIcon Kind="CircleSmall" Width="14" Height="14"
+                                                Foreground="{DynamicResource TextMutedBrush}"
+                                                VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding DeleteSessionDownloadsText}"
+                                       FontSize="13"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="8"
+                                    IsVisible="{Binding SessionDeleteReport.HasDrafts}">
+                            <icons:MaterialIcon Kind="CircleSmall" Width="14" Height="14"
+                                                Foreground="{DynamicResource TextMutedBrush}"
+                                                VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding DeleteSessionDraftsText}"
+                                       FontSize="13"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <TextBlock Text="{Binding DeleteSessionTotalText}"
+                               FontSize="12"
+                               Foreground="{DynamicResource TextMutedBrush}"/>
+
+                    <Border Background="#1F5B9CF6" Padding="10" CornerRadius="6"
+                            BorderBrush="{DynamicResource AccentPrimaryBrush}" BorderThickness="1"
+                            IsVisible="{Binding SessionDeleteReport.AppIdSharedWithOtherSession}">
+                        <TextBlock Text="{DynamicResource DeleteSessionSharedAppId}"
+                                   FontSize="12"
+                                   TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                    </Border>
+
+                    <Border Background="#1FE0A24A" Padding="10" CornerRadius="6"
+                            BorderBrush="{DynamicResource FeedbackWarningBrush}" BorderThickness="1">
+                        <TextBlock Text="{DynamicResource DeleteSessionFinalWarning}"
+                                   FontSize="12"
+                                   TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                    </Border>
+
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="{DynamicResource DeleteTypeToConfirm}"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextMutedBrush}"/>
+                        <TextBox Text="{Binding DeleteSessionTypedConfirmation}"
+                                 PlaceholderText="{x:Static helpers:DangerousActions.ConfirmationPassphrase}"
+                                 FontFamily="Consolas,Menlo,monospace"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                        <Button Command="{Binding CancelDeleteSessionCommand}"
+                                Background="{DynamicResource SurfaceElevatedBrush}"
+                                BorderBrush="{DynamicResource BorderSubtleBrush}"
+                                BorderThickness="1"
+                                Foreground="{DynamicResource TextPrimaryBrush}"
+                                Padding="14,8"
+                                CornerRadius="6">
+                            <TextBlock Text="{DynamicResource Cancel}"/>
+                        </Button>
+                        <Button Command="{Binding ConfirmDeleteSessionCommand}"
+                                IsEnabled="{Binding IsDeleteSessionConfirmed}"
+                                Background="{DynamicResource FeedbackDangerBrush}"
+                                Foreground="White"
+                                BorderThickness="0"
+                                Padding="14,8"
+                                CornerRadius="6"
+                                FontWeight="SemiBold">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <icons:MaterialIcon Kind="TrashCanOutline" Width="14" Height="14"/>
+                                <TextBlock Text="{DynamicResource DeletePermanently}"
+                                           IsVisible="{Binding !IsDeletingSession}"/>
+                                <TextBlock Text="..."
+                                           IsVisible="{Binding IsDeletingSession}"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
         </Border>
 
         <!-- Session switch overlay -->

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Xml.Linq;
+using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Models;
 using SteamWorkshopManager.Services.Log;
 
@@ -15,11 +16,7 @@ public static class BundleService
 
     private static readonly XNamespace XNs = "http://schemas.microsoft.com/winfx/2006/xaml";
 
-    private static string BundlePath { get; } = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "SteamWorkshopManager",
-        "bundle"
-    );
+    private static string BundlePath => AppPaths.Bundle;
 
     private static readonly string[] EmbeddedLanguages = ["en-US", "fr-FR"];
     private const string ReferenceLanguage = "en-US";

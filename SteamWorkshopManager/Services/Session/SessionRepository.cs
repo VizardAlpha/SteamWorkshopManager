@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Models;
 using SteamWorkshopManager.Services.Core;
 using SteamWorkshopManager.Services.Log;
@@ -22,12 +23,7 @@ public class SessionRepository : ISessionRepository
 {
     private static readonly Logger Log = LogService.GetLogger<SessionRepository>();
 
-    private static readonly string BaseFolder = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "SteamWorkshopManager"
-    );
-
-    private static readonly string SessionsFolder = Path.Combine(BaseFolder, "sessions");
+    private static readonly string SessionsFolder = AppPaths.Sessions;
 
     private readonly ISettingsService _settingsService;
 
@@ -174,8 +170,5 @@ public class SessionRepository : ISessionRepository
         return sessions.Count > 0;
     }
 
-    private static string GetSessionFilePath(string sessionId)
-    {
-        return Path.Combine(SessionsFolder, $"{sessionId}.json");
-    }
+    private static string GetSessionFilePath(string sessionId) => AppPaths.SessionFile(sessionId);
 }

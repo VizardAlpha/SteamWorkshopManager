@@ -28,25 +28,15 @@ public static class SteamImageCache
     private static readonly Logger Log = LogService.GetLogger<object>();
     private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(10) };
 
-    private static readonly string HeaderCacheFolder = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "SteamWorkshopManager", "cache", "headers"
-    );
-
-    private static readonly string IconCacheFolder = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "SteamWorkshopManager", "cache", "icons"
-    );
-
     static SteamImageCache()
     {
-        Directory.CreateDirectory(HeaderCacheFolder);
-        Directory.CreateDirectory(IconCacheFolder);
+        Directory.CreateDirectory(AppPaths.CacheHeaders);
+        Directory.CreateDirectory(AppPaths.CacheIcons);
     }
 
-    public static string HeaderCacheFilePath(uint appId) => Path.Combine(HeaderCacheFolder, $"{appId}.jpg");
+    public static string HeaderCacheFilePath(uint appId) => AppPaths.HeaderForApp(appId);
 
-    public static string IconCacheFilePath(uint appId) => Path.Combine(IconCacheFolder, $"{appId}.jpg");
+    public static string IconCacheFilePath(uint appId) => AppPaths.IconForApp(appId);
 
     /// <summary>
     /// Returns the Steam Store header image (wide, ~460×215).

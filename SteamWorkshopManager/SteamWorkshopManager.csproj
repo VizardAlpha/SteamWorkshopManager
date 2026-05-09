@@ -6,9 +6,9 @@
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
 
-        <Version>1.7.0</Version>
-        <AssemblyVersion>1.7.0.0</AssemblyVersion>
-        <FileVersion>1.7.0.0</FileVersion>
+        <Version>1.7.1</Version>
+        <AssemblyVersion>1.7.1.0</AssemblyVersion>
+        <FileVersion>1.7.1.0</FileVersion>
         
         <!-- Default ingest URL baked into every build (incl. CI release builds).
              Overridable via SWM_TELEMETRY_URL env var/MSBuild prop for local dev. -->
@@ -43,10 +43,10 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Avalonia" Version="12.0.1" />
-        <PackageReference Include="Avalonia.Desktop" Version="12.0.1" />
-        <PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.1" />
-        <PackageReference Include="Avalonia.Fonts.Inter" Version="12.0.1" />
+        <PackageReference Include="Avalonia" Version="12.0.2" />
+        <PackageReference Include="Avalonia.Desktop" Version="12.0.2" />
+        <PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.2" />
+        <PackageReference Include="Avalonia.Fonts.Inter" Version="12.0.2" />
         <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.1" />
         
         <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
@@ -61,7 +61,6 @@
         <PackageReference Include="SteamKit2" Version="3.4.0" />
         <PackageReference Include="Steamworks.NET" Version="2025.163.0" />
         <PackageReference Include="StreamJsonRpc" Version="2.24.84" />
-        <PackageReference Include="Tmds.DBus.Protocol" Version="0.92.0" />
     </ItemGroup>
 
     <ItemGroup>

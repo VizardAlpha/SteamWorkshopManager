@@ -10,6 +10,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input.Platform;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Models;
 using Microsoft.Extensions.DependencyInjection;
 using SteamWorkshopManager.Services.Core;
@@ -82,9 +83,7 @@ public partial class SettingsViewModel : ViewModelBase
     /// cache, telemetry queue, downloads, tags). Logs live separately under
     /// LocalApplicationData — that's what <see cref="LogFilePath"/> points to.
     /// </summary>
-    public string DataFolderPath { get; } = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "SteamWorkshopManager");
+    public string DataFolderPath { get; } = AppPaths.Root;
 
     [ObservableProperty]
     private bool _isUpdateAvailable;

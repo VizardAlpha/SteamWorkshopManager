@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using SteamWorkshopManager.Helpers;
 
 namespace SteamWorkshopManager.Services.Log;
 
@@ -29,12 +30,8 @@ public class LogService : ILogService
 
     private LogService()
     {
-        var appDataPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "SteamWorkshopManager"
-        );
-        Directory.CreateDirectory(appDataPath);
-        _logFilePath = Path.Combine(appDataPath, $"debug_{DateTime.Now:yyyy-MM-dd}.log");
+        Directory.CreateDirectory(AppPaths.LocalRoot);
+        _logFilePath = Path.Combine(AppPaths.LocalRoot, $"debug_{DateTime.Now:yyyy-MM-dd}.log");
         _userProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
     }
 

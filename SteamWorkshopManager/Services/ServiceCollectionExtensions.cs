@@ -63,6 +63,7 @@ public static class ServiceCollectionExtensions
 
         // Session orchestration
         services.AddSingleton<SessionManager>();
+        services.AddSingleton<SessionCleanupService>();
 
         return services;
     }

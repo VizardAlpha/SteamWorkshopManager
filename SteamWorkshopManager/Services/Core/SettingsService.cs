@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Models;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Session;
@@ -16,12 +17,9 @@ public class SettingsService : ISettingsService
 {
     private static readonly Logger Log = LogService.GetLogger<SettingsService>();
 
-    private static readonly string SettingsFolder = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "SteamWorkshopManager"
-    );
+    private static readonly string SettingsFolder = AppPaths.Root;
 
-    private static readonly string SettingsPath = Path.Combine(SettingsFolder, "settings.json");
+    private static readonly string SettingsPath = AppPaths.SettingsFile;
 
     public AppSettings Settings { get; private set; } = new();
 
@@ -150,11 +148,7 @@ public class SettingsService : ISettingsService
     {
         try
         {
-            var folder = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "SteamWorkshopManager", "sessions"
-            );
-            var filePath = Path.Combine(folder, $"{session.Id}.json");
+            var filePath = AppPaths.SessionFile(session.Id);
             var json = JsonSerializer.Serialize(session, SessionJsonContext.Default.WorkshopSession);
             await File.WriteAllTextAsync(filePath, json);
         }

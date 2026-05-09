@@ -216,7 +216,7 @@
                     </Button>
                 </Grid>
 
-                <ItemsControl ItemsSource="{Binding ItemList.Items}">
+                <ItemsControl ItemsSource="{Binding RecentMods}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <UniformGrid Columns="4"/>

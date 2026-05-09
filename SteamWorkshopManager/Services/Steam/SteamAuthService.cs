@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using SteamKit2;
 using SteamKit2.Authentication;
+using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Services.Core;
 using SteamWorkshopManager.Services.Log;
 
@@ -198,7 +199,7 @@ public static class SteamAuthService
             var authSession = await client.Authentication.BeginAuthSessionViaQRAsync(
                 new AuthSessionDetails
                 {
-                    DeviceFriendlyName = "SteamWorkshopManager",
+                    DeviceFriendlyName = AppPaths.AppName,
                     IsPersistentSession = true,
                 });
 

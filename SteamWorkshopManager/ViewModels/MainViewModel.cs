@@ -7,6 +7,7 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
+using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Models;
 using SteamWorkshopManager.Services.Core;
 using SteamWorkshopManager.Services.Log;
@@ -27,6 +28,7 @@ public partial class MainViewModel : ViewModelBase
     private readonly ISessionRepository _sessionRepository;
     private readonly SessionManager _sessionManager;
     private readonly SessionHost _sessionHost;
+    private readonly SessionCleanupService _sessionCleanup;
     private string _statusKey = "ConnectingToSteam";
 
     [ObservableProperty]
@@ -137,6 +139,52 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     private Avalonia.Media.Imaging.Bitmap? _activeSessionIcon;
 
+    /// <summary>
+    /// Type-to-confirm DELETE state, mirroring <see cref="ItemEditorViewModel"/>.
+    /// The flyout picks a session, the modal opens, the user types DELETE,
+    /// and the confirm button only enables when the literal passphrase matches.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsDeleteSessionConfirmed))]
+    private bool _showDeleteSessionConfirmation;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsDeleteSessionConfirmed))]
+    private string _deleteSessionTypedConfirmation = string.Empty;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(DeleteSessionIntroText))]
+    private WorkshopSession? _sessionToDelete;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(DeleteSessionTotalText))]
+    [NotifyPropertyChangedFor(nameof(DeleteSessionDownloadsText))]
+    [NotifyPropertyChangedFor(nameof(DeleteSessionDraftsText))]
+    private SessionCleanupReport? _sessionDeleteReport;
+
+    public string DeleteSessionIntroText =>
+        SessionToDelete is null ? string.Empty : string.Format(Loc["DeleteSessionIntro"], SessionToDelete.GameName);
+
+    public string DeleteSessionTotalText =>
+        SessionDeleteReport is null ? string.Empty : string.Format(Loc["DeleteSessionTotal"], SessionDeleteReport.TotalBytesDisplay);
+
+    public string DeleteSessionDownloadsText =>
+        SessionDeleteReport is null
+            ? string.Empty
+            : string.Format(Loc["DeleteSessionItemDownloads"], SessionDeleteReport.DownloadedVersionCount, SessionDeleteReport.DownloadedBytesDisplay);
+
+    public string DeleteSessionDraftsText =>
+        SessionDeleteReport is null
+            ? string.Empty
+            : string.Format(Loc["DeleteSessionItemDrafts"], SessionDeleteReport.DraftCount, SessionDeleteReport.DraftBytesDisplay);
+
+    [ObservableProperty]
+    private bool _isDeletingSession;
+
+    public bool IsDeleteSessionConfirmed =>
+        ShowDeleteSessionConfirmation
+        && string.Equals(DeleteSessionTypedConfirmation, DangerousActions.ConfirmationPassphrase, StringComparison.Ordinal);
+
     public IProgress<UploadProgress> UploadProgressReporter { get; }
 
     public MainViewModel() : this(
@@ -146,7 +194,8 @@ public partial class MainViewModel : ViewModelBase
         App.Services.GetRequiredService<INotificationService>(),
         App.Services.GetRequiredService<ISessionRepository>(),
         App.Services.GetRequiredService<SessionManager>(),
-        App.Services.GetRequiredService<SessionHost>())
+        App.Services.GetRequiredService<SessionHost>(),
+        App.Services.GetRequiredService<SessionCleanupService>())
     { }
 
     public MainViewModel(
@@ -156,7 +205,8 @@ public partial class MainViewModel : ViewModelBase
         INotificationService notificationService,
         ISessionRepository sessionRepository,
         SessionManager sessionManager,
-        SessionHost sessionHost)
+        SessionHost sessionHost,
+        SessionCleanupService sessionCleanup)
     {
         _steamService = steamService;
         _fileDialogService = fileDialogService;
@@ -165,6 +215,7 @@ public partial class MainViewModel : ViewModelBase
         _sessionRepository = sessionRepository;
         _sessionManager = sessionManager;
         _sessionHost = sessionHost;
+        _sessionCleanup = sessionCleanup;
 
         // Worker auto-recovery feedback: refresh UI state on successful respawn,
         // or surface a persistent disconnected banner when we've given up.
@@ -605,6 +656,109 @@ public partial class MainViewModel : ViewModelBase
     private void AddSession()
     {
         OnAddSessionRequested();
+    }
+
+    /// <summary>
+    /// Tears the worker down and resets shell state so the user lands on a
+    /// sessionless home (empty list, no pill, "Add session" CTA). Used when
+    /// the active session is deleted with no other sessions to fall back on.
+    /// </summary>
+    private async Task ClearActiveSessionAsync()
+    {
+        await _sessionHost.StopAsync();
+
+        AppConfig.Clear();
+        _settingsService.Settings.ActiveSessionId = null;
+        _settingsService.Save();
+
+        ItemListViewModel.DisposeAndClearItems();
+        HomeViewModel.HeaderImage = null;
+        ActiveSessionIcon = null;
+        SelectedItem = null;
+        IsSteamConnected = false;
+        ConnectionState = SteamConnectionState.Disconnected;
+        HomeViewModel.ConnectionState = SteamConnectionState.Disconnected;
+
+        OnPropertyChanged(nameof(ActiveGameName));
+        OnPropertyChanged(nameof(ActiveGameInitial));
+        OnPropertyChanged(nameof(HasActiveSession));
+        OnPropertyChanged(nameof(WindowTitle));
+        HomeViewModel.OnSessionChanged();
+
+        if (CurrentView is ItemEditorViewModel)
+        {
+            DetachCurrentView();
+            CurrentView = HomeViewModel;
+            ActiveTab = ShellTab.Home;
+        }
+    }
+
+    [RelayCommand]
+    private void RequestDeleteSession(WorkshopSession? session)
+    {
+        if (session is null) return;
+
+        SessionToDelete = session;
+        SessionDeleteReport = _sessionCleanup.BuildReport(session, Sessions.ToList());
+        DeleteSessionTypedConfirmation = string.Empty;
+        ShowDeleteSessionConfirmation = true;
+    }
+
+    [RelayCommand]
+    private void CancelDeleteSession()
+    {
+        ShowDeleteSessionConfirmation = false;
+        DeleteSessionTypedConfirmation = string.Empty;
+        SessionToDelete = null;
+        SessionDeleteReport = null;
+    }
+
+    [RelayCommand]
+    private async Task ConfirmDeleteSessionAsync()
+    {
+        if (!IsDeleteSessionConfirmed || SessionToDelete is null) return;
+
+        var session = SessionToDelete;
+        var snapshot = Sessions.ToList();
+        var wasActive = session.Id == AppConfig.CurrentSession?.Id;
+
+        IsDeletingSession = true;
+        try
+        {
+            // If the doomed session is the live one, swap the worker first so
+            // PurgeAsync isn't yanking files out from under an active Steam
+            // worker. With no fallback we fall back to a sessionless shell —
+            // user gets an empty home with an "Add session" button.
+            if (wasActive)
+            {
+                var fallback = Sessions.FirstOrDefault(s => s.Id != session.Id);
+                if (fallback is not null)
+                    await SwitchSessionAsync(fallback);
+                else
+                    await ClearActiveSessionAsync();
+            }
+
+            await _sessionCleanup.PurgeAsync(session, snapshot);
+
+            var stale = Sessions.FirstOrDefault(s => s.Id == session.Id);
+            if (stale is not null)
+                Sessions.Remove(stale);
+
+            _notificationService.ShowSuccess(Loc["DeleteSessionSuccess"]);
+        }
+        catch (Exception ex)
+        {
+            Log.Error("Failed to delete session", ex);
+            _notificationService.ShowError($"{Loc["DeleteSessionFailed"]}: {ex.Message}");
+        }
+        finally
+        {
+            IsDeletingSession = false;
+            ShowDeleteSessionConfirmation = false;
+            DeleteSessionTypedConfirmation = string.Empty;
+            SessionToDelete = null;
+            SessionDeleteReport = null;
+        }
     }
 
     /// <summary>

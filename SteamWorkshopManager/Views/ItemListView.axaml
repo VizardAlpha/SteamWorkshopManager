@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:SteamWorkshopManager.ViewModels"
              xmlns:models="using:SteamWorkshopManager.Models"
+             xmlns:helpers="using:SteamWorkshopManager.Helpers"
              xmlns:icons="using:Material.Icons.Avalonia"
              xmlns:enums="using:SteamWorkshopManager.Models"
              mc:Ignorable="d" d:DesignWidth="960" d:DesignHeight="640"
@@ -520,7 +521,7 @@
                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                    FontSize="13"/>
                         <TextBox Text="{Binding BulkDeleteTypedConfirmation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                 PlaceholderText="DELETE"
+                                 PlaceholderText="{x:Static helpers:DangerousActions.ConfirmationPassphrase}"
                                  FontFamily="Consolas, Menlo, monospace"
                                  IsEnabled="{Binding !IsBulkProcessing}"/>
                         <TextBlock Text="{DynamicResource DeleteTypeToConfirmHint}"

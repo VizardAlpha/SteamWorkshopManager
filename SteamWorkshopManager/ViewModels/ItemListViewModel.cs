@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Models;
 using SteamWorkshopManager.Services.Core;
 using SteamWorkshopManager.Services.Log;
@@ -19,8 +20,6 @@ namespace SteamWorkshopManager.ViewModels;
 
 public partial class ItemListViewModel : ViewModelBase
 {
-    private const string BulkDeletePassphrase = "DELETE";
-
     private static readonly Logger Log = LogService.GetLogger<ItemListViewModel>();
     private readonly ISteamService _steamService;
     private readonly INotificationService? _notifications;
@@ -73,7 +72,7 @@ public partial class ItemListViewModel : ViewModelBase
     private string _bulkDeleteTypedConfirmation = string.Empty;
 
     public bool IsBulkDeleteConfirmed =>
-        string.Equals(BulkDeleteTypedConfirmation, BulkDeletePassphrase, StringComparison.Ordinal);
+        string.Equals(BulkDeleteTypedConfirmation, DangerousActions.ConfirmationPassphrase, StringComparison.Ordinal);
 
     public ObservableCollection<WorkshopItem> Items { get; } = [];
 

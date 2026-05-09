@@ -124,6 +124,20 @@
     <x:String x:Key="DeleteTypeToConfirm">Tapez DELETE pour confirmer</x:String>
     <x:String x:Key="DeleteTypeToConfirmHint">Entrez DELETE en majuscules pour activer le bouton de suppression.</x:String>
 
+    <!-- Suppression de session -->
+    <x:String x:Key="DeleteSessionTitle">Supprimer la session</x:String>
+    <x:String x:Key="DeleteSessionIntro">Supprimer cette session effacera tout ce qui est lié à {0} :</x:String>
+    <x:String x:Key="DeleteSessionItemSession">Profil de session (tags, tags personnalisés, chemins)</x:String>
+    <x:String x:Key="DeleteSessionItemCache">Header, icône et catalogue de tags en cache</x:String>
+    <x:String x:Key="DeleteSessionItemDownloads">{0} version(s) de mod téléchargée(s) ({1})</x:String>
+    <x:String x:Key="DeleteSessionItemDrafts">{0} brouillon(s) non publié(s) ({1})</x:String>
+    <x:String x:Key="DeleteSessionTotal">Libère environ {0} sur le disque.</x:String>
+    <x:String x:Key="DeleteSessionSharedAppId">Une autre session utilise le même AppId — ses données en cache sont conservées.</x:String>
+    <x:String x:Key="DeleteSessionFinalWarning">Les mods sur le Workshop Steam ne sont pas touchés. Seules les données locales sont effacées.</x:String>
+    <x:String x:Key="DeleteSessionSuccess">Session supprimée</x:String>
+    <x:String x:Key="DeleteSessionFailed">Échec de la suppression de la session</x:String>
+    <x:String x:Key="DeleteSessionTooltip">Supprimer cette session</x:String>
+
     <!-- Bulk actions -->
     <x:String x:Key="Select">Sélectionner</x:String>
     <x:String x:Key="SelectAll">Tout sélectionner</x:String>

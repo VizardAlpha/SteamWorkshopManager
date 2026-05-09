@@ -11,6 +11,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Models;
 using SteamWorkshopManager.Services.Core;
 using SteamWorkshopManager.Services.Log;
@@ -64,12 +65,9 @@ public class TelemetryService : ITelemetryService, IDisposable
 #endif
     }
 
-    private static readonly string StateFolder = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "SteamWorkshopManager"
-    );
+    private static readonly string StateFolder = AppPaths.Root;
 
-    private static readonly string StatePath = Path.Combine(StateFolder, "telemetry.json");
+    private static readonly string StatePath = AppPaths.TelemetryStateFile;
 
     private static readonly HttpClient Http = SteamHttpClientFactory.Create(timeout: TimeSpan.FromSeconds(10));
 
@@ -251,6 +249,9 @@ public class TelemetryService : ITelemetryService, IDisposable
 
     private TelemetryState LoadOrCreateState()
     {
+#if DEBUG
+        return new TelemetryState { InstanceId = Guid.NewGuid() };
+#else
         try
         {
             if (File.Exists(StatePath))
@@ -279,10 +280,15 @@ public class TelemetryService : ITelemetryService, IDisposable
             Log.Debug($"Telemetry state save failed: {ex.Message}");
         }
         return fresh;
+#endif
     }
 
     private void SaveStateUnsafe()
     {
+#if DEBUG
+        // See LoadOrCreateState: Debug builds never write telemetry.json.
+        return;
+#else
         try
         {
             Directory.CreateDirectory(StateFolder);
@@ -293,6 +299,7 @@ public class TelemetryService : ITelemetryService, IDisposable
         {
             Log.Debug($"Telemetry state save failed: {ex.Message}");
         }
+#endif
     }
 
     public void Dispose()

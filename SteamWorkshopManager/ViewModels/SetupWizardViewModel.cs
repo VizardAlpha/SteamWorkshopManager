@@ -63,7 +63,7 @@ public partial class SetupWizardViewModel : ViewModelBase
     /// </summary>
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ValidateAppIdCommand))]
-    private bool _isTelemetryEnabled = true;
+    private bool _isTelemetryEnabled;
 
     private uint _validatedAppId;
 

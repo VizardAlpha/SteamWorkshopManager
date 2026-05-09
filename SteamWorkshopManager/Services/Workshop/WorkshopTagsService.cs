@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Steam;
 
@@ -47,11 +48,7 @@ public class WorkshopTagsService
 {
     private static readonly Logger Log = LogService.GetLogger<WorkshopTagsService>();
 
-    private static readonly string CacheFolder = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "SteamWorkshopManager",
-        "cache",
-        "tags");
+    private static readonly string CacheFolder = AppPaths.CacheTags;
 
     // Matches `window.SSR.loaderData = [...]` up to the first `];` terminator.
     // The loader entries are double-encoded JSON strings; their contents never
@@ -289,8 +286,7 @@ public class WorkshopTagsService
         }
     }
 
-    private static string GetCacheFilePath(uint appId) =>
-        Path.Combine(CacheFolder, $"{appId}.json");
+    private static string GetCacheFilePath(uint appId) => AppPaths.TagsForApp(appId);
 }
 
 // ─── DTOs mirroring the Steam SSR payload ────────────────────────────────────

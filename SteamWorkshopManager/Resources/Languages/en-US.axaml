@@ -124,6 +124,20 @@
     <x:String x:Key="DeleteTypeToConfirm">Type DELETE to confirm</x:String>
     <x:String x:Key="DeleteTypeToConfirmHint">Enter DELETE in capitals to enable the destructive action.</x:String>
 
+    <!-- Session deletion -->
+    <x:String x:Key="DeleteSessionTitle">Delete session</x:String>
+    <x:String x:Key="DeleteSessionIntro">Removing this session will erase everything tied to {0}:</x:String>
+    <x:String x:Key="DeleteSessionItemSession">Session profile (tags, custom tags, paths)</x:String>
+    <x:String x:Key="DeleteSessionItemCache">Cached header, icon and tag catalogue</x:String>
+    <x:String x:Key="DeleteSessionItemDownloads">{0} downloaded mod version(s) ({1})</x:String>
+    <x:String x:Key="DeleteSessionItemDrafts">{0} unpublished draft(s) ({1})</x:String>
+    <x:String x:Key="DeleteSessionTotal">Frees about {0} on disk.</x:String>
+    <x:String x:Key="DeleteSessionSharedAppId">Another session uses the same AppId — its cached data is kept.</x:String>
+    <x:String x:Key="DeleteSessionFinalWarning">Mods on Steam Workshop are not affected. This only erases local data.</x:String>
+    <x:String x:Key="DeleteSessionSuccess">Session deleted</x:String>
+    <x:String x:Key="DeleteSessionFailed">Failed to delete session</x:String>
+    <x:String x:Key="DeleteSessionTooltip">Delete this session</x:String>
+
     <!-- Bulk actions -->
     <x:String x:Key="Select">Select</x:String>
     <x:String x:Key="SelectAll">Select all</x:String>

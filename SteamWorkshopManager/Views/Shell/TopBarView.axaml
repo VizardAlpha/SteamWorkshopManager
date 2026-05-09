@@ -71,6 +71,30 @@
         <Style Selector="Button.session-pill:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource SurfaceOverlayBrush}"/>
         </Style>
+
+        <!-- Strip the FlyoutPresenter's own chrome so only our inner Border
+             draws the popup background. Without this, the Fluent default adds
+             a second translucent panel underneath our card. -->
+        <Style Selector="FlyoutPresenter.session-flyout">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+        </Style>
+
+        <!-- Inline trash button on each session row. Sits inside the
+             switch-session button — Avalonia routes the click to the inner
+             button so the outer switch never fires. -->
+        <Style Selector="Button.session-trash">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="6"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}"/>
+        </Style>
+        <Style Selector="Button.session-trash:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#1FE04A4A"/>
+            <Setter Property="TextElement.Foreground" Value="{DynamicResource FeedbackDangerTextBrush}"/>
+        </Style>
     </UserControl.Styles>
 
     <Border Background="{DynamicResource SurfaceElevatedBrush}"
@@ -138,6 +162,27 @@
 
             </StackPanel>
 
+            <!-- Sessionless state: a single CTA so the user can re-enter
+                 the wizard after deleting their last session. -->
+            <Button Grid.Column="2"
+                    Classes="session-pill"
+                    IsVisible="{Binding !HasActiveSession}"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Command="{Binding AddSessionCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <icons:MaterialIcon Kind="PlusCircleOutline"
+                                        Width="18" Height="18"
+                                        Foreground="{DynamicResource AccentPrimaryBrush}"
+                                        VerticalAlignment="Center"/>
+                    <TextBlock Text="{DynamicResource AddSession}"
+                               FontSize="13"
+                               FontWeight="Medium"
+                               Foreground="{DynamicResource TextPrimaryBrush}"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+
             <!-- Session pill (with dropdown flyout) -->
             <Button Grid.Column="2"
                     Classes="session-pill"
@@ -171,7 +216,8 @@
                 </StackPanel>
 
                 <Button.Flyout>
-                    <Flyout Placement="BottomEdgeAlignedRight">
+                    <Flyout Placement="BottomEdgeAlignedRight"
+                            FlyoutPresenterClasses="session-flyout">
                         <Border MinWidth="280" MaxWidth="360"
                                 Background="{DynamicResource SurfaceCardBrush}"
                                 BorderBrush="{DynamicResource BorderSubtleBrush}"
@@ -217,12 +263,23 @@
                                                                    FontSize="11"
                                                                    Foreground="{DynamicResource TextMutedBrush}"/>
                                                     </StackPanel>
-                                                    <icons:MaterialIcon Grid.Column="2"
-                                                                        Kind="Check"
-                                                                        Width="16" Height="16"
-                                                                        Foreground="{DynamicResource AccentSecondaryBrush}"
-                                                                        VerticalAlignment="Center"
-                                                                        IsVisible="{Binding IsActive}"/>
+                                                    <StackPanel Grid.Column="2"
+                                                                Orientation="Horizontal"
+                                                                Spacing="4"
+                                                                VerticalAlignment="Center">
+                                                        <icons:MaterialIcon Kind="Check"
+                                                                            Width="16" Height="16"
+                                                                            Foreground="{DynamicResource AccentSecondaryBrush}"
+                                                                            VerticalAlignment="Center"
+                                                                            IsVisible="{Binding IsActive}"/>
+                                                        <Button Classes="session-trash"
+                                                                Command="{Binding $parent[ItemsControl].((vm:MainViewModel)DataContext).RequestDeleteSessionCommand, FallbackValue={x:Null}}"
+                                                                CommandParameter="{Binding}"
+                                                                ToolTip.Tip="{DynamicResource DeleteSessionTooltip}">
+                                                            <icons:MaterialIcon Kind="TrashCanOutline"
+                                                                                Width="14" Height="14"/>
+                                                        </Button>
+                                                    </StackPanel>
                                                 </Grid>
                                             </Button>
                                         </DataTemplate>

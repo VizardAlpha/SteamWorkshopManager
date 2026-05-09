@@ -47,12 +47,11 @@ public class AppSettings
     public ulong SteamId64 { get; set; }
 
     /// <summary>
-    /// Whether usage statistics are sent to swm-stats.com.
-    /// Default is true, but new installs and upgrades from older versions
-    /// must pass through an explicit consent screen before any data is sent
-    /// (see <see cref="TelemetryConsentVersion"/>).
+    /// Whether usage statistics are sent to swm-stats.com. Off by default so
+    /// the consent screen starts unchecked — sending requires the user to
+    /// explicitly opt in (see <see cref="TelemetryConsentVersion"/>).
     /// </summary>
-    public bool TelemetryEnabled { get; set; } = true;
+    public bool TelemetryEnabled { get; set; }
 
     /// <summary>
     /// Tracks which version of the telemetry consent UI the user has been
