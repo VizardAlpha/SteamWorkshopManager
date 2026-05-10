@@ -18,7 +18,6 @@ public interface ILogService
 
     string GetLogFilePath();
     IReadOnlyList<LogEntry> GetRecentLogs(int count = 100);
-    void ClearLogs();
 }
 
 /// <summary>

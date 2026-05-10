@@ -69,12 +69,16 @@ public partial class SetupWizardViewModel : ViewModelBase
 
     public event Action? SessionCreated;
 
-    public SetupWizardViewModel(ISessionRepository sessionRepository)
+    public SetupWizardViewModel(
+        ISessionRepository sessionRepository,
+        AppIdValidator validator,
+        SessionManager sessionManager,
+        ISettingsService settingsService)
     {
         _sessionRepository = sessionRepository;
-        _validator = App.Services.GetRequiredService<AppIdValidator>();
-        _sessionManager = App.Services.GetRequiredService<SessionManager>();
-        _settingsService = App.Services.GetRequiredService<ISettingsService>();
+        _validator = validator;
+        _sessionManager = sessionManager;
+        _settingsService = settingsService;
 
         // Mirror the existing stored preference so reopening the wizard
         // (via --force-setup-wizard) pre-fills the user's last choice.

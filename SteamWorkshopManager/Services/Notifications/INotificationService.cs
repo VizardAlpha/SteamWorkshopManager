@@ -4,7 +4,6 @@ namespace SteamWorkshopManager.Services.Notifications;
 
 public interface INotificationService
 {
-    void ShowProgress(string message, double progress);
     void ShowSuccess(string message);
     void ShowError(string message);
     void Hide();

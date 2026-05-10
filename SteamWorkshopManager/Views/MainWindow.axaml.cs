@@ -39,7 +39,7 @@ public partial class MainWindow : Window
     private async void OnOpenAddSessionWizard()
     {
         var sessionRepository = App.Services.GetRequiredService<ISessionRepository>();
-        var addSessionWindow = new AddSessionWindow(sessionRepository);
+        var addSessionWindow = new AddSessionWindow();
 
         // The dialog auto-closes itself on success; here we refresh the pill
         // collection and route through the ViewModel's SwitchSessionCommand so

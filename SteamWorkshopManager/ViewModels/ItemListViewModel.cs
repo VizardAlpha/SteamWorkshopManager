@@ -24,6 +24,7 @@ public partial class ItemListViewModel : ViewModelBase
     private static readonly Logger Log = LogService.GetLogger<ItemListViewModel>();
     private readonly ISteamService _steamService;
     private readonly INotificationService? _notifications;
+    private readonly ITelemetryService _telemetry;
     private static readonly HttpClient HttpClient = new();
 
     [ObservableProperty]
@@ -82,9 +83,13 @@ public partial class ItemListViewModel : ViewModelBase
     public event Action<WorkshopItem>? ItemSelected;
     public event Action? CreateRequested;
 
-    public ItemListViewModel(ISteamService steamService, INotificationService? notifications = null)
+    public ItemListViewModel(
+        ISteamService steamService,
+        ITelemetryService telemetry,
+        INotificationService? notifications = null)
     {
         _steamService = steamService;
+        _telemetry = telemetry;
         _notifications = notifications;
         Items.CollectionChanged += OnItemsChanged;
     }
@@ -325,7 +330,7 @@ public partial class ItemListViewModel : ViewModelBase
                         tags: null, changelog: null);
 
                     if (ok)
-                        TelemetryService.Instance?.Track(TelemetryEventTypes.ModUpdated, AppConfig.AppId);
+                        _telemetry.Track(TelemetryEventTypes.ModUpdated, AppConfig.AppId);
                     else
                         failed.Add(item.Title);
                 }
@@ -396,7 +401,7 @@ public partial class ItemListViewModel : ViewModelBase
                     var ok = await _steamService.DeleteItemAsync(item.PublishedFileId);
                     if (ok)
                     {
-                        TelemetryService.Instance?.Track(TelemetryEventTypes.ModDeleted, AppConfig.AppId);
+                        _telemetry.Track(TelemetryEventTypes.ModDeleted, AppConfig.AppId);
                     }
                     else
                     {

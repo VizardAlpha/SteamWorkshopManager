@@ -35,6 +35,8 @@ public partial class CreateItemViewModel : ViewModelBase
     private readonly DraftService _draftService;
     private readonly TagSelectionService _tagSelection;
     private readonly WorkshopOrchestrator _orchestrator;
+    private readonly WorkshopTagsService _workshopTagsService;
+    private readonly ISessionRepository _sessionRepository;
 
     /// <summary>
     /// If non-null, the user is editing a previously saved draft. Further
@@ -403,20 +405,34 @@ public partial class CreateItemViewModel : ViewModelBase
     
     public event Action<PublishedFileId_t>? ItemCreated;
 
-    public CreateItemViewModel(ISteamService steamService, IFileDialogService fileDialogService,
-        ISettingsService settingsService, INotificationService notificationService, IProgress<UploadProgress>? uploadProgress = null)
+    public CreateItemViewModel(
+        ISteamService steamService,
+        IFileDialogService fileDialogService,
+        ISettingsService settingsService,
+        INotificationService notificationService,
+        DependencyService dependencyService,
+        AppDependencyService appDependencyService,
+        VersioningService versioningService,
+        DraftService draftService,
+        TagSelectionService tagSelection,
+        WorkshopOrchestrator orchestrator,
+        WorkshopTagsService workshopTagsService,
+        ISessionRepository sessionRepository,
+        IProgress<UploadProgress>? uploadProgress = null)
     {
         _steamService = steamService;
         _fileDialogService = fileDialogService;
         _settingsService = settingsService;
         _notificationService = notificationService;
+        _dependencyService = dependencyService;
+        _appDependencyService = appDependencyService;
+        _versioningService = versioningService;
+        _draftService = draftService;
+        _tagSelection = tagSelection;
+        _orchestrator = orchestrator;
+        _workshopTagsService = workshopTagsService;
+        _sessionRepository = sessionRepository;
         _uploadProgress = uploadProgress;
-        _dependencyService = App.Services.GetRequiredService<DependencyService>();
-        _appDependencyService = App.Services.GetRequiredService<AppDependencyService>();
-        _versioningService = App.Services.GetRequiredService<VersioningService>();
-        _draftService = App.Services.GetRequiredService<DraftService>();
-        _tagSelection = App.Services.GetRequiredService<TagSelectionService>();
-        _orchestrator = App.Services.GetRequiredService<WorkshopOrchestrator>();
 
         RefreshDrafts();
         ReloadVersioningFromCurrentSession();
@@ -527,8 +543,7 @@ public partial class CreateItemViewModel : ViewModelBase
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
             // Fetch fresh tags from Steam
-            var tagsService = App.Services.GetRequiredService<WorkshopTagsService>();
-            var tagsResult = await tagsService.GetTagsForAppAsync(session.AppId, forceRefresh: true);
+            var tagsResult = await _workshopTagsService.GetTagsForAppAsync(session.AppId, forceRefresh: true);
 
             // Update session
             session.TagsByCategory = tagsResult.TagsByCategory;
@@ -864,20 +879,10 @@ public partial class CreateItemViewModel : ViewModelBase
         CustomTags.Remove(tag);
     }
 
-    /// <summary>
-    /// Saves the session asynchronously (fire and forget).
-    /// </summary>
-    private static async void SaveSessionAsync(Models.WorkshopSession session)
+    /// <summary>Fire-and-forget session save; failures aren't user-actionable here.</summary>
+    private async void SaveSessionAsync(Models.WorkshopSession session)
     {
-        try
-        {
-            var sessionRepository = App.Services.GetRequiredService<ISessionRepository>();
-            await sessionRepository.SaveSessionAsync(session);
-        }
-        catch
-        {
-            // Ignore session save failures in fire-and-forget
-        }
+        try { await _sessionRepository.SaveSessionAsync(session); }
+        catch { /* fire-and-forget */ }
     }
-
 }

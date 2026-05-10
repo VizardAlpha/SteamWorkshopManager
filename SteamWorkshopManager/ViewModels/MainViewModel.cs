@@ -30,6 +30,7 @@ public partial class MainViewModel : ViewModelBase
     private readonly SessionManager _sessionManager;
     private readonly SessionHost _sessionHost;
     private readonly SessionCleanupService _sessionCleanup;
+    private readonly SteamAppMetadataService _appMetadata;
     private string _statusKey = "ConnectingToSteam";
 
     [ObservableProperty]
@@ -188,6 +189,9 @@ public partial class MainViewModel : ViewModelBase
 
     public IProgress<UploadProgress> UploadProgressReporter { get; }
 
+    /// <summary>Parameterless ctor required by Avalonia's design-time tooling.
+    /// Pulls everything from the runtime DI container so the production path
+    /// matches what's registered in <c>ServiceCollectionExtensions</c>.</summary>
     public MainViewModel() : this(
         App.Services.GetRequiredService<ISteamService>(),
         App.Services.GetRequiredService<IFileDialogService>(),
@@ -196,7 +200,8 @@ public partial class MainViewModel : ViewModelBase
         App.Services.GetRequiredService<ISessionRepository>(),
         App.Services.GetRequiredService<SessionManager>(),
         App.Services.GetRequiredService<SessionHost>(),
-        App.Services.GetRequiredService<SessionCleanupService>())
+        App.Services.GetRequiredService<SessionCleanupService>(),
+        App.Services.GetRequiredService<SteamAppMetadataService>())
     { }
 
     public MainViewModel(
@@ -207,7 +212,8 @@ public partial class MainViewModel : ViewModelBase
         ISessionRepository sessionRepository,
         SessionManager sessionManager,
         SessionHost sessionHost,
-        SessionCleanupService sessionCleanup)
+        SessionCleanupService sessionCleanup,
+        SteamAppMetadataService appMetadata)
     {
         _steamService = steamService;
         _fileDialogService = fileDialogService;
@@ -217,6 +223,7 @@ public partial class MainViewModel : ViewModelBase
         _sessionManager = sessionManager;
         _sessionHost = sessionHost;
         _sessionCleanup = sessionCleanup;
+        _appMetadata = appMetadata;
 
         // Worker auto-recovery feedback: refresh UI state on successful respawn,
         // or surface a persistent disconnected banner when we've given up.
@@ -256,7 +263,8 @@ public partial class MainViewModel : ViewModelBase
             });
         });
 
-        ItemListViewModel = new ItemListViewModel(_steamService, _notificationService);
+        ItemListViewModel = ActivatorUtilities.CreateInstance<ItemListViewModel>(
+            App.Services, _notificationService);
         ItemListViewModel.ItemSelected += OnItemSelected;
         ItemListViewModel.CreateRequested += OnCreateRequested;
 
@@ -335,8 +343,7 @@ public partial class MainViewModel : ViewModelBase
 
         try
         {
-            var metadata = App.Services.GetRequiredService<SteamAppMetadataService>();
-            var urls = await metadata.GetIconUrlsAsync(missing.Select(s => s.AppId));
+            var urls = await _appMetadata.GetIconUrlsAsync(missing.Select(s => s.AppId));
 
             foreach (var session in missing)
             {
@@ -490,7 +497,8 @@ public partial class MainViewModel : ViewModelBase
     {
         DetachCurrentView();
         SelectedItem = item;
-        var editor = new ItemEditorViewModel(item, _steamService, _fileDialogService, _settingsService, _notificationService, UploadProgressReporter);
+        var editor = ActivatorUtilities.CreateInstance<ItemEditorViewModel>(
+            App.Services, item, UploadProgressReporter);
         editor.ItemUpdated += OnItemUpdated;
         editor.ItemDeleted += OnItemDeleted;
         CurrentView = editor;
@@ -500,7 +508,8 @@ public partial class MainViewModel : ViewModelBase
     private void OnCreateRequested()
     {
         DetachCurrentView();
-        var creator = new CreateItemViewModel(_steamService, _fileDialogService, _settingsService, _notificationService, UploadProgressReporter);
+        var creator = ActivatorUtilities.CreateInstance<CreateItemViewModel>(
+            App.Services, UploadProgressReporter);
         creator.ItemCreated += OnItemCreated;
         CurrentView = creator;
     }
@@ -545,8 +554,8 @@ public partial class MainViewModel : ViewModelBase
         if (item is not null)
         {
             SelectedItem = item;
-            var editor = new ItemEditorViewModel(item, _steamService, _fileDialogService,
-                _settingsService, _notificationService, UploadProgressReporter);
+            var editor = ActivatorUtilities.CreateInstance<ItemEditorViewModel>(
+                App.Services, item, UploadProgressReporter);
             editor.ItemUpdated += OnItemUpdated;
             editor.ItemDeleted += OnItemDeleted;
             CurrentView = editor;
@@ -590,7 +599,7 @@ public partial class MainViewModel : ViewModelBase
     private void NavigateToSettings()
     {
         DetachCurrentView();
-        CurrentView = new SettingsViewModel(_settingsService);
+        CurrentView = ActivatorUtilities.CreateInstance<SettingsViewModel>(App.Services);
         ActiveTab = ShellTab.Settings;
     }
 

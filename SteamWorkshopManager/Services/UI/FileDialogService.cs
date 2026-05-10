@@ -84,27 +84,4 @@ public class FileDialogService : IFileDialogService
         return result;
     }
 
-    public async Task<string?> SaveFileAsync(string title, string defaultFileName, params string[] filters)
-    {
-        var window = GetMainWindow();
-        if (window is null) return null;
-
-        var fileTypeChoices = new List<FilePickerFileType>();
-        foreach (var filter in filters)
-        {
-            fileTypeChoices.Add(new FilePickerFileType(filter)
-            {
-                Patterns = [$"*{filter}"]
-            });
-        }
-
-        var file = await window.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
-        {
-            Title = title,
-            SuggestedFileName = defaultFileName,
-            FileTypeChoices = fileTypeChoices.Count > 0 ? fileTypeChoices : null
-        });
-
-        return file?.Path.LocalPath;
-    }
 }

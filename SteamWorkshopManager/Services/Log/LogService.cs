@@ -245,23 +245,4 @@ public class LogService : ILogService
         }
     }
 
-    public void ClearLogs()
-    {
-        lock (_lock)
-        {
-            _logs.Clear();
-        }
-
-        try
-        {
-            if (File.Exists(_logFilePath))
-            {
-                File.Delete(_logFilePath);
-            }
-        }
-        catch
-        {
-            // Ignore
-        }
-    }
 }

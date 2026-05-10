@@ -31,6 +31,7 @@ public partial class SettingsViewModel : ViewModelBase
 
     private readonly ISettingsService _settingsService;
     private readonly ILogService _logService;
+    private readonly ITelemetryService _telemetry;
 
     /// <summary>
     /// Which category is currently shown in the right-hand content pane.
@@ -69,8 +70,7 @@ public partial class SettingsViewModel : ViewModelBase
     /// <see cref="TelemetryService"/>; the app is initialized at startup so
     /// the instance is already created by the time the settings page opens.
     /// </summary>
-    public string InstanceId =>
-        (TelemetryService.Instance?.InstanceId ?? Guid.Empty).ToString();
+    public string InstanceId => _telemetry.InstanceId.ToString();
 
     [ObservableProperty]
     private bool _isInstanceIdCopied;
@@ -96,10 +96,14 @@ public partial class SettingsViewModel : ViewModelBase
 
     public string AppVersion => AppInfo.Version;
 
-    public SettingsViewModel(ISettingsService settingsService)
+    public SettingsViewModel(
+        ISettingsService settingsService,
+        ILogService logService,
+        ITelemetryService telemetry)
     {
         _settingsService = settingsService;
-        _logService = LogService.Instance;
+        _logService = logService;
+        _telemetry = telemetry;
 
         var languages = LocalizationService.Instance.AvailableLanguages;
         _availableLanguages = new ObservableCollection<LanguageInfo>(languages);
@@ -144,7 +148,7 @@ public partial class SettingsViewModel : ViewModelBase
     {
         _settingsService.Settings.TelemetryEnabled = value;
         _settingsService.Save();
-        _ = TelemetryService.Instance?.FlushAsync();
+        _ = _telemetry.FlushAsync();
     }
 
     partial void OnSelectedLanguageChanged(LanguageInfo? value)

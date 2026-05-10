@@ -81,7 +81,7 @@ public partial class App : Application
             {
                 // No session - show setup wizard as main window
                 Log.Info("No active session, showing setup wizard");
-                var wizard = new SetupWizardWindow(sessionRepository);
+                var wizard = new SetupWizardWindow();
                 var sessionWasCreated = false;
 
                 // When session is created, show MainWindow then close wizard

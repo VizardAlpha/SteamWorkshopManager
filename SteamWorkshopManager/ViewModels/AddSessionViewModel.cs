@@ -28,6 +28,7 @@ public partial class AddSessionViewModel : ViewModelBase
     private readonly AppIdValidator _validator;
     private readonly ISessionRepository _sessionRepository;
     private readonly SessionManager _sessionManager;
+    private readonly ITelemetryService _telemetry;
 
     [ObservableProperty]
     private string _appIdInput = string.Empty;
@@ -65,11 +66,16 @@ public partial class AddSessionViewModel : ViewModelBase
     public event Action? SessionCreated;
     public event Action? CancelRequested;
 
-    public AddSessionViewModel(ISessionRepository sessionRepository)
+    public AddSessionViewModel(
+        ISessionRepository sessionRepository,
+        AppIdValidator validator,
+        SessionManager sessionManager,
+        ITelemetryService telemetry)
     {
         _sessionRepository = sessionRepository;
-        _validator = App.Services.GetRequiredService<AppIdValidator>();
-        _sessionManager = App.Services.GetRequiredService<SessionManager>();
+        _validator = validator;
+        _sessionManager = sessionManager;
+        _telemetry = telemetry;
     }
 
     /// <summary>
@@ -195,7 +201,7 @@ public partial class AddSessionViewModel : ViewModelBase
 
             Log.Info("Session created successfully");
 
-            TelemetryService.Instance?.Track(TelemetryEventTypes.SessionAdded, ValidatedAppId);
+            _telemetry.Track(TelemetryEventTypes.SessionAdded, ValidatedAppId);
 
             SessionCreated?.Invoke();
         }

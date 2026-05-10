@@ -51,6 +51,8 @@ public partial class ItemEditorViewModel : ViewModelBase
     private readonly VersioningService _versioningService;
     private readonly TagSelectionService _tagSelection;
     private readonly WorkshopOrchestrator _orchestrator;
+    private readonly WorkshopTagsService _workshopTagsService;
+    private readonly ISessionRepository _sessionRepository;
     private bool _changelogHistoryLoaded;
     private bool _dependenciesLoaded;
     private bool _versionsLoaded;
@@ -337,22 +339,38 @@ public partial class ItemEditorViewModel : ViewModelBase
     public event Action<PublishedFileId_t>? ItemUpdated;
     public event Action? ItemDeleted;
 
-    public ItemEditorViewModel(WorkshopItem item, ISteamService steamService, IFileDialogService fileDialogService,
-        ISettingsService settingsService, INotificationService notificationService, IProgress<UploadProgress>? uploadProgress = null)
+    public ItemEditorViewModel(
+        WorkshopItem item,
+        ISteamService steamService,
+        IFileDialogService fileDialogService,
+        ISettingsService settingsService,
+        INotificationService notificationService,
+        ChangelogScraperService changelogScraper,
+        WorkshopDownloadService workshopDownloader,
+        DependencyService dependencyService,
+        AppDependencyService appDependencyService,
+        VersioningService versioningService,
+        TagSelectionService tagSelection,
+        WorkshopOrchestrator orchestrator,
+        WorkshopTagsService workshopTagsService,
+        ISessionRepository sessionRepository,
+        IProgress<UploadProgress>? uploadProgress = null)
     {
         _originalItem = item;
         _steamService = steamService;
         _fileDialogService = fileDialogService;
         _settingsService = settingsService;
         _notificationService = notificationService;
+        _changelogScraper = changelogScraper;
+        _workshopDownloader = workshopDownloader;
+        _dependencyService = dependencyService;
+        _appDependencyService = appDependencyService;
+        _versioningService = versioningService;
+        _tagSelection = tagSelection;
+        _orchestrator = orchestrator;
+        _workshopTagsService = workshopTagsService;
+        _sessionRepository = sessionRepository;
         _uploadProgress = uploadProgress;
-        _changelogScraper = App.Services.GetRequiredService<ChangelogScraperService>();
-        _workshopDownloader = App.Services.GetRequiredService<WorkshopDownloadService>();
-        _dependencyService = App.Services.GetRequiredService<DependencyService>();
-        _appDependencyService = App.Services.GetRequiredService<AppDependencyService>();
-        _versioningService = App.Services.GetRequiredService<VersioningService>();
-        _tagSelection = App.Services.GetRequiredService<TagSelectionService>();
-        _orchestrator = App.Services.GetRequiredService<WorkshopOrchestrator>();
 
         _title = item.Title;
         _description = item.Description;
@@ -1408,8 +1426,7 @@ public partial class ItemEditorViewModel : ViewModelBase
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
             // Fetch fresh tags from Steam
-            var tagsService = App.Services.GetRequiredService<WorkshopTagsService>();
-            var tagsResult = await tagsService.GetTagsForAppAsync(session.AppId, forceRefresh: true);
+            var tagsResult = await _workshopTagsService.GetTagsForAppAsync(session.AppId, forceRefresh: true);
 
             // Update session
             session.TagsByCategory = tagsResult.TagsByCategory;
@@ -1476,25 +1493,13 @@ public partial class ItemEditorViewModel : ViewModelBase
     }
 
 
-    /// <summary>
-    /// Saves the session asynchronously (fire and forget).
-    /// </summary>
-    private static async void SaveSessionAsync(Models.WorkshopSession session)
+    /// <summary>Fire-and-forget session save; failures aren't user-actionable here.</summary>
+    private async void SaveSessionAsync(Models.WorkshopSession session)
     {
-        try
-        {
-            var sessionRepository = App.Services.GetRequiredService<ISessionRepository>();
-            await sessionRepository.SaveSessionAsync(session);
-        }
-        catch
-        {
-            // Ignore session save failures in fire-and-forget
-        }
+        try { await _sessionRepository.SaveSessionAsync(session); }
+        catch { /* fire-and-forget */ }
     }
 
-    /// <summary>
-    /// Formats the folder size for display.
-    /// </summary>
     /// <summary>True if the content folder differs from the last uploaded
     /// fingerprint (path, size, or last-write date).</summary>
     private bool HasContentFolderChanged()

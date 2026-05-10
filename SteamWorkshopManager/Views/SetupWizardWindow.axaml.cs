@@ -1,6 +1,6 @@
 using System;
 using Avalonia.Controls;
-using SteamWorkshopManager.Services.Session;
+using Microsoft.Extensions.DependencyInjection;
 using SteamWorkshopManager.ViewModels;
 
 namespace SteamWorkshopManager.Views;
@@ -12,11 +12,8 @@ public partial class SetupWizardWindow : Window
     public SetupWizardWindow()
     {
         InitializeComponent();
-    }
 
-    public SetupWizardWindow(ISessionRepository sessionRepository) : this()
-    {
-        var viewModel = new SetupWizardViewModel(sessionRepository);
+        var viewModel = ActivatorUtilities.CreateInstance<SetupWizardViewModel>(App.Services);
         viewModel.SessionCreated += OnSessionCreated;
         DataContext = viewModel;
     }
