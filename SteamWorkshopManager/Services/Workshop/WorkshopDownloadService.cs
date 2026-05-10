@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Models;
@@ -12,6 +13,9 @@ using SteamWorkshopManager.Services.Session;
 using SteamWorkshopManager.Services.Steam;
 
 namespace SteamWorkshopManager.Services.Workshop;
+
+[JsonSerializable(typeof(DownloadFileResponse))]
+internal partial class DownloadJsonContext : JsonSerializerContext;
 
 public class WorkshopDownloadService
 {
@@ -56,7 +60,7 @@ public class WorkshopDownloadService
                 return null;
             }
 
-            var response = JsonSerializer.Deserialize<DownloadFileResponse>(json);
+            var response = JsonSerializer.Deserialize(json, DownloadJsonContext.Default.DownloadFileResponse);
 
             if (response is { Success: 1, Url: not null })
             {

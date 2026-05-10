@@ -10,6 +10,13 @@ using SteamWorkshopManager.Services.Log;
 
 namespace SteamWorkshopManager.Services.Core;
 
+[JsonSourceGenerationOptions(
+    WriteIndented = true,
+    PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
+    UseStringEnumConverter = true)]
+[JsonSerializable(typeof(CreateDraft))]
+internal partial class DraftJsonContext : JsonSerializerContext;
+
 /// <summary>
 /// Persists in-progress mod drafts under <c>%AppData%/SteamWorkshopManager/Tempo</c>.
 /// Layout: one sub-folder per draft, named with a compact Guid; each folder
@@ -25,13 +32,6 @@ public sealed class DraftService
 
     private const string FileName = "draft.json";
 
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        WriteIndented = true,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        Converters = { new JsonStringEnumConverter() },
-    };
-
     /// <summary>
     /// Writes <paramref name="draft"/> to disk. If its <see cref="CreateDraft.TempId"/>
     /// is empty we mint a new one; otherwise the existing folder is overwritten
@@ -45,7 +45,7 @@ public sealed class DraftService
         Directory.CreateDirectory(folder);
 
         var final = draft with { TempId = tempId, UpdatedAt = DateTime.UtcNow };
-        var json = JsonSerializer.Serialize(final, JsonOptions);
+        var json = JsonSerializer.Serialize(final, DraftJsonContext.Default.CreateDraft);
         File.WriteAllText(Path.Combine(folder, FileName), json);
 
         Log.Info($"Draft saved: {tempId} (\"{final.DisplayName}\")");
@@ -97,7 +97,7 @@ public sealed class DraftService
             var path = Path.Combine(folder, FileName);
             if (!File.Exists(path)) return null;
             var json = File.ReadAllText(path);
-            return JsonSerializer.Deserialize<CreateDraft>(json, JsonOptions);
+            return JsonSerializer.Deserialize(json, DraftJsonContext.Default.CreateDraft);
         }
         catch (Exception ex)
         {

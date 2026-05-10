@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using SteamWorkshopManager.Models;
@@ -10,6 +11,9 @@ using SteamWorkshopManager.Services.Session;
 using SteamWorkshopManager.Services.Steam;
 
 namespace SteamWorkshopManager.Services.Workshop;
+
+[JsonSerializable(typeof(ChangeLogEntry))]
+internal partial class ChangelogJsonContext : JsonSerializerContext;
 
 public class ChangelogScraperService(SessionHost host)
 {
@@ -93,7 +97,7 @@ public class ChangelogScraperService(SessionHost host)
             try
             {
                 var json = match.Groups[1].Value.Replace("\\/", "/");
-                var entry = JsonSerializer.Deserialize<ChangeLogEntry>(json);
+                var entry = JsonSerializer.Deserialize(json, ChangelogJsonContext.Default.ChangeLogEntry);
                 if (entry != null)
                     entries.Add(entry);
             }
