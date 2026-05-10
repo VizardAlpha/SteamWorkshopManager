@@ -10,9 +10,10 @@
         <AssemblyVersion>1.7.2.0</AssemblyVersion>
         <FileVersion>1.7.2.0</FileVersion>
         
-        <!-- Default ingest URL baked into every build (incl. CI release builds).
-             Overridable via SWM_TELEMETRY_URL env var/MSBuild prop for local dev. -->
-        <TelemetryEndpoint>https://swm-stats.com/ingest</TelemetryEndpoint>
+        <!-- Default ingest URL points to a local dev endpoint so source builds
+             never leak the prod URL. Release CI overrides via the
+             SWM_TELEMETRY_URL secret (see .github/workflows/release.yml). -->
+        <TelemetryEndpoint>http://localhost:5000/ingest</TelemetryEndpoint>
         <TelemetryEndpoint Condition="'$(SWM_TELEMETRY_URL)' != ''">$(SWM_TELEMETRY_URL)</TelemetryEndpoint>
     </PropertyGroup>
 
