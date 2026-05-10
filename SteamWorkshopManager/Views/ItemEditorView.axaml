@@ -407,10 +407,27 @@
                                                    TextTrimming="CharacterEllipsis"
                                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                                    FontSize="13"/>
-                                        <TextBlock Text="{Binding PreviewImageSize}"
-                                                   Foreground="{DynamicResource TextMutedBrush}"
-                                                   FontSize="11"
-                                                   IsVisible="{Binding PreviewImageSize, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                        <Grid>
+                                            <TextBlock Text="{Binding PreviewImageSize}"
+                                                       Foreground="{DynamicResource TextMutedBrush}"
+                                                       FontSize="11"
+                                                       IsVisible="{Binding !IsImageSizeChanged}"/>
+                                            <StackPanel Orientation="Horizontal" Spacing="6"
+                                                        IsVisible="{Binding IsImageSizeChanged}">
+                                                <TextBlock Text="{Binding OriginalImageSizeDisplay}"
+                                                           Foreground="{DynamicResource FeedbackDangerTextBrush}"
+                                                           TextDecorations="Strikethrough"
+                                                           FontSize="11"
+                                                           VerticalAlignment="Center"/>
+                                                <icons:MaterialIcon Kind="ArrowRight" Width="11" Height="11"
+                                                                    Foreground="{DynamicResource TextMutedBrush}"
+                                                                    VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding PreviewImageSize}"
+                                                           Foreground="{DynamicResource FeedbackSuccessTextBrush}"
+                                                           FontSize="11"
+                                                           VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Grid>
                                         <Border Background="#1FC23B2E" Padding="8" CornerRadius="4"
                                                 BorderBrush="{DynamicResource FeedbackDangerBrush}" BorderThickness="1"
                                                 IsVisible="{Binding IsImageTooLarge}">
@@ -471,13 +488,27 @@
                                         <Grid ColumnDefinitions="*,Auto,Auto">
                                             <TextBox Text="{Binding ContentFolderPath}" IsReadOnly="True"
                                                      PlaceholderText="{DynamicResource ContentFolderPlaceholder}"/>
-                                            <TextBlock Grid.Column="1"
-                                                       Text="{Binding ContentFolderSize}"
-                                                       VerticalAlignment="Center"
-                                                       Foreground="{DynamicResource TextMutedBrush}"
-                                                       FontSize="12"
-                                                       Margin="12,0,0,0"
-                                                       IsVisible="{Binding ContentFolderSize, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                            <Grid Grid.Column="1" VerticalAlignment="Center" Margin="12,0,0,0">
+                                                <TextBlock Text="{Binding ContentFolderSize}"
+                                                           Foreground="{DynamicResource TextMutedBrush}"
+                                                           FontSize="12"
+                                                           IsVisible="{Binding !IsFolderSizeChanged}"/>
+                                                <StackPanel Orientation="Horizontal" Spacing="6"
+                                                            IsVisible="{Binding IsFolderSizeChanged}">
+                                                    <TextBlock Text="{Binding OriginalFolderSizeDisplay}"
+                                                               Foreground="{DynamicResource FeedbackDangerTextBrush}"
+                                                               TextDecorations="Strikethrough"
+                                                               FontSize="12"
+                                                               VerticalAlignment="Center"/>
+                                                    <icons:MaterialIcon Kind="ArrowRight" Width="12" Height="12"
+                                                                        Foreground="{DynamicResource TextMutedBrush}"
+                                                                        VerticalAlignment="Center"/>
+                                                    <TextBlock Text="{Binding ContentFolderSize}"
+                                                               Foreground="{DynamicResource FeedbackSuccessTextBrush}"
+                                                               FontSize="12"
+                                                               VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Grid>
                                             <Button Grid.Column="2" Command="{Binding BrowseContentFolderCommand}"
                                                     Background="{DynamicResource SurfaceElevatedBrush}"
                                                     BorderBrush="{DynamicResource BorderSubtleBrush}"

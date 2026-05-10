@@ -584,17 +584,19 @@ public class SteamService : ISteamService
     }
 
     /// <summary>
-    /// Single emit point for upload progress so we can keep a stable
-    /// presentation: bytes shown only when we're really uploading something
-    /// (<paramref name="expectedTotal"/> &gt; 0); otherwise the UI only
-    /// shows the percentage hint, avoiding the "0 / 0 MB" artifact for
-    /// metadata-only updates.
+    /// Single emit point for upload progress. Steam streams real byte counts
+    /// only during <c>k_EItemUpdateStatusUploadingContent</c> — every other
+    /// phase (preparing, configuring, committing) is reported with
+    /// <paramref name="bytesProcessed"/> = 0. In those phases we hide the byte
+    /// counter and let <paramref name="percentHint"/> drive the bar; otherwise
+    /// <c>BytesTotal &gt; 0</c> + <c>BytesProcessed == 0</c> would pin the
+    /// progress bar at 0% until the content upload phase actually starts.
     /// </summary>
     private static void ReportProgress(IProgress<UploadProgress>? progress,
         string status, ulong bytesProcessed, ulong expectedTotal, double percentHint)
     {
         if (progress is null) return;
-        if (expectedTotal > 0)
+        if (bytesProcessed > 0 && expectedTotal > 0)
             progress.Report(new UploadProgress(status, bytesProcessed, expectedTotal, percentHint));
         else
             progress.Report(new UploadProgress(status, 0, 0, percentHint));

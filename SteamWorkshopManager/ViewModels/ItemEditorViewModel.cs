@@ -69,6 +69,8 @@ public partial class ItemEditorViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(PreviewImageSize))]
     [NotifyPropertyChangedFor(nameof(IsImageTooLarge))]
     [NotifyPropertyChangedFor(nameof(IsInfoComplete))]
+    [NotifyPropertyChangedFor(nameof(IsImageSizeChanged))]
+    [NotifyPropertyChangedFor(nameof(OriginalImageSizeDisplay))]
     private string? _previewImagePath;
 
     [ObservableProperty]
@@ -90,6 +92,8 @@ public partial class ItemEditorViewModel : ViewModelBase
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ContentFolderSize))]
+    [NotifyPropertyChangedFor(nameof(IsFolderSizeChanged))]
+    [NotifyPropertyChangedFor(nameof(OriginalFolderSizeDisplay))]
     private string? _contentFolderPath;
 
     public string ContentFolderSize
@@ -100,6 +104,19 @@ public partial class ItemEditorViewModel : ViewModelBase
             return size > 0 ? Formatters.Bytes(size) : string.Empty;
         }
     }
+
+    /// <summary>True when the folder has changed and we have a previous-upload
+    /// fingerprint to diff against — drives the red→green size badge.</summary>
+    public bool IsFolderSizeChanged => _initialFolderSize > 0 && HasContentFolderChanged();
+
+    public string OriginalFolderSizeDisplay =>
+        _initialFolderSize > 0 ? Formatters.Bytes(_initialFolderSize) : string.Empty;
+
+    /// <summary>Same logic for the preview image.</summary>
+    public bool IsImageSizeChanged => _initialImageSize > 0 && HasPreviewImageChanged();
+
+    public string OriginalImageSizeDisplay =>
+        _initialImageSize > 0 ? Formatters.Bytes(_initialImageSize) : string.Empty;
 
     [ObservableProperty]
     private VisibilityType _visibility;
@@ -610,6 +627,10 @@ public partial class ItemEditorViewModel : ViewModelBase
                     _initialImageSize = fp.Size;
                     _initialImageModified = fp.LastModifiedUtc;
                 }
+                OnPropertyChanged(nameof(IsFolderSizeChanged));
+                OnPropertyChanged(nameof(OriginalFolderSizeDisplay));
+                OnPropertyChanged(nameof(IsImageSizeChanged));
+                OnPropertyChanged(nameof(OriginalImageSizeDisplay));
 
                 NewChangelog = string.Empty;
                 ItemUpdated?.Invoke(_originalItem.PublishedFileId);
