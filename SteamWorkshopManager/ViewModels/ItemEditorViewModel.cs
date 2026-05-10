@@ -317,7 +317,7 @@ public partial class ItemEditorViewModel : ViewModelBase
         Enum.GetValues<VisibilityType>();
 
 
-    public event Action? ItemUpdated;
+    public event Action<PublishedFileId_t>? ItemUpdated;
     public event Action? ItemDeleted;
 
     public ItemEditorViewModel(WorkshopItem item, ISteamService steamService, IFileDialogService fileDialogService,
@@ -595,7 +595,7 @@ public partial class ItemEditorViewModel : ViewModelBase
                 NewChangelog = string.Empty;
                 TelemetryService.Instance?.Track(TelemetryEventTypes.ModUpdated, AppConfig.AppId);
                 _notificationService.ShowSuccess(Loc["ItemUpdatedSuccess"]);
-                ItemUpdated?.Invoke();
+                ItemUpdated?.Invoke(_originalItem.PublishedFileId);
             }
             else
             {

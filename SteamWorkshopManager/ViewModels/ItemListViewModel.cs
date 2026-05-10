@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Steamworks;
 using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Models;
 using SteamWorkshopManager.Services.Core;
@@ -119,6 +120,54 @@ public partial class ItemListViewModel : ViewModelBase
             IsLoading = false;
             HasNoItems = Items.Count == 0;
         }
+    }
+
+    /// <summary>
+    /// Single-item refresh for post-Create / post-Update flows. Avoids the
+    /// full Steam UGC re-query <see cref="LoadItemsAsync"/> performs. Returns
+    /// the live <see cref="WorkshopItem"/> instance now in <see cref="Items"/>,
+    /// or null if Steam couldn't resolve the id (caller decides whether to
+    /// fall back to a full reload).
+    /// </summary>
+    public async Task<WorkshopItem?> RefreshItemAsync(PublishedFileId_t fileId)
+    {
+        if (!_steamService.IsInitialized) return null;
+
+        WorkshopItem? fetched;
+        try
+        {
+            fetched = await _steamService.GetPublishedItemAsync(fileId);
+        }
+        catch (Exception ex)
+        {
+            Log.Warning($"RefreshItemAsync failed for {fileId}: {ex.Message}");
+            return null;
+        }
+        if (fetched is null) return null;
+
+        var existingIndex = -1;
+        for (var i = 0; i < Items.Count; i++)
+        {
+            if (Items[i].PublishedFileId == fileId) { existingIndex = i; break; }
+        }
+
+        if (existingIndex >= 0)
+        {
+            // Replace in place so list position + scroll anchor are preserved.
+            var stale = Items[existingIndex];
+            stale.PreviewBitmap = null;
+            stale.PropertyChanged -= OnItemPropertyChanged;
+            Items[existingIndex] = fetched;
+        }
+        else
+        {
+            // Newly created item: prepend (Steam orders by creation desc).
+            Items.Insert(0, fetched);
+        }
+
+        HasNoItems = Items.Count == 0;
+        _ = LoadItemPreviewAsync(fetched);
+        return fetched;
     }
 
     partial void OnSearchQueryChanged(string value) => ApplyFilter();

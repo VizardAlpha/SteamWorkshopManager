@@ -152,63 +152,115 @@ public class SteamService : ISteamService
         var queryResult = await tcs.Task;
         Log.Debug($"Query returned {queryResult.m_unNumResultsReturned} items (EResult: {queryResult.m_eResult})");
 
+        var currentUserId = SteamUser.GetSteamID();
         for (uint i = 0; i < queryResult.m_unNumResultsReturned; i++)
         {
-            if (SteamUGC.GetQueryUGCResult(queryResult.m_handle, i, out var details))
-            {
-                var tags = new List<WorkshopTag>();
-                if (!string.IsNullOrEmpty(details.m_rgchTags))
-                {
-                    foreach (var tag in details.m_rgchTags.Split(','))
-                    {
-                        tags.Add(new WorkshopTag(tag.Trim(), true));
-                    }
-                }
-
-                // Get preview image URL
-                string? previewUrl = null;
-                if (SteamUGC.GetQueryUGCPreviewURL(queryResult.m_handle, i, out var url, 1024))
-                {
-                    previewUrl = url;
-                    Log.Debug($"Item '{details.m_rgchTitle}' preview URL: {url}");
-                }
-                else
-                {
-                    Log.Debug($"Item '{details.m_rgchTitle}' - No preview URL found");
-                }
-
-                var ownerId = new CSteamID(details.m_ulSteamIDOwner);
-                var currentUserId = SteamUser.GetSteamID();
-
-                // Subscriber count comes from a separate statistic API, not the details struct
-                ulong subscribers = 0;
-                SteamUGC.GetQueryUGCStatistic(queryResult.m_handle, i,
-                    EItemStatistic.k_EItemStatistic_NumSubscriptions, out subscribers);
-
-                var additionalPreviews = ReadAdditionalPreviews(queryResult.m_handle, i);
-
-                items.Add(new WorkshopItem
-                {
-                    PublishedFileId = details.m_nPublishedFileId,
-                    Title = details.m_rgchTitle,
-                    Description = details.m_rgchDescription,
-                    PreviewImageUrl = previewUrl,
-                    Visibility = MapVisibility(details.m_eVisibility),
-                    Tags = tags,
-                    CreatedAt = DateTimeOffset.FromUnixTimeSeconds(details.m_rtimeCreated).DateTime,
-                    UpdatedAt = DateTimeOffset.FromUnixTimeSeconds(details.m_rtimeUpdated).DateTime,
-                    SubscriberCount = subscribers,
-                    FileSize = details.m_nFileSize,
-                    OwnerId = ownerId,
-                    IsOwner = ownerId == currentUserId,
-                    AdditionalPreviews = additionalPreviews,
-                });
-            }
+            var item = ReadWorkshopItemAt(queryResult.m_handle, i, currentUserId);
+            if (item is not null) items.Add(item);
         }
 
         SteamUGC.ReleaseQueryUGCRequest(queryResult.m_handle);
         Log.Info($"Successfully fetched {items.Count} published items");
         return items;
+    }
+
+    /// <summary>
+    /// Fetches a single Workshop item by its <see cref="PublishedFileId_t"/>.
+    /// Used after Create/Update so the shell can refresh just that row instead
+    /// of re-querying the user's whole catalog. Returns null if Steam can't
+    /// resolve the id (e.g. indexing latency right after publish).
+    /// </summary>
+    public async Task<WorkshopItem?> GetPublishedItemAsync(PublishedFileId_t fileId)
+    {
+        if (!_isInitialized)
+        {
+            Log.Warning("GetPublishedItemAsync called but Steam is not initialized");
+            return null;
+        }
+
+        Log.Debug($"Fetching single Workshop item: {fileId}");
+
+        var query = SteamUGC.CreateQueryUGCDetailsRequest([fileId], 1);
+        SteamUGC.SetReturnLongDescription(query, true);
+        SteamUGC.SetReturnMetadata(query, true);
+        SteamUGC.SetReturnAdditionalPreviews(query, true);
+
+        var tcs = new TaskCompletionSource<SteamUGCQueryCompleted_t>();
+        var callResult = CallResult<SteamUGCQueryCompleted_t>.Create((result, failure) =>
+        {
+            if (failure) tcs.SetException(new Exception("Single-item query failed"));
+            else tcs.SetResult(result);
+        });
+        callResult.Set(SteamUGC.SendQueryUGCRequest(query));
+
+        var timeout = DateTime.UtcNow.AddSeconds(15);
+        while (!tcs.Task.IsCompleted && DateTime.UtcNow < timeout)
+        {
+            SteamAPI.RunCallbacks();
+            await Task.Delay(50);
+        }
+
+        if (!tcs.Task.IsCompleted)
+        {
+            Log.Error($"Single-item query timed out for {fileId}");
+            SteamUGC.ReleaseQueryUGCRequest(query);
+            return null;
+        }
+
+        var queryResult = await tcs.Task;
+        if (queryResult.m_eResult != EResult.k_EResultOK || queryResult.m_unNumResultsReturned == 0)
+        {
+            Log.Warning($"Single-item query returned no result for {fileId} (EResult: {queryResult.m_eResult})");
+            SteamUGC.ReleaseQueryUGCRequest(queryResult.m_handle);
+            return null;
+        }
+
+        var item = ReadWorkshopItemAt(queryResult.m_handle, 0, SteamUser.GetSteamID());
+        SteamUGC.ReleaseQueryUGCRequest(queryResult.m_handle);
+        return item;
+    }
+
+    /// <summary>
+    /// Builds a <see cref="WorkshopItem"/> from one row of a UGC query result.
+    /// Shared by the bulk and single-item fetch paths.
+    /// </summary>
+    private static WorkshopItem? ReadWorkshopItemAt(UGCQueryHandle_t handle, uint index, CSteamID currentUserId)
+    {
+        if (!SteamUGC.GetQueryUGCResult(handle, index, out var details))
+            return null;
+
+        var tags = new List<WorkshopTag>();
+        if (!string.IsNullOrEmpty(details.m_rgchTags))
+        {
+            foreach (var tag in details.m_rgchTags.Split(','))
+                tags.Add(new WorkshopTag(tag.Trim(), true));
+        }
+
+        string? previewUrl = null;
+        if (SteamUGC.GetQueryUGCPreviewURL(handle, index, out var url, 1024))
+            previewUrl = url;
+
+        SteamUGC.GetQueryUGCStatistic(handle, index,
+            EItemStatistic.k_EItemStatistic_NumSubscriptions, out var subscribers);
+
+        var ownerId = new CSteamID(details.m_ulSteamIDOwner);
+
+        return new WorkshopItem
+        {
+            PublishedFileId = details.m_nPublishedFileId,
+            Title = details.m_rgchTitle,
+            Description = details.m_rgchDescription,
+            PreviewImageUrl = previewUrl,
+            Visibility = MapVisibility(details.m_eVisibility),
+            Tags = tags,
+            CreatedAt = DateTimeOffset.FromUnixTimeSeconds(details.m_rtimeCreated).DateTime,
+            UpdatedAt = DateTimeOffset.FromUnixTimeSeconds(details.m_rtimeUpdated).DateTime,
+            SubscriberCount = subscribers,
+            FileSize = details.m_nFileSize,
+            OwnerId = ownerId,
+            IsOwner = ownerId == currentUserId,
+            AdditionalPreviews = ReadAdditionalPreviews(handle, index),
+        };
     }
 
     public async Task<PublishedFileId_t?> CreateItemAsync(string title, string description,

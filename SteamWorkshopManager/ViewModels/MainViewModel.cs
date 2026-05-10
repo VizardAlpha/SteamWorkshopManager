@@ -7,6 +7,7 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
+using Steamworks;
 using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Models;
 using SteamWorkshopManager.Services.Core;
@@ -504,12 +505,20 @@ public partial class MainViewModel : ViewModelBase
         CurrentView = creator;
     }
 
-    private async void OnItemUpdated()
+    /// <summary>
+    /// Post-save flow: keep the editor mounted so the user can verify the
+    /// just-saved state — only refresh the matching list row in background so
+    /// the catalog is accurate the next time they navigate to "My mods".
+    /// </summary>
+    private async void OnItemUpdated(PublishedFileId_t fileId)
     {
-        DetachCurrentView();
-        CurrentView = ItemListViewModel;
-        SelectedItem = null;
-        await ItemListViewModel.LoadItemsAsync();
+        var refreshed = await ItemListViewModel.RefreshItemAsync(fileId);
+        if (refreshed is null)
+        {
+            // Single-item fetch failed; trigger a best-effort full reload so
+            // the next list visit isn't stale.
+            await ItemListViewModel.LoadItemsAsync();
+        }
     }
 
     private async void OnItemDeleted()
@@ -520,10 +529,35 @@ public partial class MainViewModel : ViewModelBase
         await ItemListViewModel.LoadItemsAsync();
     }
 
-    private async void OnItemCreated()
+    /// <summary>
+    /// Post-publish flow: fetch only the new item (instead of re-querying the
+    /// full catalog), insert it into the list, and route straight to the
+    /// editor so the user can verify what just shipped — addresses the
+    /// "navigation breaks my concentration" feedback. If Steam can't resolve
+    /// the freshly-published id (indexing latency, network), fall back to the
+    /// list view + full reload + a notification rather than stranding the user.
+    /// </summary>
+    private async void OnItemCreated(PublishedFileId_t fileId)
     {
         DetachCurrentView();
+
+        var item = await ItemListViewModel.RefreshItemAsync(fileId);
+        if (item is not null)
+        {
+            SelectedItem = item;
+            var editor = new ItemEditorViewModel(item, _steamService, _fileDialogService,
+                _settingsService, _notificationService, UploadProgressReporter);
+            editor.ItemUpdated += OnItemUpdated;
+            editor.ItemDeleted += OnItemDeleted;
+            CurrentView = editor;
+            ActiveTab = ShellTab.MyMods;
+            return;
+        }
+
+        // Fallback path
+        _notificationService.ShowError(Loc["PostPublishFetchFailed"]);
         CurrentView = ItemListViewModel;
+        ActiveTab = ShellTab.MyMods;
         await ItemListViewModel.LoadItemsAsync();
     }
 

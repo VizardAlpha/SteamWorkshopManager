@@ -197,6 +197,7 @@
     <x:String x:Key="ItemUpdatedSuccess">Item updated successfully!</x:String>
     <x:String x:Key="ItemDeletedSuccess">Item deleted successfully!</x:String>
     <x:String x:Key="OperationFailed">Operation failed</x:String>
+    <x:String x:Key="PostPublishFetchFailed">Item published, but Steam hasn't indexed it yet — refreshing list.</x:String>
 
     <!-- Debug Mode -->
     <x:String x:Key="DebugMode">Debug Mode</x:String>

@@ -437,7 +437,7 @@ public partial class CreateItemViewModel : ViewModelBase
     public static IEnumerable<VisibilityType> VisibilityOptions =>
         Enum.GetValues<VisibilityType>();
     
-    public event Action? ItemCreated;
+    public event Action<PublishedFileId_t>? ItemCreated;
 
     public CreateItemViewModel(ISteamService steamService, IFileDialogService fileDialogService,
         ISettingsService settingsService, INotificationService notificationService, IProgress<UploadProgress>? uploadProgress = null)
@@ -762,7 +762,7 @@ public partial class CreateItemViewModel : ViewModelBase
                 }
 
                 _notificationService.ShowSuccess(Loc["ItemCreatedSuccess"]);
-                ItemCreated?.Invoke();
+                ItemCreated?.Invoke(fileId.Value);
             }
             else
             {

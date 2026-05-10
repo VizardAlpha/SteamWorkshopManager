@@ -39,6 +39,12 @@ public interface ISteamService
     void Shutdown();
 
     Task<List<WorkshopItem>> GetPublishedItemsAsync();
+
+    /// <summary>
+    /// Fetches a single Workshop item by id. Returns null when Steam can't
+    /// resolve it (e.g. brief indexing latency right after a Create).
+    /// </summary>
+    Task<WorkshopItem?> GetPublishedItemAsync(PublishedFileId_t fileId);
     Task<PublishedFileId_t?> CreateItemAsync(string title, string description, string contentFolderPath,
         string? previewImagePath, VisibilityType visibility, List<string> tags, string? changelog,
         IProgress<UploadProgress>? progress = null, string? branchMin = null, string? branchMax = null,
@@ -52,12 +58,12 @@ public interface ISteamService
 
     /// <summary>
     /// Gets the list of game branches (betas) available for the current AppId.
-    /// Returns empty list if versioning is not enabled.
+    /// Returns an empty list if versioning is not enabled.
     /// </summary>
     List<GameBranch> GetGameBranches();
 
     /// <summary>
-    /// Gets the current active beta branch name. Returns "public" if on default branch.
+    /// Gets the current active beta branch name. Returns "public" if on the default branch.
     /// </summary>
     string GetCurrentBranchName();
 }

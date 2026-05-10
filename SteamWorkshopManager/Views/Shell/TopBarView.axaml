@@ -110,6 +110,7 @@
 
                 <Button Classes="tab"
                             Classes.active="{Binding IsHomeActive}"
+                            IsEnabled="{Binding !IsUploadInProgress}"
                             Command="{Binding NavigateToHomeCommand}">
                         <StackPanel Spacing="2" HorizontalAlignment="Center">
                             <icons:MaterialIcon Kind="HomeVariantOutline"
@@ -123,6 +124,7 @@
 
                 <Button Classes="tab"
                         Classes.active="{Binding IsMyModsActive}"
+                        IsEnabled="{Binding !IsUploadInProgress}"
                         Command="{Binding NavigateToListCommand}">
                     <StackPanel Spacing="2" HorizontalAlignment="Center">
                         <icons:MaterialIcon Kind="PackageVariantClosed"
@@ -136,6 +138,7 @@
 
                 <Button Classes="tab"
                         Classes.active="{Binding IsCreateActive}"
+                        IsEnabled="{Binding !IsUploadInProgress}"
                         Command="{Binding NavigateToCreateCommand}">
                     <StackPanel Spacing="2" HorizontalAlignment="Center">
                         <icons:MaterialIcon Kind="PlusBoxOutline"
@@ -149,6 +152,7 @@
 
                 <Button Classes="tab"
                         Classes.active="{Binding IsSettingsActive}"
+                        IsEnabled="{Binding !IsUploadInProgress}"
                         Command="{Binding NavigateToSettingsCommand}">
                     <StackPanel Spacing="2" HorizontalAlignment="Center">
                         <icons:MaterialIcon Kind="CogOutline"
@@ -187,6 +191,7 @@
             <Button Grid.Column="2"
                     Classes="session-pill"
                     IsVisible="{Binding HasActiveSession}"
+                    IsEnabled="{Binding !IsUploadInProgress}"
                     HorizontalAlignment="Right"
                     VerticalAlignment="Center">
                 <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">

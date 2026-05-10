@@ -97,6 +97,12 @@ internal sealed class SteamWorkerImpl : ISteamWorker
         return items.Select(ToDto).ToList();
     }
 
+    public async Task<WorkshopItemDto?> GetPublishedItemAsync(ulong publishedFileId)
+    {
+        var item = await _steam.GetPublishedItemAsync(new PublishedFileId_t(publishedFileId));
+        return item is null ? null : ToDto(item);
+    }
+
     public Task<bool> DeleteItemAsync(ulong publishedFileId) =>
         _steam.DeleteItemAsync(new PublishedFileId_t(publishedFileId));
 

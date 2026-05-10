@@ -49,6 +49,12 @@ public partial interface ISteamWorker
     /// <summary>All published Workshop items owned by the signed-in user.</summary>
     Task<List<WorkshopItemDto>> GetPublishedItemsAsync();
 
+    /// <summary>
+    /// Single Workshop item by id — used to refresh one row after Create/Update
+    /// without re-querying the full catalog. Null when Steam can't resolve the id.
+    /// </summary>
+    Task<WorkshopItemDto?> GetPublishedItemAsync(ulong publishedFileId);
+
     /// <summary>Deletes a published Workshop item.</summary>
     Task<bool> DeleteItemAsync(ulong publishedFileId);
 

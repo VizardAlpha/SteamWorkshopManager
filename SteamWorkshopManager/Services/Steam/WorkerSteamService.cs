@@ -64,6 +64,22 @@ public sealed class WorkerSteamService(SessionHost host) : ISteamService
         }
     }
 
+    public async Task<WorkshopItem?> GetPublishedItemAsync(PublishedFileId_t fileId)
+    {
+        if (host.Worker is null) return null;
+
+        try
+        {
+            var dto = await host.Worker.GetPublishedItemAsync(fileId.m_PublishedFileId);
+            return dto is null ? null : FromDto(dto);
+        }
+        catch (Exception ex)
+        {
+            LogRpcFailure(nameof(GetPublishedItemAsync), ex);
+            return null;
+        }
+    }
+
     public async Task<bool> DeleteItemAsync(PublishedFileId_t fileId)
     {
         if (host.Worker is null) return false;
