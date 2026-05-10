@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using SteamWorkshopManager.Core.Workshop;
 using SteamWorkshopManager.Services.Core;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Notifications;
@@ -60,6 +61,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<AppDependencyService>();
         services.AddSingleton<AppIdValidator>();
         services.AddSingleton<DraftService>();
+        services.AddSingleton<TagSelectionService>();
+        services.AddSingleton<WorkshopOrchestrator>();
 
         // Session orchestration
         services.AddSingleton<SessionManager>();

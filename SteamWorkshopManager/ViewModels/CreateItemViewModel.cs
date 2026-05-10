@@ -8,6 +8,8 @@ using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
+using SteamWorkshopManager.Core.Workshop;
+using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Models;
 using Steamworks;
 using SteamWorkshopManager.Services.Core;
@@ -31,7 +33,8 @@ public partial class CreateItemViewModel : ViewModelBase
     private readonly AppDependencyService _appDependencyService;
     private readonly VersioningService _versioningService;
     private readonly DraftService _draftService;
-    private const long MaxImageSizeBytes = 1024 * 1024; // 1 MB Steam limit
+    private readonly TagSelectionService _tagSelection;
+    private readonly WorkshopOrchestrator _orchestrator;
 
     /// <summary>
     /// If non-null, the user is editing a previously saved draft. Further
@@ -69,9 +72,25 @@ public partial class CreateItemViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(IsInfoComplete))]
     private string? _contentFolderPath;
 
-    public string ContentFolderSize => FormatFolderSize(ContentFolderPath);
-    public string PreviewImageSize => FormatFileSize(PreviewImagePath);
-    public bool IsImageTooLarge => GetFileSize(PreviewImagePath) > MaxImageSizeBytes;
+    public string ContentFolderSize
+    {
+        get
+        {
+            var size = ModFileInfoBuilder.InspectFolder(ContentFolderPath).Size;
+            return size > 0 ? Formatters.Bytes(size) : string.Empty;
+        }
+    }
+
+    public string PreviewImageSize
+    {
+        get
+        {
+            var size = ModFileInfoBuilder.InspectFile(PreviewImagePath).Size;
+            return size > 0 ? Formatters.Bytes(size) : string.Empty;
+        }
+    }
+
+    public bool IsImageTooLarge => ModValidator.IsImageTooLarge(PreviewImagePath);
 
     [ObservableProperty]
     private VisibilityType _visibility = VisibilityType.Private;
@@ -284,21 +303,6 @@ public partial class CreateItemViewModel : ViewModelBase
         return null;
     }
 
-    private List<PreviewOp> BuildPreviewOps()
-    {
-        var ops = new List<PreviewOp>();
-        foreach (var p in ImagePreviews)
-        {
-            if (!string.IsNullOrEmpty(p.LocalPath))
-                ops.Add(new PreviewOp.AddImage(p.LocalPath));
-        }
-        foreach (var p in VideoPreviews)
-        {
-            if (!string.IsNullOrEmpty(p.VideoId))
-                ops.Add(new PreviewOp.AddVideo(p.VideoId));
-        }
-        return ops;
-    }
 
     /// <summary>
     /// Saved drafts for the current AppId, ordered by most recently updated.
@@ -330,13 +334,7 @@ public partial class CreateItemViewModel : ViewModelBase
         // chip list survives a reload, and the flat list of currently-checked
         // names across both sources so ticks can be restored.
         var customNames = CustomTags.Select(t => t.Name).ToList();
-        var selectedNames = TagCategories
-            .SelectMany(c => c.Tags)
-            .Where(t => t.IsSelected)
-            .Select(t => t.Name)
-            .Concat(CustomTags.Where(t => t.IsSelected).Select(t => t.Name))
-            .Distinct()
-            .ToList();
+        var selectedNames = TagSelectionService.CollectSelectedNames(TagCategories, CustomTags);
 
         var draft = new CreateDraft(
             TempId: _currentDraftId ?? string.Empty,
@@ -374,7 +372,7 @@ public partial class CreateItemViewModel : ViewModelBase
         SelectedBranchMin = AvailableBranches.FirstOrDefault(b => b.Name == draft.BranchMin);
         SelectedBranchMax = AvailableBranches.FirstOrDefault(b => b.Name == draft.BranchMax);
 
-        RestoreTagsFromDraft(draft);
+        TagSelectionService.RestoreFromDraft(draft, TagCategories, CustomTags);
 
         _currentDraftId = draft.TempId;
         _draftCreatedAt = draft.CreatedAt;
@@ -387,40 +385,6 @@ public partial class CreateItemViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Reapplies the draft's tag selection over the current tag model, without
-    /// blowing away session-scoped custom tags the user has accumulated.
-    /// Merges the draft's custom-tag names in (dedup by name), then resets
-    /// every tag's IsSelected from the flat SelectedTags list. Selected names
-    /// that match nothing known are promoted to new custom tags — so a draft
-    /// survives a Steam category reshuffle.
-    /// </summary>
-    private void RestoreTagsFromDraft(CreateDraft draft)
-    {
-        // Merge: keep existing custom tags, add any draft-only ones.
-        foreach (var name in draft.CustomTags ?? [])
-        {
-            if (!CustomTags.Any(t => string.Equals(t.Name, name, StringComparison.OrdinalIgnoreCase)))
-                CustomTags.Add(new WorkshopTag(name));
-        }
-
-        var selected = new HashSet<string>(draft.SelectedTags ?? [], StringComparer.OrdinalIgnoreCase);
-
-        // Reset every known tag's checked state from the draft.
-        foreach (var tag in TagCategories.SelectMany(c => c.Tags))
-            tag.IsSelected = selected.Contains(tag.Name);
-        foreach (var tag in CustomTags)
-            tag.IsSelected = selected.Contains(tag.Name);
-
-        // Any selected name that still has no home → custom tag, pre-checked.
-        var knownNames = new HashSet<string>(
-            TagCategories.SelectMany(c => c.Tags).Select(t => t.Name)
-                .Concat(CustomTags.Select(t => t.Name)),
-            StringComparer.OrdinalIgnoreCase);
-
-        foreach (var name in selected.Where(n => !knownNames.Contains(n)))
-            CustomTags.Add(new WorkshopTag(name, isSelected: true));
-    }
 
     [RelayCommand]
     private void DeleteDraft(CreateDraft draft)
@@ -451,6 +415,8 @@ public partial class CreateItemViewModel : ViewModelBase
         _appDependencyService = App.Services.GetRequiredService<AppDependencyService>();
         _versioningService = App.Services.GetRequiredService<VersioningService>();
         _draftService = App.Services.GetRequiredService<DraftService>();
+        _tagSelection = App.Services.GetRequiredService<TagSelectionService>();
+        _orchestrator = App.Services.GetRequiredService<WorkshopOrchestrator>();
 
         RefreshDrafts();
         ReloadVersioningFromCurrentSession();
@@ -655,21 +621,10 @@ public partial class CreateItemViewModel : ViewModelBase
     [RelayCommand]
     private async Task CreateAsync()
     {
-        if (string.IsNullOrWhiteSpace(Title))
+        var validation = ModValidator.ValidateForCreate(Title, ContentFolderPath);
+        if (!validation.IsValid)
         {
-            ErrorMessage = Loc["TitleRequired"];
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(ContentFolderPath))
-        {
-            ErrorMessage = Loc["FolderRequired"];
-            return;
-        }
-
-        if (!Directory.Exists(ContentFolderPath))
-        {
-            ErrorMessage = Loc["FolderNotExist"];
+            ErrorMessage = Loc[validation.ErrorKey!];
             return;
         }
 
@@ -678,14 +633,6 @@ public partial class CreateItemViewModel : ViewModelBase
 
         try
         {
-            var selectedTags = TagCategories
-                .SelectMany(c => c.Tags)
-                .Where(t => t.IsSelected)
-                .Select(t => t.Name)
-                .Concat(CustomTags.Where(t => t.IsSelected).Select(t => t.Name))
-                .ToList();
-
-            // Versioning: pass branch range if enabled and not targeting all
             string? branchMin = null, branchMax = null;
             if (IsVersioningEnabled && !TargetAllVersions)
             {
@@ -693,87 +640,40 @@ public partial class CreateItemViewModel : ViewModelBase
                 branchMax = SelectedBranchMax?.Name;
             }
 
-            var previewOps = BuildPreviewOps();
+            var previewOps = PreviewOpBuilder.BuildForCreate(ImagePreviews, VideoPreviews);
 
-            var fileId = await _steamService.CreateItemAsync(
+            var request = new CreateModRequest(
                 Title,
                 Description,
-                ContentFolderPath,
+                ContentFolderPath!,
                 PreviewImagePath,
                 Visibility,
-                selectedTags,
-                string.IsNullOrWhiteSpace(InitialChangelog) ? "Initial version" : InitialChangelog,
-                _uploadProgress,
+                TagSelectionService.CollectSelectedNames(TagCategories, CustomTags),
+                InitialChangelog,
                 branchMin,
                 branchMax,
-                previewOps.Count > 0 ? previewOps : null
-            );
+                previewOps.Count > 0 ? previewOps : null,
+                Dependencies,
+                AppDependencies);
 
-            if (fileId.HasValue)
+            var result = await _orchestrator.PublishAsync(request, _uploadProgress, _currentDraftId);
+
+            if (result.Success && result.FileId.HasValue)
             {
-                TelemetryService.Instance?.Track(TelemetryEventTypes.ModCreated, AppConfig.AppId);
-
-                // Save paths + file info for change detection on future updates
-                var id = (ulong)fileId.Value;
-                if (!string.IsNullOrEmpty(ContentFolderPath) && Directory.Exists(ContentFolderPath))
-                {
-                    var dirInfo = new DirectoryInfo(ContentFolderPath);
-                    var files = dirInfo.GetFiles("*", SearchOption.AllDirectories);
-                    _settingsService.SetContentFolderInfo(id, new ItemFileInfo
-                    {
-                        Path = ContentFolderPath,
-                        Size = files.Sum(f => f.Length),
-                        LastModifiedUtc = files.Length > 0 ? files.Max(f => f.LastWriteTimeUtc) : dirInfo.LastWriteTimeUtc
-                    });
-                }
-                if (!string.IsNullOrEmpty(PreviewImagePath) && File.Exists(PreviewImagePath))
-                {
-                    var fi = new FileInfo(PreviewImagePath);
-                    _settingsService.SetPreviewImageInfo(id, new ItemFileInfo
-                    {
-                        Path = PreviewImagePath,
-                        Size = fi.Length,
-                        LastModifiedUtc = fi.LastWriteTimeUtc
-                    });
-                }
-
-                // Add collected dependencies
-                foreach (var dep in Dependencies)
-                {
-                    await _dependencyService.AddDependencyAsync(
-                        fileId.Value, new PublishedFileId_t(dep.PublishedFileId));
-                }
-
-                // Add collected app dependencies
-                foreach (var appDep in AppDependencies)
-                {
-                    await _appDependencyService.AddAppDependencyAsync(
-                        fileId.Value, new AppId_t(appDep.AppId));
-                }
-
-                // Publish succeeded — discard the draft folder if this session
-                // was editing one, so "Tempo/" stays clean.
                 if (!string.IsNullOrEmpty(_currentDraftId))
                 {
-                    _draftService.Delete(_currentDraftId);
                     _currentDraftId = null;
                     _draftCreatedAt = null;
                     RefreshDrafts();
                 }
-
-                _notificationService.ShowSuccess(Loc["ItemCreatedSuccess"]);
-                ItemCreated?.Invoke(fileId.Value);
+                ItemCreated?.Invoke(result.FileId.Value);
             }
             else
             {
-                _notificationService.ShowError(Loc["CreationFailed"]);
-                ErrorMessage = Loc["CreationFailed"];
+                ErrorMessage = result.ExceptionMessage is null
+                    ? Loc[result.ErrorKey ?? "CreationFailed"]
+                    : $"{Loc[result.ErrorKey ?? "CreationFailed"]}: {result.ExceptionMessage}";
             }
-        }
-        catch (Exception ex)
-        {
-            _notificationService.ShowError(Loc["CreationFailed"]);
-            ErrorMessage = $"{Loc["CreationFailed"]}: {ex.Message}";
         }
         finally
         {
@@ -950,7 +850,7 @@ public partial class CreateItemViewModel : ViewModelBase
         }
 
         // Add to session and list
-        AddCustomTagToSession(tagName);
+        _tagSelection.AddCustomTagToSession(tagName);
         CustomTags.Add(new WorkshopTag(tagName, true));
         NewCustomTag = string.Empty;
     }
@@ -960,39 +860,8 @@ public partial class CreateItemViewModel : ViewModelBase
     {
         if (tag == null) return;
 
-        RemoveCustomTagFromSession(tag.Name);
+        _tagSelection.RemoveCustomTagFromSession(tag.Name);
         CustomTags.Remove(tag);
-    }
-
-    /// <summary>
-    /// Adds a custom tag to the current session and saves it.
-    /// </summary>
-    private static void AddCustomTagToSession(string tagName)
-    {
-        var session = AppConfig.CurrentSession;
-        if (session == null) return;
-
-        if (!session.CustomTags.Contains(tagName, StringComparer.OrdinalIgnoreCase))
-        {
-            session.CustomTags.Add(tagName);
-            SaveSessionAsync(session);
-        }
-    }
-
-    /// <summary>
-    /// Removes a custom tag from the current session and saves it.
-    /// </summary>
-    private static void RemoveCustomTagFromSession(string tagName)
-    {
-        var session = AppConfig.CurrentSession;
-        if (session == null) return;
-
-        var index = session.CustomTags.FindIndex(t => t.Equals(tagName, StringComparison.OrdinalIgnoreCase));
-        if (index >= 0)
-        {
-            session.CustomTags.RemoveAt(index);
-            SaveSessionAsync(session);
-        }
     }
 
     /// <summary>
@@ -1011,65 +880,4 @@ public partial class CreateItemViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Gets file size in bytes.
-    /// </summary>
-    private static long GetFileSize(string? filePath)
-    {
-        if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
-            return 0;
-
-        try
-        {
-            return new FileInfo(filePath).Length;
-        }
-        catch
-        {
-            return 0;
-        }
-    }
-
-    /// <summary>
-    /// Formats file size for display.
-    /// </summary>
-    private static string FormatFileSize(string? filePath)
-    {
-        var size = GetFileSize(filePath);
-        if (size == 0)
-            return string.Empty;
-
-        return size switch
-        {
-            < 1024 => $"{size} B",
-            < 1024 * 1024 => $"{size / 1024.0:F1} KB",
-            _ => $"{size / (1024.0 * 1024):F2} MB"
-        };
-    }
-
-    /// <summary>
-    /// Formats folder size for display.
-    /// </summary>
-    private static string FormatFolderSize(string? folderPath)
-    {
-        if (string.IsNullOrEmpty(folderPath) || !Directory.Exists(folderPath))
-            return string.Empty;
-
-        try
-        {
-            var dirInfo = new DirectoryInfo(folderPath);
-            var size = dirInfo.GetFiles("*", SearchOption.AllDirectories).Sum(f => f.Length);
-
-            return size switch
-            {
-                < 1024 => $"{size} B",
-                < 1024 * 1024 => $"{size / 1024.0:F1} KB",
-                < 1024 * 1024 * 1024 => $"{size / (1024.0 * 1024):F1} MB",
-                _ => $"{size / (1024.0 * 1024 * 1024):F2} GB"
-            };
-        }
-        catch
-        {
-            return string.Empty;
-        }
-    }
 }

@@ -7,7 +7,7 @@ using SteamWorkshopManager.Services.Session;
 using SteamWorkshopManager.Services.Steam;
 using Steamworks;
 
-namespace SteamWorkshopManager.Services.Workshop;
+namespace SteamWorkshopManager.Core.Workshop;
 
 /// <summary>
 /// Shell-side facade around the game's branch/version surface. Branch

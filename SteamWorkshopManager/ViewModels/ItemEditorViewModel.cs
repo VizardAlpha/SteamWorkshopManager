@@ -16,6 +16,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using QRCoder;
+using SteamWorkshopManager.Core.Workshop;
 using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Models;
 using Steamworks;
@@ -48,11 +49,12 @@ public partial class ItemEditorViewModel : ViewModelBase
     private readonly DependencyService _dependencyService;
     private readonly AppDependencyService _appDependencyService;
     private readonly VersioningService _versioningService;
+    private readonly TagSelectionService _tagSelection;
+    private readonly WorkshopOrchestrator _orchestrator;
     private bool _changelogHistoryLoaded;
     private bool _dependenciesLoaded;
     private bool _versionsLoaded;
     private static readonly HttpClient HttpClient = new();
-    private const long MaxImageSizeBytes = 1024 * 1024; // 1 MB Steam limit
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsInfoComplete))]
@@ -73,14 +75,29 @@ public partial class ItemEditorViewModel : ViewModelBase
     /// <summary>Release the previous preview's native surface before swapping.</summary>
     partial void OnPreviewImageChanging(Bitmap? value) => _previewImage?.Dispose();
 
-    public string PreviewImageSize => FormatImageSize(PreviewImagePath);
-    public bool IsImageTooLarge => GetImageSize(PreviewImagePath) > MaxImageSizeBytes;
+    public string PreviewImageSize
+    {
+        get
+        {
+            var size = ModFileInfoBuilder.InspectFile(PreviewImagePath).Size;
+            return size > 0 ? Formatters.Bytes(size) : string.Empty;
+        }
+    }
+
+    public bool IsImageTooLarge => ModValidator.IsImageTooLarge(PreviewImagePath);
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ContentFolderSize))]
     private string? _contentFolderPath;
 
-    public string ContentFolderSize => FormatFolderSize(ContentFolderPath);
+    public string ContentFolderSize
+    {
+        get
+        {
+            var size = ModFileInfoBuilder.InspectFolder(ContentFolderPath).Size;
+            return size > 0 ? Formatters.Bytes(size) : string.Empty;
+        }
+    }
 
     [ObservableProperty]
     private VisibilityType _visibility;
@@ -334,6 +351,8 @@ public partial class ItemEditorViewModel : ViewModelBase
         _dependencyService = App.Services.GetRequiredService<DependencyService>();
         _appDependencyService = App.Services.GetRequiredService<AppDependencyService>();
         _versioningService = App.Services.GetRequiredService<VersioningService>();
+        _tagSelection = App.Services.GetRequiredService<TagSelectionService>();
+        _orchestrator = App.Services.GetRequiredService<WorkshopOrchestrator>();
 
         _title = item.Title;
         _description = item.Description;
@@ -394,7 +413,7 @@ public partial class ItemEditorViewModel : ViewModelBase
                 !CustomTags.Any(ct => ct.Name.Equals(tagName, StringComparison.OrdinalIgnoreCase)))
             {
                 // This is a custom tag from the item, add it to session
-                AddCustomTagToSession(tagName);
+                _tagSelection.AddCustomTagToSession(tagName);
                 CustomTags.Add(new WorkshopTag(tagName, true));
             }
         }
@@ -518,9 +537,10 @@ public partial class ItemEditorViewModel : ViewModelBase
     [RelayCommand]
     private async Task SaveAsync()
     {
-        if (string.IsNullOrWhiteSpace(Title))
+        var validation = ModValidator.ValidateForUpdate(Title);
+        if (!validation.IsValid)
         {
-            ErrorMessage = Loc["TitleRequired"];
+            ErrorMessage = Loc[validation.ErrorKey!];
             return;
         }
 
@@ -529,20 +549,9 @@ public partial class ItemEditorViewModel : ViewModelBase
 
         try
         {
-            var selectedTags = TagCategories
-                .SelectMany(c => c.Tags)
-                .Where(t => t.IsSelected)
-                .Select(t => t.Name)
-                .Concat(CustomTags.Where(t => t.IsSelected).Select(t => t.Name))
-                .ToList();
-
-            // Only send content folder if it changed (path, size, or modification date)
             var contentFolder = HasContentFolderChanged() ? ContentFolderPath : null;
-
-            // Only send preview image if it changed (path, size, or modification date)
             var previewImage = HasPreviewImageChanged() ? PreviewImagePath : null;
 
-            // Versioning: only pass branch range if enabled, not targeting all, and content is being uploaded
             string? branchMin = null, branchMax = null;
             if (IsVersioningEnabled && !TargetAllVersions && contentFolder != null)
             {
@@ -552,61 +561,47 @@ public partial class ItemEditorViewModel : ViewModelBase
 
             var previewOps = await BuildPreviewOpsAsync();
 
-            var success = await _steamService.UpdateItemAsync(
+            var request = new UpdateModRequest(
                 _originalItem.PublishedFileId,
                 Title != _originalItem.Title ? Title : null,
                 Description != _originalItem.Description ? Description : null,
                 contentFolder,
                 previewImage,
                 Visibility != _originalItem.Visibility ? Visibility : null,
-                selectedTags,
+                TagSelectionService.CollectSelectedNames(TagCategories, CustomTags),
                 string.IsNullOrWhiteSpace(NewChangelog) ? null : NewChangelog,
-                _uploadProgress,
                 branchMin,
                 branchMax,
-                previewOps.Count > 0 ? previewOps : null
-            );
+                previewOps.Count > 0 ? previewOps : null);
 
-            if (success)
+            var result = await _orchestrator.UpdateAsync(request, _uploadProgress);
+
+            if (result.Success)
             {
-                // Save current state as the last uploaded state for change detection
-                var fileId = (ulong)_originalItem.PublishedFileId;
+                // Resync the local fingerprint baseline so the next "has changed"
+                // check uses the just-uploaded state.
                 if (!string.IsNullOrEmpty(ContentFolderPath))
                 {
-                    var (folderSize, folderModified) = GetFolderInfo(ContentFolderPath);
-                    _settingsService.SetContentFolderInfo(fileId, new ItemFileInfo
-                    {
-                        Path = ContentFolderPath, Size = folderSize, LastModifiedUtc = folderModified
-                    });
-                    _initialFolderSize = folderSize;
-                    _initialFolderModified = folderModified;
+                    var fp = ModFileInfoBuilder.InspectFolder(ContentFolderPath);
+                    _initialFolderSize = fp.Size;
+                    _initialFolderModified = fp.LastModifiedUtc;
                 }
                 if (!string.IsNullOrEmpty(PreviewImagePath))
                 {
-                    var (imgSize, imgModified) = GetFileInfo(PreviewImagePath);
-                    _settingsService.SetPreviewImageInfo(fileId, new ItemFileInfo
-                    {
-                        Path = PreviewImagePath, Size = imgSize, LastModifiedUtc = imgModified
-                    });
-                    _initialImageSize = imgSize;
-                    _initialImageModified = imgModified;
+                    var fp = ModFileInfoBuilder.InspectFile(PreviewImagePath);
+                    _initialImageSize = fp.Size;
+                    _initialImageModified = fp.LastModifiedUtc;
                 }
 
                 NewChangelog = string.Empty;
-                TelemetryService.Instance?.Track(TelemetryEventTypes.ModUpdated, AppConfig.AppId);
-                _notificationService.ShowSuccess(Loc["ItemUpdatedSuccess"]);
                 ItemUpdated?.Invoke(_originalItem.PublishedFileId);
             }
             else
             {
-                _notificationService.ShowError(Loc["UpdateFailed"]);
-                ErrorMessage = Loc["UpdateFailed"];
+                ErrorMessage = result.ExceptionMessage is null
+                    ? Loc[result.ErrorKey ?? "UpdateFailed"]
+                    : $"{Loc[result.ErrorKey ?? "UpdateFailed"]}: {result.ExceptionMessage}";
             }
-        }
-        catch (Exception ex)
-        {
-            _notificationService.ShowError(Loc["UpdateFailed"]);
-            ErrorMessage = $"{Loc["UpdateFailed"]}: {ex.Message}";
         }
         finally
         {
@@ -638,30 +633,19 @@ public partial class ItemEditorViewModel : ViewModelBase
 
         try
         {
-            var success = await _steamService.DeleteItemAsync(_originalItem.PublishedFileId);
+            var result = await _orchestrator.DeleteAsync(_originalItem.PublishedFileId);
 
-            if (success)
+            if (result.Success)
             {
-                var fileId = (ulong)_originalItem.PublishedFileId;
-                _settingsService.SetContentFolderInfo(fileId, null);
-                _settingsService.SetPreviewImageInfo(fileId, null);
-
-                TelemetryService.Instance?.Track(TelemetryEventTypes.ModDeleted, AppConfig.AppId);
-                _notificationService.ShowSuccess(Loc["ItemDeletedSuccess"]);
                 ItemDeleted?.Invoke();
             }
             else
             {
-                _notificationService.ShowError(Loc["DeleteFailed"]);
-                ErrorMessage = Loc["DeleteFailed"];
+                ErrorMessage = result.ExceptionMessage is null
+                    ? Loc[result.ErrorKey ?? "DeleteFailed"]
+                    : $"{Loc[result.ErrorKey ?? "DeleteFailed"]}: {result.ExceptionMessage}";
                 ShowDeleteConfirmation = false;
             }
-        }
-        catch (Exception ex)
-        {
-            _notificationService.ShowError(Loc["DeleteFailed"]);
-            ErrorMessage = $"{Loc["DeleteFailed"]}: {ex.Message}";
-            ShowDeleteConfirmation = false;
         }
         finally
         {
@@ -1341,28 +1325,11 @@ public partial class ItemEditorViewModel : ViewModelBase
         var ops = new List<PreviewOp>();
         foreach (var idx in _removedExistingIndices)
             ops.Add(new PreviewOp.Remove(idx));
-        foreach (var p in ImagePreviews) AppendNewPreviewOp(ops, p);
-        foreach (var p in VideoPreviews) AppendNewPreviewOp(ops, p);
+        foreach (var p in ImagePreviews) PreviewOpBuilder.AppendNewPreviewOp(ops, p);
+        foreach (var p in VideoPreviews) PreviewOpBuilder.AppendNewPreviewOp(ops, p);
         return ops;
     }
 
-    /// <summary>
-    /// Common emit point for a preview entry the user has just added. Picks
-    /// the right Steam UGC entrypoint based on the preview type — local
-    /// image, YouTube video, or Sketchfab model ID.
-    /// </summary>
-    private static void AppendNewPreviewOp(List<PreviewOp> ops, WorkshopPreview p)
-    {
-        switch (p.Source)
-        {
-            case WorkshopPreviewSource.NewImage when !string.IsNullOrEmpty(p.LocalPath):
-                ops.Add(new PreviewOp.AddImage(p.LocalPath));
-                break;
-            case WorkshopPreviewSource.NewVideo when !string.IsNullOrEmpty(p.VideoId):
-                ops.Add(new PreviewOp.AddVideo(p.VideoId));
-                break;
-        }
-    }
 
     private async Task<List<PreviewOp>> BuildRebuildOpsAsync()
     {
@@ -1436,11 +1403,8 @@ public partial class ItemEditorViewModel : ViewModelBase
         try
         {
             // Remember currently selected tags
-            var selectedTags = TagCategories
-                .SelectMany(c => c.Tags)
-                .Where(t => t.IsSelected)
-                .Select(t => t.Name)
-                .Concat(CustomTags.Where(t => t.IsSelected).Select(t => t.Name))
+            var selectedTags = TagSelectionService
+                .CollectSelectedNames(TagCategories, CustomTags)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
             // Fetch fresh tags from Steam
@@ -1497,7 +1461,7 @@ public partial class ItemEditorViewModel : ViewModelBase
         }
 
         // Add to session and list
-        AddCustomTagToSession(tagName);
+        _tagSelection.AddCustomTagToSession(tagName);
         CustomTags.Add(new WorkshopTag(tagName, true));
         NewCustomTag = string.Empty;
     }
@@ -1507,40 +1471,10 @@ public partial class ItemEditorViewModel : ViewModelBase
     {
         if (tag == null) return;
 
-        RemoveCustomTagFromSession(tag.Name);
+        _tagSelection.RemoveCustomTagFromSession(tag.Name);
         CustomTags.Remove(tag);
     }
 
-    /// <summary>
-    /// Adds a custom tag to the current session and saves it.
-    /// </summary>
-    private static void AddCustomTagToSession(string tagName)
-    {
-        var session = AppConfig.CurrentSession;
-        if (session == null) return;
-
-        if (!session.CustomTags.Contains(tagName, StringComparer.OrdinalIgnoreCase))
-        {
-            session.CustomTags.Add(tagName);
-            SaveSessionAsync(session);
-        }
-    }
-
-    /// <summary>
-    /// Removes a custom tag from the current session and saves it.
-    /// </summary>
-    private static void RemoveCustomTagFromSession(string tagName)
-    {
-        var session = AppConfig.CurrentSession;
-        if (session == null) return;
-
-        var index = session.CustomTags.FindIndex(t => t.Equals(tagName, StringComparison.OrdinalIgnoreCase));
-        if (index >= 0)
-        {
-            session.CustomTags.RemoveAt(index);
-            SaveSessionAsync(session);
-        }
-    }
 
     /// <summary>
     /// Saves the session asynchronously (fire and forget).
@@ -1561,132 +1495,23 @@ public partial class ItemEditorViewModel : ViewModelBase
     /// <summary>
     /// Formats the folder size for display.
     /// </summary>
-    private static string FormatFolderSize(string? folderPath)
-    {
-        if (string.IsNullOrEmpty(folderPath) || !Directory.Exists(folderPath))
-            return string.Empty;
-
-        var (size, _) = GetFolderInfo(folderPath);
-        return size switch
-        {
-            < 1024 => $"{size} B",
-            < 1024 * 1024 => $"{size / 1024.0:F1} KB",
-            < 1024 * 1024 * 1024 => $"{size / (1024.0 * 1024):F1} MB",
-            _ => $"{size / (1024.0 * 1024 * 1024):F2} GB"
-        };
-    }
-
-    /// <summary>
-    /// Gets the total size and last modified date of a folder.
-    /// </summary>
-    private static (long size, DateTime modified) GetFolderInfo(string? folderPath)
-    {
-        if (string.IsNullOrEmpty(folderPath) || !Directory.Exists(folderPath))
-            return (0, DateTime.MinValue);
-
-        try
-        {
-            var dirInfo = new DirectoryInfo(folderPath);
-            var files = dirInfo.GetFiles("*", SearchOption.AllDirectories);
-            var totalSize = files.Sum(f => f.Length);
-            var lastModified = files.Length > 0
-                ? files.Max(f => f.LastWriteTimeUtc)
-                : dirInfo.LastWriteTimeUtc;
-            return (totalSize, lastModified);
-        }
-        catch
-        {
-            return (0, DateTime.MinValue);
-        }
-    }
-
-    /// <summary>
-    /// Checks if the content folder has changed (different path, size, or modification date).
-    /// </summary>
+    /// <summary>True if the content folder differs from the last uploaded
+    /// fingerprint (path, size, or last-write date).</summary>
     private bool HasContentFolderChanged()
     {
-        // Path changed
-        if (ContentFolderPath != _initialContentFolderPath)
-            return true;
-
-        // No folder set
-        if (string.IsNullOrEmpty(ContentFolderPath))
-            return false;
-
-        // Check size and modification date
-        var (currentSize, currentModified) = GetFolderInfo(ContentFolderPath);
-        return currentSize != _initialFolderSize || currentModified != _initialFolderModified;
+        if (ContentFolderPath != _initialContentFolderPath) return true;
+        if (string.IsNullOrEmpty(ContentFolderPath)) return false;
+        var fp = ModFileInfoBuilder.InspectFolder(ContentFolderPath);
+        return fp.Size != _initialFolderSize || fp.LastModifiedUtc != _initialFolderModified;
     }
 
-    /// <summary>
-    /// Checks if the preview image has changed (different path, size, or modification date).
-    /// </summary>
+    /// <summary>True if the preview image differs from the last uploaded
+    /// fingerprint (path, size, or last-write date).</summary>
     private bool HasPreviewImageChanged()
     {
-        // Path changed
-        if (PreviewImagePath != _initialPreviewImagePath)
-            return true;
-
-        // No image set
-        if (string.IsNullOrEmpty(PreviewImagePath))
-            return false;
-
-        // Check size and modification date
-        var (currentSize, currentModified) = GetFileInfo(PreviewImagePath);
-        return currentSize != _initialImageSize || currentModified != _initialImageModified;
-    }
-
-    /// <summary>
-    /// Gets file size and last modified date.
-    /// </summary>
-    private static (long size, DateTime modified) GetFileInfo(string? filePath)
-    {
-        if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
-            return (0, DateTime.MinValue);
-
-        try
-        {
-            var fileInfo = new FileInfo(filePath);
-            return (fileInfo.Length, fileInfo.LastWriteTimeUtc);
-        }
-        catch
-        {
-            return (0, DateTime.MinValue);
-        }
-    }
-
-    /// <summary>
-    /// Gets the file size in bytes.
-    /// </summary>
-    private static long GetImageSize(string? filePath)
-    {
-        if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
-            return 0;
-
-        try
-        {
-            return new FileInfo(filePath).Length;
-        }
-        catch
-        {
-            return 0;
-        }
-    }
-
-    /// <summary>
-    /// Formats the image file size for display.
-    /// </summary>
-    private static string FormatImageSize(string? filePath)
-    {
-        var size = GetImageSize(filePath);
-        if (size == 0)
-            return string.Empty;
-
-        return size switch
-        {
-            < 1024 => $"{size} B",
-            < 1024 * 1024 => $"{size / 1024.0:F1} KB",
-            _ => $"{size / (1024.0 * 1024):F2} MB"
-        };
+        if (PreviewImagePath != _initialPreviewImagePath) return true;
+        if (string.IsNullOrEmpty(PreviewImagePath)) return false;
+        var fp = ModFileInfoBuilder.InspectFile(PreviewImagePath);
+        return fp.Size != _initialImageSize || fp.LastModifiedUtc != _initialImageModified;
     }
 }
