@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -20,7 +21,7 @@ public sealed class AppDependencyService(SessionHost host)
 {
     private static readonly Logger Log = LogService.GetLogger<AppDependencyService>();
     private static readonly HttpClient HttpClient = new();
-    private static readonly Dictionary<uint, string?> AppNameCache = new();
+    private static readonly ConcurrentDictionary<uint, string?> AppNameCache = new();
 
     public async Task<List<AppDependencyInfo>> GetAppDependenciesAsync(PublishedFileId_t modId)
     {

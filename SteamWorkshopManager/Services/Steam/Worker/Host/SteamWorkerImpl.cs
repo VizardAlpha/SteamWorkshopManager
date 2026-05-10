@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -25,7 +26,7 @@ internal sealed class SteamWorkerImpl : ISteamWorker
 {
     private static readonly Logger Log = LogService.GetLogger<SteamWorkerImpl>();
     private static readonly HttpClient HttpClient = new();
-    private static readonly Dictionary<uint, string?> AppNameCache = new();
+    private static readonly ConcurrentDictionary<uint, string?> AppNameCache = new();
 
     private readonly SteamService _steam = new();
     private CancellationTokenSource? _logSinkCts;

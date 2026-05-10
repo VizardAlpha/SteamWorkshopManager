@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using SteamWorkshopManager.Helpers;
 
 namespace SteamWorkshopManager.Services.Log;
@@ -12,7 +13,7 @@ public class LogService : ILogService
     public static LogService Instance => _instance ??= new LogService();
 
     private readonly List<LogEntry> _logs = [];
-    private readonly object _lock = new();
+    private readonly Lock _lock = new();
     private readonly string _logFilePath;
     private bool _isDebugEnabled;
     private readonly List<string> _sensitiveValues = [];
