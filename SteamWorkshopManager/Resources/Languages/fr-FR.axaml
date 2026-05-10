@@ -206,6 +206,9 @@
     <x:String x:Key="LogFileLocation">Emplacement du fichier de logs :</x:String>
     <x:String x:Key="AppDataFolder">Dossier de données de l'application</x:String>
     <x:String x:Key="AppDataFolderDescription">Paramètres, sessions, cache, file de télémétrie et téléchargements. Utile pour signaler un bug ou migrer vers une autre machine.</x:String>
+    <x:String x:Key="LogFolderSize">Taille du dossier de logs</x:String>
+    <x:String x:Key="LogFolderSizeDescription">Taille totale de tous les fichiers de logs produits par l'application.</x:String>
+    <x:String x:Key="ClearLogs">Vider les logs</x:String>
 
     <!-- Sessions -->
     <x:String x:Key="Sessions">Sessions</x:String>

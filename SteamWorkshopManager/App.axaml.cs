@@ -4,6 +4,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
 using Microsoft.Extensions.DependencyInjection;
+using SteamWorkshopManager.Core.Sessions;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Views;
 using System.Threading.Tasks;

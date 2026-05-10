@@ -1,4 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
+using SteamWorkshopManager.Core.Sessions;
+using SteamWorkshopManager.Core.Steam;
 using SteamWorkshopManager.Core.Workshop;
 using SteamWorkshopManager.Services.Core;
 using SteamWorkshopManager.Services.Log;

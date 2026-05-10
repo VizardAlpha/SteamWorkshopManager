@@ -246,4 +246,44 @@ public class LogService : ILogService
         }
     }
 
+    public long GetLogFolderSize()
+    {
+        try
+        {
+            if (!Directory.Exists(AppPaths.LocalRoot)) return 0;
+            long total = 0;
+            foreach (var path in Directory.EnumerateFiles(AppPaths.LocalRoot, "debug_*.log"))
+            {
+                try { total += new FileInfo(path).Length; }
+                catch { /* race with delete */ }
+            }
+            return total;
+        }
+        catch
+        {
+            return 0;
+        }
+    }
+
+    public void ClearLogs()
+    {
+        lock (_lock)
+        {
+            _logs.Clear();
+        }
+
+        try
+        {
+            if (!Directory.Exists(AppPaths.LocalRoot)) return;
+            foreach (var path in Directory.EnumerateFiles(AppPaths.LocalRoot, "debug_*.log"))
+            {
+                try { File.Delete(path); }
+                catch { /* in-use by another process / handle still open */ }
+            }
+        }
+        catch
+        {
+            // Ignore enumeration failures
+        }
+    }
 }

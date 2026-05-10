@@ -1,14 +1,16 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using SteamWorkshopManager.Core.Steam;
 using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Models;
 using SteamWorkshopManager.Services.Core;
 using SteamWorkshopManager.Services.Log;
+using SteamWorkshopManager.Services.Session;
 using SteamWorkshopManager.Services.Steam;
 using SteamWorkshopManager.Services.Workshop;
 
-namespace SteamWorkshopManager.Services.Session;
+namespace SteamWorkshopManager.Core.Sessions;
 
 /// <summary>
 /// Manages workshop sessions including switching between them.

@@ -1,7 +1,7 @@
 using Steamworks;
 using SteamWorkshopManager.Services.Core;
 
-namespace SteamWorkshopManager.Services.Steam;
+namespace SteamWorkshopManager.Core.Steam;
 
 /// <summary>
 /// Maps Steam API error codes to human-readable messages.

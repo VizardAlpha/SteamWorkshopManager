@@ -21,11 +21,6 @@ public static class AppConfig
     /// </summary>
     public static WorkshopSession? CurrentSession { get; private set; }
 
-    /// <summary>
-    /// Whether AppConfig has been initialized.
-    /// </summary>
-    public static bool IsInitialized => CurrentSession != null;
-
     private const string Source = nameof(AppConfig);
 
     /// <summary>

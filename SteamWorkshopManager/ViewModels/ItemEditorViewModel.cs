@@ -16,6 +16,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using QRCoder;
+using SteamWorkshopManager.Core.Steam;
 using SteamWorkshopManager.Core.Workshop;
 using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Models;

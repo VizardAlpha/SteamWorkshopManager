@@ -3,8 +3,7 @@
 
   Views should reference these via StaticResource so the theme variant can be
   swapped at runtime. A `Light` dictionary slot is reserved below but intentionally
-  left empty for now — Phase A delivers only the Dark variant; Phase B (or later)
-  will populate Light and wire a toggle in Settings.
+  left empty for now — Phase A delivers only the Dark variant; Later will populate Light and wire a toggle in Settings.
 
   Naming convention:
     Surface.*        — container backgrounds, ordered from flat to elevated
@@ -123,7 +122,7 @@
         </ResourceDictionary>
 
         <!-- =================== LIGHT (placeholder) =================== -->
-        <!-- Intentionally left empty. Phase B or later will populate these. -->
+        <!-- Intentionally left empty. Later will populate these. -->
         <ResourceDictionary x:Key="Light"/>
 
     </ResourceDictionary.ThemeDictionaries>

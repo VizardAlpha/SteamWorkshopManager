@@ -206,6 +206,9 @@
     <x:String x:Key="LogFileLocation">Log file location:</x:String>
     <x:String x:Key="AppDataFolder">App data folder</x:String>
     <x:String x:Key="AppDataFolderDescription">Settings, sessions, cache, telemetry queue, and downloads. Handy when reporting bugs or migrating to another machine.</x:String>
+    <x:String x:Key="LogFolderSize">Log folder size</x:String>
+    <x:String x:Key="LogFolderSizeDescription">Total size of every debug log file produced by the app.</x:String>
+    <x:String x:Key="ClearLogs">Clear logs</x:String>
 
     <!-- Sessions -->
     <x:String x:Key="Sessions">Sessions</x:String>

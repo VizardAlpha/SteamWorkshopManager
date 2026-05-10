@@ -78,6 +78,9 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     private string _logFilePath = string.Empty;
 
+    [ObservableProperty]
+    private string _logFolderSizeDisplay = string.Empty;
+
     /// <summary>
     /// Root folder where app-state lives (bundle, settings, sessions, image
     /// cache, telemetry queue, downloads, tags). Logs live separately under
@@ -112,8 +115,16 @@ public partial class SettingsViewModel : ViewModelBase
         _isDebugModeEnabled = _settingsService.Settings.DebugMode;
         _isTelemetryEnabled = _settingsService.Settings.TelemetryEnabled;
         _logFilePath = _logService.GetLogFilePath();
+        _logFolderSizeDisplay = Formatters.Bytes(_logService.GetLogFolderSize());
 
         _ = CheckForUpdatesAsync();
+    }
+
+    [RelayCommand]
+    private void ClearLogs()
+    {
+        _logService.ClearLogs();
+        LogFolderSizeDisplay = Formatters.Bytes(_logService.GetLogFolderSize());
     }
 
     [RelayCommand]

@@ -8,7 +8,7 @@ using SteamWorkshopManager.Models;
 using SteamWorkshopManager.Services.Core;
 using SteamWorkshopManager.Services.Log;
 
-namespace SteamWorkshopManager.Services.Session;
+namespace SteamWorkshopManager.Core.Sessions;
 
 /// <summary>
 /// Removes everything tied to a session: the session JSON, the AppId-keyed

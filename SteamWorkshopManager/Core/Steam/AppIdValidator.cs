@@ -4,8 +4,9 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using SteamWorkshopManager.Services.Log;
+using SteamWorkshopManager.Services.Steam;
 
-namespace SteamWorkshopManager.Services.Steam;
+namespace SteamWorkshopManager.Core.Steam;
 
 /// <summary>
 /// Validates Steam AppIds and retrieves game metadata.

@@ -398,6 +398,51 @@
                                     </StackPanel>
                                 </Button>
                             </Grid>
+
+                            <!-- Separator -->
+                            <Border Height="1"
+                                    Background="{DynamicResource BorderSubtleBrush}"
+                                    Margin="16,0"/>
+
+                            <!-- Log folder size + Clear logs -->
+                            <Grid Classes="row" ColumnDefinitions="*,Auto">
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock Classes="row-label" Text="{DynamicResource LogFolderSize}"/>
+                                    <TextBlock Classes="row-desc" Text="{DynamicResource LogFolderSizeDescription}"/>
+                                    <Border Background="{DynamicResource SurfaceElevatedBrush}"
+                                            BorderBrush="{DynamicResource BorderSubtleBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="6"
+                                            Padding="8,5"
+                                            HorizontalAlignment="Left">
+                                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                            <icons:MaterialIcon Kind="DatabaseOutline" Width="12" Height="12"
+                                                                Foreground="{DynamicResource TextMutedBrush}"
+                                                                VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding LogFolderSizeDisplay}"
+                                                       FontSize="11"
+                                                       FontFamily="Consolas, Menlo, monospace"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                       VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                                <Button Grid.Column="1"
+                                        Command="{Binding ClearLogsCommand}"
+                                        Background="{DynamicResource SurfaceElevatedBrush}"
+                                        BorderBrush="{DynamicResource BorderStrongBrush}"
+                                        BorderThickness="1"
+                                        Foreground="{DynamicResource TextPrimaryBrush}"
+                                        CornerRadius="6"
+                                        Padding="12,8"
+                                        FontSize="13"
+                                        VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <icons:MaterialIcon Kind="DeleteOutline" Width="14" Height="14"/>
+                                        <TextBlock Text="{DynamicResource ClearLogs}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
                         </StackPanel>
                     </Border>
                 </StackPanel>

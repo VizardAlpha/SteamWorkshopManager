@@ -18,6 +18,14 @@ public interface ILogService
 
     string GetLogFilePath();
     IReadOnlyList<LogEntry> GetRecentLogs(int count = 100);
+
+    /// <summary>Total size on disk (in bytes) of every <c>debug_*.log</c> file
+    /// the app has produced. 0 when the log folder is missing or empty.</summary>
+    long GetLogFolderSize();
+
+    /// <summary>Wipes the in-memory log buffer and deletes every
+    /// <c>debug_*.log</c> file in the log folder.</summary>
+    void ClearLogs();
 }
 
 /// <summary>
