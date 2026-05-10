@@ -6,9 +6,9 @@
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
 
-        <Version>1.7.2</Version>
-        <AssemblyVersion>1.7.2.0</AssemblyVersion>
-        <FileVersion>1.7.2.0</FileVersion>
+        <Version>1.8.0</Version>
+        <AssemblyVersion>1.8.0.0</AssemblyVersion>
+        <FileVersion>1.8.0.0</FileVersion>
         
         <!-- Default ingest URL points to a local dev endpoint so source builds
              never leak the prod URL. Release CI overrides via the
