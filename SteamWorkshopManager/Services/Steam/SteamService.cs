@@ -108,7 +108,34 @@ public class SteamService : ISteamService
         Log.Debug("Fetching published items from Steam Workshop");
         var items = new List<WorkshopItem>();
         var accountId = SteamUser.GetSteamID().GetAccountID();
+        var currentUserId = SteamUser.GetSteamID();
 
+        // Steam UGC returns up to 50 items per page (kNumUGCResultsPerPage),
+        // so loop until we've drained every page.
+        for (uint page = 1; ; page++)
+        {
+            var pageResult = await QueryPublishedPageAsync(accountId, page);
+            if (pageResult is null) return items;
+
+            var queryResult = pageResult.Value;
+            for (uint i = 0; i < queryResult.m_unNumResultsReturned; i++)
+            {
+                var item = ReadWorkshopItemAt(queryResult.m_handle, i, currentUserId);
+                if (item is not null) items.Add(item);
+            }
+
+            SteamUGC.ReleaseQueryUGCRequest(queryResult.m_handle);
+
+            if (queryResult.m_unNumResultsReturned == 0 || items.Count >= queryResult.m_unTotalMatchingResults)
+            {
+                Log.Info($"Successfully fetched {items.Count} published items ({page} page(s))");
+                return items;
+            }
+        }
+    }
+
+    private static async Task<SteamUGCQueryCompleted_t?> QueryPublishedPageAsync(AccountID_t accountId, uint page)
+    {
         var query = SteamUGC.CreateQueryUserUGCRequest(
             accountId,
             EUserUGCList.k_EUserUGCList_Published,
@@ -116,7 +143,7 @@ public class SteamService : ISteamService
             EUserUGCListSortOrder.k_EUserUGCListSortOrder_CreationOrderDesc,
             new AppId_t(AppConfig.AppId),
             new AppId_t(AppConfig.AppId),
-            1
+            page
         );
 
         SteamUGC.SetReturnLongDescription(query, true);
@@ -135,7 +162,6 @@ public class SteamService : ISteamService
         var handle = SteamUGC.SendQueryUGCRequest(query);
         callResult.Set(handle);
 
-        // Wait for callback via polling
         var timeout = DateTime.UtcNow.AddSeconds(30);
         while (!tcs.Task.IsCompleted && DateTime.UtcNow < timeout)
         {
@@ -145,24 +171,14 @@ public class SteamService : ISteamService
 
         if (!tcs.Task.IsCompleted)
         {
-            Log.Error("Query published items request timed out");
+            Log.Error($"Query published items page {page} timed out");
             SteamUGC.ReleaseQueryUGCRequest(query);
-            return items;
+            return null;
         }
 
         var queryResult = await tcs.Task;
-        Log.Debug($"Query returned {queryResult.m_unNumResultsReturned} items (EResult: {queryResult.m_eResult})");
-
-        var currentUserId = SteamUser.GetSteamID();
-        for (uint i = 0; i < queryResult.m_unNumResultsReturned; i++)
-        {
-            var item = ReadWorkshopItemAt(queryResult.m_handle, i, currentUserId);
-            if (item is not null) items.Add(item);
-        }
-
-        SteamUGC.ReleaseQueryUGCRequest(queryResult.m_handle);
-        Log.Info($"Successfully fetched {items.Count} published items");
-        return items;
+        Log.Debug($"Page {page} returned {queryResult.m_unNumResultsReturned}/{queryResult.m_unTotalMatchingResults} (EResult: {queryResult.m_eResult})");
+        return queryResult;
     }
 
     /// <summary>
