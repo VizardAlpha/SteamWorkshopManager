@@ -14,7 +14,17 @@ public class ItemFileInfo
 {
     public string Path { get; set; } = string.Empty;
     public long Size { get; set; }
-    public DateTime LastModifiedUtc { get; set; }
+
+    private DateTime _lastModifiedUtc;
+
+    // System.Text.Json reads "...Z" timestamps back as Kind=Local (ticks shifted by
+    // the local offset). Force UTC so tick comparisons against FileInfo.LastWriteTimeUtc
+    // survive a save/load round-trip — otherwise change detection always fires.
+    public DateTime LastModifiedUtc
+    {
+        get => _lastModifiedUtc;
+        set => _lastModifiedUtc = value.Kind == DateTimeKind.Utc ? value : value.ToUniversalTime();
+    }
 }
 
 /// <summary>
