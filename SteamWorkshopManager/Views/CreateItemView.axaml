@@ -7,10 +7,10 @@
              xmlns:converters="using:SteamWorkshopManager.Converters"
              xmlns:controls="using:SteamWorkshopManager.Views.Controls"
              xmlns:icons="using:Material.Icons.Avalonia"
+             xmlns:behaviors="using:SteamWorkshopManager.Behaviors"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="SteamWorkshopManager.Views.CreateItemView"
-             x:DataType="vm:CreateItemViewModel"
-             DragDrop.AllowDrop="True">
+             x:DataType="vm:CreateItemViewModel">
 
     <UserControl.Resources>
         <DataTemplate x:Key="PreviewItemTemplate" DataType="models:WorkshopPreview">
@@ -403,15 +403,10 @@
                             </Grid>
                             <Border Height="1" Background="{DynamicResource BorderSubtleBrush}"/>
                             <Panel Margin="16">
-                                <Border x:Name="DropZone"
-                                        Background="Transparent"
-                                        BorderBrush="{DynamicResource BorderStrongBrush}"
-                                        BorderThickness="1.5"
-                                        CornerRadius="10"
-                                        Padding="32,24"
-                                        DragDrop.AllowDrop="True"
-                                        DragDrop.DragOver="DropZone_DragOver"
-                                        DragDrop.Drop="DropZone_Drop">
+                                <ContentControl Classes="dropzone"
+                                                Padding="32,24"
+                                                behaviors:DropZone.Accepts="Folder"
+                                                behaviors:DropZone.Command="{Binding FolderDroppedCommand}">
                                     <StackPanel HorizontalAlignment="Center" Spacing="10">
                                         <Border Width="44" Height="44" CornerRadius="10"
                                                 Background="#1F5B9CF6"
@@ -457,7 +452,7 @@
                                                        IsVisible="{Binding ContentFolderSize, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                                         </StackPanel>
                                     </StackPanel>
-                                </Border>
+                                </ContentControl>
                             </Panel>
                         </StackPanel>
                     </Border>
@@ -472,59 +467,63 @@
                                            VerticalAlignment="Center"/>
                             </Grid>
                             <Border Height="1" Background="{DynamicResource BorderSubtleBrush}"/>
-                            <Grid Margin="16" ColumnDefinitions="160,*">
-                                <Border Width="160" Height="75"
-                                        Background="{DynamicResource SurfaceElevatedBrush}"
-                                        BorderBrush="{DynamicResource BorderSubtleBrush}"
-                                        BorderThickness="1"
-                                        CornerRadius="6" ClipToBounds="True">
-                                    <Panel>
-                                        <Image Source="{Binding PreviewImage}" Stretch="UniformToFill"
-                                               IsVisible="{Binding PreviewImage, Converter={x:Static ObjectConverters.IsNotNull}}"/>
-                                        <icons:MaterialIcon Kind="ImageOutline" Width="22" Height="22"
-                                                            HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                            Opacity="0.3"
-                                                            Foreground="{DynamicResource TextMutedBrush}"
-                                                            IsVisible="{Binding PreviewImage, Converter={x:Static ObjectConverters.IsNull}}"/>
-                                    </Panel>
-                                </Border>
-                                <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center" Spacing="10">
-                                    <TextBlock Text="{Binding PreviewImagePath}"
-                                               TextTrimming="CharacterEllipsis"
-                                               Foreground="{DynamicResource TextSecondaryBrush}"
-                                               FontSize="13"
-                                               IsVisible="{Binding PreviewImagePath, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-                                    <TextBlock Text="{DynamicResource NoImageSelected}"
-                                               Foreground="{DynamicResource TextMutedBrush}"
-                                               FontSize="13"
-                                               IsVisible="{Binding PreviewImagePath, Converter={x:Static StringConverters.IsNullOrEmpty}}"/>
-                                    <Border Background="#1FC23B2E" Padding="8" CornerRadius="4"
-                                            BorderBrush="{DynamicResource FeedbackDangerBrush}" BorderThickness="1"
-                                            IsVisible="{Binding IsImageTooLarge}">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <icons:MaterialIcon Kind="AlertCircleOutline" Width="14" Height="14"
-                                                                Foreground="{DynamicResource FeedbackDangerTextBrush}"
-                                                                VerticalAlignment="Center"/>
-                                            <TextBlock Text="{DynamicResource ImageTooLarge}"
-                                                       Foreground="{DynamicResource FeedbackDangerTextBrush}" FontSize="12"/>
-                                        </StackPanel>
-                                    </Border>
-                                    <Button Command="{Binding BrowsePreviewImageCommand}"
+                            <ContentControl Classes="dropzone" Margin="16" Padding="12"
+                                            behaviors:DropZone.Accepts="Images"
+                                            behaviors:DropZone.Command="{Binding PreviewImageDroppedCommand}">
+                                <Grid ColumnDefinitions="160,*">
+                                    <Border Width="160" Height="75"
                                             Background="{DynamicResource SurfaceElevatedBrush}"
                                             BorderBrush="{DynamicResource BorderSubtleBrush}"
                                             BorderThickness="1"
-                                            Foreground="{DynamicResource TextPrimaryBrush}"
-                                            CornerRadius="6"
-                                            Padding="12,6"
-                                            FontSize="13"
-                                            HorizontalAlignment="Left">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <icons:MaterialIcon Kind="ImageOutline" Width="14" Height="14"/>
-                                            <TextBlock Text="{DynamicResource ChooseImage}" VerticalAlignment="Center"/>
-                                        </StackPanel>
-                                    </Button>
-                                </StackPanel>
-                            </Grid>
+                                            CornerRadius="6" ClipToBounds="True">
+                                        <Panel>
+                                            <Image Source="{Binding PreviewImage}" Stretch="UniformToFill"
+                                                   IsVisible="{Binding PreviewImage, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                            <icons:MaterialIcon Kind="ImageOutline" Width="22" Height="22"
+                                                                HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                Opacity="0.3"
+                                                                Foreground="{DynamicResource TextMutedBrush}"
+                                                                IsVisible="{Binding PreviewImage, Converter={x:Static ObjectConverters.IsNull}}"/>
+                                        </Panel>
+                                    </Border>
+                                    <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center" Spacing="10">
+                                        <TextBlock Text="{Binding PreviewImagePath}"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   FontSize="13"
+                                                   IsVisible="{Binding PreviewImagePath, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                        <TextBlock Text="{DynamicResource NoImageSelected}"
+                                                   Foreground="{DynamicResource TextMutedBrush}"
+                                                   FontSize="13"
+                                                   IsVisible="{Binding PreviewImagePath, Converter={x:Static StringConverters.IsNullOrEmpty}}"/>
+                                        <Border Background="#1FC23B2E" Padding="8" CornerRadius="4"
+                                                BorderBrush="{DynamicResource FeedbackDangerBrush}" BorderThickness="1"
+                                                IsVisible="{Binding IsImageTooLarge}">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <icons:MaterialIcon Kind="AlertCircleOutline" Width="14" Height="14"
+                                                                    Foreground="{DynamicResource FeedbackDangerTextBrush}"
+                                                                    VerticalAlignment="Center"/>
+                                                <TextBlock Text="{DynamicResource ImageTooLarge}"
+                                                           Foreground="{DynamicResource FeedbackDangerTextBrush}" FontSize="12"/>
+                                            </StackPanel>
+                                        </Border>
+                                        <Button Command="{Binding BrowsePreviewImageCommand}"
+                                                Background="{DynamicResource SurfaceElevatedBrush}"
+                                                BorderBrush="{DynamicResource BorderSubtleBrush}"
+                                                BorderThickness="1"
+                                                Foreground="{DynamicResource TextPrimaryBrush}"
+                                                CornerRadius="6"
+                                                Padding="12,6"
+                                                FontSize="13"
+                                                HorizontalAlignment="Left">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <icons:MaterialIcon Kind="ImageOutline" Width="14" Height="14"/>
+                                                <TextBlock Text="{DynamicResource ChooseImage}" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                            </ContentControl>
                         </StackPanel>
                     </Border>
 
@@ -1212,12 +1211,18 @@
                         </Grid>
                         <Border Height="1" Background="{DynamicResource BorderSubtleBrush}"/>
                         <StackPanel Margin="16" Spacing="10">
-                            <TextBlock Text="{DynamicResource NoImagesYet}"
-                                       Foreground="{DynamicResource TextMutedBrush}" FontSize="12"
-                                       HorizontalAlignment="Center" Margin="0,12"
-                                       IsVisible="{Binding !ImagePreviews.Count}"/>
-                            <ItemsControl ItemsSource="{Binding ImagePreviews}"
-                                          ItemTemplate="{StaticResource PreviewItemTemplate}"/>
+                            <ContentControl Classes="dropzone" Padding="12"
+                                            behaviors:DropZone.Accepts="Images"
+                                            behaviors:DropZone.Command="{Binding PreviewImagesDroppedCommand}">
+                                <StackPanel Spacing="10">
+                                    <TextBlock Text="{DynamicResource NoImagesYet}"
+                                               Foreground="{DynamicResource TextMutedBrush}" FontSize="12"
+                                               HorizontalAlignment="Center" Margin="0,12"
+                                               IsVisible="{Binding !ImagePreviews.Count}"/>
+                                    <ItemsControl ItemsSource="{Binding ImagePreviews}"
+                                                  ItemTemplate="{StaticResource PreviewItemTemplate}"/>
+                                </StackPanel>
+                            </ContentControl>
                         </StackPanel>
                     </StackPanel>
                 </Border>

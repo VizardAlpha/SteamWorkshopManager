@@ -105,9 +105,6 @@ public partial class CreateItemViewModel : ViewModelBase
     private bool _isCreating;
 
     [ObservableProperty]
-    private bool _isDragOver;
-
-    [ObservableProperty]
     private string? _errorMessage;
 
     [ObservableProperty]
@@ -231,21 +228,36 @@ public partial class CreateItemViewModel : ViewModelBase
         PreviewError = null;
         var paths = await _fileDialogService.OpenFilesAsync(
             Loc["SelectPreviewImage"],
-            ".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp"
+            WorkshopMedia.ImageExtensions
         );
         if (paths.Count == 0) return;
 
         foreach (var path in paths)
+            AddImagePreviewFromPath(path);
+    }
+
+    private void AddImagePreviewFromPath(string path)
+    {
+        // Skip if this exact file is already in the gallery.
+        if (ImagePreviews.Any(p => string.Equals(p.LocalPath, path, StringComparison.OrdinalIgnoreCase)))
+            return;
+
+        var preview = new WorkshopPreview
         {
-            var preview = new WorkshopPreview
-            {
-                Source = WorkshopPreviewSource.NewImage,
-                PreviewType = EItemPreviewType.k_EItemPreviewType_Image,
-                LocalPath = path,
-            };
-            try { preview.Thumbnail = new Bitmap(path); } catch { /* ignore */ }
-            ImagePreviews.Add(preview);
-        }
+            Source = WorkshopPreviewSource.NewImage,
+            PreviewType = EItemPreviewType.k_EItemPreviewType_Image,
+            LocalPath = path,
+        };
+        try { preview.Thumbnail = new Bitmap(path); } catch { /* ignore */ }
+        ImagePreviews.Add(preview);
+    }
+
+    [RelayCommand]
+    private void PreviewImagesDropped(DropPayload payload)
+    {
+        PreviewError = null;
+        foreach (var path in payload.Paths)
+            AddImagePreviewFromPath(path);
     }
 
     [RelayCommand]
@@ -585,21 +597,24 @@ public partial class CreateItemViewModel : ViewModelBase
     {
         var path = await _fileDialogService.OpenFileAsync(
             Loc["SelectPreviewImage"],
-            ".png", ".jpg", ".jpeg", ".gif"
+            WorkshopMedia.ImageExtensions
         );
 
         if (!string.IsNullOrEmpty(path))
-        {
-            PreviewImagePath = path;
-            try
-            {
-                PreviewImage = new Bitmap(path);
-            }
-            catch
-            {
-                // Ignore
-            }
-        }
+            SetPreviewImage(path);
+    }
+
+    private void SetPreviewImage(string path)
+    {
+        PreviewImagePath = path;
+        try { PreviewImage = new Bitmap(path); }
+        catch { /* ignore */ }
+    }
+
+    [RelayCommand]
+    private void PreviewImageDropped(DropPayload payload)
+    {
+        if (payload.FirstPath is { } path) SetPreviewImage(path);
     }
 
     [RelayCommand]
@@ -610,28 +625,23 @@ public partial class CreateItemViewModel : ViewModelBase
         );
 
         if (!string.IsNullOrEmpty(path))
-        {
-            ContentFolderPath = path;
-
-            // Auto-fill title if empty
-            if (string.IsNullOrEmpty(Title))
-            {
-                Title = Path.GetFileName(path) ?? "New mod";
-            }
-        }
+            SetContentFolder(path);
     }
 
-    public void HandleFolderDrop(string folderPath)
+    private void SetContentFolder(string path)
     {
-        if (Directory.Exists(folderPath))
-        {
-            ContentFolderPath = folderPath;
+        if (!Directory.Exists(path)) return;
+        ContentFolderPath = path;
 
-            if (string.IsNullOrEmpty(Title))
-            {
-                Title = Path.GetFileName(folderPath) ?? "New mod";
-            }
-        }
+        // Auto-fill title if empty
+        if (string.IsNullOrEmpty(Title))
+            Title = Path.GetFileName(path) ?? "New mod";
+    }
+
+    [RelayCommand]
+    private void FolderDropped(DropPayload payload)
+    {
+        if (payload.FirstPath is { } path) SetContentFolder(path);
     }
 
     [RelayCommand]

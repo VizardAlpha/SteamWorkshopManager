@@ -536,7 +536,7 @@ public partial class ItemEditorViewModel : ViewModelBase
     {
         var path = await _fileDialogService.OpenFileAsync(
             Loc["SelectPreviewImage"],
-            ".png", ".jpg", ".jpeg", ".gif"
+            WorkshopMedia.ImageExtensions
         );
 
         if (!string.IsNullOrEmpty(path))
@@ -1225,7 +1225,7 @@ public partial class ItemEditorViewModel : ViewModelBase
         PreviewError = null;
         var paths = await _fileDialogService.OpenFilesAsync(
             Loc["SelectPreviewImage"],
-            ".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp"
+            WorkshopMedia.ImageExtensions
         );
         if (paths.Count == 0) return;
 

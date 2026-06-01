@@ -14,8 +14,7 @@
         Title="{Binding WindowTitle}"
         MinWidth="900" MinHeight="600"
         Width="1100" Height="750"
-        Background="{DynamicResource WindowBackgroundBrush}"
-        DragDrop.AllowDrop="True">
+        Background="{DynamicResource WindowBackgroundBrush}">
 
     <Design.DataContext>
         <vm:MainViewModel/>
@@ -75,8 +74,7 @@
             <TransitioningContentControl Grid.Row="2"
                                          Name="ShellContent"
                                          Classes.switching="{Binding IsSwitchingSession}"
-                                         Content="{Binding CurrentView}"
-                                         DragDrop.AllowDrop="True">
+                                         Content="{Binding CurrentView}">
                 <TransitioningContentControl.Styles>
                     <Style Selector="TransitioningContentControl#ShellContent">
                         <Setter Property="Opacity" Value="1"/>

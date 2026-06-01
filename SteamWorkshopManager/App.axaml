@@ -140,6 +140,41 @@
             <Setter Property="Padding" Value="16"/>
         </Style>
 
+        <!-- Reusable drop zone (paired with behaviors:DropZone.Accepts). The
+             dashed outline is a Rectangle since Border has no dash support; the
+             :dragover pseudo-class (toggled by the behavior) recolors it. -->
+        <Style Selector="ContentControl.dropzone">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Panel>
+                        <Rectangle RadiusX="10" RadiusY="10"
+                                   StrokeThickness="1.5"
+                                   StrokeDashArray="4,3"
+                                   Stroke="{DynamicResource BorderStrongBrush}"
+                                   Fill="Transparent">
+                            <Rectangle.Transitions>
+                                <Transitions>
+                                    <BrushTransition Property="Stroke" Duration="0:0:0.15"/>
+                                    <BrushTransition Property="Fill" Duration="0:0:0.15"/>
+                                </Transitions>
+                            </Rectangle.Transitions>
+                        </Rectangle>
+                        <ContentPresenter Content="{TemplateBinding Content}"
+                                          ContentTemplate="{TemplateBinding ContentTemplate}"
+                                          Padding="{TemplateBinding Padding}"
+                                          HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                    </Panel>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+        <Style Selector="ContentControl.dropzone:dragover /template/ Rectangle">
+            <Setter Property="Stroke" Value="{DynamicResource AccentPrimaryBrush}"/>
+            <Setter Property="Fill" Value="#1F66C0F4"/>
+        </Style>
+
         <!-- Improved TextBox -->
         <Style Selector="TextBox">
             <Setter Property="Background" Value="#1e2328"/>

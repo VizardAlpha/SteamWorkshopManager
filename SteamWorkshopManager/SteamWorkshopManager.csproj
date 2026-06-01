@@ -6,13 +6,11 @@
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
 
-        <Version>1.8.2</Version>
-        <AssemblyVersion>1.8.2.0</AssemblyVersion>
-        <FileVersion>1.8.2.0</FileVersion>
+        <Version>1.8.3</Version>
+        <AssemblyVersion>1.8.3.0</AssemblyVersion>
+        <FileVersion>1.8.3.0</FileVersion>
         
-        <!-- Default ingest URL points to a local dev endpoint so source builds
-             never leak the prod URL. Release CI overrides via the
-             SWM_TELEMETRY_URL secret (see .github/workflows/release.yml). -->
+        <!-- Default ingest URL points to a local dev endpoint. -->
         <TelemetryEndpoint>http://localhost:5000/ingest</TelemetryEndpoint>
         <TelemetryEndpoint Condition="'$(SWM_TELEMETRY_URL)' != ''">$(SWM_TELEMETRY_URL)</TelemetryEndpoint>
     </PropertyGroup>
