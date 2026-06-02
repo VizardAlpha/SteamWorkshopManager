@@ -42,6 +42,8 @@
     <x:String x:Key="CheckingUpdates">Vérification…</x:String>
     <x:String x:Key="UpToDate">Tu es à la dernière version</x:String>
     <x:String x:Key="NewVersionAvailable">Une nouvelle version est disponible</x:String>
+    <x:String x:Key="IncludePrereleases">Inclure les versions bêta</x:String>
+    <x:String x:Key="IncludePrereleasesDesc">Être aussi notifié des préversions</x:String>
 
     <!-- Settings — À propos -->
     <x:String x:Key="OpenGitHub">Voir sur GitHub</x:String>

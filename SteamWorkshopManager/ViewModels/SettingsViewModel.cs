@@ -64,6 +64,9 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isTelemetryEnabled;
 
+    [ObservableProperty]
+    private bool _includePrereleases;
+
     /// <summary>
     /// Pseudonymous instance ID surfaced to the user in the Privacy section
     /// so they can quote it in a GDPR access or deletion request. Comes from
@@ -114,6 +117,7 @@ public partial class SettingsViewModel : ViewModelBase
 
         _isDebugModeEnabled = _settingsService.Settings.DebugMode;
         _isTelemetryEnabled = _settingsService.Settings.TelemetryEnabled;
+        _includePrereleases = _settingsService.Settings.IncludePrereleases;
         _logFilePath = _logService.GetLogFilePath();
         _logFolderSizeDisplay = Formatters.Bytes(_logService.GetLogFolderSize());
 
@@ -160,6 +164,13 @@ public partial class SettingsViewModel : ViewModelBase
         _settingsService.Settings.TelemetryEnabled = value;
         _settingsService.Save();
         _ = _telemetry.FlushAsync();
+    }
+
+    partial void OnIncludePrereleasesChanged(bool value)
+    {
+        _settingsService.Settings.IncludePrereleases = value;
+        _settingsService.Save();
+        _ = CheckForUpdatesAsync();
     }
 
     partial void OnSelectedLanguageChanged(LanguageInfo? value)
@@ -221,7 +232,7 @@ public partial class SettingsViewModel : ViewModelBase
         IsCheckingUpdates = true;
         try
         {
-            var info = await UpdateCheckerService.CheckForUpdateAsync();
+            var info = await UpdateCheckerService.CheckForUpdateAsync(IncludePrereleases);
             UpdateInfo = info;
             IsUpdateAvailable = info is not null;
         }

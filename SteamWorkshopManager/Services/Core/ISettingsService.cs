@@ -61,4 +61,10 @@ public class AppSettings
     /// Bumped whenever the data we collect or the destination changes.
     /// </summary>
     public int TelemetryConsentVersion { get; set; }
+
+    /// <summary>
+    /// When true, the update checker also considers GitHub pre-releases
+    /// (beta channel). Off by default — most users only want stable builds.
+    /// </summary>
+    public bool IncludePrereleases { get; set; }
 }

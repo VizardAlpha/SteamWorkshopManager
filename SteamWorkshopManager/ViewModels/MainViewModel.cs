@@ -818,7 +818,7 @@ public partial class MainViewModel : ViewModelBase
 
     private async Task CheckForUpdatesAsync()
     {
-        var info = await UpdateCheckerService.CheckForUpdateAsync();
+        var info = await UpdateCheckerService.CheckForUpdateAsync(_settingsService.Settings.IncludePrereleases);
         if (info is not null)
         {
             await Dispatcher.UIThread.InvokeAsync(() =>

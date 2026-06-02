@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
@@ -348,7 +347,7 @@ public partial class ItemEditorViewModel : ViewModelBase
     [ObservableProperty]
     private string? _previewError;
 
-    public bool IsYouTubeInputValid => !string.IsNullOrWhiteSpace(ParseYouTubeId(NewYouTubeInput));
+    public bool IsYouTubeInputValid => !string.IsNullOrWhiteSpace(WorkshopInputParser.ParseYouTubeId(NewYouTubeInput));
 
     public static IEnumerable<VisibilityType> VisibilityOptions =>
         Enum.GetValues<VisibilityType>();
@@ -938,7 +937,7 @@ public partial class ItemEditorViewModel : ViewModelBase
         DependencyError = null;
         PreviewDependency = null;
 
-        var fileId = ParseWorkshopInput(NewDependencyInput);
+        var fileId = WorkshopInputParser.ParseWorkshopId(NewDependencyInput);
         if (fileId == 0)
         {
             DependencyError = Loc["InvalidWorkshopInput"];
@@ -1200,25 +1199,6 @@ public partial class ItemEditorViewModel : ViewModelBase
         Process.Start(new ProcessStartInfo { FileName = dep.StoreUrl, UseShellExecute = true });
     }
 
-    internal static ulong ParseWorkshopInput(string input)
-    {
-        if (string.IsNullOrWhiteSpace(input))
-            return 0;
-
-        input = input.Trim();
-
-        // Try as raw numeric ID
-        if (ulong.TryParse(input, out var rawId))
-            return rawId;
-
-        // Try to extract ?id= from URL
-        var match = Regex.Match(input, @"[?&]id=(\d+)");
-        if (match.Success && ulong.TryParse(match.Groups[1].Value, out var urlId))
-            return urlId;
-
-        return 0;
-    }
-
     [RelayCommand]
     private async Task AddImagePreviewAsync()
     {
@@ -1246,7 +1226,7 @@ public partial class ItemEditorViewModel : ViewModelBase
     private void AddYouTubeVideo()
     {
         PreviewError = null;
-        var id = ParseYouTubeId(NewYouTubeInput);
+        var id = WorkshopInputParser.ParseYouTubeId(NewYouTubeInput);
         if (string.IsNullOrEmpty(id))
         {
             PreviewError = Loc["InvalidYouTubeInput"];
@@ -1294,31 +1274,6 @@ public partial class ItemEditorViewModel : ViewModelBase
         if (list == null) return;
         var index = list.IndexOf(preview);
         if (index >= 0 && index < list.Count - 1) list.Move(index, index + 1);
-    }
-
-    /// <summary>
-    /// Pulls the 11-character video ID out of a YouTube URL or returns the
-    /// input itself when it already looks like a bare ID. Returns null when
-    /// nothing matches the expected shape.
-    /// </summary>
-    internal static string? ParseYouTubeId(string? input)
-    {
-        if (string.IsNullOrWhiteSpace(input)) return null;
-        input = input.Trim();
-
-        if (Regex.IsMatch(input, @"^[A-Za-z0-9_-]{11}$"))
-            return input;
-
-        var v = Regex.Match(input, @"[?&]v=([A-Za-z0-9_-]{11})");
-        if (v.Success) return v.Groups[1].Value;
-
-        var shortLink = Regex.Match(input, @"youtu\.be/([A-Za-z0-9_-]{11})");
-        if (shortLink.Success) return shortLink.Groups[1].Value;
-
-        var embed = Regex.Match(input, @"youtube\.com/embed/([A-Za-z0-9_-]{11})");
-        if (embed.Success) return embed.Groups[1].Value;
-
-        return null;
     }
 
     /// <summary>

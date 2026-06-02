@@ -485,6 +485,22 @@
                                 </Button>
                             </Grid>
 
+                            <!-- Beta channel toggle -->
+                            <Border BorderBrush="{DynamicResource BorderSubtleBrush}"
+                                    BorderThickness="0,1,0,0"
+                                    Padding="16,12">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <StackPanel Grid.Column="0" Spacing="4">
+                                        <TextBlock Classes="row-label" Text="{DynamicResource IncludePrereleases}"/>
+                                        <TextBlock Classes="row-desc" Text="{DynamicResource IncludePrereleasesDesc}"/>
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="1"
+                                                  IsChecked="{Binding IncludePrereleases}"
+                                                  OnContent="" OffContent=""
+                                                  VerticalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+
                             <!-- Up to date banner -->
                             <Border IsVisible="{Binding !IsUpdateAvailable}"
                                     Background="Transparent"

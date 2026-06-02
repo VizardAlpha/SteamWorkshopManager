@@ -220,7 +220,7 @@ public partial class CreateItemViewModel : ViewModelBase
     [ObservableProperty]
     private string? _previewError;
 
-    public bool IsYouTubeInputValid => !string.IsNullOrWhiteSpace(ItemEditorViewModel.ParseYouTubeId(NewYouTubeInput));
+    public bool IsYouTubeInputValid => !string.IsNullOrWhiteSpace(WorkshopInputParser.ParseYouTubeId(NewYouTubeInput));
 
     [RelayCommand]
     private async Task AddImagePreviewAsync()
@@ -264,7 +264,7 @@ public partial class CreateItemViewModel : ViewModelBase
     private void AddYouTubeVideo()
     {
         PreviewError = null;
-        var id = ItemEditorViewModel.ParseYouTubeId(NewYouTubeInput);
+        var id = WorkshopInputParser.ParseYouTubeId(NewYouTubeInput);
         if (string.IsNullOrEmpty(id))
         {
             PreviewError = Loc["InvalidYouTubeInput"];
@@ -713,7 +713,7 @@ public partial class CreateItemViewModel : ViewModelBase
         DependencyError = null;
         PreviewDependency = null;
 
-        var fileId = ItemEditorViewModel.ParseWorkshopInput(NewDependencyInput);
+        var fileId = WorkshopInputParser.ParseWorkshopId(NewDependencyInput);
         if (fileId == 0)
         {
             DependencyError = Loc["InvalidWorkshopInput"];
