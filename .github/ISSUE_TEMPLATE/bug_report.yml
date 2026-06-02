@@ -1,0 +1,83 @@
+name: Bug report
+description: Report a problem with Steam Workshop Manager
+title: "[BUGFIX]: "
+labels: ["bug", "needs triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Please fill in the form so the
+        problem can be reproduced and fixed.
+
+  - type: checkboxes
+    id: prerequisites
+    attributes:
+      label: Prerequisites
+      description: Please confirm all of the following before submitting.
+      options:
+        - label: I have searched existing issues and this has not been reported yet.
+          required: true
+        - label: I am running the latest version of Steam Workshop Manager.
+          required: true
+        - label: Steam was installed and running while reproducing the problem.
+          required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      description: Shown in Settings → Updates (e.g. v1.8.3).
+      placeholder: v1.8.3
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows
+        - macOS
+        - Linux
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear and concise description of what the bug is.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: How can the problem be reproduced?
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. See the error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen instead?
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: >-
+        Paste any relevant log output. Logs live under
+        %LocalAppData%\SteamWorkshopManager\ on Windows
+        (Settings → Debug → Open log folder).
+      render: shell
+    validations:
+      required: false
