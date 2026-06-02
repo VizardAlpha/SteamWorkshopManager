@@ -1,6 +1,6 @@
 name: Bug report
 description: Report a problem with Steam Workshop Manager
-title: "[BUGFIX]: "
+title: "[Bug]: "
 labels: ["bug", "needs triage"]
 body:
   - type: markdown
