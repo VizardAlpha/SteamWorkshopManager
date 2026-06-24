@@ -113,9 +113,9 @@
                 Background="#F0242a35"
                 CornerRadius="12"
                 Padding="20,16"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Bottom"
-                Margin="0,0,24,24"
+                HorizontalAlignment="{Binding ToastHorizontalAlignment}"
+                VerticalAlignment="{Binding ToastVerticalAlignment}"
+                Margin="24"
                 MinWidth="320"
                 BoxShadow="{DynamicResource ShadowOverlay}">
             <StackPanel Spacing="12">
@@ -152,9 +152,9 @@
                 Background="#F01e3a1e"
                 CornerRadius="12"
                 Padding="20,16"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Top"
-                Margin="0,24,0,0"
+                HorizontalAlignment="{Binding ToastHorizontalAlignment}"
+                VerticalAlignment="{Binding ToastVerticalAlignment}"
+                Margin="24"
                 MinWidth="300"
                 BoxShadow="{DynamicResource ShadowOverlay}">
             <StackPanel Orientation="Horizontal" Spacing="12">
@@ -183,9 +183,9 @@
                 Background="#F03d1e1e"
                 CornerRadius="12"
                 Padding="20,16"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Top"
-                Margin="0,24,0,0"
+                HorizontalAlignment="{Binding ToastHorizontalAlignment}"
+                VerticalAlignment="{Binding ToastVerticalAlignment}"
+                Margin="24"
                 MinWidth="300"
                 BoxShadow="{DynamicResource ShadowOverlay}">
             <StackPanel Orientation="Horizontal" Spacing="12">

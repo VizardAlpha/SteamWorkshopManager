@@ -81,6 +81,31 @@
             <Setter Property="Background" Value="#1F5B9CF6"/>
             <Setter Property="BorderBrush" Value="{DynamicResource AccentPrimaryBrush}"/>
         </Style>
+
+        <!-- Toast corner picker: each button is a mini "toast" pill docked to a
+             corner of the faux app-window. The ContentPresenter is the visible
+             pill (same /template/ trick as the nav items above). -->
+        <Style Selector="Button.corner-dot">
+            <Setter Property="Width" Value="48"/>
+            <Setter Property="Height" Value="15"/>
+            <Setter Property="MinWidth" Value="0"/>
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="12"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.corner-dot /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource BorderStrongBrush}"/>
+            <Setter Property="CornerRadius" Value="4"/>
+        </Style>
+        <Style Selector="Button.corner-dot:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource TextMutedBrush}"/>
+        </Style>
+        <Style Selector="Button.corner-dot.selected /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource AccentPrimaryBrush}"/>
+        </Style>
     </UserControl.Styles>
 
     <Grid ColumnDefinitions="240,*" Margin="24,24,24,24">
@@ -106,6 +131,15 @@
                     <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
                         <icons:MaterialIcon Kind="CogOutline" Width="16" Height="16"/>
                         <TextBlock Text="{DynamicResource SettingsGeneral}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+
+                <Button Classes="nav-item"
+                        Classes.active="{Binding IsCustomizationActive}"
+                        Command="{Binding NavigateToCustomizationCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                        <icons:MaterialIcon Kind="PaletteOutline" Width="16" Height="16"/>
+                        <TextBlock Text="{DynamicResource SettingsCustomization}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
 
@@ -207,6 +241,73 @@
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
                             </ListBox>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- ── CUSTOMIZATION ── -->
+                <StackPanel Spacing="12" IsVisible="{Binding IsCustomizationActive}">
+                    <TextBlock Text="{DynamicResource SettingsCustomization}"
+                               FontSize="20"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimaryBrush}"/>
+
+                    <Border Classes="section">
+                        <StackPanel Spacing="0">
+                            <TextBlock Classes="section-caps"
+                                       Text="{DynamicResource ToastPositionTitle}"
+                                       Margin="16,12,16,0"/>
+                            <TextBlock Classes="row-desc"
+                                       Text="{DynamicResource ToastPositionDescription}"
+                                       Margin="16,4,16,0"/>
+
+                            <!-- Faux app-window with a clickable toast pill in each corner -->
+                            <Border Width="260" Height="160"
+                                    Margin="16,14,16,16"
+                                    HorizontalAlignment="Left"
+                                    Background="{DynamicResource SurfaceElevatedBrush}"
+                                    BorderBrush="{DynamicResource BorderSubtleBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="10">
+                                <DockPanel>
+                                    <Border DockPanel.Dock="Top" Height="26"
+                                            Background="{DynamicResource SurfaceCardBrush}"
+                                            CornerRadius="9,9,0,0">
+                                        <StackPanel Orientation="Horizontal" Spacing="5"
+                                                    Margin="10,0" VerticalAlignment="Center">
+                                            <Ellipse Width="8" Height="8" Fill="{DynamicResource BorderStrongBrush}"/>
+                                            <Ellipse Width="8" Height="8" Fill="{DynamicResource BorderStrongBrush}"/>
+                                            <Ellipse Width="8" Height="8" Fill="{DynamicResource BorderStrongBrush}"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <Grid RowDefinitions="*,*" ColumnDefinitions="*,*">
+                                        <Button Grid.Row="0" Grid.Column="0" Classes="corner-dot"
+                                                Classes.selected="{Binding IsToastTopLeft}"
+                                                Command="{Binding SelectToastPositionCommand}"
+                                                CommandParameter="TopLeft"
+                                                HorizontalAlignment="Left" VerticalAlignment="Top"
+                                                ToolTip.Tip="{DynamicResource ToastCornerTopLeft}"/>
+                                        <Button Grid.Row="0" Grid.Column="1" Classes="corner-dot"
+                                                Classes.selected="{Binding IsToastTopRight}"
+                                                Command="{Binding SelectToastPositionCommand}"
+                                                CommandParameter="TopRight"
+                                                HorizontalAlignment="Right" VerticalAlignment="Top"
+                                                ToolTip.Tip="{DynamicResource ToastCornerTopRight}"/>
+                                        <Button Grid.Row="1" Grid.Column="0" Classes="corner-dot"
+                                                Classes.selected="{Binding IsToastBottomLeft}"
+                                                Command="{Binding SelectToastPositionCommand}"
+                                                CommandParameter="BottomLeft"
+                                                HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                                                ToolTip.Tip="{DynamicResource ToastCornerBottomLeft}"/>
+                                        <Button Grid.Row="1" Grid.Column="1" Classes="corner-dot"
+                                                Classes.selected="{Binding IsToastBottomRight}"
+                                                Command="{Binding SelectToastPositionCommand}"
+                                                CommandParameter="BottomRight"
+                                                HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                                ToolTip.Tip="{DynamicResource ToastCornerBottomRight}"/>
+                                    </Grid>
+                                </DockPanel>
+                            </Border>
                         </StackPanel>
                     </Border>
                 </StackPanel>

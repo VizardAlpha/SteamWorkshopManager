@@ -35,6 +35,16 @@
     <x:String x:Key="SettingsDebug">Débogage</x:String>
     <x:String x:Key="SettingsUpdates">Mises à jour</x:String>
     <x:String x:Key="SettingsAbout">À propos</x:String>
+    <x:String x:Key="SettingsCustomization">Personnalisation</x:String>
+
+    <!-- Settings — Personnalisation -->
+    <x:String x:Key="ToastPositionTitle">Position des notifications</x:String>
+    <x:String x:Key="ToastPositionDescription">Choisis le coin où les messages apparaissent.</x:String>
+    <x:String x:Key="ToastPositionPreview">Les notifications apparaîtront ici</x:String>
+    <x:String x:Key="ToastCornerTopLeft">En haut à gauche</x:String>
+    <x:String x:Key="ToastCornerTopRight">En haut à droite</x:String>
+    <x:String x:Key="ToastCornerBottomLeft">En bas à gauche</x:String>
+    <x:String x:Key="ToastCornerBottomRight">En bas à droite</x:String>
 
     <!-- Settings — Mises à jour -->
     <x:String x:Key="CurrentVersion">Version actuelle</x:String>

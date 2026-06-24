@@ -67,4 +67,10 @@ public class AppSettings
     /// (beta channel). Off by default — most users only want stable builds.
     /// </summary>
     public bool IncludePrereleases { get; set; }
+
+    /// <summary>
+    /// Screen corner where toast notifications appear. Defaults to bottom-right
+    /// so they stay clear of the top navigation bar.
+    /// </summary>
+    public ToastPosition ToastPosition { get; set; } = ToastPosition.BottomRight;
 }

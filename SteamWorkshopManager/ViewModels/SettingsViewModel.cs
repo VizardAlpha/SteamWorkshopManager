@@ -32,6 +32,7 @@ public partial class SettingsViewModel : ViewModelBase
     private readonly ISettingsService _settingsService;
     private readonly ILogService _logService;
     private readonly ITelemetryService _telemetry;
+    private readonly INotificationService _notificationService;
 
     /// <summary>
     /// Which category is currently shown in the right-hand content pane.
@@ -40,6 +41,7 @@ public partial class SettingsViewModel : ViewModelBase
     /// </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsGeneralActive))]
+    [NotifyPropertyChangedFor(nameof(IsCustomizationActive))]
     [NotifyPropertyChangedFor(nameof(IsPrivacyActive))]
     [NotifyPropertyChangedFor(nameof(IsDebugActive))]
     [NotifyPropertyChangedFor(nameof(IsUpdatesActive))]
@@ -47,6 +49,7 @@ public partial class SettingsViewModel : ViewModelBase
     private SettingsCategory _activeCategory = SettingsCategory.General;
 
     public bool IsGeneralActive => ActiveCategory == SettingsCategory.General;
+    public bool IsCustomizationActive => ActiveCategory == SettingsCategory.Customization;
     public bool IsPrivacyActive => ActiveCategory == SettingsCategory.Privacy;
     public bool IsDebugActive => ActiveCategory == SettingsCategory.Debug;
     public bool IsUpdatesActive => ActiveCategory == SettingsCategory.Updates;
@@ -66,6 +69,18 @@ public partial class SettingsViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _includePrereleases;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsToastTopLeft))]
+    [NotifyPropertyChangedFor(nameof(IsToastTopRight))]
+    [NotifyPropertyChangedFor(nameof(IsToastBottomLeft))]
+    [NotifyPropertyChangedFor(nameof(IsToastBottomRight))]
+    private ToastPosition _toastPosition;
+
+    public bool IsToastTopLeft => ToastPosition == ToastPosition.TopLeft;
+    public bool IsToastTopRight => ToastPosition == ToastPosition.TopRight;
+    public bool IsToastBottomLeft => ToastPosition == ToastPosition.BottomLeft;
+    public bool IsToastBottomRight => ToastPosition == ToastPosition.BottomRight;
 
     /// <summary>
     /// Pseudonymous instance ID surfaced to the user in the Privacy section
@@ -105,11 +120,13 @@ public partial class SettingsViewModel : ViewModelBase
     public SettingsViewModel(
         ISettingsService settingsService,
         ILogService logService,
-        ITelemetryService telemetry)
+        ITelemetryService telemetry,
+        INotificationService notificationService)
     {
         _settingsService = settingsService;
         _logService = logService;
         _telemetry = telemetry;
+        _notificationService = notificationService;
 
         var languages = LocalizationService.Instance.AvailableLanguages;
         _availableLanguages = new ObservableCollection<LanguageInfo>(languages);
@@ -118,6 +135,7 @@ public partial class SettingsViewModel : ViewModelBase
         _isDebugModeEnabled = _settingsService.Settings.DebugMode;
         _isTelemetryEnabled = _settingsService.Settings.TelemetryEnabled;
         _includePrereleases = _settingsService.Settings.IncludePrereleases;
+        _toastPosition = _settingsService.Settings.ToastPosition;
         _logFilePath = _logService.GetLogFilePath();
         _logFolderSizeDisplay = Formatters.Bytes(_logService.GetLogFolderSize());
 
@@ -135,6 +153,9 @@ public partial class SettingsViewModel : ViewModelBase
     private void NavigateToGeneral() => ActiveCategory = SettingsCategory.General;
 
     [RelayCommand]
+    private void NavigateToCustomization() => ActiveCategory = SettingsCategory.Customization;
+
+    [RelayCommand]
     private void NavigateToPrivacy() => ActiveCategory = SettingsCategory.Privacy;
 
     [RelayCommand]
@@ -145,6 +166,19 @@ public partial class SettingsViewModel : ViewModelBase
 
     [RelayCommand]
     private void NavigateToAbout() => ActiveCategory = SettingsCategory.About;
+
+    [RelayCommand]
+    private void SelectToastPosition(string position)
+    {
+        if (!Enum.TryParse<ToastPosition>(position, out var parsed)) return;
+
+        ToastPosition = parsed;
+        _settingsService.Settings.ToastPosition = parsed;
+        _settingsService.Save();
+
+        // Sample toast so the user sees it jump to the chosen corner.
+        _notificationService.ShowSuccess(Loc["ToastPositionPreview"]);
+    }
 
     partial void OnIsDebugModeEnabledChanged(bool value)
     {

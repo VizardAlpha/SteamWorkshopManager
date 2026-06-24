@@ -35,6 +35,16 @@
     <x:String x:Key="SettingsDebug">Debug</x:String>
     <x:String x:Key="SettingsUpdates">Updates</x:String>
     <x:String x:Key="SettingsAbout">About</x:String>
+    <x:String x:Key="SettingsCustomization">Customization</x:String>
+
+    <!-- Settings — Customization -->
+    <x:String x:Key="ToastPositionTitle">Notification position</x:String>
+    <x:String x:Key="ToastPositionDescription">Choose the corner where toast messages appear.</x:String>
+    <x:String x:Key="ToastPositionPreview">Notifications will appear here</x:String>
+    <x:String x:Key="ToastCornerTopLeft">Top left</x:String>
+    <x:String x:Key="ToastCornerTopRight">Top right</x:String>
+    <x:String x:Key="ToastCornerBottomLeft">Bottom left</x:String>
+    <x:String x:Key="ToastCornerBottomRight">Bottom right</x:String>
 
     <!-- Settings — Updates -->
     <x:String x:Key="CurrentVersion">Current version</x:String>

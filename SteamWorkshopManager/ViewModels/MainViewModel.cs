@@ -119,6 +119,14 @@ public partial class MainViewModel : ViewModelBase
     public bool IsSuccessNotification => ShowNotification && NotificationType == NotificationType.Success;
     public bool IsErrorNotification => ShowNotification && NotificationType == NotificationType.Error;
 
+    /// <summary>Corner the toast borders dock to, derived from the saved
+    /// <see cref="ToastPosition"/> setting via <see cref="ApplyToastPosition"/>.</summary>
+    [ObservableProperty]
+    private Avalonia.Layout.HorizontalAlignment _toastHorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right;
+
+    [ObservableProperty]
+    private Avalonia.Layout.VerticalAlignment _toastVerticalAlignment = Avalonia.Layout.VerticalAlignment.Bottom;
+
     [ObservableProperty]
     private bool _isUpdateAvailable;
 
@@ -227,6 +235,8 @@ public partial class MainViewModel : ViewModelBase
         _sessionCleanup = sessionCleanup;
         _appMetadata = appMetadata;
 
+        ApplyToastPosition();
+
         // Worker auto-recovery feedback: refresh UI state on successful respawn,
         // or surface a persistent disconnected banner when we've given up.
         _sessionHost.WorkerRecovered += OnWorkerRecovered;
@@ -248,6 +258,7 @@ public partial class MainViewModel : ViewModelBase
         {
             Dispatcher.UIThread.Post(() =>
             {
+                if (p.Percentage < 100) ApplyToastPosition();
                 IsUploadInProgress = p.Percentage < 100;
                 UploadStatusMessage = p.Status;
                 UploadProgress = p.Percentage;
@@ -422,6 +433,7 @@ public partial class MainViewModel : ViewModelBase
     {
         Dispatcher.UIThread.Post(() =>
         {
+            if (state.IsVisible) ApplyToastPosition();
             ShowNotification = state.IsVisible;
             NotificationMessage = state.Message;
             NotificationType = state.Type;
@@ -438,6 +450,22 @@ public partial class MainViewModel : ViewModelBase
     {
         await Task.Delay(3000);
         _notificationService.Hide();
+    }
+
+    /// <summary>
+    /// Maps the saved <see cref="ToastPosition"/> onto the alignment the toast
+    /// borders bind to. Read fresh each time a toast appears so a change made in
+    /// Settings takes effect on the next notification.
+    /// </summary>
+    private void ApplyToastPosition()
+    {
+        var pos = _settingsService.Settings.ToastPosition;
+        ToastHorizontalAlignment = pos is ToastPosition.TopLeft or ToastPosition.BottomLeft
+            ? Avalonia.Layout.HorizontalAlignment.Left
+            : Avalonia.Layout.HorizontalAlignment.Right;
+        ToastVerticalAlignment = pos is ToastPosition.TopLeft or ToastPosition.TopRight
+            ? Avalonia.Layout.VerticalAlignment.Top
+            : Avalonia.Layout.VerticalAlignment.Bottom;
     }
 
     private void SetStatus(string key)

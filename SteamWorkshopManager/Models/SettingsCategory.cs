@@ -7,6 +7,7 @@ namespace SteamWorkshopManager.Models;
 public enum SettingsCategory
 {
     General,
+    Customization,
     Privacy,
     Debug,
     Updates,
