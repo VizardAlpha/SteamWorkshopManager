@@ -138,7 +138,7 @@ public partial class AddSessionViewModel : ViewModelBase
 
         try
         {
-            Log.Info($"Validating AppId: {appId}");
+            Log.Debug($"Validating AppId: {appId}");
             var result = await _validator.ValidateAsync(appId);
 
             if (result.IsValid)
@@ -146,7 +146,7 @@ public partial class AddSessionViewModel : ViewModelBase
                 IsValid = true;
                 GameName = !string.IsNullOrEmpty(result.GameName) ? result.GameName : $"Game {appId}";
                 ValidatedAppId = appId;
-                Log.Info($"AppId valid: {GameName}");
+                Log.Debug($"AppId valid: {GameName}");
 
                 // Fire-and-forget the header image so the preview card paints
                 // the big picture without blocking the validation spinner.
@@ -201,7 +201,7 @@ public partial class AddSessionViewModel : ViewModelBase
             await _sessionRepository.SetActiveSessionAsync(session.Id);
             await SessionManager.UpdateSteamAppIdFileAsync(ValidatedAppId);
 
-            Log.Info("Session created successfully");
+            Log.Debug("Session created successfully");
 
             _telemetry.Track(TelemetryEventTypes.SessionAdded, ValidatedAppId);
 

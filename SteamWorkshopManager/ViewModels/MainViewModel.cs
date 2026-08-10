@@ -638,7 +638,7 @@ public partial class MainViewModel : ViewModelBase
     {
         if (session is null || session.Id == AppConfig.CurrentSession?.Id) return;
 
-        Log.Info($"Switching to session: {session.Name}");
+        Log.Debug($"Switching to session: {session.Name}");
         IsSwitchingSession = true;
 
         try

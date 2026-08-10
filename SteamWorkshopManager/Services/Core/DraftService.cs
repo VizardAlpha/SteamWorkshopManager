@@ -48,7 +48,7 @@ public sealed class DraftService
         var json = JsonSerializer.Serialize(final, DraftJsonContext.Default.CreateDraft);
         File.WriteAllText(Path.Combine(folder, FileName), json);
 
-        Log.Info($"Draft saved: {tempId} (\"{final.DisplayName}\")");
+        Log.Debug($"Draft saved: {tempId} (\"{final.DisplayName}\")");
         return tempId;
     }
 
@@ -82,7 +82,7 @@ public sealed class DraftService
         try
         {
             Directory.Delete(folder, recursive: true);
-            Log.Info($"Draft deleted: {tempId}");
+            Log.Debug($"Draft deleted: {tempId}");
         }
         catch (Exception ex)
         {

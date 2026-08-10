@@ -14,8 +14,10 @@ public class LogService : ILogService
 
     private readonly List<LogEntry> _logs = [];
     private readonly Lock _lock = new();
-    private readonly string _logFilePath;
+    private readonly string _appLogPath;
+    private readonly string _debugLogPath;
     private bool _isDebugEnabled;
+    private bool _fileOutputEnabled = true;
     private readonly List<string> _sensitiveValues = [];
 
     // Worker-side log forwarding: when enabled, file writes are skipped and
@@ -32,7 +34,9 @@ public class LogService : ILogService
     private LogService()
     {
         Directory.CreateDirectory(AppPaths.LocalRoot);
-        _logFilePath = Path.Combine(AppPaths.LocalRoot, $"debug_{DateTime.Now:yyyy-MM-dd}.log");
+        var day = DateTime.Now.ToString("yyyy-MM-dd");
+        _appLogPath = Path.Combine(AppPaths.LocalRoot, $"app_{day}.log");
+        _debugLogPath = Path.Combine(AppPaths.LocalRoot, $"debug_{day}.log");
         _userProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
     }
 
@@ -68,7 +72,7 @@ public class LogService : ILogService
     /// LogService's file + memory ring. Bypasses remote-sink forwarding.</summary>
     public void IngestRemote(LogLevel level, string source, string message, string? exception, DateTime timestampUtc)
     {
-        if (!_isDebugEnabled) return;
+        if (level == LogLevel.Debug && !_isDebugEnabled) return;
         var entry = new LogEntry(timestampUtc.ToLocalTime(), level, source, message, exception);
         lock (_lock)
         {
@@ -117,6 +121,15 @@ public class LogService : ILogService
         return message;
     }
 
+    /// <summary>
+    /// Keeps log entries in memory only. The test suite calls this so a run
+    /// doesn't append to the logs of whoever is running it.
+    /// </summary>
+    public void DisableFileOutput()
+    {
+        lock (_lock) _fileOutputEnabled = false;
+    }
+
     public void SetDebugMode(bool enabled)
     {
         _isDebugEnabled = enabled;
@@ -134,30 +147,15 @@ public class LogService : ILogService
         }
     }
 
-    public void Info(string source, string message)
-    {
-        if (_isDebugEnabled)
-        {
-            Log(LogLevel.Info, source, message);
-        }
-    }
+    // Info and above are always recorded. Debug mode only adds the Debug level,
+    // so a user hitting a bug still has something to send without having turned
+    // anything on beforehand.
+    public void Info(string source, string message) => Log(LogLevel.Info, source, message);
 
-    public void Warning(string source, string message)
-    {
-        if (_isDebugEnabled)
-        {
-            Log(LogLevel.Warning, source, message);
-        }
-    }
+    public void Warning(string source, string message) => Log(LogLevel.Warning, source, message);
 
-    public void Error(string source, string message, Exception? exception = null)
-    {
-        // Errors are always logged when debug mode is enabled
-        if (_isDebugEnabled)
-        {
-            Log(LogLevel.Error, source, message, exception);
-        }
-    }
+    public void Error(string source, string message, Exception? exception = null) =>
+        Log(LogLevel.Error, source, message, exception);
 
     private void Log(LogLevel level, string source, string message, Exception? exception = null)
     {
@@ -209,8 +207,30 @@ public class LogService : ILogService
         WriteEntryToDisk(entry);
     }
 
+    /// <summary>
+    /// Appends, retrying briefly on sharing violations. The shell and the worker
+    /// are separate processes, so an in-process lock alone can still lose a line.
+    /// </summary>
+    internal static void AppendWithRetry(string path, string content)
+    {
+        for (var attempt = 0; ; attempt++)
+        {
+            try
+            {
+                File.AppendAllText(path, content);
+                return;
+            }
+            catch (IOException) when (attempt < 4)
+            {
+                Thread.Sleep(15);
+            }
+        }
+    }
+
     private void WriteEntryToDisk(LogEntry entry)
     {
+        if (!_fileOutputEnabled) return;
+
         try
         {
             var levelStr = entry.Level switch
@@ -225,9 +245,12 @@ public class LogService : ILogService
             if (entry.Exception != null)
                 line += Environment.NewLine + entry.Exception;
 
+            // Debug chatter goes to its own file so it can't drown the entries
+            // that matter when diagnosing a user report.
+            var path = entry.Level == LogLevel.Debug ? _debugLogPath : _appLogPath;
             lock (_lock)
             {
-                File.AppendAllText(_logFilePath, line + Environment.NewLine);
+                AppendWithRetry(path, line + Environment.NewLine);
             }
         }
         catch
@@ -236,7 +259,17 @@ public class LogService : ILogService
         }
     }
 
-    public string GetLogFilePath() => _logFilePath;
+    /// <summary>
+    /// File Settings points at. In debug mode that is the debug log, since it is
+    /// the one the user just asked to produce; otherwise the regular app log.
+    /// </summary>
+    public string GetLogFilePath() => _isDebugEnabled ? _debugLogPath : _appLogPath;
+
+    /// <summary>Every file the log folder owns: app, debug and crash, all days.</summary>
+    private static IEnumerable<string> EnumerateLogFiles() =>
+        Directory.EnumerateFiles(AppPaths.LocalRoot, "app_*.log")
+            .Concat(Directory.EnumerateFiles(AppPaths.LocalRoot, "debug_*.log"))
+            .Concat(Directory.EnumerateFiles(AppPaths.LocalRoot, "crash_*.log"));
 
     public IReadOnlyList<LogEntry> GetRecentLogs(int count = 100)
     {
@@ -252,7 +285,7 @@ public class LogService : ILogService
         {
             if (!Directory.Exists(AppPaths.LocalRoot)) return 0;
             long total = 0;
-            foreach (var path in Directory.EnumerateFiles(AppPaths.LocalRoot, "debug_*.log"))
+            foreach (var path in EnumerateLogFiles())
             {
                 try { total += new FileInfo(path).Length; }
                 catch { /* race with delete */ }
@@ -275,7 +308,7 @@ public class LogService : ILogService
         try
         {
             if (!Directory.Exists(AppPaths.LocalRoot)) return;
-            foreach (var path in Directory.EnumerateFiles(AppPaths.LocalRoot, "debug_*.log"))
+            foreach (var path in EnumerateLogFiles())
             {
                 try { File.Delete(path); }
                 catch { /* in-use by another process / handle still open */ }

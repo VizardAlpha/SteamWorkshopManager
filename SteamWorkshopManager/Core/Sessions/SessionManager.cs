@@ -54,7 +54,7 @@ public class SessionManager
         // Fetch tags for this workshop
         try
         {
-            Log.Info($"Fetching tags for new session: {gameName}");
+            Log.Debug($"Fetching tags for new session: {gameName}");
             var tagsResult = await _tagsService.GetTagsForAppAsync(appId);
             session.TagsByCategory = tagsResult.TagsByCategory;
             session.DropdownCategories = tagsResult.DropdownCategories;
@@ -120,7 +120,7 @@ public class SessionManager
 
             // Write to AppContext.BaseDirectory
             await File.WriteAllTextAsync(AppPaths.SteamAppIdFile, appIdContent);
-            Log.Info($"Updated steam_appid.txt to {appId} at {AppPaths.SteamAppIdFile}");
+            Log.Debug($"Updated steam_appid.txt to {appId} at {AppPaths.SteamAppIdFile}");
 
             // Also write to current working directory if different
             var workingDir = Environment.CurrentDirectory;
@@ -128,7 +128,7 @@ public class SessionManager
             {
                 var workingPath = Path.Combine(workingDir, "steam_appid.txt");
                 await File.WriteAllTextAsync(workingPath, appIdContent);
-                Log.Info($"Also updated steam_appid.txt at {workingPath}");
+                Log.Debug($"Also updated steam_appid.txt at {workingPath}");
             }
         }
         catch (Exception ex)
@@ -143,7 +143,7 @@ public class SessionManager
     /// </summary>
     public async Task RefreshTagsAsync(WorkshopSession session)
     {
-        Log.Info($"Refreshing tags for session: {session.Name}");
+        Log.Debug($"Refreshing tags for session: {session.Name}");
 
         var tagsResult = await _tagsService.GetTagsForAppAsync(session.AppId, forceRefresh: true);
         session.TagsByCategory = tagsResult.TagsByCategory;
@@ -158,7 +158,7 @@ public class SessionManager
             AppConfig.UpdateSession(session);
         }
 
-        Log.Info($"Tags refreshed: {tagsResult.TagsByCategory.Count} categories");
+        Log.Debug($"Tags refreshed: {tagsResult.TagsByCategory.Count} categories");
     }
 
     /// <summary>

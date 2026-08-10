@@ -131,7 +131,7 @@ public partial class SetupWizardViewModel : ViewModelBase
 
         try
         {
-            Log.Info($"Validating AppId: {appId}");
+            Log.Debug($"Validating AppId: {appId}");
             var result = await _validator.ValidateAsync(appId);
 
             if (result.IsValid)
@@ -139,7 +139,7 @@ public partial class SetupWizardViewModel : ViewModelBase
                 IsValid = true;
                 GameName = !string.IsNullOrEmpty(result.GameName) ? result.GameName : $"Game {appId}";
                 _validatedAppId = appId;
-                Log.Info($"AppId valid: {GameName}");
+                Log.Debug($"AppId valid: {GameName}");
             }
             else
             {
@@ -192,7 +192,7 @@ public partial class SetupWizardViewModel : ViewModelBase
             // Update steam_appid.txt
             await SessionManager.UpdateSteamAppIdFileAsync(_validatedAppId);
 
-            Log.Info("Session created successfully");
+            Log.Debug("Session created successfully");
 
             // Notify that session was created
             SessionCreated?.Invoke();

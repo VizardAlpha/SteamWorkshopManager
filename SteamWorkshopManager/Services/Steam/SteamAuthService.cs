@@ -58,11 +58,11 @@ public static class SteamAuthService
         if (!string.IsNullOrEmpty(savedAccessToken) && !IsJwtExpired(savedAccessToken))
         {
             _accessToken = savedAccessToken;
-            Log.Info("Restored valid access token");
+            Log.Debug("Restored valid access token");
         }
         else
         {
-            Log.Info($"Initialized: hasRefreshToken={HasRefreshToken}, accessToken={(savedAccessToken != null ? "expired" : "none")}");
+            Log.Debug($"Initialized: hasRefreshToken={HasRefreshToken}, accessToken={(savedAccessToken != null ? "expired" : "none")}");
         }
     }
 
@@ -82,7 +82,7 @@ public static class SteamAuthService
         if (!HasRefreshToken || _steamId64 == 0)
             return false;
 
-        Log.Info($"Attempting to refresh access token for account {_accountName}...");
+        Log.Debug($"Attempting to refresh access token for account {_accountName}...");
 
         SteamClient? client = null;
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
@@ -148,7 +148,7 @@ public static class SteamAuthService
                 SaveTokens();
             }
 
-            Log.Info("Access token refreshed successfully");
+            Log.Debug("Access token refreshed successfully");
 
             steamUser.LogOff();
             return true;
@@ -252,7 +252,7 @@ public static class SteamAuthService
             LogService.Instance.RegisterSensitiveValue(_steamId64.ToString(), "steamId64");
 
             SaveTokens();
-            Log.Info($"Auth complete. SteamID64={_steamId64}");
+            Log.Debug($"Auth complete. SteamID64={_steamId64}");
 
             steamUser.LogOff();
         }

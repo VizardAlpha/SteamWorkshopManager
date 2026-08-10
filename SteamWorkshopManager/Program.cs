@@ -1,6 +1,7 @@
 using Avalonia;
 using Microsoft.Extensions.DependencyInjection;
 using SteamWorkshopManager.Services;
+using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Steam.Worker.Contracts;
 using SteamWorkshopManager.Services.Steam.Worker.Host;
 using System;
@@ -20,6 +21,20 @@ sealed class Program
     // yet and stuff might break.
     [STAThread]
     public static void Main(string[] args)
+    {
+        CrashLog.Install();
+        try
+        {
+            Run(args);
+        }
+        catch (Exception ex)
+        {
+            CrashLog.Write("Main", ex);
+            throw;
+        }
+    }
+
+    private static void Run(string[] args)
     {
         // Worker mode: the same binary bifurcates on --steam-worker, skipping Avalonia entirely.
         // Session switching kills and respawns this process without touching the shell.

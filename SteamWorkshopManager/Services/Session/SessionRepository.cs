@@ -160,7 +160,7 @@ public class SessionRepository : ISessionRepository
     {
         _settingsService.Settings.ActiveSessionId = sessionId;
         _settingsService.Save();
-        Log.Info($"Active session set to: {sessionId}");
+        Log.Debug($"Active session set to: {sessionId}");
         return Task.CompletedTask;
     }
 

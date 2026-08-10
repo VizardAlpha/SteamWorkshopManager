@@ -47,7 +47,7 @@ public class SteamService : ISteamService
             Log.Debug($"Environment SteamGameId: {Environment.GetEnvironmentVariable("SteamGameId") ?? "(not set)"}");
 
             var steamRunning = SteamAPI.IsSteamRunning();
-            Log.Info($"Steam running: {steamRunning}");
+            Log.Debug($"Steam running: {steamRunning}");
 
             _isInitialized = SteamAPI.Init();
             Log.Info($"Steam API Init result: {_isInitialized}");
@@ -55,10 +55,10 @@ public class SteamService : ISteamService
             if (_isInitialized)
             {
                 var loggedOn = SteamUser.BLoggedOn();
-                Log.Info($"User logged on: {loggedOn}");
+                Log.Debug($"User logged on: {loggedOn}");
 
                 var steamAppId = SteamUtils.GetAppID();
-                Log.Info($"Steam AppID from SteamUtils: {steamAppId}");
+                Log.Debug($"Steam AppID from SteamUtils: {steamAppId}");
 
                 if (steamAppId.m_AppId != AppConfig.AppId)
                 {
@@ -66,9 +66,9 @@ public class SteamService : ISteamService
                 }
 
                 var currentBranch = GetCurrentBranchName();
-                Log.Info($"Current game branch: {currentBranch}");
+                Log.Debug($"Current game branch: {currentBranch}");
                 var branches = GetGameBranches();
-                Log.Info($"Versioning: {branches.Count} branches available (enabled={branches.Count > 0})");
+                Log.Debug($"Versioning: {branches.Count} branches available (enabled={branches.Count > 0})");
 
                 return SteamInitResult.Success;
             }
@@ -684,7 +684,7 @@ public class SteamService : ISteamService
     {
         if (ops == null || ops.Count == 0) return;
 
-        Log.Info($"Applying {ops.Count} preview op(s) — final list will reflect Add order below");
+        Log.Debug($"Applying {ops.Count} preview op(s). The final list reflects the Add order below");
 
         var removes = new List<uint>();
         foreach (var op in ops)
@@ -695,7 +695,7 @@ public class SteamService : ISteamService
         foreach (var idx in removes)
         {
             var ok = SteamUGC.RemoveItemPreview(handle, idx);
-            Log.Info($"  RemoveItemPreview(index={idx}) = {ok}");
+            Log.Debug($"  RemoveItemPreview(index={idx}) = {ok}");
         }
 
         var addPosition = 0;
@@ -706,11 +706,11 @@ public class SteamService : ISteamService
                 case PreviewOp.AddImage img:
                     var imgOk = SteamUGC.AddItemPreviewFile(handle, img.FilePath,
                         EItemPreviewType.k_EItemPreviewType_Image);
-                    Log.Info($"  [pos {addPosition++}] AddItemPreviewFile(Image, '{img.FilePath}') = {imgOk}");
+                    Log.Debug($"  [pos {addPosition++}] AddItemPreviewFile(Image, '{img.FilePath}') = {imgOk}");
                     break;
                 case PreviewOp.AddVideo vid:
                     var vidOk = SteamUGC.AddItemPreviewVideo(handle, vid.YouTubeId);
-                    Log.Info($"  [pos {addPosition++}] AddItemPreviewVideo('{vid.YouTubeId}') = {vidOk}");
+                    Log.Debug($"  [pos {addPosition++}] AddItemPreviewVideo('{vid.YouTubeId}') = {vidOk}");
                     break;
             }
         }

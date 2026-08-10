@@ -101,7 +101,7 @@ public class WorkshopTagsService
         // disk, even if expired.
         if (TryReadCache(cacheFile, ignoreTtl: true, out var stale))
         {
-            Log.Info($"Using stale tag cache for AppId {appId}");
+            Log.Debug($"Using stale tag cache for AppId {appId}");
             return stale;
         }
 
@@ -115,7 +115,7 @@ public class WorkshopTagsService
     /// </summary>
     private async Task<TagsResult> FetchTagsFromSteamAsync(uint appId)
     {
-        Log.Info($"Fetching tags from Steam Workshop for AppId {appId}");
+        Log.Debug($"Fetching tags from Steam Workshop for AppId {appId}");
 
         var html = await _httpClient.GetStringAsync(SteamUrls.WorkshopPage(appId));
 
@@ -171,7 +171,7 @@ public class WorkshopTagsService
             }
         }
 
-        Log.Info($"Parsed {categories.Count} categories with {categories.Values.Sum(v => v.Count)} tags for AppId {appId}");
+        Log.Debug($"Parsed {categories.Count} categories with {categories.Values.Sum(v => v.Count)} tags for AppId {appId}");
         return new TagsResult(categories, dropdowns);
     }
 

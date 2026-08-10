@@ -64,7 +64,7 @@ public class WorkshopDownloadService
 
             if (response is { Success: 1, Url: not null })
             {
-                Log.Info($"Got download URL for file {publishedFileId} revision {revision}");
+                Log.Debug($"Got download URL for file {publishedFileId} revision {revision}");
                 return response.Url;
             }
 

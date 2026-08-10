@@ -105,7 +105,7 @@ public sealed class SteamWorkerClient : IAsyncDisposable
         _rpc = JsonRpc.Attach(_pipe);
         Proxy = _rpc.Attach<ISteamWorker>();
 
-        Log.Info("Steam worker RPC channel attached");
+        Log.Debug("Steam worker RPC channel attached");
 
         // Fire-and-forget: the worker holds this call open for the lifetime
         // of the session so its IProgress<LogEntryDto> sink stays valid.

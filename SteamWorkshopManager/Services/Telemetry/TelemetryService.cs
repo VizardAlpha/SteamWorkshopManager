@@ -84,7 +84,7 @@ public class TelemetryService : ITelemetryService, IDisposable
         _settingsService = settingsService;
         _endpoint = ResolveEndpoint();
         _state = LoadOrCreateState();
-        Log.Info($"Telemetry initialized: endpoint={(string.IsNullOrEmpty(_endpoint) ? "(none)" : "<redacted>")}, enabled={settingsService.Settings.TelemetryEnabled}, instanceId={_state.InstanceId}, queueCount={_state.Queue.Count}");
+        Log.Debug($"Telemetry initialized: endpoint={(string.IsNullOrEmpty(_endpoint) ? "(none)" : "<redacted>")}, enabled={settingsService.Settings.TelemetryEnabled}, instanceId={_state.InstanceId}, queueCount={_state.Queue.Count}");
         _flushLoop = Task.Run(FlushLoopAsync);
     }
 

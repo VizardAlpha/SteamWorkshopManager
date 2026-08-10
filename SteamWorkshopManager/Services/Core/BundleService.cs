@@ -129,7 +129,7 @@ public static class BundleService
         if (added > 0)
         {
             doc.Save(filePath);
-            Log.Info($"Added {added} missing key(s) to {lang}.axaml (TODO translate)");
+            Log.Warning($"Added {added} missing key(s) to {lang}.axaml (TODO translate)");
         }
     }
 

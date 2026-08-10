@@ -26,14 +26,14 @@ public class ChangelogScraperService(SessionHost host)
     public async Task<List<ChangeLogEntry>> GetChangeLogsAsync(ulong publishedFileId)
     {
         var url = $"https://steamcommunity.com/sharedfiles/filedetails/changelog/{publishedFileId}";
-        Log.Info($"Fetching changelogs from {url}");
+        Log.Debug($"Fetching changelogs from {url}");
 
         try
         {
             var entries = await FetchAndParseAsync(url);
             if (entries.Count > 0)
             {
-                Log.Info($"Parsed {entries.Count} changelog entries for file {publishedFileId}");
+                Log.Debug($"Parsed {entries.Count} changelog entries for file {publishedFileId}");
                 return entries.OrderByDescending(e => e.Timestamp).ToList();
             }
 
@@ -49,7 +49,7 @@ public class ChangelogScraperService(SessionHost host)
                     var retry = await FetchAndParseAsync(url);
                     if (retry.Count > 0)
                     {
-                        Log.Info($"Parsed {retry.Count} changelog entries for file {publishedFileId} after refresh");
+                        Log.Debug($"Parsed {retry.Count} changelog entries for file {publishedFileId} after refresh");
                         return retry.OrderByDescending(e => e.Timestamp).ToList();
                     }
                 }

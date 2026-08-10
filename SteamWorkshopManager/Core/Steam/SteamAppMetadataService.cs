@@ -89,7 +89,7 @@ public sealed class SteamAppMetadataService
                 }
             }
 
-            Log.Info($"Resolved {icons.Count}/{ids.Count} Steam icon URLs via PICS");
+            Log.Debug($"Resolved {icons.Count}/{ids.Count} Steam icon URLs via PICS");
         }
         catch (Exception ex)
         {

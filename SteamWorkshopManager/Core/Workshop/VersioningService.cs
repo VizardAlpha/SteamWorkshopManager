@@ -62,7 +62,7 @@ public sealed class VersioningService(ISteamService steamService, SessionHost ho
         if (host.Worker is null) return [];
 
         var dtos = await host.Worker.GetSupportedGameVersionsAsync(fileId.m_PublishedFileId);
-        Log.Info($"Item {fileId}: {dtos.Count} supported game versions");
+        Log.Debug($"Item {fileId}: {dtos.Count} supported game versions");
         return dtos.Select(d => new ModVersionInfo
         {
             VersionIndex = d.VersionIndex,

@@ -30,7 +30,7 @@ public static class AppConfig
     {
         CurrentSession = session;
         AppId = session.AppId;
-        Log.Info(Source, $"AppConfig initialized: {session.GameName ?? session.Name} (AppId: {AppId})");
+        Log.Debug(Source, $"AppConfig initialized: {session.GameName ?? session.Name} (AppId: {AppId})");
     }
 
     /// <summary>
@@ -41,7 +41,7 @@ public static class AppConfig
     public static void InitializeAppIdOnly(uint appId)
     {
         AppId = appId;
-        Log.Info(Source, $"AppConfig initialized (AppId only): {AppId}");
+        Log.Debug(Source, $"AppConfig initialized (AppId only): {AppId}");
     }
 
     /// <summary>

@@ -186,6 +186,10 @@ public partial class SettingsViewModel : ViewModelBase
         _settingsService.Save();
         _logService.SetDebugMode(value);
 
+        // The toggle changes which file Settings should reveal: debug output
+        // when it is on, the regular app log otherwise.
+        LogFilePath = _logService.GetLogFilePath();
+
         // Mirror the toggle into the running worker so it stops emitting at
         // the source instead of relying on the shell to drop entries.
         var sessionHost = App.Services.GetService<SessionHost>();
