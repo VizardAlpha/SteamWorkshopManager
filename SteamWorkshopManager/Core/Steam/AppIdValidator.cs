@@ -10,16 +10,16 @@ namespace SteamWorkshopManager.Core.Steam;
 
 /// <summary>
 /// Validates Steam AppIds and retrieves game metadata.
-/// Relies exclusively on the Steam Store API (<c>appdetails</c>) so the validator
-/// cannot be broken by Workshop page redesigns — the API contract is stable.
+/// Uses the Steam Store API (<c>appdetails</c>) first, then falls back to the
+/// Community Workshop page when the Store metadata omits the Workshop category.
 /// </summary>
 public partial class AppIdValidator
 {
     private static readonly Logger Log = LogService.GetLogger<AppIdValidator>();
 
     /// <summary>
-    /// Steam's internal category id for "Steam Workshop" — presence in an app's
-    /// <c>categories</c> array is the authoritative signal that the app has a Workshop.
+    /// Steam's internal category id for "Steam Workshop". Its presence is a fast
+    /// positive signal, but some games with active Workshops omit it from Store metadata.
     /// </summary>
     private const int SteamWorkshopCategoryId = 30;
 
@@ -89,7 +89,14 @@ public partial class AppIdValidator
                 };
             }
 
-            if (!details.HasWorkshop)
+            var hasWorkshop = details.HasWorkshop;
+            if (!hasWorkshop)
+            {
+                Log.Debug($"AppId {appId} Store metadata omits the Workshop category; checking the Community page");
+                hasWorkshop = await HasWorkshopPageAsync(appId);
+            }
+
+            if (!hasWorkshop)
             {
                 Log.Warning($"AppId {appId} ({details.Name}) has no Workshop");
                 return new AppIdValidationResult
@@ -136,8 +143,7 @@ public partial class AppIdValidator
     /// </summary>
     private async Task<AppDetails?> FetchAppDetailsAsync(uint appId)
     {
-        var url = $"https://store.steampowered.com/api/appdetails?appids={appId}";
-        var json = await _httpClient.GetStringAsync(url);
+        var json = await _httpClient.GetStringAsync(SteamUrls.AppDetails(appId));
 
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
@@ -163,6 +169,22 @@ public partial class AppIdValidator
         }
 
         return new AppDetails(name, hasWorkshop);
+    }
+
+    /// <summary>
+    /// Fallback for games whose Store metadata omits category 30: Steam redirects
+    /// to the game hub when an app has no Workshop, so the URL we land on is the
+    /// signal. Don't switch to HEAD Steam answers 404 to it on every app.
+    /// </summary>
+    private async Task<bool> HasWorkshopPageAsync(uint appId)
+    {
+        var url = SteamUrls.WorkshopPage(appId);
+        // Headers are enough; the page body runs to ~1 MB and we never read it.
+        using var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+        if (!response.IsSuccessStatusCode) return false;
+
+        var landedOn = response.RequestMessage?.RequestUri?.AbsolutePath ?? string.Empty;
+        return landedOn.Contains(SteamUrls.WorkshopPathSegment, StringComparison.OrdinalIgnoreCase);
     }
 
     private record AppDetails(string Name, bool HasWorkshop);

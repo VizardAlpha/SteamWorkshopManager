@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using SteamWorkshopManager.Models;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Session;
+using SteamWorkshopManager.Services.Steam;
 using Steamworks;
 
 namespace SteamWorkshopManager.Core.Workshop;
@@ -50,7 +51,7 @@ public sealed class AppDependencyService(SessionHost host)
 
         try
         {
-            var url = $"https://store.steampowered.com/api/appdetails?appids={appId}";
+            var url = SteamUrls.AppDetails(appId);
             using var response = await HttpClient.GetAsync(url);
             if (!response.IsSuccessStatusCode) { AppNameCache[appId] = null; return null; }
 
