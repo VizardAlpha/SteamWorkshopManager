@@ -117,8 +117,7 @@ public class WorkshopTagsService
     {
         Log.Info($"Fetching tags from Steam Workshop for AppId {appId}");
 
-        var url = $"https://steamcommunity.com/app/{appId}/workshop/";
-        var html = await _httpClient.GetStringAsync(url);
+        var html = await _httpClient.GetStringAsync(SteamUrls.WorkshopPage(appId));
 
         var match = LoaderDataRegex.Match(html);
         if (!match.Success)

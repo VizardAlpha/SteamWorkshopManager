@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SteamWorkshopManager.Core.Steam;
+using SteamWorkshopManager.Services.Steam;
 
 namespace SteamWorkshopManager.Tests;
 
@@ -34,54 +35,56 @@ public class AppIdValidatorTests
         Assert.AreEqual(0U, appId);
     }
 
+    /// <summary>
+    /// Pins the endpoint literals once, so the tests below can build their URLs
+    /// from <see cref="SteamUrls"/> without losing coverage on the actual values.
+    /// </summary>
     [TestMethod]
-    public async Task ValidateAsync_WorkshopCategoryPresent_UsesStoreMetadata()
+    public void SteamUrls_BuildTheExpectedEndpoints()
+    {
+        Assert.AreEqual("https://store.steampowered.com/api/appdetails?appids=440", SteamUrls.AppDetails(440));
+        Assert.AreEqual("https://steamcommunity.com/app/440/workshop/", SteamUrls.WorkshopPage(440));
+    }
+
+    [TestMethod]
+    public async Task ValidateAsync_WorkshopCategoryPresent_SkipsTheWorkshopProbe()
     {
         const uint appId = 1162750;
-        var handler = new StubHttpMessageHandler(new Dictionary<string, string>
-        {
-            [StoreUrl(appId)] = StoreResponse(appId, "Songs of Syx", includeWorkshopCategory: true),
-        });
-        var validator = new AppIdValidator(new HttpClient(handler));
+        var (validator, handler) = CreateValidator(
+            (SteamUrls.AppDetails(appId), StoreResponse(appId, "Songs of Syx", withWorkshopCategory: true)));
 
         var result = await validator.ValidateAsync(appId);
 
         Assert.IsTrue(result.IsValid);
         Assert.AreEqual("Songs of Syx", result.GameName);
-        CollectionAssert.AreEqual(new[] { StoreUrl(appId) }, handler.RequestedUrls);
+        Assert.AreSequenceEqual(new[] { SteamUrls.AppDetails(appId) }, handler.RequestedUrls);
     }
 
     [TestMethod]
-    public async Task ValidateAsync_WorkshopCategoryMissingButWorkshopPageExists_ReturnsValid()
+    public async Task ValidateAsync_WorkshopCategoryMissingButPageStaysOnWorkshop_ReturnsValid()
     {
         const uint appId = 1022980;
-        var handler = new StubHttpMessageHandler(new Dictionary<string, string>
-        {
-            [StoreUrl(appId)] = StoreResponse(appId, "Ostranauts", includeWorkshopCategory: false),
-            [WorkshopUrl(appId)] = "<script>window.SSR.loaderData = [];</script>",
-        });
-        var validator = new AppIdValidator(new HttpClient(handler));
+        var (validator, handler) = CreateValidator(
+            (SteamUrls.AppDetails(appId), StoreResponse(appId, "Ostranauts", withWorkshopCategory: false)),
+            (SteamUrls.WorkshopPage(appId), StubResponse.NoRedirect));
 
         var result = await validator.ValidateAsync(appId);
 
         Assert.IsTrue(result.IsValid);
         Assert.AreEqual(appId, result.AppId);
         Assert.AreEqual("Ostranauts", result.GameName);
-        CollectionAssert.AreEqual(
-            new[] { StoreUrl(appId), WorkshopUrl(appId) },
+        Assert.AreSequenceEqual(
+            new[] { SteamUrls.AppDetails(appId), SteamUrls.WorkshopPage(appId) },
             handler.RequestedUrls);
     }
 
     [TestMethod]
-    public async Task ValidateAsync_WorkshopCategoryMissingAndNoWorkshopPage_ReturnsNoWorkshop()
+    public async Task ValidateAsync_WorkshopPageRedirectsToGameHub_ReturnsNoWorkshop()
     {
         const uint appId = 1086940;
-        var handler = new StubHttpMessageHandler(new Dictionary<string, string>
-        {
-            [StoreUrl(appId)] = StoreResponse(appId, "Baldur's Gate 3", includeWorkshopCategory: false),
-            [WorkshopUrl(appId)] = "<title>Baldur's Gate 3 :: Steam Community</title>",
-        });
-        var validator = new AppIdValidator(new HttpClient(handler));
+        var (validator, _) = CreateValidator(
+            (SteamUrls.AppDetails(appId), StoreResponse(appId, "Baldur's Gate 3", withWorkshopCategory: false)),
+            (SteamUrls.WorkshopPage(appId), StubResponse.RedirectedTo($"https://steamcommunity.com/app/{appId}/")));
 
         var result = await validator.ValidateAsync(appId);
 
@@ -91,14 +94,25 @@ public class AppIdValidatorTests
     }
 
     [TestMethod]
-    public async Task ValidateAsync_WorkshopFallbackRequestFails_ReturnsNetworkError()
+    public async Task ValidateAsync_WorkshopProbeReturnsError_ReturnsNoWorkshop()
+    {
+        const uint appId = 1086940;
+        var (validator, _) = CreateValidator(
+            (SteamUrls.AppDetails(appId), StoreResponse(appId, "Baldur's Gate 3", withWorkshopCategory: false)),
+            (SteamUrls.WorkshopPage(appId), StubResponse.WithStatus(HttpStatusCode.NotFound)));
+
+        var result = await validator.ValidateAsync(appId);
+
+        Assert.IsFalse(result.IsValid);
+        Assert.AreEqual("NoWorkshop", result.ErrorKey);
+    }
+
+    [TestMethod]
+    public async Task ValidateAsync_WorkshopProbeRequestFails_ReturnsNetworkError()
     {
         const uint appId = 1022980;
-        var handler = new StubHttpMessageHandler(new Dictionary<string, string>
-        {
-            [StoreUrl(appId)] = StoreResponse(appId, "Ostranauts", includeWorkshopCategory: false),
-        });
-        var validator = new AppIdValidator(new HttpClient(handler));
+        var (validator, _) = CreateValidator(
+            (SteamUrls.AppDetails(appId), StoreResponse(appId, "Ostranauts", withWorkshopCategory: false)));
 
         var result = await validator.ValidateAsync(appId);
 
@@ -106,21 +120,41 @@ public class AppIdValidatorTests
         Assert.AreEqual("NetworkError", result.ErrorKey);
     }
 
-    private static string StoreUrl(uint appId) =>
-        $"https://store.steampowered.com/api/appdetails?appids={appId}";
-
-    private static string WorkshopUrl(uint appId) =>
-        $"https://steamcommunity.com/app/{appId}/workshop/";
-
-    private static string StoreResponse(uint appId, string name, bool includeWorkshopCategory)
+    private static (AppIdValidator Validator, StubHttpMessageHandler Handler) CreateValidator(
+        params (string Url, StubResponse Response)[] stubs)
     {
-        var categories = includeWorkshopCategory
-            ? "[{\"id\":30,\"description\":\"Steam Workshop\"}]"
-            : "[]";
-        return $"{{\"{appId}\":{{\"success\":true,\"data\":{{\"name\":\"{name}\",\"categories\":{categories}}}}}}}";
+        var handler = new StubHttpMessageHandler(stubs.ToDictionary(s => s.Url, s => s.Response));
+        return (new AppIdValidator(new HttpClient(handler)), handler);
     }
 
-    private sealed class StubHttpMessageHandler(IReadOnlyDictionary<string, string> responses)
+    private static StubResponse StoreResponse(uint appId, string name, bool withWorkshopCategory)
+    {
+        var categories = withWorkshopCategory
+            ? "[{\"id\":30,\"description\":\"Steam Workshop\"}]"
+            : "[]";
+        return StubResponse.NoRedirect with
+        {
+            Body = $"{{\"{appId}\":{{\"success\":true,\"data\":{{\"name\":\"{name}\",\"categories\":{categories}}}}}}}",
+        };
+    }
+
+    /// <param name="FinalUrl">
+    /// URL the response is reported as coming from null means "no redirect".
+    /// Mirrors HttpClientHandler, which rewrites RequestUri while following 3xx.
+    /// </param>
+    private sealed record StubResponse(
+        string Body = "",
+        string? FinalUrl = null,
+        HttpStatusCode Status = HttpStatusCode.OK)
+    {
+        public static StubResponse NoRedirect => new();
+
+        public static StubResponse RedirectedTo(string finalUrl) => new(FinalUrl: finalUrl);
+
+        public static StubResponse WithStatus(HttpStatusCode status) => new(Status: status);
+    }
+
+    private sealed class StubHttpMessageHandler(IReadOnlyDictionary<string, StubResponse> responses)
         : HttpMessageHandler
     {
         public List<string> RequestedUrls { get; } = [];
@@ -132,12 +166,13 @@ public class AppIdValidatorTests
             var url = request.RequestUri?.AbsoluteUri ?? string.Empty;
             RequestedUrls.Add(url);
 
-            if (!responses.TryGetValue(url, out var content))
+            if (!responses.TryGetValue(url, out var stub))
                 throw new HttpRequestException($"No stub response configured for {url}");
 
-            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            return Task.FromResult(new HttpResponseMessage(stub.Status)
             {
-                Content = new StringContent(content, Encoding.UTF8),
+                RequestMessage = new HttpRequestMessage(HttpMethod.Get, stub.FinalUrl ?? url),
+                Content = new StringContent(stub.Body, Encoding.UTF8),
             });
         }
     }

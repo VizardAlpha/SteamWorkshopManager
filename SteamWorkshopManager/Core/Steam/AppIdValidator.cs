@@ -22,7 +22,6 @@ public partial class AppIdValidator
     /// positive signal, but some games with active Workshops omit it from Store metadata.
     /// </summary>
     private const int SteamWorkshopCategoryId = 30;
-    private const string WorkshopPageMarker = "window.SSR.loaderData";
 
     private readonly HttpClient _httpClient;
 
@@ -144,8 +143,7 @@ public partial class AppIdValidator
     /// </summary>
     private async Task<AppDetails?> FetchAppDetailsAsync(uint appId)
     {
-        var url = $"https://store.steampowered.com/api/appdetails?appids={appId}";
-        var json = await _httpClient.GetStringAsync(url);
+        var json = await _httpClient.GetStringAsync(SteamUrls.AppDetails(appId));
 
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
@@ -173,11 +171,20 @@ public partial class AppIdValidator
         return new AppDetails(name, hasWorkshop);
     }
 
+    /// <summary>
+    /// Fallback for games whose Store metadata omits category 30: Steam redirects
+    /// to the game hub when an app has no Workshop, so the URL we land on is the
+    /// signal. Don't switch to HEAD Steam answers 404 to it on every app.
+    /// </summary>
     private async Task<bool> HasWorkshopPageAsync(uint appId)
     {
-        var url = $"https://steamcommunity.com/app/{appId}/workshop/";
-        var html = await _httpClient.GetStringAsync(url);
-        return html.Contains(WorkshopPageMarker, StringComparison.Ordinal);
+        var url = SteamUrls.WorkshopPage(appId);
+        // Headers are enough; the page body runs to ~1 MB and we never read it.
+        using var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+        if (!response.IsSuccessStatusCode) return false;
+
+        var landedOn = response.RequestMessage?.RequestUri?.AbsolutePath ?? string.Empty;
+        return landedOn.Contains(SteamUrls.WorkshopPathSegment, StringComparison.OrdinalIgnoreCase);
     }
 
     private record AppDetails(string Name, bool HasWorkshop);

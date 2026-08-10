@@ -438,7 +438,7 @@ internal sealed class SteamWorkerImpl : ISteamWorker
 
         try
         {
-            var url = $"https://store.steampowered.com/api/appdetails?appids={appId}";
+            var url = SteamUrls.AppDetails(appId);
             using var response = await HttpClient.GetAsync(url);
             if (!response.IsSuccessStatusCode) { AppNameCache[appId] = null; return null; }
 
