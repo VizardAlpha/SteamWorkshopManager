@@ -10,18 +10,19 @@ namespace SteamWorkshopManager.Core.Steam;
 
 /// <summary>
 /// Validates Steam AppIds and retrieves game metadata.
-/// Relies exclusively on the Steam Store API (<c>appdetails</c>) so the validator
-/// cannot be broken by Workshop page redesigns — the API contract is stable.
+/// Uses the Steam Store API (<c>appdetails</c>) first, then falls back to the
+/// Community Workshop page when the Store metadata omits the Workshop category.
 /// </summary>
 public partial class AppIdValidator
 {
     private static readonly Logger Log = LogService.GetLogger<AppIdValidator>();
 
     /// <summary>
-    /// Steam's internal category id for "Steam Workshop" — presence in an app's
-    /// <c>categories</c> array is the authoritative signal that the app has a Workshop.
+    /// Steam's internal category id for "Steam Workshop". Its presence is a fast
+    /// positive signal, but some games with active Workshops omit it from Store metadata.
     /// </summary>
     private const int SteamWorkshopCategoryId = 30;
+    private const string WorkshopPageMarker = "window.SSR.loaderData";
 
     private readonly HttpClient _httpClient;
 
@@ -89,7 +90,14 @@ public partial class AppIdValidator
                 };
             }
 
-            if (!details.HasWorkshop)
+            var hasWorkshop = details.HasWorkshop;
+            if (!hasWorkshop)
+            {
+                Log.Debug($"AppId {appId} Store metadata omits the Workshop category; checking the Community page");
+                hasWorkshop = await HasWorkshopPageAsync(appId);
+            }
+
+            if (!hasWorkshop)
             {
                 Log.Warning($"AppId {appId} ({details.Name}) has no Workshop");
                 return new AppIdValidationResult
@@ -163,6 +171,13 @@ public partial class AppIdValidator
         }
 
         return new AppDetails(name, hasWorkshop);
+    }
+
+    private async Task<bool> HasWorkshopPageAsync(uint appId)
+    {
+        var url = $"https://steamcommunity.com/app/{appId}/workshop/";
+        var html = await _httpClient.GetStringAsync(url);
+        return html.Contains(WorkshopPageMarker, StringComparison.Ordinal);
     }
 
     private record AppDetails(string Name, bool HasWorkshop);
