@@ -310,6 +310,7 @@
     <x:String x:Key="SteamInvalidEmail">Invalid email address</x:String>
     <x:String x:Key="SteamDuplicateName">Name already exists</x:String>
     <x:String x:Key="SteamAccessDenied">Access denied</x:String>
+    <x:String x:Key="WorkshopSubmissionRefused">Steam refused to create the item. This game's Workshop most likely does not accept player submissions, or your Steam account lacks the required permission.</x:String>
     <x:String x:Key="SteamTimeout">Operation timed out</x:String>
     <x:String x:Key="SteamBanned">Account is banned</x:String>
     <x:String x:Key="SteamAccountNotFound">Account not found</x:String>
@@ -368,6 +369,17 @@
     <x:String x:Key="SteamIPLoginRestrictionFailed">IP login restriction failed</x:String>
     <x:String x:Key="SteamAccountLockedDown">Account is locked down</x:String>
     <x:String x:Key="SteamRateLimitExceeded">Rate limit exceeded, try again later</x:String>
+    <x:String x:Key="SteamBadResponse">Malformed response from Steam</x:String>
+    <x:String x:Key="SteamValueOutOfRange">A value is outside the accepted range</x:String>
+    <x:String x:Key="SteamUnexpectedError">Unexpected Steam error</x:String>
+    <x:String x:Key="SteamDisabled">This Steam service is currently unavailable</x:String>
+    <x:String x:Key="SteamRestrictedDevice">This device is not allowed to perform this action</x:String>
+    <x:String x:Key="SteamRegionLocked">Blocked by a regional restriction</x:String>
+    <x:String x:Key="SteamItemDeleted">The item has been deleted</x:String>
+    <x:String x:Key="SteamNotModified">Nothing changed, so there was nothing to send</x:String>
+    <x:String x:Key="SteamAccountLimitExceeded">Too many accounts are using this resource</x:String>
+    <x:String x:Key="SteamAccountActivityLimitExceeded">Too many changes on this account, try again later</x:String>
+    <x:String x:Key="SteamInvalidItemType">Invalid item type</x:String>
     <x:String x:Key="SteamUnknownError">Unknown Steam error</x:String>
 
     <!-- BBCode Editor -->

@@ -310,6 +310,7 @@
     <x:String x:Key="SteamInvalidEmail">Adresse email invalide</x:String>
     <x:String x:Key="SteamDuplicateName">Le nom existe déjà</x:String>
     <x:String x:Key="SteamAccessDenied">Accès refusé</x:String>
+    <x:String x:Key="WorkshopSubmissionRefused">Steam a refusé de créer l'élément. Le Workshop de ce jeu n'accepte probablement pas les envois de joueurs, ou votre compte Steam n'a pas les droits nécessaires.</x:String>
     <x:String x:Key="SteamTimeout">L'opération a expiré</x:String>
     <x:String x:Key="SteamBanned">Le compte est banni</x:String>
     <x:String x:Key="SteamAccountNotFound">Compte non trouvé</x:String>
@@ -368,6 +369,17 @@
     <x:String x:Key="SteamIPLoginRestrictionFailed">Restriction de connexion IP échouée</x:String>
     <x:String x:Key="SteamAccountLockedDown">Le compte est verrouillé</x:String>
     <x:String x:Key="SteamRateLimitExceeded">Limite de requêtes dépassée, réessayez plus tard</x:String>
+    <x:String x:Key="SteamBadResponse">Réponse de Steam mal formée</x:String>
+    <x:String x:Key="SteamValueOutOfRange">Une valeur est en dehors de la plage acceptée</x:String>
+    <x:String x:Key="SteamUnexpectedError">Erreur Steam inattendue</x:String>
+    <x:String x:Key="SteamDisabled">Ce service Steam est actuellement indisponible</x:String>
+    <x:String x:Key="SteamRestrictedDevice">Cet appareil n'est pas autorisé à effectuer cette action</x:String>
+    <x:String x:Key="SteamRegionLocked">Action bloquée par une restriction territoriale</x:String>
+    <x:String x:Key="SteamItemDeleted">L'élément a été supprimé</x:String>
+    <x:String x:Key="SteamNotModified">Aucune modification à envoyer</x:String>
+    <x:String x:Key="SteamAccountLimitExceeded">Trop de comptes utilisent cette ressource</x:String>
+    <x:String x:Key="SteamAccountActivityLimitExceeded">Trop de modifications sur ce compte, réessayez plus tard</x:String>
+    <x:String x:Key="SteamInvalidItemType">Type d'élément invalide</x:String>
     <x:String x:Key="SteamUnknownError">Erreur Steam inconnue</x:String>
     
     <!-- BBCode Editor -->

@@ -146,13 +146,13 @@ public sealed class WorkerSteamService(SessionHost host) : ISteamService
             Log.Error($"{operation} RPC failed: {ex.Message}");
     }
 
-    public async Task<PublishedFileId_t?> CreateItemAsync(
+    public async Task<CreateItemOutcome> CreateItemAsync(
         string title, string description, string contentFolderPath,
         string? previewImagePath, VisibilityType visibility, List<string> tags, string? changelog,
         IProgress<UploadProgress>? progress = null, string? branchMin = null, string? branchMax = null,
         IReadOnlyList<PreviewOp>? previewOps = null)
     {
-        if (host.Worker is null) return null;
+        if (host.Worker is null) return CreateItemOutcome.Failed();
 
         var request = new CreateItemRequestDto(
             title, description, contentFolderPath, previewImagePath,
@@ -161,13 +161,15 @@ public sealed class WorkerSteamService(SessionHost host) : ISteamService
 
         try
         {
-            var fileId = await host.Worker.CreateItemAsync(request, BridgeProgress(progress));
-            return fileId == 0UL ? null : new PublishedFileId_t(fileId);
+            var result = await host.Worker.CreateItemAsync(request, BridgeProgress(progress));
+            if (result.FileId != 0UL) return CreateItemOutcome.Created(new PublishedFileId_t(result.FileId));
+
+            return CreateItemOutcome.Failed(result.ErrorCode == 0 ? null : (EResult)result.ErrorCode);
         }
         catch (Exception ex)
         {
             LogRpcFailure(nameof(CreateItemAsync), ex);
-            return null;
+            return CreateItemOutcome.Failed();
         }
     }
 

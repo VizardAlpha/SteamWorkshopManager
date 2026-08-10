@@ -107,10 +107,10 @@ internal sealed class SteamWorkerImpl : ISteamWorker
     public Task<bool> DeleteItemAsync(ulong publishedFileId) =>
         _steam.DeleteItemAsync(new PublishedFileId_t(publishedFileId));
 
-    public async Task<ulong> CreateItemAsync(CreateItemRequestDto request, IProgress<UploadProgressDto>? progress)
+    public async Task<CreateItemResultDto> CreateItemAsync(CreateItemRequestDto request, IProgress<UploadProgressDto>? progress)
     {
         var bridge = BridgeProgress(progress);
-        var fileId = await _steam.CreateItemAsync(
+        var outcome = await _steam.CreateItemAsync(
             request.Title,
             request.Description,
             request.ContentFolderPath,
@@ -122,7 +122,9 @@ internal sealed class SteamWorkerImpl : ISteamWorker
             request.BranchMin,
             request.BranchMax,
             request.PreviewOps?.Select(FromDto).ToList());
-        return fileId?.m_PublishedFileId ?? 0UL;
+        return new CreateItemResultDto(
+            outcome.FileId?.m_PublishedFileId ?? 0UL,
+            (int)(outcome.Result ?? 0));
     }
 
     public Task<bool> UpdateItemAsync(UpdateItemRequestDto request, IProgress<UploadProgressDto>? progress)

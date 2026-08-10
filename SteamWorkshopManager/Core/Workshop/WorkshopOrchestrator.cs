@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using SteamWorkshopManager.Core.Steam;
 using SteamWorkshopManager.Models;
 using SteamWorkshopManager.Services.Core;
 using SteamWorkshopManager.Services.Notifications;
@@ -70,7 +71,7 @@ public sealed class WorkshopOrchestrator(
     {
         try
         {
-            var fileId = await steamService.CreateItemAsync(
+            var outcome = await steamService.CreateItemAsync(
                 request.Title,
                 request.Description,
                 request.ContentFolderPath,
@@ -83,30 +84,34 @@ public sealed class WorkshopOrchestrator(
                 request.BranchMax,
                 request.PreviewOps);
 
-            if (!fileId.HasValue)
+            if (outcome.FileId is not { } fileId)
             {
-                notifications.ShowError(LocalizationService.GetString("CreationFailed"));
+                // Steam's own reason when it gave one, so the user learns more than
+                // "creation failed" (e.g. a Workshop closed to player submissions).
+                notifications.ShowError(outcome.Result is { } result
+                    ? SteamErrorMapper.GetCreateItemErrorMessage(result)
+                    : LocalizationService.GetString("CreationFailed"));
                 return new WorkshopActionResult(false, null, "CreationFailed", null);
             }
 
             telemetry.Track(TelemetryEventTypes.ModCreated, AppConfig.AppId);
 
-            var id = (ulong)fileId.Value;
+            var id = (ulong)fileId;
             var folderInfo = ModFileInfoBuilder.BuildForFolder(request.ContentFolderPath);
             if (folderInfo is not null) settingsService.SetContentFolderInfo(id, folderInfo);
             var imageInfo = ModFileInfoBuilder.BuildForFile(request.PreviewImagePath);
             if (imageInfo is not null) settingsService.SetPreviewImageInfo(id, imageInfo);
 
             foreach (var dep in request.Dependencies)
-                await dependencyService.AddDependencyAsync(fileId.Value, new PublishedFileId_t(dep.PublishedFileId));
+                await dependencyService.AddDependencyAsync(fileId, new PublishedFileId_t(dep.PublishedFileId));
             foreach (var appDep in request.AppDependencies)
-                await appDependencyService.AddAppDependencyAsync(fileId.Value, new AppId_t(appDep.AppId));
+                await appDependencyService.AddAppDependencyAsync(fileId, new AppId_t(appDep.AppId));
 
             if (!string.IsNullOrEmpty(draftIdToCleanup))
                 draftService.Delete(draftIdToCleanup);
 
             notifications.ShowSuccess(LocalizationService.GetString("ItemCreatedSuccess"));
-            return new WorkshopActionResult(true, fileId.Value, null, null);
+            return new WorkshopActionResult(true, fileId, null, null);
         }
         catch (Exception ex)
         {

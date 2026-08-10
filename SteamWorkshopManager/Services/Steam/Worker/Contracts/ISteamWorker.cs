@@ -63,7 +63,7 @@ public partial interface ISteamWorker
     /// assigned PublishedFileId, or 0 on failure. Progress notifications are
     /// streamed over the RPC channel via <see cref="IProgress{T}"/>.
     /// </summary>
-    Task<ulong> CreateItemAsync(CreateItemRequestDto request, IProgress<UploadProgressDto>? progress);
+    Task<CreateItemResultDto> CreateItemAsync(CreateItemRequestDto request, IProgress<UploadProgressDto>? progress);
 
     /// <summary>
     /// Updates an existing Workshop item. Progress notifications are streamed

@@ -280,7 +280,7 @@ public class SteamService : ISteamService
         };
     }
 
-    public async Task<PublishedFileId_t?> CreateItemAsync(string title, string description,
+    public async Task<CreateItemOutcome> CreateItemAsync(string title, string description,
         string contentFolderPath, string? previewImagePath, VisibilityType visibility,
         List<string> tags, string? changelog, IProgress<UploadProgress>? progress = null,
         string? branchMin = null, string? branchMax = null,
@@ -290,7 +290,7 @@ public class SteamService : ISteamService
         {
             Log.Warning("CreateItemAsync called but Steam is not initialized");
             EnsureProgressDismissed(progress, "");
-            return null;
+            return CreateItemOutcome.Failed();
         }
 
         Log.Info($"Creating new Workshop item: '{title}'");
@@ -329,15 +329,15 @@ public class SteamService : ISteamService
         if (!createTcs.Task.IsCompleted)
         {
             Log.Error("Create item request timed out");
-            return null;
+            return CreateItemOutcome.Failed(EResult.k_EResultTimeout);
         }
 
         var createResult = await createTcs.Task;
         if (createResult.m_eResult != EResult.k_EResultOK)
         {
             Log.Error($"Failed to create item: {SteamErrorMapper.GetTechnicalDescription(createResult.m_eResult)}");
-            Log.Error($"User message: {SteamErrorMapper.GetErrorMessage(createResult.m_eResult)}");
-            return null;
+            Log.Error($"User message: {SteamErrorMapper.GetCreateItemErrorMessage(createResult.m_eResult)}");
+            return CreateItemOutcome.Failed(createResult.m_eResult);
         }
 
         var fileId = createResult.m_nPublishedFileId;
@@ -395,7 +395,7 @@ public class SteamService : ISteamService
         if (!submitTcs.Task.IsCompleted)
         {
             Log.Error("Submit item update request timed out");
-            return null;
+            return CreateItemOutcome.Failed(EResult.k_EResultTimeout);
         }
 
         var submitResult = await submitTcs.Task;
@@ -403,12 +403,12 @@ public class SteamService : ISteamService
         {
             Log.Info($"Item '{title}' published successfully");
             ReportProgress(progress, GetString("Done"), expectedTotal, expectedTotal, 100);
-            return fileId;
+            return CreateItemOutcome.Created(fileId);
         }
 
         Log.Error($"Failed to submit item: {SteamErrorMapper.GetTechnicalDescription(submitResult.m_eResult)}");
         Log.Error($"User message: {SteamErrorMapper.GetErrorMessage(submitResult.m_eResult)}");
-        return null;
+        return CreateItemOutcome.Failed(submitResult.m_eResult);
         }
         finally
         {

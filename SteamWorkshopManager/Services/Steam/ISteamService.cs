@@ -30,6 +30,18 @@ public abstract record PreviewOp
     public sealed record AddVideo(string YouTubeId) : PreviewOp;
 }
 
+/// <summary>
+/// Result of a create-item attempt. <see cref="FileId"/> is null on failure, and
+/// <see cref="Result"/> then carries Steam's own reason. Without it the reason is
+/// lost behind a generic "creation failed" message.
+/// </summary>
+public record CreateItemOutcome(PublishedFileId_t? FileId, EResult? Result = null)
+{
+    public static CreateItemOutcome Created(PublishedFileId_t fileId) => new(fileId);
+
+    public static CreateItemOutcome Failed(EResult? result = null) => new(null, result);
+}
+
 public interface ISteamService
 {
     bool IsInitialized { get; }
@@ -45,7 +57,7 @@ public interface ISteamService
     /// resolve it (e.g. brief indexing latency right after a Create).
     /// </summary>
     Task<WorkshopItem?> GetPublishedItemAsync(PublishedFileId_t fileId);
-    Task<PublishedFileId_t?> CreateItemAsync(string title, string description, string contentFolderPath,
+    Task<CreateItemOutcome> CreateItemAsync(string title, string description, string contentFolderPath,
         string? previewImagePath, VisibilityType visibility, List<string> tags, string? changelog,
         IProgress<UploadProgress>? progress = null, string? branchMin = null, string? branchMax = null,
         IReadOnlyList<PreviewOp>? previewOps = null);

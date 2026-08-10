@@ -18,6 +18,16 @@ public static class SteamErrorMapper
     }
 
     /// <summary>
+    /// Error message for a failed <c>CreateItem</c>. On that call AccessDenied means
+    /// the app's Workshop does not take player submissions, which the generic
+    /// "Access denied" wording hides. Every other code keeps its usual message.
+    /// </summary>
+    public static string GetCreateItemErrorMessage(EResult result) =>
+        result == EResult.k_EResultAccessDenied
+            ? LocalizationService.GetString("WorkshopSubmissionRefused")
+            : GetErrorMessage(result);
+
+    /// <summary>
     /// Gets the localization key for a Steam EResult code.
     /// </summary>
     private static string GetErrorKey(EResult result)
@@ -95,7 +105,18 @@ public static class SteamErrorMapper
             EResult.k_EResultExpiredLoginAuthCode => "SteamExpiredLoginAuthCode",
             EResult.k_EResultIPLoginRestrictionFailed => "SteamIPLoginRestrictionFailed",
             EResult.k_EResultAccountLockedDown => "SteamAccountLockedDown",
+            EResult.k_EResultBadResponse => "SteamBadResponse",
+            EResult.k_EResultValueOutOfRange => "SteamValueOutOfRange",
+            EResult.k_EResultUnexpectedError => "SteamUnexpectedError",
+            EResult.k_EResultDisabled => "SteamDisabled",
+            EResult.k_EResultRestrictedDevice => "SteamRestrictedDevice",
+            EResult.k_EResultRegionLocked => "SteamRegionLocked",
             EResult.k_EResultRateLimitExceeded => "SteamRateLimitExceeded",
+            EResult.k_EResultItemDeleted => "SteamItemDeleted",
+            EResult.k_EResultNotModified => "SteamNotModified",
+            EResult.k_EResultAccountLimitExceeded => "SteamAccountLimitExceeded",
+            EResult.k_EResultAccountActivityLimitExceeded => "SteamAccountActivityLimitExceeded",
+            EResult.k_EResultInvalidItemType => "SteamInvalidItemType",
             _ => "SteamUnknownError"
         };
     }
