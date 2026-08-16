@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input.Platform;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SteamWorkshopManager.Helpers;
@@ -106,6 +107,17 @@ public partial class SettingsViewModel : ViewModelBase
     private bool _isDiscordPresenceEnabled;
 
     /// <summary>
+    /// Whether anything actually reaches Discord, as opposed to what the user
+    /// asked for. Drives the "not reachable" hint and its retry button: without
+    /// it, enabling presence with Discord closed looks like nothing happened.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsDiscordUnreachable))]
+    private DiscordConnectionState _discordConnectionState;
+
+    public bool IsDiscordUnreachable => DiscordConnectionState == DiscordConnectionState.Unreachable;
+
+    /// <summary>
     /// Level restored when the switch is turned back on during this session, so
     /// flipping it off and on again does not downgrade someone who had picked
     /// Detailed. Only the current mode is persisted, so a restart while off
@@ -178,11 +190,24 @@ public partial class SettingsViewModel : ViewModelBase
         // starting off leaves nothing to restore: re-enabling lands on the
         // least revealing level.
         _lastPresenceLevel = _isDiscordPresenceEnabled ? _discordPresenceMode : DiscordPresenceMode.Minimal;
+        _discordConnectionState = _presence.ConnectionState;
+        _presence.ConnectionStateChanged += OnPresenceConnectionChanged;
         _logFilePath = _logService.GetLogFilePath();
         _logFolderSizeDisplay = Formatters.Bytes(_logService.GetLogFolderSize());
 
         _ = CheckForUpdatesAsync();
     }
+
+    /// <summary>Drops the presence subscription. The shell builds a fresh
+    /// instance on every navigation, so without this each visit leaks one.</summary>
+    public void Detach() => _presence.ConnectionStateChanged -= OnPresenceConnectionChanged;
+
+    // Raised from the library's connection thread.
+    private void OnPresenceConnectionChanged() =>
+        Dispatcher.UIThread.Post(() => DiscordConnectionState = _presence.ConnectionState);
+
+    [RelayCommand]
+    private void RetryDiscordConnection() => _presence.Sync();
 
     [RelayCommand]
     private void ClearLogs()

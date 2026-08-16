@@ -398,6 +398,8 @@
     <x:String x:Key="DiscordPresenceDetailed">Détaillé</x:String>
     <x:String x:Key="DiscordPresenceDetailedDesc">Affiche aussi le titre de l'objet en cours d'édition ou d'envoi.</x:String>
     <x:String x:Key="DiscordPrivacyDescription">Une fois activée, l'application transmet votre activité au client Discord de cette machine, qui l'affiche à vos contacts. Rien n'est envoyé à swm-stats.com, et le niveau de détail se règle dans Personnalisation.</x:String>
+    <x:String x:Key="DiscordUnreachable">Discord n'a pas répondu. L'application de bureau est-elle lancée ?</x:String>
+    <x:String x:Key="DiscordRetry">Réessayer</x:String>
     <x:String x:Key="EnableDiscordPresence">Activer la Discord Rich Presence</x:String>
     <x:String x:Key="DiscordPresenceWizardDescription">Affiche ce que vous faites dans votre statut Discord. Au départ, seule la section en cours est affichée, sans nom de jeu ni titre d'objet. Vous pourrez élargir ou désactiver dans les paramètres.</x:String>
 

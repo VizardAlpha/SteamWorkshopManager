@@ -3,6 +3,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using DiscordRPC;
 using SteamWorkshopManager.Models;
 using SteamWorkshopManager.Services.Core;
@@ -36,6 +37,11 @@ public sealed class DiscordPresenceService : IDiscordPresenceService, IDisposabl
     // wins the race and the final one is dropped.
     private const int CoalesceDelayMs = 700;
 
+    // The library retries the pipe forever with a growing backoff. Left alone
+    // it would log a failure roughly every minute for the whole session on a
+    // machine without Discord, so we stop and wait for the user instead.
+    private const int MaxConnectionAttempts = 3;
+
     private static readonly Logger Log = LogService.GetLogger<DiscordPresenceService>();
 
     private readonly ISettingsService _settings;
@@ -45,6 +51,8 @@ public sealed class DiscordPresenceService : IDiscordPresenceService, IDisposabl
 
     private DiscordRpcClient? _client;
     private PresenceState _state = PresenceState.Idle;
+    private DiscordConnectionState _connection = DiscordConnectionState.Disabled;
+    private int _failures;
 
     public DiscordPresenceService(ISettingsService settings)
     {
@@ -52,22 +60,43 @@ public sealed class DiscordPresenceService : IDiscordPresenceService, IDisposabl
         _coalesce = new Timer(_ => PublishLocked(), null, Timeout.Infinite, Timeout.Infinite);
     }
 
+    public DiscordConnectionState ConnectionState
+    {
+        get { lock (_gate) return _connection; }
+    }
+
+    public event Action? ConnectionStateChanged;
+
     private DiscordPresenceMode Mode => _settings.Settings.DiscordPresenceMode;
 
     public void Sync()
     {
+        bool changed;
+
         lock (_gate)
         {
             if (Mode == DiscordPresenceMode.Off)
             {
                 Disconnect();
-                return;
+                changed = SetStateLocked(DiscordConnectionState.Disabled);
             }
+            else
+            {
+                // Reaching here is always a deliberate act (startup, a settings
+                // change, the retry button), so it clears a previous give-up.
+                _failures = 0;
+                changed = false;
 
-            if (_client is null && !Connect()) return;
+                if (_client is null)
+                    changed = SetStateLocked(Connect()
+                        ? DiscordConnectionState.Connecting
+                        : DiscordConnectionState.Unreachable);
 
-            Publish();
+                Publish();
+            }
         }
+
+        if (changed) ConnectionStateChanged?.Invoke();
     }
 
     public void Update(PresenceState state)
@@ -88,12 +117,57 @@ public sealed class DiscordPresenceService : IDiscordPresenceService, IDisposabl
         {
             _coalesce.Change(Timeout.Infinite, Timeout.Infinite);
             Disconnect();
+            SetStateLocked(DiscordConnectionState.Disabled);
         }
     }
 
     private void PublishLocked()
     {
         lock (_gate) Publish();
+    }
+
+    /// <summary>Assigns the state under <see cref="_gate"/> and reports whether
+    /// it moved. Callers fire <see cref="ConnectionStateChanged"/> after
+    /// releasing the lock, never under it.</summary>
+    private bool SetStateLocked(DiscordConnectionState next)
+    {
+        if (_connection == next) return false;
+        _connection = next;
+        return true;
+    }
+
+    private void OnPipeConnected()
+    {
+        bool changed;
+        lock (_gate)
+        {
+            _failures = 0;
+            changed = SetStateLocked(DiscordConnectionState.Connected);
+        }
+
+        if (!changed) return;
+
+        Log.Debug("Discord presence: connected");
+        ConnectionStateChanged?.Invoke();
+    }
+
+    private void OnPipeFailed()
+    {
+        lock (_gate)
+        {
+            if (_connection is DiscordConnectionState.Disabled or DiscordConnectionState.Unreachable) return;
+            if (++_failures < MaxConnectionAttempts) return;
+            if (!SetStateLocked(DiscordConnectionState.Unreachable)) return;
+        }
+
+        Log.Debug($"Discord presence: unreachable after {MaxConnectionAttempts} attempts, waiting for a manual retry");
+
+        // Disposing joins the library's connection thread, and this runs on it.
+        Task.Run(() =>
+        {
+            lock (_gate) Disconnect();
+            ConnectionStateChanged?.Invoke();
+        });
     }
 
     public void Dispose()
@@ -114,12 +188,14 @@ public sealed class DiscordPresenceService : IDiscordPresenceService, IDisposabl
         try
         {
             var client = new DiscordRpcClient(appId) { SkipIdenticalPresence = true };
-            client.OnConnectionFailed += (_, _) => Log.Debug("Discord presence: Discord is not reachable");
+            client.OnConnectionEstablished += (_, _) => OnPipeConnected();
+            client.OnConnectionFailed += (_, _) => OnPipeFailed();
             client.OnError += (_, args) => Log.Debug($"Discord presence error: {args.Message}");
 
+            // Initialize only starts the connection thread: it returns true even
+            // with no Discord to talk to, so the real state comes from the events.
             client.Initialize();
             _client = client;
-            Log.Debug("Discord presence: client initialized");
             return true;
         }
         catch (Exception ex)
@@ -158,8 +234,10 @@ public sealed class DiscordPresenceService : IDiscordPresenceService, IDisposabl
         {
             _client.SetPresence(BuildPresence(_state, Mode, _startedAt));
 
-            // Mode and connection only: the activity text names what is being edited.
-            Log.Debug($"Discord presence [{Mode}]: published, connected={_client.IsInitialized}");
+            // Mode and link state only: the activity text names what is being
+            // edited. IsInitialized is deliberately not used here, it stays true
+            // even when nothing ever connected.
+            Log.Debug($"Discord presence [{Mode}]: published, link={_connection}");
         }
         catch (Exception ex)
         {

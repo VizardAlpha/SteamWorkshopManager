@@ -523,9 +523,8 @@ public partial class MainViewModel : ViewModelBase
             case CreateItemViewModel creator:
                 creator.ItemCreated -= OnItemCreated;
                 break;
-            case SettingsViewModel:
-                // SettingsViewModel no longer raises close/add-session events
-                // since those UX affordances moved to the topbar / session pill.
+            case SettingsViewModel settings:
+                settings.Detach();
                 break;
         }
     }

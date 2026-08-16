@@ -6,9 +6,9 @@
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
 
-        <Version>1.8.7</Version>
-        <AssemblyVersion>1.8.7.0</AssemblyVersion>
-        <FileVersion>1.8.7.0</FileVersion>
+        <Version>1.8.8</Version>
+        <AssemblyVersion>1.8.8.0</AssemblyVersion>
+        <FileVersion>1.8.8.0</FileVersion>
         
         <!-- Default ingest URL points to a local dev endpoint. -->
         <TelemetryEndpoint>http://localhost:5000/ingest</TelemetryEndpoint>

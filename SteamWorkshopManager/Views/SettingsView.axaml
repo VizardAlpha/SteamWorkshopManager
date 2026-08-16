@@ -442,6 +442,25 @@
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock Classes="row-label" Text="{DynamicResource DiscordPresenceTitle}"/>
                                     <TextBlock Classes="row-desc" Text="{DynamicResource DiscordPrivacyDescription}"/>
+
+                                    <!-- Only after the service gave up retrying, so the
+                                         hint means "it will not fix itself", not "wait". -->
+                                    <StackPanel Orientation="Horizontal" Spacing="10"
+                                                IsVisible="{Binding IsDiscordUnreachable}">
+                                        <TextBlock Text="{DynamicResource DiscordUnreachable}"
+                                                   Foreground="{DynamicResource FeedbackWarningBrush}"
+                                                   TextWrapping="Wrap"
+                                                   VerticalAlignment="Center"
+                                                   FontSize="12"/>
+                                        <Button Content="{DynamicResource DiscordRetry}"
+                                                Command="{Binding RetryDiscordConnectionCommand}"
+                                                Background="{DynamicResource SurfaceOverlayBrush}"
+                                                BorderBrush="{DynamicResource BorderSubtleBrush}"
+                                                BorderThickness="1"
+                                                Foreground="{DynamicResource TextPrimaryBrush}"
+                                                Padding="12,4" FontSize="12"
+                                                VerticalAlignment="Center"/>
+                                    </StackPanel>
                                 </StackPanel>
                                 <ToggleSwitch Grid.Column="1"
                                               IsChecked="{Binding IsDiscordPresenceEnabled}"

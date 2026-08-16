@@ -398,6 +398,8 @@
     <x:String x:Key="DiscordPresenceDetailed">Detailed</x:String>
     <x:String x:Key="DiscordPresenceDetailedDesc">Also shows the title of the item you are editing or uploading.</x:String>
     <x:String x:Key="DiscordPrivacyDescription">When enabled, the app sends your current activity to the Discord client on this machine, which shows it to your contacts. Nothing goes to swm-stats.com, and the level of detail is set in Customization.</x:String>
+    <x:String x:Key="DiscordUnreachable">Discord did not answer. Is the desktop app running?</x:String>
+    <x:String x:Key="DiscordRetry">Retry</x:String>
     <x:String x:Key="EnableDiscordPresence">Enable Discord Rich Presence</x:String>
     <x:String x:Key="DiscordPresenceWizardDescription">Show what you are doing in your Discord status. It starts with the section you are in only, no game name and no item title. You can widen it or turn it off later in Settings.</x:String>
 
