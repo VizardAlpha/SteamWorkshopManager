@@ -47,6 +47,7 @@ jobs:
       - name: Publish
         env:
           SWM_TELEMETRY_URL: ${{ secrets.SWM_TELEMETRY_URL }}
+          SWM_DISCORD_APP_ID: ${{ secrets.SWM_DISCORD_APP_ID }}
         run: dotnet publish SteamWorkshopManager/SteamWorkshopManager.csproj -c Release -r ${{ matrix.rid }} --self-contained false -p:DebugType=None -p:DebugSymbols=false -o dist
 
       - name: Create archive (Windows)
