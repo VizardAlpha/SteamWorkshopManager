@@ -22,6 +22,8 @@
     <x:String x:Key="GameNotOwned">Jeu non possédé - Publication de mods impossible</x:String>
     <x:String x:Key="GameNotOwnedMessage">Vous ne possédez pas ce jeu. Vous devez posséder le jeu pour publier des mods sur le Steam Workshop.</x:String>
     <x:String x:Key="SteamNotInitialized">Steam n'est pas initialisé</x:String>
+    <x:String x:Key="SteamOffline">Steam est hors ligne - Impossible de lister les objets du Workshop</x:String>
+    <x:String x:Key="SteamOfflineMessage">Steam est lancé mais n'est pas connecté à ses serveurs. Vos objets ne peuvent être ni listés ni modifiés tant qu'il ne s'est pas reconnecté. Repassez en ligne dans Steam, puis changez de session pour réessayer.</x:String>
 
     <!-- Item List -->
     <x:String x:Key="MyPublicationsTitle">Mes publications</x:String>

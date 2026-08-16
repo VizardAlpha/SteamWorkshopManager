@@ -10,7 +10,12 @@ public enum SteamInitResult
 {
     Success,
     SteamNotRunning,
-    GameNotOwned
+    GameNotOwned,
+
+    /// <summary>Steam is running and the API initialized, but the user is not
+    /// logged on to the backend (offline mode, or no network). Local state is
+    /// readable; anything that needs Steam's servers is not.</summary>
+    SteamOffline
 }
 
 /// <summary>

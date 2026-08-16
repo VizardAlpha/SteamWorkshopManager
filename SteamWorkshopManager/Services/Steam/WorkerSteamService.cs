@@ -59,8 +59,11 @@ public sealed class WorkerSteamService(SessionHost host) : ISteamService
         }
         catch (Exception ex)
         {
+            // Rethrown, unlike the other calls: an empty list here is
+            // indistinguishable from a user who has published nothing, so the
+            // list view has to surface the failure instead of showing zero mods.
             LogRpcFailure(nameof(GetPublishedItemsAsync), ex);
-            return [];
+            throw;
         }
     }
 

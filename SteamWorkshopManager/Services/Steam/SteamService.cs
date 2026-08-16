@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using SteamWorkshopManager.Core.Steam;
 using SteamWorkshopManager.Models;
@@ -14,6 +15,11 @@ namespace SteamWorkshopManager.Services.Steam;
 public class SteamService : ISteamService
 {
     private static readonly Logger Log = LogService.GetLogger<SteamService>();
+
+    // Steam can still be reconnecting when Init returns, so a false BLoggedOn
+    // is only conclusive after a short grace period.
+    private static readonly TimeSpan LogonGrace = TimeSpan.FromSeconds(3);
+
     private bool _isInitialized;
 
     public bool IsInitialized => _isInitialized;
@@ -54,8 +60,14 @@ public class SteamService : ISteamService
 
             if (_isInitialized)
             {
-                var loggedOn = SteamUser.BLoggedOn();
-                Log.Debug($"User logged on: {loggedOn}");
+                if (!WaitForLogon(LogonGrace))
+                {
+                    // Init succeeds against a Steam client in offline mode, so
+                    // without this check the app reports a healthy connection and
+                    // then shows an empty Workshop list with no explanation.
+                    Log.Warning("Steam API initialized but the user is not logged on - offline mode");
+                    return SteamInitResult.SteamOffline;
+                }
 
                 var steamAppId = SteamUtils.GetAppID();
                 Log.Debug($"Steam AppID from SteamUtils: {steamAppId}");
@@ -89,6 +101,19 @@ public class SteamService : ISteamService
         }
     }
 
+    private static bool WaitForLogon(TimeSpan grace)
+    {
+        var deadline = DateTime.UtcNow + grace;
+        while (!SteamUser.BLoggedOn())
+        {
+            if (DateTime.UtcNow >= deadline) return false;
+            SteamAPI.RunCallbacks();
+            Thread.Sleep(200);
+        }
+
+        return true;
+    }
+
     public void Shutdown()
     {
         if (!_isInitialized) return;
@@ -114,10 +139,10 @@ public class SteamService : ISteamService
         // so loop until we've drained every page.
         for (uint page = 1; ; page++)
         {
-            var pageResult = await QueryPublishedPageAsync(accountId, page);
-            if (pageResult is null) return items;
+            // Throws rather than returning an empty page: a failed query must
+            // never reach the UI looking like "you have published nothing".
+            var queryResult = await QueryPublishedPageAsync(accountId, page);
 
-            var queryResult = pageResult.Value;
             for (uint i = 0; i < queryResult.m_unNumResultsReturned; i++)
             {
                 var item = ReadWorkshopItemAt(queryResult.m_handle, i, currentUserId);
@@ -134,7 +159,9 @@ public class SteamService : ISteamService
         }
     }
 
-    private static async Task<SteamUGCQueryCompleted_t?> QueryPublishedPageAsync(AccountID_t accountId, uint page)
+    /// <exception cref="SteamQueryException">The query could not be answered.
+    /// Distinct from a query that succeeds with zero results.</exception>
+    private static async Task<SteamUGCQueryCompleted_t> QueryPublishedPageAsync(AccountID_t accountId, uint page)
     {
         var query = SteamUGC.CreateQueryUserUGCRequest(
             accountId,
@@ -154,7 +181,7 @@ public class SteamService : ISteamService
         var callResult = CallResult<SteamUGCQueryCompleted_t>.Create((result, failure) =>
         {
             if (failure)
-                tcs.SetException(new Exception("Steam query failed"));
+                tcs.SetException(new SteamQueryException("Steam did not answer the Workshop query"));
             else
                 tcs.SetResult(result);
         });
@@ -162,7 +189,8 @@ public class SteamService : ISteamService
         var handle = SteamUGC.SendQueryUGCRequest(query);
         callResult.Set(handle);
 
-        var timeout = DateTime.UtcNow.AddSeconds(30);
+        const int timeoutSeconds = 30;
+        var timeout = DateTime.UtcNow.AddSeconds(timeoutSeconds);
         while (!tcs.Task.IsCompleted && DateTime.UtcNow < timeout)
         {
             SteamAPI.RunCallbacks();
@@ -173,11 +201,21 @@ public class SteamService : ISteamService
         {
             Log.Error($"Query published items page {page} timed out");
             SteamUGC.ReleaseQueryUGCRequest(query);
-            return null;
+            throw new SteamQueryException($"Steam did not answer the Workshop query within {timeoutSeconds} seconds");
         }
 
         var queryResult = await tcs.Task;
         Log.Debug($"Page {page} returned {queryResult.m_unNumResultsReturned}/{queryResult.m_unTotalMatchingResults} (EResult: {queryResult.m_eResult})");
+
+        // A user with no published items answers OK with zero results, so only
+        // a non-OK result means the query itself did not go through.
+        if (queryResult.m_eResult != EResult.k_EResultOK)
+        {
+            Log.Error($"Query published items page {page} failed: {queryResult.m_eResult}");
+            SteamUGC.ReleaseQueryUGCRequest(queryResult.m_handle);
+            throw new SteamQueryException($"Steam rejected the Workshop query ({queryResult.m_eResult})");
+        }
+
         return queryResult;
     }
 

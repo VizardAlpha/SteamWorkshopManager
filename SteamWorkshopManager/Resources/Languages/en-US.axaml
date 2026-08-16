@@ -22,6 +22,8 @@
     <x:String x:Key="GameNotOwned">Game not owned - Cannot publish mods</x:String>
     <x:String x:Key="GameNotOwnedMessage">You do not own this game. You must own the game to publish mods to the Steam Workshop.</x:String>
     <x:String x:Key="SteamNotInitialized">Steam is not initialized</x:String>
+    <x:String x:Key="SteamOffline">Steam is offline - Workshop items cannot be listed</x:String>
+    <x:String x:Key="SteamOfflineMessage">Steam is running but not signed in to its servers. Your items cannot be listed or edited until it reconnects. Go online in Steam, then switch sessions to retry.</x:String>
 
     <!-- Item List -->
     <x:String x:Key="MyPublicationsTitle">My mods</x:String>

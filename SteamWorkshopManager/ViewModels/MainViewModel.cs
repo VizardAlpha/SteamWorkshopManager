@@ -415,7 +415,12 @@ public partial class MainViewModel : ViewModelBase
                 ? SteamConnectionState.Connected
                 : SteamConnectionState.Disconnected;
             HomeViewModel.ConnectionState = ConnectionState;
-            SetStatus(IsSteamConnected ? "ConnectedToSteam" : "SteamNotAvailable");
+            SetStatus(_sessionHost.LastInitResult switch
+            {
+                SteamInitResult.Success => "ConnectedToSteam",
+                SteamInitResult.SteamOffline => "SteamOffline",
+                _ => "SteamNotAvailable",
+            });
             _notificationService.ShowSuccess(Loc["WorkerRecovered"]);
 
             // Rehydrate what the dead worker had served: items list.
@@ -504,6 +509,12 @@ public partial class MainViewModel : ViewModelBase
                 case SteamInitResult.GameNotOwned:
                     SetStatus("GameNotOwned");
                     _notificationService.ShowError(Loc["GameNotOwnedMessage"]);
+                    break;
+                case SteamInitResult.SteamOffline:
+                    // Deliberately no item load: the query would come back empty
+                    // and read as "you have no mods".
+                    SetStatus("SteamOffline");
+                    _notificationService.ShowError(Loc["SteamOfflineMessage"]);
                     break;
                 default:
                     SetStatus("SteamNotAvailable");
