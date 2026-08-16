@@ -2,12 +2,14 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:icons="using:Material.Icons.Avalonia"
+             xmlns:controls="using:SteamWorkshopManager.Views.Controls"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="300"
              x:Class="SteamWorkshopManager.Views.Controls.BbCodeEditorControl">
 
     <StackPanel Spacing="8">
-        <!-- Toggle + Toolbar + Expand -->
-        <Grid ColumnDefinitions="Auto,*,Auto">
+        <!-- Toggle + Toolbar + Preview + Expand -->
+        <Grid ColumnDefinitions="Auto,*,Auto,Auto">
             <ToggleButton x:Name="BbCodeToggle"
                           IsChecked="False"
                           Padding="8,4"
@@ -29,8 +31,20 @@
                 </ScrollViewer>
             </Border>
 
+            <!-- Preview toggle -->
+            <ToggleButton Grid.Column="2"
+                          x:Name="PreviewToggle"
+                          Padding="6,3"
+                          Background="Transparent"
+                          Foreground="#8899a6"
+                          CornerRadius="3"
+                          Focusable="False"
+                          ToolTip.Tip="{DynamicResource Preview}">
+                <icons:MaterialIcon Kind="EyeOutline" Width="15" Height="15"/>
+            </ToggleButton>
+
             <!-- Expand button -->
-            <Button Grid.Column="2"
+            <Button Grid.Column="3"
                     x:Name="ExpandButton"
                     Padding="6,3"
                     Background="Transparent"
@@ -42,10 +56,16 @@
                     Content="⤢"/>
         </Grid>
 
-        <!-- TextBox -->
-        <TextBox x:Name="EditorTextBox"
-                 AcceptsReturn="True"
-                 TextWrapping="Wrap"
-                 Height="150"/>
+        <!-- Editor / preview swap -->
+        <Panel x:Name="EditorArea">
+            <TextBox x:Name="EditorTextBox"
+                     AcceptsReturn="True"
+                     TextWrapping="Wrap"
+                     Height="150"/>
+
+            <controls:BbCodePreviewControl x:Name="PreviewPanel"
+                                           IsVisible="False"
+                                           Height="150"/>
+        </Panel>
     </StackPanel>
 </UserControl>

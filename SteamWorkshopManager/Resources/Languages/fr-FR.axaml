@@ -386,6 +386,10 @@
     <x:String x:Key="BbCodeMode">BBCode</x:String>
     <x:String x:Key="PlainTextMode">Texte brut</x:String>
     <x:String x:Key="Expand">Agrandir</x:String>
+    <x:String x:Key="Preview">Aperçu</x:String>
+    <x:String x:Key="BbCodePreviewEmpty">Rien à prévisualiser. Saisissez du BBCode pour voir le rendu Steam.</x:String>
+    <x:String x:Key="BbCodeQuoteAuthor">Message original de {0} :</x:String>
+    <x:String x:Key="BbCodeSpoilerHint">Survolez pour révéler le spoiler</x:String>
 
     <!-- Update Checker -->
     <x:String x:Key="UpdateAvailable">Une nouvelle version est disponible :</x:String>

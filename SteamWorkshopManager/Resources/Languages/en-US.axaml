@@ -386,6 +386,10 @@
     <x:String x:Key="BbCodeMode">BBCode</x:String>
     <x:String x:Key="PlainTextMode">Plain text</x:String>
     <x:String x:Key="Expand">Expand</x:String>
+    <x:String x:Key="Preview">Preview</x:String>
+    <x:String x:Key="BbCodePreviewEmpty">Nothing to preview yet. Type some BBCode to see how Steam will render it.</x:String>
+    <x:String x:Key="BbCodeQuoteAuthor">Originally posted by {0}:</x:String>
+    <x:String x:Key="BbCodeSpoilerHint">Hover to reveal the spoiler</x:String>
 
     <!-- Update Checker -->
     <x:String x:Key="UpdateAvailable">A new version is available:</x:String>

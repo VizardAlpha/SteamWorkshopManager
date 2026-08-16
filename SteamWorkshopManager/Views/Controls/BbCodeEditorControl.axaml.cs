@@ -6,8 +6,11 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Material.Icons;
+using Material.Icons.Avalonia;
 using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Models;
+using SteamWorkshopManager.Services.Core;
 
 namespace SteamWorkshopManager.Views.Controls;
 
@@ -44,6 +47,7 @@ public partial class BbCodeEditorControl : UserControl
     private int _savedSelectionEnd;
     private Border? _expandedOverlay;
     private TextBox? _expandedTextBox;
+    private BbCodePreviewControl? _expandedPreview;
 
     public BbCodeEditorControl()
     {
@@ -51,6 +55,7 @@ public partial class BbCodeEditorControl : UserControl
         BuildToolbar();
 
         BbCodeToggle.IsCheckedChanged += OnToggleChanged;
+        PreviewToggle.IsCheckedChanged += OnPreviewToggleChanged;
         EditorTextBox.PropertyChanged += OnEditorTextBoxPropertyChanged;
         ExpandButton.Click += OnExpandClick;
 
@@ -89,11 +94,18 @@ public partial class BbCodeEditorControl : UserControl
             // Sync expanded textbox if open
             if (_expandedTextBox != null && _expandedTextBox.Text != Text)
                 _expandedTextBox.Text = Text;
+
+            if (PreviewPanel != null && PreviewToggle?.IsChecked == true)
+                PreviewPanel.Text = Text;
+            if (_expandedPreview != null)
+                _expandedPreview.Text = Text;
         }
         else if (change.Property == EditorHeightProperty)
         {
             if (EditorTextBox != null)
                 EditorTextBox.Height = EditorHeight;
+            if (PreviewPanel != null)
+                PreviewPanel.Height = EditorHeight;
         }
         else if (change.Property == PlaceholderTextProperty)
         {
@@ -106,6 +118,7 @@ public partial class BbCodeEditorControl : UserControl
     {
         base.OnLoaded(e);
         EditorTextBox.Height = EditorHeight;
+        PreviewPanel.Height = EditorHeight;
         EditorTextBox.PlaceholderText = PlaceholderText;
         if (EditorTextBox.Text != Text)
             EditorTextBox.Text = Text;
@@ -119,7 +132,19 @@ public partial class BbCodeEditorControl : UserControl
 
     private void OnToggleChanged(object? sender, RoutedEventArgs e)
     {
-        ToolbarPanel.IsVisible = BbCodeToggle.IsChecked == true;
+        ToolbarPanel.IsVisible = BbCodeToggle.IsChecked == true && PreviewToggle.IsChecked != true;
+    }
+
+    private void OnPreviewToggleChanged(object? sender, RoutedEventArgs e)
+    {
+        var previewing = PreviewToggle.IsChecked == true;
+
+        if (previewing)
+            PreviewPanel.Text = Text;
+
+        PreviewPanel.IsVisible = previewing;
+        EditorTextBox.IsVisible = !previewing;
+        ToolbarPanel.IsVisible = BbCodeToggle.IsChecked == true && !previewing;
     }
 
     private void BuildToolbar()
@@ -289,6 +314,47 @@ public partial class BbCodeEditorControl : UserControl
         // Build expanded toolbar
         var expandedToolbar = BuildExpandedToolbar();
 
+        // Live preview beside the editor
+        _expandedPreview = new BbCodePreviewControl { Text = Text };
+
+        var splitter = new GridSplitter
+        {
+            Width = 8,
+            Background = Brushes.Transparent,
+            ResizeDirection = GridResizeDirection.Columns,
+        };
+
+        var split = new Grid { ColumnDefinitions = ColumnDefinitions.Parse("*,Auto,*") };
+        Grid.SetColumn(_expandedTextBox, 0);
+        Grid.SetColumn(splitter, 1);
+        Grid.SetColumn(_expandedPreview, 2);
+        split.Children.Add(_expandedTextBox);
+        split.Children.Add(splitter);
+        split.Children.Add(_expandedPreview);
+
+        // Preview toggle
+        var previewToggle = new ToggleButton
+        {
+            IsChecked = true,
+            Padding = new Thickness(6, 3),
+            Background = Brushes.Transparent,
+            Foreground = new SolidColorBrush(Color.Parse("#c7d5e0")),
+            CornerRadius = new CornerRadius(3),
+            Cursor = new Cursor(StandardCursorType.Hand),
+            Focusable = false,
+            Content = new MaterialIcon { Kind = MaterialIconKind.EyeOutline, Width = 15, Height = 15 },
+        };
+        ToolTip.SetTip(previewToggle, LocalizationService.GetString("Preview"));
+
+        previewToggle.IsCheckedChanged += (_, _) =>
+        {
+            var showPreview = previewToggle.IsChecked == true;
+            _expandedPreview.IsVisible = showPreview;
+            splitter.IsVisible = showPreview;
+            split.ColumnDefinitions[1].Width = showPreview ? GridLength.Auto : new GridLength(0);
+            split.ColumnDefinitions[2].Width = showPreview ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
+        };
+
         // Close button
         var closeBtn = new Button
         {
@@ -303,22 +369,24 @@ public partial class BbCodeEditorControl : UserControl
         };
         closeBtn.Click += (_, _) => CollapseEditor();
 
-        // Header with toolbar + close
+        // Header with toolbar + preview toggle + close
         var header = new Grid
         {
-            ColumnDefinitions = ColumnDefinitions.Parse("*,Auto"),
+            ColumnDefinitions = ColumnDefinitions.Parse("*,Auto,Auto"),
             Margin = new Thickness(0, 0, 0, 12),
         };
         Grid.SetColumn(expandedToolbar, 0);
-        Grid.SetColumn(closeBtn, 1);
+        Grid.SetColumn(previewToggle, 1);
+        Grid.SetColumn(closeBtn, 2);
         header.Children.Add(expandedToolbar);
+        header.Children.Add(previewToggle);
         header.Children.Add(closeBtn);
 
         // Content panel
         var contentPanel = new DockPanel();
         DockPanel.SetDock(header, Dock.Top);
         contentPanel.Children.Add(header);
-        contentPanel.Children.Add(_expandedTextBox);
+        contentPanel.Children.Add(split);
 
         // Inner card
         var innerCard = new Border
@@ -358,6 +426,7 @@ public partial class BbCodeEditorControl : UserControl
 
         _expandedOverlay = null;
         _expandedTextBox = null;
+        _expandedPreview = null;
     }
 
     private ScrollViewer BuildExpandedToolbar()
