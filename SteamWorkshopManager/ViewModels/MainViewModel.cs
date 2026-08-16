@@ -136,7 +136,7 @@ public partial class MainViewModel : ViewModelBase
     private UpdateInfo? _updateInfo;
 
     /// <summary>
-    /// True while <see cref="SwitchSessionAsync"/> is in flight — drives a
+    /// True while <see cref="SwitchSessionAsync"/> is in flight - drives a
     /// full-window overlay so the user sees "something is happening" instead
     /// of a stale UI during the worker swap + item reload.
     /// </summary>
@@ -553,7 +553,7 @@ public partial class MainViewModel : ViewModelBase
 
     /// <summary>
     /// Post-save flow: keep the editor mounted so the user can verify the
-    /// just-saved state — only refresh the matching list row in background so
+    /// just-saved state - only refresh the matching list row in background so
     /// the catalog is accurate the next time they navigate to "My mods".
     /// </summary>
     private async void OnItemUpdated(PublishedFileId_t fileId)
@@ -578,7 +578,7 @@ public partial class MainViewModel : ViewModelBase
     /// <summary>
     /// Post-publish flow: fetch only the new item (instead of re-querying the
     /// full catalog), insert it into the list, and route straight to the
-    /// editor so the user can verify what just shipped — addresses the
+    /// editor so the user can verify what just shipped - addresses the
     /// "navigation breaks my concentration" feedback. If Steam can't resolve
     /// the freshly-published id (indexing latency, network), fall back to the
     /// list view + full reload + a notification rather than stranding the user.
@@ -638,6 +638,24 @@ public partial class MainViewModel : ViewModelBase
         DetachCurrentView();
         CurrentView = ActivatorUtilities.CreateInstance<SettingsViewModel>(App.Services);
         ActiveTab = ShellTab.Settings;
+    }
+
+    /// <summary>
+    /// Ctrl+S. Routed to whichever editor is mounted, and a no-op anywhere else
+    /// so the shortcut never fires a save the user cannot see.
+    /// </summary>
+    [RelayCommand]
+    private void SaveCurrent()
+    {
+        switch (CurrentView)
+        {
+            case ItemEditorViewModel editor when editor.SaveCommand.CanExecute(null):
+                editor.SaveCommand.Execute(null);
+                break;
+            case CreateItemViewModel creator when creator.CreateCommand.CanExecute(null):
+                creator.CreateCommand.Execute(null);
+                break;
+        }
     }
 
     #region Discord presence
@@ -830,7 +848,7 @@ public partial class MainViewModel : ViewModelBase
         {
             // If the doomed session is the live one, swap the worker first so
             // PurgeAsync isn't yanking files out from under an active Steam
-            // worker. With no fallback we fall back to a sessionless shell —
+            // worker. With no fallback we fall back to a sessionless shell -
             // user gets an empty home with an "Add session" button.
             if (wasActive)
             {

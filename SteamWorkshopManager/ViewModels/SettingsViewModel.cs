@@ -29,6 +29,7 @@ public partial class SettingsViewModel : ViewModelBase
     private const string GitHubRepoUrl = "https://github.com/VizardAlpha/SteamWorkshopManager";
     private const string PrivacyPolicyUrl = "https://swm-stats.com/Privacy";
     private const string StatsSiteUrl = "https://swm-stats.com";
+    private const string ThirdPartyNoticesUrl = $"{GitHubRepoUrl}/blob/master/THIRD-PARTY-NOTICES.md";
 
     private readonly ISettingsService _settingsService;
     private readonly ILogService _logService;
@@ -97,6 +98,25 @@ public partial class SettingsViewModel : ViewModelBase
     public bool IsPresenceDetailed => DiscordPresenceMode == DiscordPresenceMode.Detailed;
 
     /// <summary>
+    /// On/off switch, owned by the Privacy section: it is the choice that
+    /// decides whether anything reaches Discord at all. Customization only
+    /// picks how much detail is published.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isDiscordPresenceEnabled;
+
+    /// <summary>
+    /// Level restored when the switch is turned back on during this session, so
+    /// flipping it off and on again does not downgrade someone who had picked
+    /// Detailed. Only the current mode is persisted, so a restart while off
+    /// loses the level: see the constructor.
+    /// </summary>
+    private DiscordPresenceMode _lastPresenceLevel;
+
+    partial void OnIsDiscordPresenceEnabledChanged(bool value) =>
+        ApplyPresenceMode(value ? _lastPresenceLevel : DiscordPresenceMode.Off);
+
+    /// <summary>
     /// Pseudonymous instance ID surfaced to the user in the Privacy section
     /// so they can quote it in a GDPR access or deletion request. Comes from
     /// <see cref="TelemetryService"/>; the app is initialized at startup so
@@ -116,7 +136,7 @@ public partial class SettingsViewModel : ViewModelBase
     /// <summary>
     /// Root folder where app-state lives (bundle, settings, sessions, image
     /// cache, telemetry queue, downloads, tags). Logs live separately under
-    /// LocalApplicationData — that's what <see cref="LogFilePath"/> points to.
+    /// LocalApplicationData - that's what <see cref="LogFilePath"/> points to.
     /// </summary>
     public string DataFolderPath { get; } = AppPaths.Root;
 
@@ -153,6 +173,11 @@ public partial class SettingsViewModel : ViewModelBase
         _includePrereleases = _settingsService.Settings.IncludePrereleases;
         _toastPosition = _settingsService.Settings.ToastPosition;
         _discordPresenceMode = _settingsService.Settings.DiscordPresenceMode;
+        _isDiscordPresenceEnabled = _discordPresenceMode != DiscordPresenceMode.Off;
+        // Settings store the mode, not the level behind an off switch, so
+        // starting off leaves nothing to restore: re-enabling lands on the
+        // least revealing level.
+        _lastPresenceLevel = _isDiscordPresenceEnabled ? _discordPresenceMode : DiscordPresenceMode.Minimal;
         _logFilePath = _logService.GetLogFilePath();
         _logFolderSizeDisplay = Formatters.Bytes(_logService.GetLogFolderSize());
 
@@ -202,8 +227,15 @@ public partial class SettingsViewModel : ViewModelBase
     {
         if (!Enum.TryParse<DiscordPresenceMode>(mode, out var parsed)) return;
 
-        DiscordPresenceMode = parsed;
-        _settingsService.Settings.DiscordPresenceMode = parsed;
+        ApplyPresenceMode(parsed);
+    }
+
+    private void ApplyPresenceMode(DiscordPresenceMode mode)
+    {
+        DiscordPresenceMode = mode;
+        if (mode != DiscordPresenceMode.Off) _lastPresenceLevel = mode;
+
+        _settingsService.Settings.DiscordPresenceMode = mode;
         _settingsService.Save();
 
         // Connects, drops or just relabels the activity depending on the new mode.
@@ -269,7 +301,7 @@ public partial class SettingsViewModel : ViewModelBase
             if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
                 && desktop.MainWindow?.Clipboard is { } clipboard)
             {
-                // Avalonia 12 — `SetTextAsync` is an extension method on
+                // Avalonia 12 - `SetTextAsync` is an extension method on
                 // IClipboard from Avalonia.Input.Platform.ClipboardExtensions,
                 // and routes natively on Windows (Win32 clipboard), macOS
                 // (NSPasteboard), and Linux (X11 / Wayland).
@@ -293,6 +325,9 @@ public partial class SettingsViewModel : ViewModelBase
 
     [RelayCommand]
     private void OpenChangelog() => OpenUrl($"{GitHubRepoUrl}/releases");
+
+    [RelayCommand]
+    private void OpenThirdPartyNotices() => OpenUrl(ThirdPartyNoticesUrl);
 
     [RelayCommand]
     private async Task CheckForUpdatesAsync()

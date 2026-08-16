@@ -136,7 +136,7 @@
                     </Grid>
                 </Border>
 
-                <!-- Telemetry consent — nothing is sent before Create Session.
+                <!-- Telemetry consent - nothing is sent before Create Session.
                      The Terms/Privacy acknowledgement only appears (and only
                      gates Validate) when the toggle is on, since opt-out
                      means no data ever leaves the machine. -->
@@ -175,43 +175,12 @@
                                           VerticalAlignment="Center"
                                           Margin="12,0,0,0"/>
                         </Grid>
-                        <StackPanel IsVisible="{Binding IsTelemetryEnabled}" Spacing="8">
-                            <Border Height="1" Background="{DynamicResource BorderSubtleBrush}"/>
-                            <CheckBox IsChecked="{Binding IsPrivacyAccepted}"
-                                      Content="{Binding Loc[IHaveReadLegal]}"
-                                      FontSize="12"
-                                      Foreground="{DynamicResource TextPrimaryBrush}"/>
-                            <StackPanel Orientation="Horizontal" Spacing="16" Margin="26,0,0,0">
-                                <Button Background="Transparent" BorderThickness="0" Padding="0"
-                                        Command="{Binding OpenTermsOfUseCommand}">
-                                    <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding Loc[TermsOfUse]}"
-                                                   FontSize="12"
-                                                   Foreground="{DynamicResource AccentPrimaryBrush}"/>
-                                        <icons:MaterialIcon Kind="OpenInNew" Width="11" Height="11"
-                                                            Foreground="{DynamicResource AccentPrimaryBrush}"
-                                                            VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Button>
-                                <Button Background="Transparent" BorderThickness="0" Padding="0"
-                                        Command="{Binding OpenPrivacyPolicyCommand}">
-                                    <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding Loc[PrivacyPolicy]}"
-                                                   FontSize="12"
-                                                   Foreground="{DynamicResource AccentPrimaryBrush}"/>
-                                        <icons:MaterialIcon Kind="OpenInNew" Width="11" Height="11"
-                                                            Foreground="{DynamicResource AccentPrimaryBrush}"
-                                                            VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Button>
-                            </StackPanel>
-                        </StackPanel>
                     </StackPanel>
                 </Border>
 
-                <!-- Discord Rich Presence — off unless the user opts in here.
-                     Enabling picks the middle detail level; Settings >
-                     Customization can narrow or widen it afterwards. -->
+                <!-- Discord Rich Presence, off unless the user opts in here.
+                     Enabling picks the least revealing level; Settings >
+                     Customization can widen it afterwards. -->
                 <Border Background="{DynamicResource SurfaceCardBrush}"
                         BorderBrush="{DynamicResource BorderSubtleBrush}"
                         BorderThickness="1"
@@ -235,6 +204,39 @@
                                       Margin="12,0,0,0"/>
                     </Grid>
                 </Border>
+
+                <!-- One acknowledgement for both channels: the Terms and the
+                     privacy policy cover statistics and Discord alike. -->
+                <StackPanel IsVisible="{Binding RequiresLegalAcceptance}" Spacing="8">
+                    <CheckBox IsChecked="{Binding IsPrivacyAccepted}"
+                              Content="{Binding Loc[IHaveReadLegal]}"
+                              FontSize="12"
+                              Foreground="{DynamicResource TextPrimaryBrush}"/>
+                    <StackPanel Orientation="Horizontal" Spacing="16" Margin="26,0,0,0">
+                        <Button Background="Transparent" BorderThickness="0" Padding="0"
+                                Command="{Binding OpenTermsOfUseCommand}">
+                            <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Loc[TermsOfUse]}"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource AccentPrimaryBrush}"/>
+                                <icons:MaterialIcon Kind="OpenInNew" Width="11" Height="11"
+                                                    Foreground="{DynamicResource AccentPrimaryBrush}"
+                                                    VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Background="Transparent" BorderThickness="0" Padding="0"
+                                Command="{Binding OpenPrivacyPolicyCommand}">
+                            <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Loc[PrivacyPolicy]}"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource AccentPrimaryBrush}"/>
+                                <icons:MaterialIcon Kind="OpenInNew" Width="11" Height="11"
+                                                    Foreground="{DynamicResource AccentPrimaryBrush}"
+                                                    VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
             </StackPanel>
 
             <!-- Footer -->

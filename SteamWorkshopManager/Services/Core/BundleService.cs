@@ -51,7 +51,7 @@ public static class BundleService
         // Custom (user-added) languages: patch any key present in the reference
         // language but missing from the custom file, marking it with a
         // to-do comment so the translator knows to handle it. Existing keys are
-        // never overwritten — the user's translation is preserved as-is.
+        // never overwritten - the user's translation is preserved as-is.
         SyncCustomLanguagesWithReference();
     }
 

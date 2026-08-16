@@ -13,7 +13,7 @@ namespace SteamWorkshopManager.Models;
 /// </summary>
 public enum WorkshopPreviewSource
 {
-    /// <summary>Preview already published on Steam — has OriginalIndex.</summary>
+    /// <summary>Preview already published on Steam - has OriginalIndex.</summary>
     Existing,
     /// <summary>Local image file pending upload on next save.</summary>
     NewImage,
@@ -61,7 +61,7 @@ public partial class WorkshopPreview : ObservableObject
 
     /// <summary>
     /// Show the dimmed placeholder icon only when the entry is an image AND
-    /// no bitmap has been loaded yet — embedded media types (YouTube /
+    /// no bitmap has been loaded yet - embedded media types (YouTube /
     /// Sketchfab) render their own icon and short-circuit this.
     /// </summary>
     public bool ShouldShowImagePlaceholder => IsImage && Thumbnail == null;

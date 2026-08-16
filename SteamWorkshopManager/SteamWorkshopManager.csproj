@@ -53,7 +53,9 @@
         <PackageReference Include="Avalonia.Desktop" Version="12.1.1" />
         <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.1" />
         <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.1" />
-        <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.3" />
+        <!-- DevTools bridge: only used behind #if DEBUG, and the package declares
+             no licence, so it must not ship in a release build. -->
+        <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.3" Condition="'$(Configuration)' == 'Debug'" />
         
         <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
         
@@ -74,6 +76,13 @@
     <ItemGroup>
       <Folder Include="Properties\" />
       <InternalsVisibleTo Include="SteamWorkshopManager.Tests" />
+    </ItemGroup>
+
+    <!-- MIT and LGPL require their notices to travel with the binaries, so these
+         ride along with every publish instead of living only in the repo. -->
+    <ItemGroup>
+      <Content Include="..\THIRD-PARTY-NOTICES.md" Link="THIRD-PARTY-NOTICES.md" CopyToOutputDirectory="PreserveNewest" />
+      <Content Include="..\LICENSE" Link="LICENSE" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 
     <!-- Language files also as EmbeddedResource for bundle extraction -->

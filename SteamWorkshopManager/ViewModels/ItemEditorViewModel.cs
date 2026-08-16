@@ -106,7 +106,7 @@ public partial class ItemEditorViewModel : ViewModelBase
     }
 
     /// <summary>True when the folder has changed and we have a previous-upload
-    /// fingerprint to diff against — drives the red→green size badge.</summary>
+    /// fingerprint to diff against - drives the red→green size badge.</summary>
     public bool IsFolderSizeChanged => _initialFolderSize > 0 && HasContentFolderChanged();
 
     public string OriginalFolderSizeDisplay =>
@@ -136,7 +136,7 @@ public partial class ItemEditorViewModel : ViewModelBase
 
     /// <summary>
     /// Forces the user to type the shared <see cref="DangerousActions.ConfirmationPassphrase"/>
-    /// before the destructive button enables — same pattern GitHub uses for
+    /// before the destructive button enables - same pattern GitHub uses for
     /// repo deletion. Mirrors the bulk-delete and delete-session flows.
     /// </summary>
     [ObservableProperty]
@@ -335,7 +335,7 @@ public partial class ItemEditorViewModel : ViewModelBase
     /// <summary>
     /// Original Steam-side indices captured at load. Lets us issue
     /// <see cref="PreviewOp.Remove"/> for *all* existing previews when a
-    /// reorder forces a full rebuild — the alternative would be to read the
+    /// reorder forces a full rebuild - the alternative would be to read the
     /// current Steam state again at save time, which we want to avoid.
     /// </summary>
     private readonly List<uint> _originalExistingIndices = [];
@@ -764,7 +764,7 @@ public partial class ItemEditorViewModel : ViewModelBase
         try
         {
             // Refresh the access token if we have a stored refresh token but no
-            // live access token — keeps "already downloaded" badges accurate
+            // live access token - keeps "already downloaded" badges accurate
             // across restarts without forcing a fresh QR scan.
             if (!SteamAuthService.IsAuthenticated && SteamAuthService.HasRefreshToken)
                 await SteamAuthService.TryRefreshAccessTokenAsync();
@@ -1277,6 +1277,22 @@ public partial class ItemEditorViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Drag reorder. Only moves within a single carousel list: Steam shows
+    /// images, videos and models as separate sections, and models are read-only.
+    /// </summary>
+    [RelayCommand]
+    private void ReorderPreview(ReorderRequest request)
+    {
+        if (request.Source is not WorkshopPreview source || request.Target is not WorkshopPreview target) return;
+        if (source.IsSketchfab || target.IsSketchfab) return;
+
+        var list = FindContainingList(source);
+        if (list is null || !ReferenceEquals(list, FindContainingList(target))) return;
+
+        ListReorder.Move(list, source, target);
+    }
+
+    /// <summary>
     /// Steam's UGC API has no "move" verb, so any per-list reorder forces a
     /// full rebuild. A list is "in order" when existing entries appear in
     /// OriginalIndex-ascending order with new entries appended at the end.
@@ -1308,8 +1324,8 @@ public partial class ItemEditorViewModel : ViewModelBase
     /// <summary>
     /// Builds the preview-op list passed to the Steam update RPC. Hits the
     /// fast path (single Remove/Add ops) when the user only added or removed
-    /// entries; falls back to a full rebuild — including downloading any
-    /// existing image we still want to keep — when the in-list order no
+    /// entries; falls back to a full rebuild - including downloading any
+    /// existing image we still want to keep - when the in-list order no
     /// longer matches what Steam will hold after a naive replay.
     /// </summary>
     private async Task<List<PreviewOp>> BuildPreviewOpsAsync()
@@ -1330,7 +1346,7 @@ public partial class ItemEditorViewModel : ViewModelBase
     {
         var ops = new List<PreviewOp>();
 
-        // Sketchfabs the user kept stay on Steam untouched — the SDK doesn't
+        // Sketchfabs the user kept stay on Steam untouched - the SDK doesn't
         // let us re-add them, so wiping them here would silently delete data.
         var preserve = ModelPreviews
             .Where(m => m.Source == WorkshopPreviewSource.Existing)

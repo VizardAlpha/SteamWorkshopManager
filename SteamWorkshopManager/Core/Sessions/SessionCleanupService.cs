@@ -14,7 +14,7 @@ namespace SteamWorkshopManager.Core.Sessions;
 /// Removes everything tied to a session: the session JSON, the AppId-keyed
 /// caches (headers, icons, tags), the downloaded mod versions and the drafts
 /// authored against that AppId. AppId-keyed assets are only purged when no
-/// other session still references the same AppId — two sessions on the same
+/// other session still references the same AppId - two sessions on the same
 /// game would otherwise lose shared cache for both.
 /// </summary>
 public sealed class SessionCleanupService
@@ -30,7 +30,7 @@ public sealed class SessionCleanupService
 
     /// <summary>
     /// Inspects what would be removed if <paramref name="session"/> were
-    /// deleted, given the full list of sessions still on disk. Pure read —
+    /// deleted, given the full list of sessions still on disk. Pure read -
     /// nothing is touched.
     /// </summary>
     public SessionCleanupReport BuildReport(WorkshopSession session, IReadOnlyList<WorkshopSession> allSessions)

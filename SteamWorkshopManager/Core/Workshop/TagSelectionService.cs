@@ -16,7 +16,7 @@ namespace SteamWorkshopManager.Core.Workshop;
 public sealed class TagSelectionService(ISessionRepository sessionRepository)
 {
     /// <summary>Adds a custom tag to the active session if not already present
-    /// (case-insensitive). Fire-and-forget persist — failures are ignored.</summary>
+    /// (case-insensitive). Fire-and-forget persist - failures are ignored.</summary>
     public void AddCustomTagToSession(string tagName)
     {
         var session = AppConfig.CurrentSession;

@@ -97,7 +97,7 @@ public class WorkshopTagsService
             Log.Error($"Failed to fetch tags for AppId {appId}: {ex.Message}", ex);
         }
 
-        // Fetch failed or returned nothing — fall back to whatever we have on
+        // Fetch failed or returned nothing - fall back to whatever we have on
         // disk, even if expired.
         if (TryReadCache(cacheFile, ignoreTtl: true, out var stale))
         {
@@ -178,7 +178,7 @@ public class WorkshopTagsService
     /// <summary>
     /// Scans the loader-data array for the first entry that carries a
     /// <c>declaredTags</c> node. Entries that fail to parse as JSON are skipped
-    /// silently — Steam occasionally inlines non-JSON payloads there.
+    /// silently - Steam occasionally inlines non-JSON payloads there.
     /// </summary>
     private static SteamDeclaredTags? FindDeclaredTags(List<string> loaderEntries)
     {
@@ -193,7 +193,7 @@ public class WorkshopTagsService
             }
             catch (JsonException)
             {
-                // Non-JSON or schema drift — try the next entry.
+                // Non-JSON or schema drift - try the next entry.
             }
         }
         return null;
@@ -210,7 +210,7 @@ public class WorkshopTagsService
             var cached = JsonSerializer.Deserialize(json, TagsCacheJsonContext.Default.TagsCacheEntry);
             if (cached is null) return false;
 
-            // Cached entries have no TTL in "ignore" mode — lets us surface a
+            // Cached entries have no TTL in "ignore" mode - lets us surface a
             // stale snapshot as a last-ditch fallback when Steam is unreachable.
             return ignoreTtl
                 ? TryMaterialize(cached, out result)

@@ -49,7 +49,7 @@ public partial class HomeViewModel : ViewModelBase
 
     public bool HasMods => ItemList.Items.Count > 0;
 
-    /// <summary>Capped to two rows (4 cols × 2) — the dashboard is a snapshot;
+    /// <summary>Capped to two rows (4 cols × 2) - the dashboard is a snapshot;
     /// "See all" routes to the full list view.</summary>
     private const int RecentModsLimit = 8;
 
@@ -64,7 +64,7 @@ public partial class HomeViewModel : ViewModelBase
 
     public string LastUpdateDisplay =>
         ItemList.Items.Count == 0
-            ? "—"
+            ? "-"
             : Formatters.TimeAgo(ItemList.Items.Max(i => i.UpdatedAt));
 
     public string ConnectionText => ConnectionState switch

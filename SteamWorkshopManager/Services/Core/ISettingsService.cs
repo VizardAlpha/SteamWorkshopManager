@@ -48,7 +48,7 @@ public class AppSettings
 
     /// <summary>
     /// Whether usage statistics are sent to swm-stats.com. Off by default so
-    /// the consent screen starts unchecked — sending requires the user to
+    /// the consent screen starts unchecked - sending requires the user to
     /// explicitly opt in (see <see cref="TelemetryConsentVersion"/>).
     /// </summary>
     public bool TelemetryEnabled { get; set; }
@@ -64,7 +64,7 @@ public class AppSettings
 
     /// <summary>
     /// When true, the update checker also considers GitHub pre-releases
-    /// (beta channel). Off by default — most users only want stable builds.
+    /// (beta channel). Off by default - most users only want stable builds.
     /// </summary>
     public bool IncludePrereleases { get; set; }
 

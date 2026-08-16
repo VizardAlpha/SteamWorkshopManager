@@ -19,7 +19,7 @@ public class ItemFileInfo
 
     // System.Text.Json reads "...Z" timestamps back as Kind=Local (ticks shifted by
     // the local offset). Force UTC so tick comparisons against FileInfo.LastWriteTimeUtc
-    // survive a save/load round-trip — otherwise change detection always fires.
+    // survive a save/load round-trip - otherwise change detection always fires.
     public DateTime LastModifiedUtc
     {
         get => _lastModifiedUtc;

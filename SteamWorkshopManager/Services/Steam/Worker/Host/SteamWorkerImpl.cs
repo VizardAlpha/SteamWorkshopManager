@@ -19,7 +19,7 @@ namespace SteamWorkshopManager.Services.Steam.Worker.Host;
 /// All Steamworks.NET interaction lives here: the worker owns its own
 /// <see cref="SteamService"/> instance, so <c>SteamAPI.Init()</c> happens in
 /// this process only and the shell never touches the global Steam state.
-/// RPC calls are thin wrappers — they marshal domain models to the DTOs
+/// RPC calls are thin wrappers - they marshal domain models to the DTOs
 /// defined under <see cref="Contracts.Dtos"/>, nothing more.
 /// </summary>
 internal sealed class SteamWorkerImpl : ISteamWorker
@@ -55,7 +55,7 @@ internal sealed class SteamWorkerImpl : ISteamWorker
             entry.Timestamp.ToUniversalTime())));
 
         // StreamJsonRpc IProgress<T> only stays alive for the duration of the
-        // call that received it — return now and the sink dies. Hold the call
+        // call that received it - return now and the sink dies. Hold the call
         // open until cancellation so every subsequent worker log keeps flowing.
         _logSinkCts = new CancellationTokenSource();
         try
@@ -326,7 +326,7 @@ internal sealed class SteamWorkerImpl : ISteamWorker
     public async Task<string?> FetchSteamWebAsync(string url)
     {
         // Routed here so the SteamHTTP cookie container & request lifecycle stay
-        // inside the worker process — only here is SteamAPI initialised.
+        // inside the worker process - only here is SteamAPI initialised.
         await SteamWebClient.InitializeAsync();
         return await SteamWebClient.GetStringAsync(url);
     }

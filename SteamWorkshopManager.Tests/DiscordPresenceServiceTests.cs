@@ -20,13 +20,25 @@ public class DiscordPresenceServiceTests
         DiscordPresenceService.BuildPresence(state, mode, StartedAt);
 
     [TestMethod]
-    public void Minimal_HidesGameAndItem()
+    public void Minimal_ShowsTheSectionButHidesGameAndItem()
     {
         var presence = Build(State(), DiscordPresenceMode.Minimal);
 
-        Assert.AreEqual("Managing Steam Workshop items", presence.Details);
+        Assert.AreEqual("Browsing Workshop items", presence.Details);
         Assert.IsTrue(string.IsNullOrEmpty(presence.State));
         Assert.AreEqual("app_logo", presence.Assets.LargeImageKey);
+    }
+
+    [TestMethod]
+    [DataRow(ShellTab.Create, "Creating a new item")]
+    [DataRow(ShellTab.Settings, "Configuring the app")]
+    [DataRow(ShellTab.Home, "Managing Workshop items")]
+    public void Minimal_FollowsTheSectionLikeTheOtherModes(ShellTab tab, string expected)
+    {
+        var presence = Build(State(tab: tab), DiscordPresenceMode.Minimal);
+
+        Assert.AreEqual(expected, presence.Details);
+        Assert.IsTrue(string.IsNullOrEmpty(presence.State));
     }
 
     [TestMethod]

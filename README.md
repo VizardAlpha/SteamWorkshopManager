@@ -8,7 +8,7 @@ Features:
 - Smart updates: Change title, description, tags, or visibility without re-uploading your mod content or preview image. The app tracks file path, size, and modification date: only uploads when something actually changed!
 - Multi-game support: Manage mods for multiple Steam games (switch between workshops easily)
 - Worker-process Steam: Steam runs in a separate process, so switching between sessions does not freeze the UI
-- Visual editor: Edit title, description, tags, and preview image — Info / Changelog / Versions tabs in a card-based layout
+- Visual editor: Edit title, description, tags, and preview image, with Info / Changelog / Versions tabs in a card-based layout
 - Drag & drop: Simply drop your mod folder to create a new item
 - Changelog management: add changelogs with each update
 - Multi-version support: declare which game versions a mod is compatible with (when supported by the game)
@@ -17,7 +17,8 @@ Features:
 - Custom tags: Add your own tags per game
 - Multi-language: English, French,... supported
 - PlainText or BBCode: Customize your description and changelogs with the tags currently offered by Steam
-- Optional usage statistics: opt-in telemetry feeds the public dashboard at [swm-stats.com](https://swm-stats.com) — pseudonymous, no Steam ID, full opt-out from Settings → Privacy
+- Optional usage statistics: opt-in telemetry feeds the public dashboard at [swm-stats.com](https://swm-stats.com): pseudonymous, no Steam ID, full opt-out from Settings → Privacy
+- Optional Discord Rich Presence: opt-in, with three levels of detail from the current section alone to the item being edited
 
 
 # Requirements
@@ -48,7 +49,7 @@ dotnet publish SteamWorkshopManager/SteamWorkshopManager.csproj -c Release -r wi
 
 # Localization
 
-Languages are stored as `.axaml` resource files in `%AppData%/SteamWorkshopManager/bundle/`. Built-in languages are automatically extracted on first launch. New languages can be added by dropping a file into the bundle folder — no rebuild required.
+Languages are stored as `.axaml` resource files in `%AppData%/SteamWorkshopManager/bundle/`. Built-in languages are automatically extracted on first launch. New languages can be added by dropping a file into the bundle folder, no rebuild required.
 
 Want to contribute a translation? See [TRANSLATING.md](TRANSLATING.md) for instructions.
 
@@ -62,6 +63,12 @@ What is sent: instance UUID (random, generated locally), operating system + vers
 What is **not** sent: Steam IDs, Steam usernames, account information, mod titles or descriptions, file paths, or any personal information.
 
 The aggregated public dashboard lives at [swm-stats.com](https://swm-stats.com). The full policy and the deletion request workflow are documented at [swm-stats.com/Privacy](https://swm-stats.com/Privacy). Telemetry can be toggled at any time from **Settings → Privacy**, and the per-install UUID is displayed there with a copy button so it can be quoted in deletion requests.
+
+## Discord Rich Presence
+
+Discord Rich Presence is a separate **opt-in**, off until enabled in the setup wizard or in **Settings → Privacy**. It talks to the Discord client running on the same machine, never to swm-stats.com, and Discord shows the activity to your contacts.
+
+Enabling it always starts at the narrowest level: the section you are in, with no game name and no item title. **Settings → Customization** widens it from there, adding the game you are modding, or everything including the title of the item being edited. Turning it off clears the activity immediately.
 
 
 ## 💙 Support / Donations

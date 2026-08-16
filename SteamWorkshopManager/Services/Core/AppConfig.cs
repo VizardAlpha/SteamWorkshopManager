@@ -34,7 +34,7 @@ public static class AppConfig
     }
 
     /// <summary>
-    /// Initializes only the <see cref="AppId"/> — used inside the Steam worker
+    /// Initializes only the <see cref="AppId"/> - used inside the Steam worker
     /// process where no full <see cref="WorkshopSession"/> is available but
     /// Steamworks code still reads the AppId from here.
     /// </summary>

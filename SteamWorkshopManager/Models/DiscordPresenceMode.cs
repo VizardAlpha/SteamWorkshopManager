@@ -3,14 +3,15 @@ namespace SteamWorkshopManager.Models;
 /// <summary>
 /// How much of the current activity is published to Discord. Off by default:
 /// nothing reaches Discord until the user opts in, in the setup wizard or in
-/// Settings > Customization.
+/// Settings > Privacy. Customization only picks the level of detail.
 /// </summary>
 public enum DiscordPresenceMode
 {
     /// <summary>No connection to Discord at all.</summary>
     Off,
 
-    /// <summary>Generic activity only, no game and no item title.</summary>
+    /// <summary>Current section only, no game and no item title. Picked when
+    /// presence is first enabled, from any of the three opt-in screens.</summary>
     Minimal,
 
     /// <summary>Current section plus the game being modded.</summary>

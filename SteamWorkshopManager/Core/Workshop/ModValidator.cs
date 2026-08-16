@@ -30,7 +30,7 @@ public static class ModValidator
         return ModValidationResult.Ok;
     }
 
-    /// <summary>Validates the form state for an existing item update — only
+    /// <summary>Validates the form state for an existing item update - only
     /// title is mandatory; folder and preview are optional on update.</summary>
     public static ModValidationResult ValidateForUpdate(string? title)
     {

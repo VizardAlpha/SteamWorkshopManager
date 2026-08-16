@@ -5,7 +5,7 @@ namespace SteamWorkshopManager.Services.Steam.Worker.Contracts.Dtos;
 /// <summary>
 /// Wire format for a log entry crossing the worker → shell RPC channel. The
 /// worker forwards every <c>LogService</c> write through this DTO so the
-/// shell remains the only process that touches the on-disk log file —
+/// shell remains the only process that touches the on-disk log file -
 /// removing the cross-process write race that previously made worker logs
 /// silently disappear.
 /// </summary>

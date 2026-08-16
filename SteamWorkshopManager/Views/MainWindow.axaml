@@ -20,6 +20,11 @@
         <vm:MainViewModel/>
     </Design.DataContext>
 
+    <Window.KeyBindings>
+        <KeyBinding Gesture="Ctrl+S" Command="{Binding SaveCurrentCommand}"/>
+        <KeyBinding Gesture="Ctrl+N" Command="{Binding NavigateToCreateCommand}"/>
+    </Window.KeyBindings>
+
     <Panel>
         <Grid RowDefinitions="Auto,Auto,*,Auto">
 
@@ -64,13 +69,13 @@
 
             <!-- Main content (transparent so the window gradient shows through).
                  Two animation layers coexist:
-                   · PageTransition — plays when Content swaps (tab navigation).
-                   · Transitions on Opacity + RenderTransform — plays on session
+                   · PageTransition - plays when Content swaps (tab navigation).
+                   · Transitions on Opacity + RenderTransform - plays on session
                      switch (Content is unchanged but the underlying data is
                      reloading), driven by the Classes.switching binding below.
                  When IsSwitchingSession goes false → the class is removed,
                  RenderTransform animates from translateY(-24) back to 0 and
-                 Opacity from 0 back to 1 — the "ghost descending" effect. -->
+                 Opacity from 0 back to 1 - the "ghost descending" effect. -->
             <TransitioningContentControl Grid.Row="2"
                                          Name="ShellContent"
                                          Classes.switching="{Binding IsSwitchingSession}"

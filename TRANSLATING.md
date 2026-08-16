@@ -45,7 +45,7 @@ Every language file **must** include these three keys at the top. They are used 
 
 ### 3. Translate the strings
 
-Translate the value of each `<x:String>` entry. Do **not** change the `x:Key` attributes — only the text between the tags.
+Translate the value of each `<x:String>` entry. Do **not** change the `x:Key` attributes, only the text between the tags.
 
 ```xml
 <!-- English -->
@@ -80,7 +80,7 @@ The file must be a valid Avalonia `ResourceDictionary`:
 ## Guidelines
 
 - **Translate every key.** Missing keys will fall back to English, but a complete translation is preferred.
-- **Keep placeholders intact.** Some strings contain `{0}`, `{1}`, etc. — these are replaced at runtime with dynamic values. Keep them in your translation.
+- **Keep placeholders intact.** Some strings contain `{0}`, `{1}`, etc. These are replaced at runtime with dynamic values. Keep them in your translation.
 - **Don't translate key names.** Only translate the text content, never the `x:Key` value.
 - **Match the tone.** Keep translations concise and consistent with the existing UI style.
 

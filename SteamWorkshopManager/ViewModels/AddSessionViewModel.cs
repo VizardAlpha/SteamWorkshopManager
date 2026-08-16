@@ -60,7 +60,7 @@ public partial class AddSessionViewModel : ViewModelBase
     private Bitmap? _gameHeaderImage;
 
     /// <summary>
-    /// Dispose the previous preview bitmap — the validate+preview flow can
+    /// Dispose the previous preview bitmap - the validate+preview flow can
     /// refetch multiple times in the same session (user edits the AppId).
     /// </summary>
     partial void OnGameHeaderImageChanging(Bitmap? value) => _gameHeaderImage?.Dispose();
@@ -99,7 +99,7 @@ public partial class AddSessionViewModel : ViewModelBase
 
     partial void OnAppIdInputChanged(string value)
     {
-        // Any edit invalidates the last preview — resets the card + unlocks the
+        // Any edit invalidates the last preview - resets the card + unlocks the
         // Validate button so the user can't submit a mismatched pair.
         if (IsValid || HasError)
         {

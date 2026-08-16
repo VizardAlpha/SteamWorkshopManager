@@ -54,7 +54,7 @@ public sealed class DraftService
 
     /// <summary>
     /// Returns all drafts belonging to <paramref name="appId"/>, most recent
-    /// first. Bad/unreadable folders are skipped silently — a corrupted draft
+    /// first. Bad/unreadable folders are skipped silently - a corrupted draft
     /// shouldn't block the rest from loading.
     /// </summary>
     public List<CreateDraft> ListForApp(uint appId)

@@ -7,6 +7,7 @@
              xmlns:helpers="using:SteamWorkshopManager.Helpers"
              xmlns:converters="using:SteamWorkshopManager.Converters"
              xmlns:controls="using:SteamWorkshopManager.Views.Controls"
+             xmlns:behaviors="using:SteamWorkshopManager.Behaviors"
              xmlns:icons="using:Material.Icons.Avalonia"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="SteamWorkshopManager.Views.ItemEditorView"
@@ -14,13 +15,21 @@
 
     <UserControl.Resources>
         <DataTemplate x:Key="PreviewItemTemplate" DataType="models:WorkshopPreview">
-            <Border Background="{DynamicResource SurfaceElevatedBrush}"
+            <Border Classes="reorder-row"
+                    behaviors:ReorderZone.Command="{Binding $parent[UserControl].((vm:ItemEditorViewModel)DataContext).ReorderPreviewCommand}"
+                    Background="{DynamicResource SurfaceElevatedBrush}"
                     BorderBrush="{DynamicResource BorderSubtleBrush}"
                     BorderThickness="1"
                     CornerRadius="6"
                     Padding="10,8" Margin="0,0,0,4">
-                <Grid ColumnDefinitions="80,*,Auto" VerticalAlignment="Center">
-                    <Border Width="80" Height="45"
+                <Grid ColumnDefinitions="Auto,80,*,Auto" VerticalAlignment="Center">
+                    <icons:MaterialIcon Kind="DragVertical" Width="16" Height="16"
+                                        Margin="0,0,6,0"
+                                        VerticalAlignment="Center"
+                                        Foreground="{DynamicResource TextDisabledBrush}"
+                                        IsVisible="{Binding !IsSketchfab}"
+                                        ToolTip.Tip="{DynamicResource DragToReorder}"/>
+                    <Border Grid.Column="1" Width="80" Height="45"
                             Background="{DynamicResource SurfaceCardBrush}"
                             BorderBrush="{DynamicResource BorderSubtleBrush}"
                             BorderThickness="1"
@@ -43,7 +52,7 @@
                                                 IsVisible="{Binding ShouldShowImagePlaceholder}"/>
                         </Panel>
                     </Border>
-                    <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center" Spacing="2">
+                    <StackPanel Grid.Column="2" Margin="12,0,0,0" VerticalAlignment="Center" Spacing="2">
                         <TextBlock Text="{Binding DisplayLabel}"
                                    FontWeight="Medium"
                                    Foreground="{DynamicResource TextPrimaryBrush}"
@@ -54,7 +63,7 @@
                                    FontSize="11"
                                    IsVisible="{Binding IsNew}"/>
                     </StackPanel>
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+                    <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
                         <Button Command="{Binding $parent[UserControl].((vm:ItemEditorViewModel)DataContext).MovePreviewUpCommand}"
                                 CommandParameter="{Binding}"
                                 Background="Transparent" BorderThickness="0"
@@ -86,6 +95,12 @@
     </UserControl.Resources>
 
     <UserControl.Styles>
+        <!-- Drop target under the cursor while dragging a preview row -->
+        <Style Selector="Border.reorder-row:dragover">
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentPrimaryBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceOverlayBrush}"/>
+        </Style>
+
         <Style Selector="Button.nav-item">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -596,7 +611,7 @@
                                                         <ComboBox Grid.Column="0"
                                                                   ItemsSource="{Binding Tags}"
                                                                   SelectedItem="{Binding SelectedTag}"
-                                                                  PlaceholderText="—"
+                                                                  PlaceholderText="-"
                                                                   HorizontalAlignment="Stretch">
                                                             <ComboBox.ItemTemplate>
                                                                 <DataTemplate DataType="models:WorkshopTag">
@@ -1475,7 +1490,7 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- ── Card: 3D models (read-only — Steam SDK doesn't expose adding) ── -->
+                        <!-- ── Card: 3D models (read-only - Steam SDK doesn't expose adding) ── -->
                         <Border Classes="section-card" IsVisible="{Binding ModelPreviews.Count}">
                             <StackPanel>
                                 <Grid Margin="16,14,16,12" ColumnDefinitions="*,Auto">

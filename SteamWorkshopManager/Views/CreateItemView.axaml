@@ -14,13 +14,20 @@
 
     <UserControl.Resources>
         <DataTemplate x:Key="PreviewItemTemplate" DataType="models:WorkshopPreview">
-            <Border Background="{DynamicResource SurfaceElevatedBrush}"
+            <Border Classes="reorder-row"
+                    behaviors:ReorderZone.Command="{Binding $parent[UserControl].((vm:CreateItemViewModel)DataContext).ReorderPreviewCommand}"
+                    Background="{DynamicResource SurfaceElevatedBrush}"
                     BorderBrush="{DynamicResource BorderSubtleBrush}"
                     BorderThickness="1"
                     CornerRadius="6"
                     Padding="10,8" Margin="0,0,0,4">
-                <Grid ColumnDefinitions="80,*,Auto" VerticalAlignment="Center">
-                    <Border Width="80" Height="45"
+                <Grid ColumnDefinitions="Auto,80,*,Auto" VerticalAlignment="Center">
+                    <icons:MaterialIcon Kind="DragVertical" Width="16" Height="16"
+                                        Margin="0,0,6,0"
+                                        VerticalAlignment="Center"
+                                        Foreground="{DynamicResource TextDisabledBrush}"
+                                        ToolTip.Tip="{DynamicResource DragToReorder}"/>
+                    <Border Grid.Column="1" Width="80" Height="45"
                             Background="{DynamicResource SurfaceCardBrush}"
                             BorderBrush="{DynamicResource BorderSubtleBrush}"
                             BorderThickness="1"
@@ -39,14 +46,14 @@
                                                 IsVisible="{Binding ShouldShowImagePlaceholder}"/>
                         </Panel>
                     </Border>
-                    <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center" Spacing="2">
+                    <StackPanel Grid.Column="2" Margin="12,0,0,0" VerticalAlignment="Center" Spacing="2">
                         <TextBlock Text="{Binding DisplayLabel}"
                                    FontWeight="Medium"
                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                    FontSize="13"
                                    TextTrimming="CharacterEllipsis"/>
                     </StackPanel>
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+                    <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
                         <Button Command="{Binding $parent[UserControl].((vm:CreateItemViewModel)DataContext).MovePreviewUpCommand}"
                                 CommandParameter="{Binding}"
                                 Background="Transparent" BorderThickness="0"
@@ -76,6 +83,12 @@
     </UserControl.Resources>
 
     <UserControl.Styles>
+        <!-- Drop target under the cursor while dragging a preview row -->
+        <Style Selector="Border.reorder-row:dragover">
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentPrimaryBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceOverlayBrush}"/>
+        </Style>
+
         <Style Selector="Button.nav-item">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -546,7 +559,7 @@
                                              PlaceholderText="{DynamicResource TitlePlaceholder}"/>
                                 </StackPanel>
 
-                                <!-- Description (BBCode editor — kept as-is) -->
+                                <!-- Description (BBCode editor - kept as-is) -->
                                 <StackPanel>
                                     <TextBlock Classes="field-label" Text="{DynamicResource Description}"/>
                                     <controls:BbCodeEditorControl Text="{Binding Description}"
@@ -622,7 +635,7 @@
                                                     <ComboBox Grid.Column="0"
                                                               ItemsSource="{Binding Tags}"
                                                               SelectedItem="{Binding SelectedTag}"
-                                                              PlaceholderText="—"
+                                                              PlaceholderText="-"
                                                               HorizontalAlignment="Stretch">
                                                         <ComboBox.ItemTemplate>
                                                             <DataTemplate DataType="models:WorkshopTag">

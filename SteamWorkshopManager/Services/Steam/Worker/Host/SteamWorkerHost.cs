@@ -23,7 +23,7 @@ public static class SteamWorkerHost
     /// pipe: when the shell process exits (clean shutdown, crash, force-kill,
     /// even BSOD), the OS releases its end of the pipe, which makes
     /// <see cref="JsonRpc.Completion"/> resolve and unwinds back here. No
-    /// extra parent-watch is needed — the pipe is the same mechanism that
+    /// extra parent-watch is needed - the pipe is the same mechanism that
     /// signals every other RPC end-of-life.
     ///
     /// Failures are swallowed because surfacing them to stdout would spawn a
@@ -34,7 +34,7 @@ public static class SteamWorkerHost
     {
         // The worker has its own process-local AppConfig (static classes live
         // per process). Steamworks wrappers inside SteamService read
-        // AppConfig.AppId when building UGC queries — if it's zero, every
+        // AppConfig.AppId when building UGC queries - if it's zero, every
         // query comes back empty. Seed it from the CLI args.
         SteamWorkshopManager.Services.Core.AppConfig.InitializeAppIdOnly(args.AppId);
 
@@ -54,7 +54,7 @@ public static class SteamWorkerHost
         }
         catch
         {
-            // Intentionally silent — see RunAsync XML doc.
+            // Intentionally silent - see RunAsync XML doc.
         }
     }
 }

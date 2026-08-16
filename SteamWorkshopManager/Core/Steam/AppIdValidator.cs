@@ -41,7 +41,7 @@ public partial class AppIdValidator
 
     /// <summary>
     /// Parses a user-supplied AppId from either a raw number or a Steam URL.
-    /// Accepts all common variants — store, community workshop, and steam://
+    /// Accepts all common variants - store, community workshop, and steam://
     /// protocol links:
     ///   294100
     ///   https://store.steampowered.com/app/294100/

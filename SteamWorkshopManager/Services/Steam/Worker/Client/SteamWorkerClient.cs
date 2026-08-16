@@ -14,7 +14,7 @@ namespace SteamWorkshopManager.Services.Steam.Worker.Client;
 /// Shell-side handle to a <see cref="SteamWorkerHost"/> child process.
 ///
 /// Responsibilities:
-///   1. Create a duplex named pipe — the shell is the pipe server, so the
+///   1. Create a duplex named pipe - the shell is the pipe server, so the
 ///      pipe exists before the worker tries to connect, avoiding races.
 ///   2. Spawn the current executable with <c>--steam-worker</c> + args.
 ///   3. Accept the worker's RPC connection and expose a typed proxy through
@@ -43,7 +43,7 @@ public sealed class SteamWorkerClient : IAsyncDisposable
 
     /// <summary>
     /// Fired when the worker process exits without a preceding
-    /// <see cref="MarkIntentionalShutdown"/> call — i.e. a crash. Handlers run
+    /// <see cref="MarkIntentionalShutdown"/> call - i.e. a crash. Handlers run
     /// on the <see cref="Process.Exited"/> threadpool callback, so they must
     /// not block and should dispatch async work on their own.
     /// </summary>
@@ -90,7 +90,7 @@ public sealed class SteamWorkerClient : IAsyncDisposable
         _process = Process.Start(psi)
                    ?? throw new InvalidOperationException("Failed to spawn Steam worker process.");
 
-        // Wire the exit-watcher before we block on the pipe handshake — if the
+        // Wire the exit-watcher before we block on the pipe handshake - if the
         // child dies during startup the event fires and we surface a crash
         // instead of hanging on a never-completing connect.
         _process.EnableRaisingEvents = true;
@@ -124,7 +124,7 @@ public sealed class SteamWorkerClient : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        // Any exit from here on is by definition intentional — make sure the
+        // Any exit from here on is by definition intentional - make sure the
         // Exited handler stays silent even if the caller forgot to mark.
         _intentionalShutdown = true;
         if (_process is not null) _process.Exited -= OnProcessExited;

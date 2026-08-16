@@ -37,13 +37,13 @@ public class ChangelogScraperService(SessionHost host)
                 return entries.OrderByDescending(e => e.Timestamp).ToList();
             }
 
-            // No manifest entries, but we *were* authenticated when we tried —
+            // No manifest entries, but we *were* authenticated when we tried -
             // means Steam silently invalidated the cookie (post-download session
             // consumption, server-side TTL shorter than the JWT exp, etc.).
             // Force-mint a new access token from the refresh token and retry once.
             if (SteamAuthService.IsAuthenticated && SteamAuthService.HasRefreshToken)
             {
-                Log.Warning("Authenticated scrape returned no manifest entries — refreshing access token and retrying");
+                Log.Warning("Authenticated scrape returned no manifest entries - refreshing access token and retrying");
                 if (await SteamAuthService.TryRefreshAccessTokenAsync(forceRefresh: true))
                 {
                     var retry = await FetchAndParseAsync(url);
@@ -76,7 +76,7 @@ public class ChangelogScraperService(SessionHost host)
         else
         {
             // Anonymous path goes through the worker so SteamHTTP (with the
-            // session's cookie jar) can issue the request — Steamworks is only
+            // session's cookie jar) can issue the request - Steamworks is only
             // initialised in the worker process.
             Log.Debug("Routing unauthenticated changelog fetch through worker");
             html = host.Worker is null ? null : await host.Worker.FetchSteamWebAsync(url);

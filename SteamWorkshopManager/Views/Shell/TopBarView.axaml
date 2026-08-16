@@ -82,7 +82,7 @@
         </Style>
 
         <!-- Inline trash button on each session row. Sits inside the
-             switch-session button — Avalonia routes the click to the inner
+             switch-session button - Avalonia routes the click to the inner
              button so the outer switch never fires. -->
         <Style Selector="Button.session-trash">
             <Setter Property="Background" Value="Transparent"/>

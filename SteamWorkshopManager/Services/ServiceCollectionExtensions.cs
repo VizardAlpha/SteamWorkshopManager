@@ -21,7 +21,7 @@ namespace SteamWorkshopManager.Services;
 /// Static classes (<see cref="BundleService"/>, <see cref="SteamAuthService"/>,
 /// <see cref="SteamWebClient"/>, <see cref="SteamErrorMapper"/>,
 /// <see cref="SteamHttpClientFactory"/>, <see cref="UpdateCheckerService"/>)
-/// are not registered here — they are consumed directly by callers.
+/// are not registered here - they are consumed directly by callers.
 /// </summary>
 public static class ServiceCollectionExtensions
 {

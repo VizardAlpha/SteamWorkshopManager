@@ -55,7 +55,7 @@ public static class UpdateCheckerService
         }
         catch
         {
-            // Non-critical — silently fail
+            // Non-critical - silently fail
             return null;
         }
     }

@@ -36,9 +36,9 @@ public partial class SetupWizardViewModel : ViewModelBase
     private bool _isValidating;
 
     /// <summary>
-    /// Gate inside the Telemetry consent box. Only required when telemetry
-    /// is enabled — if the user opts out, no data leaves the machine, so
-    /// the Terms/Privacy acknowledgement does not apply to validation.
+    /// Shared gate for both opt-ins. Only required when statistics or Discord
+    /// are enabled: if the user opts out of both, nothing leaves the machine
+    /// and the Terms/Privacy acknowledgement does not apply to validation.
     /// </summary>
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ValidateAppIdCommand))]
@@ -61,19 +61,41 @@ public partial class SetupWizardViewModel : ViewModelBase
 
     /// <summary>
     /// First-run telemetry consent. Committed to settings only when the user
-    /// clicks "Create session" — until then, no state leaks out of the wizard
+    /// clicks "Create session" - until then, no state leaks out of the wizard
     /// and no Track/Flush call can fire (App.axaml.cs defers AppStart).
     /// </summary>
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ValidateAppIdCommand))]
+    [NotifyPropertyChangedFor(nameof(RequiresLegalAcceptance))]
     private bool _isTelemetryEnabled;
 
     /// <summary>
+    /// The Terms and the privacy policy cover both channels, so the
+    /// acknowledgement is asked once, as soon as either one is enabled.
+    /// </summary>
+    public bool RequiresLegalAcceptance => IsTelemetryEnabled || IsDiscordPresenceEnabled;
+
+    partial void OnIsTelemetryEnabledChanged(bool value) => DropAcceptanceWhenNothingEnabled();
+
+    partial void OnIsDiscordPresenceEnabledChanged(bool value) => DropAcceptanceWhenNothingEnabled();
+
+    /// <summary>
+    /// Turning both opt-ins off clears the acknowledgement, so re-enabling one
+    /// asks for it again instead of silently reusing the earlier tick.
+    /// </summary>
+    private void DropAcceptanceWhenNothingEnabled()
+    {
+        if (!RequiresLegalAcceptance) IsPrivacyAccepted = false;
+    }
+
+    /// <summary>
     /// First-run Discord Rich Presence opt-in. Enabling it here selects
-    /// <see cref="DiscordPresenceMode.Game"/>; the detail level can be changed
-    /// later in Settings > Customization.
+    /// <see cref="DiscordPresenceMode.Minimal"/>, the least revealing level;
+    /// it can be widened later in Settings > Customization.
     /// </summary>
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ValidateAppIdCommand))]
+    [NotifyPropertyChangedFor(nameof(RequiresLegalAcceptance))]
     private bool _isDiscordPresenceEnabled;
 
     private uint _validatedAppId;
@@ -112,7 +134,7 @@ public partial class SetupWizardViewModel : ViewModelBase
         catch (Exception ex) { Log.Debug($"Failed to open URL {url}: {ex.Message}"); }
     }
 
-    private bool CanValidate => !IsValidating && (!IsTelemetryEnabled || IsPrivacyAccepted);
+    private bool CanValidate => !IsValidating && (!RequiresLegalAcceptance || IsPrivacyAccepted);
 
     [RelayCommand(CanExecute = nameof(CanValidate))]
     private async Task ValidateAppIdAsync()
@@ -196,7 +218,7 @@ public partial class SetupWizardViewModel : ViewModelBase
             if (IsDiscordPresenceEnabled)
             {
                 if (_settingsService.Settings.DiscordPresenceMode == DiscordPresenceMode.Off)
-                    _settingsService.Settings.DiscordPresenceMode = DiscordPresenceMode.Game;
+                    _settingsService.Settings.DiscordPresenceMode = DiscordPresenceMode.Minimal;
             }
             else
             {

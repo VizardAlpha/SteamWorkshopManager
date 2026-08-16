@@ -50,7 +50,7 @@ public partial interface ISteamWorker
     Task<List<WorkshopItemDto>> GetPublishedItemsAsync();
 
     /// <summary>
-    /// Single Workshop item by id — used to refresh one row after Create/Update
+    /// Single Workshop item by id - used to refresh one row after Create/Update
     /// without re-querying the full catalog. Null when Steam can't resolve the id.
     /// </summary>
     Task<WorkshopItemDto?> GetPublishedItemAsync(ulong publishedFileId);
@@ -111,7 +111,7 @@ public partial interface ISteamWorker
     /// <summary>
     /// Issues a GET via the Steamworks HTTP API (anonymous, age-gate cookies
     /// applied). Lets the shell scrape Workshop pages without spinning up its
-    /// own Steamworks instance — only the worker process has SteamAPI loaded.
+    /// own Steamworks instance - only the worker process has SteamAPI loaded.
     /// Returns the response body as UTF-8 string, or null on failure/timeout.
     /// </summary>
     Task<string?> FetchSteamWebAsync(string url);

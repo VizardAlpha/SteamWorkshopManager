@@ -311,6 +311,18 @@ public partial class CreateItemViewModel : ViewModelBase
         if (index >= 0 && index < list.Count - 1) list.Move(index, index + 1);
     }
 
+    /// <summary>Drag reorder, restricted to a single carousel list.</summary>
+    [RelayCommand]
+    private void ReorderPreview(ReorderRequest request)
+    {
+        if (request.Source is not WorkshopPreview source || request.Target is not WorkshopPreview target) return;
+
+        var list = FindContainingList(source);
+        if (list is null || !ReferenceEquals(list, FindContainingList(target))) return;
+
+        ListReorder.Move(list, source, target);
+    }
+
     private ObservableCollection<WorkshopPreview>? FindContainingList(WorkshopPreview p)
     {
         if (ImagePreviews.Contains(p)) return ImagePreviews;
@@ -396,7 +408,7 @@ public partial class CreateItemViewModel : ViewModelBase
         if (!string.IsNullOrEmpty(PreviewImagePath) && File.Exists(PreviewImagePath))
         {
             try { PreviewImage = new Bitmap(PreviewImagePath); }
-            catch { /* path may be on another machine — ignore */ }
+            catch { /* path may be on another machine - ignore */ }
         }
     }
 

@@ -50,7 +50,7 @@ public static class AppPaths
     public static string WorkshopForApp(uint appId) => Path.Combine(Workshop, appId.ToString());
 
     /// <summary>Scratch directory under the OS temp folder for the rebuild
-    /// path of preview ops — files here exist only for the duration of one
+    /// path of preview ops - files here exist only for the duration of one
     /// Steam UGC update.</summary>
     public static string TempPreviewDir() => Path.Combine(Path.GetTempPath(), AppName, "previews", Guid.NewGuid().ToString("N"));
 }

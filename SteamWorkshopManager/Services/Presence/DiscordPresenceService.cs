@@ -183,11 +183,12 @@ public sealed class DiscordPresenceService : IDiscordPresenceService, IDisposabl
         return presence;
     }
 
+    /// <summary>
+    /// The section is always published: Minimal shows it alone, Game adds the
+    /// game as the state line, Detailed adds the item title on top.
+    /// </summary>
     private static string BuildDetails(PresenceState state, DiscordPresenceMode mode)
     {
-        if (mode == DiscordPresenceMode.Minimal)
-            return "Managing Steam Workshop items";
-
         var title = mode == DiscordPresenceMode.Detailed ? state.ItemTitle?.Trim() : null;
         var hasTitle = !string.IsNullOrEmpty(title);
 

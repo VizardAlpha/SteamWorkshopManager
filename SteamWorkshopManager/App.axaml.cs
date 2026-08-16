@@ -140,7 +140,7 @@ public partial class App : Application
             }
             else
             {
-                // Existing session — but the user may be upgrading from a build
+                // Existing session - but the user may be upgrading from a build
                 // that predates the public stats dashboard. If their stored
                 // consent version is below the current requirement, show the
                 // consent modal first and only continue once they have
@@ -174,7 +174,7 @@ public partial class App : Application
         await Services.GetRequiredService<SessionHost>().StartSessionAsync(session.AppId);
 
         // Consent has already been committed (this run or a prior one).
-        // Track now — the toggle is honored inside Track().
+        // Track now - the toggle is honored inside Track().
         telemetry.Track(TelemetryEventTypes.AppStart, session.AppId);
 
         var mainWindow = new MainWindow();
@@ -199,7 +199,7 @@ public partial class App : Application
             {
                 // Show the new MainWindow first (and reassign desktop.MainWindow
                 // before closing the modal) so Avalonia never sees a moment
-                // with zero windows — that would auto-shutdown the app.
+                // with zero windows - that would auto-shutdown the app.
                 await StartWithSessionAsync(desktop, telemetry, session);
                 consentWindow.Close();
             }
@@ -278,7 +278,7 @@ public partial class App : Application
     /// <see cref="Environment.Exit"/> directly.
     ///
     /// We use Environment.Exit instead of <c>desktop.Shutdown()</c> because
-    /// the latter only signals Avalonia to wind down — any non-daemon
+    /// the latter only signals Avalonia to wind down - any non-daemon
     /// foreground thread (HttpClient internals, COM thread, etc.) can keep
     /// the process alive afterwards, and as long as the shell process lives
     /// the Steam worker keeps its pipe open and stays in Task Manager.

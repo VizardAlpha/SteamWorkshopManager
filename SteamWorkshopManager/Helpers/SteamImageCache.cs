@@ -15,9 +15,9 @@ namespace SteamWorkshopManager.Helpers;
 /// (used by the session pill and picker flyout).
 ///
 /// Cache layout under <c>%AppData%/SteamWorkshopManager/cache/</c>:
-///   <c>headers/{appId}.jpg</c> — Steam Store header (460×215), URL is
+///   <c>headers/{appId}.jpg</c> - Steam Store header (460×215), URL is
 ///     derived from the AppId.
-///   <c>icons/{appId}.jpg</c> — Steam Library icon (square), URL must be
+///   <c>icons/{appId}.jpg</c> - Steam Library icon (square), URL must be
 ///     resolved through SteamKit2 PICS and passed in at the first call.
 ///
 /// Callers check <see cref="IconCacheFilePath(uint)"/>'s existence before
@@ -53,7 +53,7 @@ public static class SteamImageCache
     /// <summary>
     /// Returns the Steam Library square icon. When the icon is already on
     /// disk, <paramref name="iconUrl"/> can be <c>null</c>. When the cache
-    /// misses, a non-null URL is required — obtain it via
+    /// misses, a non-null URL is required - obtain it via
     /// <c>SteamAppMetadataService.GetIconUrlsAsync</c>.
     /// </summary>
     public static async Task<Bitmap?> GetIconAsync(uint appId, string? iconUrl, bool forceDownload = false)

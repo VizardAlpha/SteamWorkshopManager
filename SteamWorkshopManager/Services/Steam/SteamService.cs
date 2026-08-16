@@ -581,7 +581,7 @@ public class SteamService : ISteamService
                 foreach (var f in new DirectoryInfo(contentFolderPath).GetFiles("*", SearchOption.AllDirectories))
                     total += (ulong)f.Length;
             }
-            catch { /* ignore filesystem errors — surface 0 */ }
+            catch { /* ignore filesystem errors - surface 0 */ }
         }
         if (!string.IsNullOrEmpty(previewImagePath) && File.Exists(previewImagePath))
         {
@@ -602,7 +602,7 @@ public class SteamService : ISteamService
 
     /// <summary>
     /// Single emit point for upload progress. Steam streams real byte counts
-    /// only during <c>k_EItemUpdateStatusUploadingContent</c> — every other
+    /// only during <c>k_EItemUpdateStatusUploadingContent</c> - every other
     /// phase (preparing, configuring, committing) is reported with
     /// <paramref name="bytesProcessed"/> = 0. In those phases we hide the byte
     /// counter and let <paramref name="percentHint"/> drive the bar; otherwise
@@ -650,7 +650,7 @@ public class SteamService : ISteamService
         };
 
         // During the actual content upload, Steam reports bytes against the
-        // content size — close enough to expectedTotal that we can use the
+        // content size - close enough to expectedTotal that we can use the
         // raw values directly and watch them flow.
         if (status == EItemUpdateStatus.k_EItemUpdateStatusUploadingContent && bytesTotal > 0)
         {

@@ -5,7 +5,7 @@ namespace SteamWorkshopManager.Services.Steam.Worker.Contracts.Dtos;
 
 /// <summary>
 /// Payload for <c>ISteamWorker.UpdateItemAsync</c>. Every nullable field is
-/// "unchanged when null" — matches the semantics of the underlying
+/// "unchanged when null" - matches the semantics of the underlying
 /// <see cref="Steamworks.SteamUGC"/> update handle.
 /// </summary>
 public sealed record UpdateItemRequestDto(

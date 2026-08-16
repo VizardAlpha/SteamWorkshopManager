@@ -12,7 +12,7 @@ namespace SteamWorkshopManager.Core.Steam;
 /// Fetches public Steam app metadata (icon hashes and similar) via SteamKit2's
 /// anonymous PICS (Product Information and Changes Service) access.
 ///
-/// PICS exposes the same data Steam uses in its library UI — importantly, the
+/// PICS exposes the same data Steam uses in its library UI - importantly, the
 /// opaque icon hash needed to build the real library-icon CDN URL:
 /// <c>https://cdn.cloudflare.steamstatic.com/steamcommunity/public/images/apps/{appId}/{hash}.jpg</c>.
 /// The hash is not derivable from the AppId, hence the round-trip through

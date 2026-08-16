@@ -16,7 +16,7 @@ namespace SteamWorkshopManager.Core.Workshop;
 /// per-item supported-game-version lookups require a SteamUGC query and
 /// route through the worker's <c>GetSupportedGameVersionsAsync</c> RPC.
 ///
-/// Branches are cached per AppId — Steam's beta list doesn't change during a
+/// Branches are cached per AppId - Steam's beta list doesn't change during a
 /// session, and every editor open used to trigger 2 redundant RPCs (and
 /// matching log lines). Cache invalidates automatically when the active
 /// session swaps to a different AppId.

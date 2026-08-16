@@ -311,9 +311,11 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- Discord Rich Presence detail level -->
+                    <!-- Discord Rich Presence detail level. The on/off switch is in
+                         Privacy, so this section is veiled while presence is off. -->
                     <Border Classes="section">
-                        <StackPanel Spacing="0">
+                        <Panel>
+                            <StackPanel Spacing="0">
                             <TextBlock Classes="section-caps"
                                        Text="{DynamicResource DiscordPresenceTitle}"
                                        Margin="16,12,16,0"/>
@@ -321,17 +323,8 @@
                                        Text="{DynamicResource DiscordPresenceDescription}"
                                        Margin="16,4,16,0"/>
 
-                            <StackPanel Margin="16,14,16,16" Spacing="12">
-                                <RadioButton GroupName="DiscordPresence"
-                                             IsChecked="{Binding IsPresenceOff, Mode=OneWay}"
-                                             Command="{Binding SelectDiscordPresenceModeCommand}"
-                                             CommandParameter="Off">
-                                    <StackPanel Spacing="2">
-                                        <TextBlock Classes="row-label" Text="{DynamicResource DiscordPresenceOff}"/>
-                                        <TextBlock Classes="row-desc" Text="{DynamicResource DiscordPresenceOffDesc}"/>
-                                    </StackPanel>
-                                </RadioButton>
-
+                            <StackPanel Margin="16,14,16,16" Spacing="12"
+                                        IsEnabled="{Binding !IsPresenceOff}">
                                 <RadioButton GroupName="DiscordPresence"
                                              IsChecked="{Binding IsPresenceMinimal, Mode=OneWay}"
                                              Command="{Binding SelectDiscordPresenceModeCommand}"
@@ -362,7 +355,31 @@
                                     </StackPanel>
                                 </RadioButton>
                             </StackPanel>
-                        </StackPanel>
+                            </StackPanel>
+
+                            <!-- Veil shown while presence is off, so the levels
+                                 read as unavailable rather than merely greyed. -->
+                            <Border IsVisible="{Binding IsPresenceOff}"
+                                    Background="{DynamicResource SurfaceCardBrush}"
+                                    Opacity="0.88"
+                                    CornerRadius="10">
+                                <StackPanel HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Spacing="8"
+                                            Margin="24">
+                                    <icons:MaterialIcon Kind="EyeOffOutline" Width="22" Height="22"
+                                                        HorizontalAlignment="Center"
+                                                        Foreground="{DynamicResource TextMutedBrush}"/>
+                                    <TextBlock Text="{DynamicResource DiscordPresenceDisabledOverlay}"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               TextAlignment="Center"
+                                               TextWrapping="Wrap"
+                                               MaxWidth="320"/>
+                                </StackPanel>
+                            </Border>
+                        </Panel>
                     </Border>
                 </StackPanel>
 
@@ -409,6 +426,25 @@
                                 </StackPanel>
                                 <ToggleSwitch Grid.Column="1"
                                               IsChecked="{Binding IsTelemetryEnabled}"
+                                              OnContent="" OffContent=""
+                                              VerticalAlignment="Center"/>
+                            </Grid>
+
+                            <!-- Separator -->
+                            <Border Height="1"
+                                    Background="{DynamicResource BorderSubtleBrush}"
+                                    Margin="16,0"/>
+
+                            <!-- Discord: second outbound channel. The switch lives
+                                 here because it decides whether anything is sent
+                                 at all; Customization only picks the detail level. -->
+                            <Grid Classes="row" ColumnDefinitions="*,Auto">
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock Classes="row-label" Text="{DynamicResource DiscordPresenceTitle}"/>
+                                    <TextBlock Classes="row-desc" Text="{DynamicResource DiscordPrivacyDescription}"/>
+                                </StackPanel>
+                                <ToggleSwitch Grid.Column="1"
+                                              IsChecked="{Binding IsDiscordPresenceEnabled}"
                                               OnContent="" OffContent=""
                                               VerticalAlignment="Center"/>
                             </Grid>
@@ -759,6 +795,19 @@
                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                         <icons:MaterialIcon Kind="FileDocumentOutline" Width="14" Height="14"/>
                                         <TextBlock Text="{DynamicResource OpenChangelog}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button Command="{Binding OpenThirdPartyNoticesCommand}"
+                                        Background="{DynamicResource SurfaceElevatedBrush}"
+                                        BorderBrush="{DynamicResource BorderSubtleBrush}"
+                                        BorderThickness="1"
+                                        Foreground="{DynamicResource TextPrimaryBrush}"
+                                        CornerRadius="6"
+                                        Padding="12,8"
+                                        FontSize="13">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <icons:MaterialIcon Kind="ScaleBalance" Width="14" Height="14"/>
+                                        <TextBlock Text="{DynamicResource OpenThirdPartyNotices}" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Button>
                             </StackPanel>

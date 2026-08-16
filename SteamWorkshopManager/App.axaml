@@ -57,7 +57,7 @@
         <FluentTheme />
         <materialIcons:MaterialIconStyles />
 
-        <!-- Global cursor for interactive controls — skip disabled state -->
+        <!-- Global cursor for interactive controls - skip disabled state -->
         <Style Selector="Button:not(:disabled)">
             <Setter Property="Cursor" Value="Hand"/>
         </Style>

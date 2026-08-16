@@ -13,7 +13,7 @@ namespace SteamWorkshopManager.Services.Session;
 /// Exactly one worker runs at a time. <see cref="StartSessionAsync"/> spawns a
 /// worker bound to the given AppId and calls <c>InitializeAsync</c> on it so
 /// Steamworks is live in that child process. Switching sessions disposes the
-/// current worker and starts a new one — the shell UI never restarts.
+/// current worker and starts a new one - the shell UI never restarts.
 ///
 /// <see cref="Worker"/> is the typed RPC proxy consumed by
 /// <c>WorkerSteamService</c>. <see cref="LastInitResult"/> and
@@ -24,7 +24,7 @@ namespace SteamWorkshopManager.Services.Session;
 /// Unexpected worker exits (crashes) are caught via
 /// <see cref="SteamWorkerClient.UnexpectedExit"/>. The host then respawns with
 /// a backoff (1s → 2s → 5s) capped at <see cref="MaxRestartsPerWindow"/>
-/// attempts over <see cref="RestartWindow"/> — beyond that we stop trying so a
+/// attempts over <see cref="RestartWindow"/> - beyond that we stop trying so a
 /// broken Steam install doesn't burn CPU in a restart loop.
 /// </summary>
 public sealed class SessionHost : IAsyncDisposable
@@ -109,7 +109,7 @@ public sealed class SessionHost : IAsyncDisposable
         if (_client is null) return;
 
         // Flag the shutdown before tearing down so the Exited watcher stays
-        // silent — otherwise each session switch would look like a crash.
+        // silent - otherwise each session switch would look like a crash.
         _client.MarkIntentionalShutdown();
 
         try { await _client.Proxy.ShutdownAsync(); } catch { }
@@ -145,7 +145,7 @@ public sealed class SessionHost : IAsyncDisposable
             _restartCount++;
             if (_restartCount > MaxRestartsPerWindow)
             {
-                Log.Error($"Worker crashed {_restartCount} times in the last {RestartWindow.TotalSeconds}s — giving up recovery for AppId {crashedAppId}.");
+                Log.Error($"Worker crashed {_restartCount} times in the last {RestartWindow.TotalSeconds}s - giving up recovery for AppId {crashedAppId}.");
                 attempt = -1;
                 delaySeconds = 0;
             }
@@ -166,7 +166,7 @@ public sealed class SessionHost : IAsyncDisposable
             return;
         }
 
-        Log.Warning($"Steam worker crashed for AppId {crashedAppId} — respawn attempt {attempt}/{MaxRestartsPerWindow} in {delaySeconds}s.");
+        Log.Warning($"Steam worker crashed for AppId {crashedAppId} - respawn attempt {attempt}/{MaxRestartsPerWindow} in {delaySeconds}s.");
 
         // Tear down the broken client so StartSessionAsync's early-return
         // guard (`_client != null && ActiveAppId == appId`) doesn't kick in.
@@ -184,7 +184,7 @@ public sealed class SessionHost : IAsyncDisposable
         // Session may have been switched or stopped during the backoff.
         if (ActiveAppId != crashedAppId || ActiveAppId == 0)
         {
-            Log.Debug($"Session no longer on AppId {crashedAppId} — aborting respawn.");
+            Log.Debug($"Session no longer on AppId {crashedAppId} - aborting respawn.");
             return;
         }
 

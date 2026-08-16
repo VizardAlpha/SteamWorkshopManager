@@ -85,7 +85,7 @@ public record UploadProgress(string Status, ulong BytesProcessed, ulong BytesTot
     /// <summary>
     /// Percentage to drive the progress bar. When Steam is reporting real
     /// bytes (e.g. content upload phase), use the bytes ratio. Otherwise
-    /// fall back to the explicit hint set by the call site — keeps phases
+    /// fall back to the explicit hint set by the call site - keeps phases
     /// like "Preparing" / "Committing" advancing the bar without forcing
     /// the UI to invent fake byte counts.
     /// </summary>

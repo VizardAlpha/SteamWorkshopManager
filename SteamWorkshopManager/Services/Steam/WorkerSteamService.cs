@@ -15,7 +15,7 @@ namespace SteamWorkshopManager.Services.Steam;
 /// Shell-side <see cref="ISteamService"/> that delegates every Steam call to
 /// the out-of-process worker via <see cref="SessionHost"/>. The shell process
 /// never touches <c>SteamAPI</c> directly once this implementation is wired
-/// through DI — everything round-trips through JSON-RPC.
+/// through DI - everything round-trips through JSON-RPC.
 ///
 /// The sync <c>Initialize</c> / <c>Shutdown</c> surface on
 /// <see cref="ISteamService"/> is preserved for compatibility with existing
@@ -134,7 +134,7 @@ public sealed class WorkerSteamService(SessionHost host) : ISteamService
 
     /// <summary>
     /// A lost connection or a cancelled task almost always means a session
-    /// switch killed the worker mid-call — the caller retries against the
+    /// switch killed the worker mid-call - the caller retries against the
     /// new worker anyway, so demote those to Debug to avoid noise. Everything
     /// else is a real failure worth the Error level.
     /// </summary>
