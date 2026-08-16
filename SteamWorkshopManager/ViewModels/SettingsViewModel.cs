@@ -16,6 +16,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SteamWorkshopManager.Services.Core;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Notifications;
+using SteamWorkshopManager.Services.Presence;
 using SteamWorkshopManager.Services.Session;
 using SteamWorkshopManager.Services.Telemetry;
 
@@ -33,6 +34,7 @@ public partial class SettingsViewModel : ViewModelBase
     private readonly ILogService _logService;
     private readonly ITelemetryService _telemetry;
     private readonly INotificationService _notificationService;
+    private readonly IDiscordPresenceService _presence;
 
     /// <summary>
     /// Which category is currently shown in the right-hand content pane.
@@ -82,6 +84,18 @@ public partial class SettingsViewModel : ViewModelBase
     public bool IsToastBottomLeft => ToastPosition == ToastPosition.BottomLeft;
     public bool IsToastBottomRight => ToastPosition == ToastPosition.BottomRight;
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsPresenceOff))]
+    [NotifyPropertyChangedFor(nameof(IsPresenceMinimal))]
+    [NotifyPropertyChangedFor(nameof(IsPresenceGame))]
+    [NotifyPropertyChangedFor(nameof(IsPresenceDetailed))]
+    private DiscordPresenceMode _discordPresenceMode;
+
+    public bool IsPresenceOff => DiscordPresenceMode == DiscordPresenceMode.Off;
+    public bool IsPresenceMinimal => DiscordPresenceMode == DiscordPresenceMode.Minimal;
+    public bool IsPresenceGame => DiscordPresenceMode == DiscordPresenceMode.Game;
+    public bool IsPresenceDetailed => DiscordPresenceMode == DiscordPresenceMode.Detailed;
+
     /// <summary>
     /// Pseudonymous instance ID surfaced to the user in the Privacy section
     /// so they can quote it in a GDPR access or deletion request. Comes from
@@ -121,12 +135,14 @@ public partial class SettingsViewModel : ViewModelBase
         ISettingsService settingsService,
         ILogService logService,
         ITelemetryService telemetry,
-        INotificationService notificationService)
+        INotificationService notificationService,
+        IDiscordPresenceService presence)
     {
         _settingsService = settingsService;
         _logService = logService;
         _telemetry = telemetry;
         _notificationService = notificationService;
+        _presence = presence;
 
         var languages = LocalizationService.Instance.AvailableLanguages;
         _availableLanguages = new ObservableCollection<LanguageInfo>(languages);
@@ -136,6 +152,7 @@ public partial class SettingsViewModel : ViewModelBase
         _isTelemetryEnabled = _settingsService.Settings.TelemetryEnabled;
         _includePrereleases = _settingsService.Settings.IncludePrereleases;
         _toastPosition = _settingsService.Settings.ToastPosition;
+        _discordPresenceMode = _settingsService.Settings.DiscordPresenceMode;
         _logFilePath = _logService.GetLogFilePath();
         _logFolderSizeDisplay = Formatters.Bytes(_logService.GetLogFolderSize());
 
@@ -178,6 +195,19 @@ public partial class SettingsViewModel : ViewModelBase
 
         // Sample toast so the user sees it jump to the chosen corner.
         _notificationService.ShowSuccess(Loc["ToastPositionPreview"]);
+    }
+
+    [RelayCommand]
+    private void SelectDiscordPresenceMode(string mode)
+    {
+        if (!Enum.TryParse<DiscordPresenceMode>(mode, out var parsed)) return;
+
+        DiscordPresenceMode = parsed;
+        _settingsService.Settings.DiscordPresenceMode = parsed;
+        _settingsService.Save();
+
+        // Connects, drops or just relabels the activity depending on the new mode.
+        _presence.Sync();
     }
 
     partial void OnIsDebugModeEnabledChanged(bool value)

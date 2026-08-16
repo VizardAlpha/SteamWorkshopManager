@@ -310,6 +310,60 @@
                             </Border>
                         </StackPanel>
                     </Border>
+
+                    <!-- Discord Rich Presence detail level -->
+                    <Border Classes="section">
+                        <StackPanel Spacing="0">
+                            <TextBlock Classes="section-caps"
+                                       Text="{DynamicResource DiscordPresenceTitle}"
+                                       Margin="16,12,16,0"/>
+                            <TextBlock Classes="row-desc"
+                                       Text="{DynamicResource DiscordPresenceDescription}"
+                                       Margin="16,4,16,0"/>
+
+                            <StackPanel Margin="16,14,16,16" Spacing="12">
+                                <RadioButton GroupName="DiscordPresence"
+                                             IsChecked="{Binding IsPresenceOff, Mode=OneWay}"
+                                             Command="{Binding SelectDiscordPresenceModeCommand}"
+                                             CommandParameter="Off">
+                                    <StackPanel Spacing="2">
+                                        <TextBlock Classes="row-label" Text="{DynamicResource DiscordPresenceOff}"/>
+                                        <TextBlock Classes="row-desc" Text="{DynamicResource DiscordPresenceOffDesc}"/>
+                                    </StackPanel>
+                                </RadioButton>
+
+                                <RadioButton GroupName="DiscordPresence"
+                                             IsChecked="{Binding IsPresenceMinimal, Mode=OneWay}"
+                                             Command="{Binding SelectDiscordPresenceModeCommand}"
+                                             CommandParameter="Minimal">
+                                    <StackPanel Spacing="2">
+                                        <TextBlock Classes="row-label" Text="{DynamicResource DiscordPresenceMinimal}"/>
+                                        <TextBlock Classes="row-desc" Text="{DynamicResource DiscordPresenceMinimalDesc}"/>
+                                    </StackPanel>
+                                </RadioButton>
+
+                                <RadioButton GroupName="DiscordPresence"
+                                             IsChecked="{Binding IsPresenceGame, Mode=OneWay}"
+                                             Command="{Binding SelectDiscordPresenceModeCommand}"
+                                             CommandParameter="Game">
+                                    <StackPanel Spacing="2">
+                                        <TextBlock Classes="row-label" Text="{DynamicResource DiscordPresenceGame}"/>
+                                        <TextBlock Classes="row-desc" Text="{DynamicResource DiscordPresenceGameDesc}"/>
+                                    </StackPanel>
+                                </RadioButton>
+
+                                <RadioButton GroupName="DiscordPresence"
+                                             IsChecked="{Binding IsPresenceDetailed, Mode=OneWay}"
+                                             Command="{Binding SelectDiscordPresenceModeCommand}"
+                                             CommandParameter="Detailed">
+                                    <StackPanel Spacing="2">
+                                        <TextBlock Classes="row-label" Text="{DynamicResource DiscordPresenceDetailed}"/>
+                                        <TextBlock Classes="row-desc" Text="{DynamicResource DiscordPresenceDetailedDesc}"/>
+                                    </StackPanel>
+                                </RadioButton>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
 
                 <!-- ── PRIVACY ── -->

@@ -382,6 +382,20 @@
     <x:String x:Key="SteamInvalidItemType">Type d'élément invalide</x:String>
     <x:String x:Key="SteamUnknownError">Erreur Steam inconnue</x:String>
     
+    <!-- Discord Rich Presence -->
+    <x:String x:Key="DiscordPresenceTitle">Discord Rich Presence</x:String>
+    <x:String x:Key="DiscordPresenceDescription">Affiche ce sur quoi vous travaillez dans votre statut Discord. Nécessite l'application Discord.</x:String>
+    <x:String x:Key="DiscordPresenceOff">Désactivé</x:String>
+    <x:String x:Key="DiscordPresenceOffDesc">Rien n'est envoyé à Discord.</x:String>
+    <x:String x:Key="DiscordPresenceMinimal">Minimal</x:String>
+    <x:String x:Key="DiscordPresenceMinimalDesc">Indique seulement que vous gérez des objets du Workshop, sans nom de jeu ni d'objet.</x:String>
+    <x:String x:Key="DiscordPresenceGame">Jeu et section</x:String>
+    <x:String x:Key="DiscordPresenceGameDesc">Affiche le jeu que vous moddez et la section en cours, jamais le titre d'un objet.</x:String>
+    <x:String x:Key="DiscordPresenceDetailed">Détaillé</x:String>
+    <x:String x:Key="DiscordPresenceDetailedDesc">Affiche aussi le titre de l'objet en cours d'édition ou d'envoi.</x:String>
+    <x:String x:Key="EnableDiscordPresence">Activer la Discord Rich Presence</x:String>
+    <x:String x:Key="DiscordPresenceWizardDescription">Affiche le jeu que vous moddez dans votre statut Discord. Le niveau de détail se règle ensuite dans les paramètres.</x:String>
+
     <!-- BBCode Editor -->
     <x:String x:Key="BbCodeMode">BBCode</x:String>
     <x:String x:Key="PlainTextMode">Texte brut</x:String>

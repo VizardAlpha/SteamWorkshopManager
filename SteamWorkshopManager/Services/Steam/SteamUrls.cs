@@ -16,6 +16,10 @@ public static class SteamUrls
     public static string WorkshopPage(uint appId) =>
         $"https://steamcommunity.com/app/{appId}/workshop/";
 
+    /// <summary>Store header image (wide, ~460x215) served by the Steam CDN.</summary>
+    public static string HeaderImage(uint appId) =>
+        $"https://cdn.cloudflare.steamstatic.com/steam/apps/{appId}/header.jpg";
+
     /// <summary>Path segment that tells a Workshop page apart from the game hub.</summary>
     public const string WorkshopPathSegment = "/workshop";
 }

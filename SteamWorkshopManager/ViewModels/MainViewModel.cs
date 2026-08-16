@@ -15,6 +15,7 @@ using SteamWorkshopManager.Models;
 using SteamWorkshopManager.Services.Core;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Notifications;
+using SteamWorkshopManager.Services.Presence;
 using SteamWorkshopManager.Services.Session;
 using SteamWorkshopManager.Services.Steam;
 using SteamWorkshopManager.Services.UI;
@@ -33,6 +34,7 @@ public partial class MainViewModel : ViewModelBase
     private readonly SessionHost _sessionHost;
     private readonly SessionCleanupService _sessionCleanup;
     private readonly SteamAppMetadataService _appMetadata;
+    private readonly IDiscordPresenceService _presence;
     private string _statusKey = "ConnectingToSteam";
 
     [ObservableProperty]
@@ -211,7 +213,8 @@ public partial class MainViewModel : ViewModelBase
         App.Services.GetRequiredService<SessionManager>(),
         App.Services.GetRequiredService<SessionHost>(),
         App.Services.GetRequiredService<SessionCleanupService>(),
-        App.Services.GetRequiredService<SteamAppMetadataService>())
+        App.Services.GetRequiredService<SteamAppMetadataService>(),
+        App.Services.GetRequiredService<IDiscordPresenceService>())
     { }
 
     public MainViewModel(
@@ -223,7 +226,8 @@ public partial class MainViewModel : ViewModelBase
         SessionManager sessionManager,
         SessionHost sessionHost,
         SessionCleanupService sessionCleanup,
-        SteamAppMetadataService appMetadata)
+        SteamAppMetadataService appMetadata,
+        IDiscordPresenceService presence)
     {
         _steamService = steamService;
         _fileDialogService = fileDialogService;
@@ -234,6 +238,7 @@ public partial class MainViewModel : ViewModelBase
         _sessionHost = sessionHost;
         _sessionCleanup = sessionCleanup;
         _appMetadata = appMetadata;
+        _presence = presence;
 
         ApplyToastPosition();
 
@@ -285,6 +290,8 @@ public partial class MainViewModel : ViewModelBase
 
         CurrentView = HomeViewModel;
         ActiveTab = ShellTab.Home;
+
+        _presence.Sync();
 
         InitializeSteamAsync();
         _ = CheckForUpdatesAsync();
@@ -633,6 +640,27 @@ public partial class MainViewModel : ViewModelBase
         ActiveTab = ShellTab.Settings;
     }
 
+    #region Discord presence
+
+    partial void OnActiveTabChanged(ShellTab value) => RefreshPresence();
+
+    partial void OnCurrentViewChanged(ViewModelBase? value) => RefreshPresence();
+
+    partial void OnIsUploadInProgressChanged(bool value) => RefreshPresence();
+
+    /// <summary>
+    /// Feeds the shell's current state to Discord. The service decides how much
+    /// of it is actually published, based on the user's chosen mode.
+    /// </summary>
+    private void RefreshPresence() => _presence.Update(new PresenceState(
+        ActiveTab,
+        AppConfig.CurrentSession?.GameName,
+        AppConfig.CurrentSession?.AppId ?? 0,
+        (CurrentView as ItemEditorViewModel)?.Title,
+        IsUploadInProgress));
+
+    #endregion
+
     [RelayCommand]
     private async Task SwitchSessionAsync(WorkshopSession? session)
     {
@@ -688,6 +716,7 @@ public partial class MainViewModel : ViewModelBase
             OnPropertyChanged(nameof(HasActiveSession));
             OnPropertyChanged(nameof(WindowTitle));
             HomeViewModel.OnSessionChanged();
+            RefreshPresence();
 
             // Propagate the switch to whichever editor/creator is currently
             // mounted. Create-view re-derives tags/branches/drafts from the new
@@ -757,6 +786,7 @@ public partial class MainViewModel : ViewModelBase
         OnPropertyChanged(nameof(HasActiveSession));
         OnPropertyChanged(nameof(WindowTitle));
         HomeViewModel.OnSessionChanged();
+        RefreshPresence();
 
         if (CurrentView is ItemEditorViewModel)
         {

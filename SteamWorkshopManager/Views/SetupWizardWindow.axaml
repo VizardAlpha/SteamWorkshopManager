@@ -208,6 +208,33 @@
                         </StackPanel>
                     </StackPanel>
                 </Border>
+
+                <!-- Discord Rich Presence — off unless the user opts in here.
+                     Enabling picks the middle detail level; Settings >
+                     Customization can narrow or widen it afterwards. -->
+                <Border Background="{DynamicResource SurfaceCardBrush}"
+                        BorderBrush="{DynamicResource BorderSubtleBrush}"
+                        BorderThickness="1"
+                        CornerRadius="10"
+                        Padding="14,12">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0" Spacing="6">
+                            <TextBlock Text="{Binding Loc[EnableDiscordPresence]}"
+                                       FontSize="13"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <TextBlock Text="{Binding Loc[DiscordPresenceWizardDescription]}"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource TextMutedBrush}"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="1"
+                                      IsChecked="{Binding IsDiscordPresenceEnabled}"
+                                      OnContent="" OffContent=""
+                                      VerticalAlignment="Center"
+                                      Margin="12,0,0,0"/>
+                    </Grid>
+                </Border>
             </StackPanel>
 
             <!-- Footer -->

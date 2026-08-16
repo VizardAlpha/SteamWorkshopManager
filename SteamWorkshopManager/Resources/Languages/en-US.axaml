@@ -382,6 +382,20 @@
     <x:String x:Key="SteamInvalidItemType">Invalid item type</x:String>
     <x:String x:Key="SteamUnknownError">Unknown Steam error</x:String>
 
+    <!-- Discord Rich Presence -->
+    <x:String x:Key="DiscordPresenceTitle">Discord Rich Presence</x:String>
+    <x:String x:Key="DiscordPresenceDescription">Show what you are working on in your Discord status. Requires the Discord desktop app.</x:String>
+    <x:String x:Key="DiscordPresenceOff">Disabled</x:String>
+    <x:String x:Key="DiscordPresenceOffDesc">Nothing is sent to Discord.</x:String>
+    <x:String x:Key="DiscordPresenceMinimal">Minimal</x:String>
+    <x:String x:Key="DiscordPresenceMinimalDesc">Only shows that you are managing Workshop items, with no game or item name.</x:String>
+    <x:String x:Key="DiscordPresenceGame">Game and section</x:String>
+    <x:String x:Key="DiscordPresenceGameDesc">Shows the game you are modding and the section you are in, but never an item title.</x:String>
+    <x:String x:Key="DiscordPresenceDetailed">Detailed</x:String>
+    <x:String x:Key="DiscordPresenceDetailedDesc">Also shows the title of the item you are editing or uploading.</x:String>
+    <x:String x:Key="EnableDiscordPresence">Enable Discord Rich Presence</x:String>
+    <x:String x:Key="DiscordPresenceWizardDescription">Show the game you are modding in your Discord status. You can change the detail level or turn it off later in Settings.</x:String>
+
     <!-- BBCode Editor -->
     <x:String x:Key="BbCodeMode">BBCode</x:String>
     <x:String x:Key="PlainTextMode">Plain text</x:String>

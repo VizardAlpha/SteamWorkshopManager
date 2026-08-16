@@ -9,6 +9,7 @@ using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Views;
 using System.Threading.Tasks;
 using SteamWorkshopManager.Services.Core;
+using SteamWorkshopManager.Services.Presence;
 using SteamWorkshopManager.Services.Session;
 using SteamWorkshopManager.Services.Telemetry;
 using SteamWorkshopManager.ViewModels;
@@ -302,6 +303,10 @@ public partial class App : Application
 
         try { await TelemetryService.ShutdownAsync(); }
         catch (Exception ex) { Log.Debug($"Telemetry shutdown: {ex.Message}"); }
+
+        // Clear the Discord activity so it does not linger after the app is gone.
+        try { Services.GetService<IDiscordPresenceService>()?.Shutdown(); }
+        catch (Exception ex) { Log.Debug($"Discord presence shutdown: {ex.Message}"); }
 
         try
         {

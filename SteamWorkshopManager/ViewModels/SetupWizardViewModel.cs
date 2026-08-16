@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using SteamWorkshopManager.Core.Sessions;
 using SteamWorkshopManager.Core.Steam;
+using SteamWorkshopManager.Models;
 using SteamWorkshopManager.Services.Core;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Session;
@@ -67,6 +68,14 @@ public partial class SetupWizardViewModel : ViewModelBase
     [NotifyCanExecuteChangedFor(nameof(ValidateAppIdCommand))]
     private bool _isTelemetryEnabled;
 
+    /// <summary>
+    /// First-run Discord Rich Presence opt-in. Enabling it here selects
+    /// <see cref="DiscordPresenceMode.Game"/>; the detail level can be changed
+    /// later in Settings > Customization.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isDiscordPresenceEnabled;
+
     private uint _validatedAppId;
 
     public event Action? SessionCreated;
@@ -85,6 +94,7 @@ public partial class SetupWizardViewModel : ViewModelBase
         // Mirror the existing stored preference so reopening the wizard
         // (via --force-setup-wizard) pre-fills the user's last choice.
         _isTelemetryEnabled = _settingsService.Settings.TelemetryEnabled;
+        _isDiscordPresenceEnabled = _settingsService.Settings.DiscordPresenceMode != DiscordPresenceMode.Off;
     }
 
     [RelayCommand]
@@ -181,6 +191,18 @@ public partial class SetupWizardViewModel : ViewModelBase
             // the wizard closes.
             _settingsService.Settings.TelemetryEnabled = IsTelemetryEnabled;
             _settingsService.Settings.TelemetryConsentVersion = TelemetryConsent.RequiredVersion;
+
+            // Keep an already-chosen detail level when the wizard is reopened.
+            if (IsDiscordPresenceEnabled)
+            {
+                if (_settingsService.Settings.DiscordPresenceMode == DiscordPresenceMode.Off)
+                    _settingsService.Settings.DiscordPresenceMode = DiscordPresenceMode.Game;
+            }
+            else
+            {
+                _settingsService.Settings.DiscordPresenceMode = DiscordPresenceMode.Off;
+            }
+
             _settingsService.Save();
 
             // Create the session

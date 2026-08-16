@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
 using SteamWorkshopManager.Services.Log;
+using SteamWorkshopManager.Services.Steam;
 
 namespace SteamWorkshopManager.Helpers;
 
@@ -46,8 +47,7 @@ public static class SteamImageCache
     {
         if (appId == 0) return null;
 
-        var url = $"https://cdn.cloudflare.steamstatic.com/steam/apps/{appId}/header.jpg";
-        return await LoadOrDownloadAsync(HeaderCacheFilePath(appId), url, forceDownload);
+        return await LoadOrDownloadAsync(HeaderCacheFilePath(appId), SteamUrls.HeaderImage(appId), forceDownload);
     }
 
     /// <summary>

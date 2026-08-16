@@ -73,4 +73,10 @@ public class AppSettings
     /// so they stay clear of the top navigation bar.
     /// </summary>
     public ToastPosition ToastPosition { get; set; } = ToastPosition.BottomRight;
+
+    /// <summary>
+    /// How much activity detail is published to Discord. Off by default so
+    /// nothing is shared until the user opts in.
+    /// </summary>
+    public DiscordPresenceMode DiscordPresenceMode { get; set; } = DiscordPresenceMode.Off;
 }

@@ -13,12 +13,19 @@
         <!-- Default ingest URL points to a local dev endpoint. -->
         <TelemetryEndpoint>http://localhost:5000/ingest</TelemetryEndpoint>
         <TelemetryEndpoint Condition="'$(SWM_TELEMETRY_URL)' != ''">$(SWM_TELEMETRY_URL)</TelemetryEndpoint>
+
+        <!-- Discord application id from the Developer Portal. Empty disables Rich Presence. -->
+        <DiscordAppId Condition="'$(SWM_DISCORD_APP_ID)' != ''">$(SWM_DISCORD_APP_ID)</DiscordAppId>
     </PropertyGroup>
 
     <ItemGroup>
         <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
             <_Parameter1>TelemetryEndpoint</_Parameter1>
             <_Parameter2>$(TelemetryEndpoint)</_Parameter2>
+        </AssemblyAttribute>
+        <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+            <_Parameter1>DiscordAppId</_Parameter1>
+            <_Parameter2>$(DiscordAppId)</_Parameter2>
         </AssemblyAttribute>
     </ItemGroup>
 
@@ -52,6 +59,8 @@
         
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
         
+        <PackageReference Include="DiscordRichPresence" Version="1.143.0" />
+        
         <PackageReference Include="Material.Icons.Avalonia" Version="3.0.2" />
         
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.11" />
@@ -64,6 +73,7 @@
 
     <ItemGroup>
       <Folder Include="Properties\" />
+      <InternalsVisibleTo Include="SteamWorkshopManager.Tests" />
     </ItemGroup>
 
     <!-- Language files also as EmbeddedResource for bundle extraction -->

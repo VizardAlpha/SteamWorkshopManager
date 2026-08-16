@@ -5,6 +5,7 @@ using SteamWorkshopManager.Core.Workshop;
 using SteamWorkshopManager.Services.Core;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Notifications;
+using SteamWorkshopManager.Services.Presence;
 using SteamWorkshopManager.Services.Session;
 using SteamWorkshopManager.Services.Steam;
 using SteamWorkshopManager.Services.Telemetry;
@@ -54,6 +55,7 @@ public static class ServiceCollectionExtensions
         // UI-facing services
         services.AddSingleton<INotificationService, NotificationService>();
         services.AddSingleton<IFileDialogService, FileDialogService>();
+        services.AddSingleton<IDiscordPresenceService, DiscordPresenceService>();
 
         // Workshop + dependency services
         services.AddSingleton<WorkshopTagsService>();
