@@ -6,9 +6,9 @@
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
 
-        <Version>1.8.8</Version>
-        <AssemblyVersion>1.8.8.0</AssemblyVersion>
-        <FileVersion>1.8.8.0</FileVersion>
+        <Version>1.8.9</Version>
+        <AssemblyVersion>1.8.9.0</AssemblyVersion>
+        <FileVersion>1.8.9.0</FileVersion>
         
         <!-- Default ingest URL points to a local dev endpoint. -->
         <TelemetryEndpoint>http://localhost:5000/ingest</TelemetryEndpoint>
@@ -49,10 +49,10 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Avalonia" Version="12.1.1" />
-        <PackageReference Include="Avalonia.Desktop" Version="12.1.1" />
-        <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.1" />
-        <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.1" />
+        <PackageReference Include="Avalonia" Version="12.1.3" />
+        <PackageReference Include="Avalonia.Desktop" Version="12.1.3" />
+        <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.3" />
+        <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.3" />
         <!-- DevTools bridge: only used behind #if DEBUG, and the package declares
              no licence, so it must not ship in a release build. -->
         <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.3" Condition="'$(Configuration)' == 'Debug'" />
@@ -65,7 +65,7 @@
         
         <PackageReference Include="Material.Icons.Avalonia" Version="3.0.2" />
         
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.11" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
         
         <PackageReference Include="QRCoder" Version="1.8.0" />
         <PackageReference Include="SteamKit2" Version="3.4.0" />

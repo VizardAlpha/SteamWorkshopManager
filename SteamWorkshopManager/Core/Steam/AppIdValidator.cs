@@ -146,11 +146,7 @@ public partial class AppIdValidator
         var json = await _httpClient.GetStringAsync(SteamUrls.AppDetails(appId));
 
         using var doc = JsonDocument.Parse(json);
-        var root = doc.RootElement;
-
-        if (!root.TryGetProperty(appId.ToString(), out var appData)) return null;
-        if (!appData.TryGetProperty("success", out var success) || !success.GetBoolean()) return null;
-        if (!appData.TryGetProperty("data", out var data)) return null;
+        if (!SteamAppDetailsParser.TryGetData(doc.RootElement, appId, out var data)) return null;
 
         var name = data.TryGetProperty("name", out var nameProp) ? nameProp.GetString() : null;
         if (string.IsNullOrEmpty(name)) return null;

@@ -446,9 +446,7 @@ internal sealed class SteamWorkerImpl : ISteamWorker
 
             var json = await response.Content.ReadAsStringAsync();
             using var doc = JsonDocument.Parse(json);
-            if (doc.RootElement.TryGetProperty(appId.ToString(), out var appData) &&
-                appData.TryGetProperty("success", out var success) && success.GetBoolean() &&
-                appData.TryGetProperty("data", out var data) &&
+            if (SteamAppDetailsParser.TryGetData(doc.RootElement, appId, out var data) &&
                 data.TryGetProperty("name", out var name))
             {
                 var appName = name.GetString();

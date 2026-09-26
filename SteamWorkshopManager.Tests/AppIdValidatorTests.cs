@@ -61,6 +61,37 @@ public class AppIdValidatorTests
     }
 
     [TestMethod]
+    public async Task ValidateAsync_StoreKeysEntryByAnotherId_MatchesOnSteamAppId()
+    {
+        const uint appId = 1812450;
+        var body = $"{{\"3100670\":{{\"success\":true,\"data\":{{\"name\":\"Bellwright\",\"steam_appid\":{appId}," +
+                   "\"categories\":[{\"id\":30,\"description\":\"Steam Workshop\"}]}}}";
+        var (validator, _) = CreateValidator(
+            (SteamUrls.AppDetails(appId), StubResponse.NoRedirect with { Body = body }));
+
+        var result = await validator.ValidateAsync(appId);
+
+        Assert.IsTrue(result.IsValid);
+        Assert.AreEqual("Bellwright", result.GameName);
+    }
+
+    [TestMethod]
+    public async Task ValidateAsync_StoreEntryForUnrelatedApp_ReturnsInvalidAppId()
+    {
+        const uint appId = 1812450;
+        var (validator, _) = CreateValidator(
+            (SteamUrls.AppDetails(appId), StubResponse.NoRedirect with
+            {
+                Body = "{\"42\":{\"success\":true,\"data\":{\"name\":\"Other\",\"steam_appid\":42}}}",
+            }));
+
+        var result = await validator.ValidateAsync(appId);
+
+        Assert.IsFalse(result.IsValid);
+        Assert.AreEqual("InvalidAppId", result.ErrorKey);
+    }
+
+    [TestMethod]
     public async Task ValidateAsync_WorkshopCategoryMissingButPageStaysOnWorkshop_ReturnsValid()
     {
         const uint appId = 1022980;
