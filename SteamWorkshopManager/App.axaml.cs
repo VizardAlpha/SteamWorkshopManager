@@ -289,6 +289,12 @@ public partial class App : Application
     private async void OnShutdownRequested(object? sender, ShutdownRequestedEventArgs e)
     {
         if (_shutdownStarted) return;
+        if (sender is IClassicDesktopStyleApplicationLifetime { MainWindow: MainWindow main }
+            && main.InterceptCloseDuringUpload())
+        {
+            e.Cancel = true;
+            return;
+        }
         _shutdownStarted = true;
         Log.Info("Shutdown requested, running cleanup");
         e.Cancel = true;

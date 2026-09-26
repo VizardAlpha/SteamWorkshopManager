@@ -5,6 +5,7 @@
              xmlns:vm="using:SteamWorkshopManager.ViewModels"
              xmlns:models="using:SteamWorkshopManager.Models"
              xmlns:icons="using:Material.Icons.Avalonia"
+             xmlns:controls="using:SteamWorkshopManager.Views.Controls"
              mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="640"
              x:Class="SteamWorkshopManager.Views.SettingsView"
              x:DataType="vm:SettingsViewModel">
@@ -170,7 +171,7 @@
                         <Border Background="{DynamicResource FeedbackSuccessBrush}"
                                 CornerRadius="6" Padding="5,1"
                                 VerticalAlignment="Center"
-                                IsVisible="{Binding IsUpdateAvailable}">
+                                IsVisible="{Binding Updates.IsUpdateAvailable}">
                             <TextBlock Text="!"
                                        FontSize="10" FontWeight="Bold"
                                        Foreground="White"
@@ -515,6 +516,59 @@
                             </Grid>
                         </StackPanel>
                     </Border>
+
+                    <!-- Steam web session (QR login used for changelog history and downloads) -->
+                    <Border Classes="section">
+                        <Grid Classes="row" ColumnDefinitions="*,Auto">
+                            <StackPanel Grid.Column="0" Spacing="6">
+                                <TextBlock Classes="row-label" Text="{DynamicResource SteamAccountTitle}"/>
+                                <TextBlock Classes="row-desc" Text="{DynamicResource SteamAccountDescription}"/>
+                                <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsSteamSignedIn}">
+                                    <icons:MaterialIcon Kind="AccountCircleOutline" Width="14" Height="14"
+                                                        Foreground="{DynamicResource FeedbackSuccessBrush}"
+                                                        VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding SteamAccountName}"
+                                               FontSize="12"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <TextBlock Text="{DynamicResource SteamNotSignedIn}"
+                                           IsVisible="{Binding !IsSteamSignedIn}"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextMutedBrush}"/>
+                                <Button Classes="link" Padding="0"
+                                        Background="Transparent" BorderThickness="0"
+                                        HorizontalAlignment="Left"
+                                        Command="{Binding OpenSteamAuthorizedDevicesCommand}">
+                                    <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                        <TextBlock Text="{DynamicResource SteamAuthorizedDevices}"
+                                                   FontSize="12"
+                                                   Foreground="{DynamicResource AccentPrimaryBrush}"/>
+                                        <icons:MaterialIcon Kind="OpenInNew" Width="11" Height="11"
+                                                            Foreground="{DynamicResource AccentPrimaryBrush}"
+                                                            VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                            <Button Grid.Column="1"
+                                    Command="{Binding SignOutOfSteamCommand}"
+                                    IsVisible="{Binding IsSteamSignedIn}"
+                                    Background="{DynamicResource SurfaceElevatedBrush}"
+                                    BorderBrush="{DynamicResource BorderStrongBrush}"
+                                    BorderThickness="1"
+                                    Foreground="{DynamicResource TextPrimaryBrush}"
+                                    CornerRadius="6"
+                                    Padding="12,8"
+                                    FontSize="13"
+                                    VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <icons:MaterialIcon Kind="Logout" Width="14" Height="14"/>
+                                    <TextBlock Text="{DynamicResource SteamSignOut}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                    </Border>
                 </StackPanel>
 
                 <!-- ── DEBUG ── -->
@@ -673,8 +727,8 @@
                                     <TextBlock Classes="row-desc" Text="{Binding AppVersion, StringFormat='v{0}'}"/>
                                 </StackPanel>
                                 <Button Grid.Column="1"
-                                        Command="{Binding CheckForUpdatesCommand}"
-                                        IsEnabled="{Binding !IsCheckingUpdates}"
+                                        Command="{Binding Updates.CheckCommand}"
+                                        IsEnabled="{Binding !Updates.IsChecking}"
                                         Background="{DynamicResource SurfaceElevatedBrush}"
                                         BorderBrush="{DynamicResource BorderStrongBrush}"
                                         BorderThickness="1"
@@ -686,10 +740,10 @@
                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                         <icons:MaterialIcon Kind="Refresh" Width="13" Height="13"/>
                                         <TextBlock Text="{DynamicResource CheckForUpdates}"
-                                                   IsVisible="{Binding !IsCheckingUpdates}"
+                                                   IsVisible="{Binding !Updates.IsChecking}"
                                                    VerticalAlignment="Center"/>
                                         <TextBlock Text="{DynamicResource CheckingUpdates}"
-                                                   IsVisible="{Binding IsCheckingUpdates}"
+                                                   IsVisible="{Binding Updates.IsChecking}"
                                                    VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Button>
@@ -712,7 +766,7 @@
                             </Border>
 
                             <!-- Up to date banner -->
-                            <Border IsVisible="{Binding !IsUpdateAvailable}"
+                            <Border IsVisible="{Binding !Updates.IsUpdateAvailable}"
                                     Background="Transparent"
                                     BorderBrush="{DynamicResource BorderSubtleBrush}"
                                     BorderThickness="0,1,0,0"
@@ -729,45 +783,120 @@
                             </Border>
 
                             <!-- New version banner -->
-                            <Border IsVisible="{Binding IsUpdateAvailable}"
+                            <Border IsVisible="{Binding Updates.IsUpdateAvailable}"
                                     Background="#1F5EC384"
                                     BorderBrush="{DynamicResource FeedbackSuccessBrush}"
                                     BorderThickness="0,1,0,0"
                                     Padding="16,14">
-                                <Grid ColumnDefinitions="*,Auto">
-                                    <StackPanel Grid.Column="0" Spacing="4">
-                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <icons:MaterialIcon Kind="RocketLaunchOutline" Width="16" Height="16"
-                                                                Foreground="{DynamicResource FeedbackSuccessBrush}"
-                                                                VerticalAlignment="Center"/>
-                                            <TextBlock Text="{DynamicResource NewVersionAvailable}"
+                                <StackPanel Spacing="10">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Grid.Column="0" Spacing="4">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <icons:MaterialIcon Kind="RocketLaunchOutline" Width="16" Height="16"
+                                                                    Foreground="{DynamicResource FeedbackSuccessBrush}"
+                                                                    VerticalAlignment="Center"/>
+                                                <TextBlock Text="{DynamicResource NewVersionAvailable}"
+                                                           FontSize="14"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                                           VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                            <TextBlock Text="{Binding Updates.UpdateInfo.LatestVersion}"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextMutedBrush}"/>
+                                            <TextBlock Text="{DynamicResource UpdateManualOnly}"
+                                                       IsVisible="{Binding !Updates.CanInstallInApp}"
+                                                       Classes="row-desc"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                            <Button Command="{Binding Updates.CancelInstallCommand}"
+                                                    IsVisible="{Binding Updates.IsInstalling}"
+                                                    Background="{DynamicResource SurfaceElevatedBrush}"
+                                                    BorderBrush="{DynamicResource BorderSubtleBrush}"
+                                                    BorderThickness="1"
+                                                    Foreground="{DynamicResource TextPrimaryBrush}"
+                                                    CornerRadius="6"
+                                                    Padding="12,8">
+                                                <TextBlock Text="{DynamicResource Cancel}"/>
+                                            </Button>
+                                            <Button Command="{Binding Updates.InstallCommand}"
+                                                    Background="{DynamicResource AccentPrimaryGradientBrush}"
+                                                    Foreground="White"
+                                                    FontWeight="SemiBold"
+                                                    BorderThickness="0"
+                                                    CornerRadius="6"
+                                                    Padding="14,8">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <icons:MaterialIcon Kind="Download" Width="13" Height="13"/>
+                                                    <TextBlock Text="{DynamicResource UpdateInstall}"
+                                                               IsVisible="{Binding Updates.CanInstallInApp}"
+                                                               VerticalAlignment="Center"/>
+                                                    <TextBlock Text="{DynamicResource Download}"
+                                                               IsVisible="{Binding !Updates.CanInstallInApp}"
+                                                               VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <StackPanel Spacing="6" IsVisible="{Binding Updates.IsInstalling}">
+                                        <TextBlock Text="{Binding Updates.InstallStatus}"
+                                                   FontSize="12"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                        <ProgressBar Value="{Binding Updates.InstallProgress}"
+                                                     Minimum="0" Maximum="100" Height="4"/>
+                                    </StackPanel>
+
+                                    <TextBlock Text="{Binding Updates.InstallError}"
+                                               IsVisible="{Binding Updates.InstallError, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                               Foreground="{DynamicResource FeedbackDangerTextBrush}"
+                                               FontSize="12"
+                                               TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Release notes of the newest version on the user's channel -->
+                    <TextBlock Text="{DynamicResource ReleaseNotesTitle}"
+                               FontSize="15"
+                               FontWeight="SemiBold"
+                               Margin="0,8,0,0"
+                               Foreground="{DynamicResource TextPrimaryBrush}"/>
+
+                    <TextBlock Text="{DynamicResource ReleaseNotesLoading}"
+                               IsVisible="{Binding Updates.IsLoadingReleaseNotes}"
+                               Classes="row-desc"/>
+
+                    <ContentControl Content="{Binding Updates.LatestReleaseNotes}">
+                        <ContentControl.ContentTemplate>
+                            <DataTemplate x:DataType="vm:ReleaseNotesItem">
+                                <Border Classes="section" Padding="16,14">
+                                    <StackPanel Spacing="10">
+                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                            <TextBlock Text="{Binding Version}"
                                                        FontSize="14"
                                                        FontWeight="SemiBold"
                                                        Foreground="{DynamicResource TextPrimaryBrush}"
                                                        VerticalAlignment="Center"/>
+                                            <Border IsVisible="{Binding IsPrerelease}"
+                                                    Background="{DynamicResource SurfaceOverlayBrush}"
+                                                    CornerRadius="4" Padding="6,1"
+                                                    VerticalAlignment="Center">
+                                                <TextBlock Text="beta" FontSize="10"
+                                                           Foreground="{DynamicResource FeedbackWarningBrush}"/>
+                                            </Border>
+                                            <TextBlock Text="{Binding DateText}"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextMutedBrush}"
+                                                       VerticalAlignment="Center"/>
                                         </StackPanel>
-                                        <TextBlock Text="{Binding UpdateInfo.LatestVersion}"
-                                                   FontSize="12"
-                                                   Foreground="{DynamicResource TextMutedBrush}"/>
+                                        <controls:BbCodePreviewControl Text="{Binding BbCode}"/>
                                     </StackPanel>
-                                    <Button Grid.Column="1"
-                                            Command="{Binding OpenReleasePageCommand}"
-                                            Background="{DynamicResource AccentPrimaryGradientBrush}"
-                                            Foreground="White"
-                                            FontWeight="SemiBold"
-                                            BorderThickness="0"
-                                            CornerRadius="6"
-                                            Padding="14,8"
-                                            VerticalAlignment="Center">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <icons:MaterialIcon Kind="Download" Width="13" Height="13"/>
-                                            <TextBlock Text="{DynamicResource Download}" VerticalAlignment="Center"/>
-                                        </StackPanel>
-                                    </Button>
-                                </Grid>
-                            </Border>
-                        </StackPanel>
-                    </Border>
+                                </Border>
+                            </DataTemplate>
+                        </ContentControl.ContentTemplate>
+                    </ContentControl>
                 </StackPanel>
 
                 <!-- ── ABOUT ── -->

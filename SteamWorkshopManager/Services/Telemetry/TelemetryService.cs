@@ -39,6 +39,8 @@ public class TelemetryService : ITelemetryService, IDisposable
     {
         if (Instance is not TelemetryService svc) return;
         try { await svc.FlushAsync(); } catch { }
+        // A debounced save may still be pending: don't lose queued events on exit.
+        try { await svc.SaveNowAsync(); } catch { }
         svc.Dispose();
         Instance = null;
     }
@@ -74,6 +76,9 @@ public class TelemetryService : ITelemetryService, IDisposable
     private readonly ISettingsService _settingsService;
     private readonly string _endpoint;
     private readonly SemaphoreSlim _stateLock = new(1, 1);
+    // Settings' toggle and the loop can both flush: two flushes would send and remove the same batch twice.
+    private readonly SemaphoreSlim _flushGate = new(1, 1);
+    private int _savePending;
     private readonly CancellationTokenSource _cts = new();
     private readonly Task _flushLoop;
 
@@ -110,13 +115,12 @@ public class TelemetryService : ITelemetryService, IDisposable
                 {
                     _state.Queue.RemoveRange(0, _state.Queue.Count - MaxQueueSize);
                 }
-
-                SaveStateUnsafe();
             }
             finally
             {
                 _stateLock.Release();
             }
+            ScheduleSave();
         }
         catch (Exception ex)
         {
@@ -124,7 +128,33 @@ public class TelemetryService : ITelemetryService, IDisposable
         }
     }
 
+    /// <summary>Persists the queue off the caller's thread; bursts of events share one write.</summary>
+    private void ScheduleSave()
+    {
+        if (Interlocked.Exchange(ref _savePending, 1) == 1) return;
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(500);
+            await SaveNowAsync();
+        });
+    }
+
+    private async Task SaveNowAsync()
+    {
+        Interlocked.Exchange(ref _savePending, 0);
+        await _stateLock.WaitAsync();
+        try { SaveStateUnsafe(); }
+        finally { _stateLock.Release(); }
+    }
+
     public async Task FlushAsync()
+    {
+        await _flushGate.WaitAsync();
+        try { await FlushCoreAsync(); }
+        finally { _flushGate.Release(); }
+    }
+
+    private async Task FlushCoreAsync()
     {
         if (!_settingsService.Settings.TelemetryEnabled)
         {
@@ -273,7 +303,7 @@ public class TelemetryService : ITelemetryService, IDisposable
         try
         {
             Directory.CreateDirectory(StateFolder);
-            File.WriteAllText(StatePath, JsonSerializer.Serialize(fresh, TelemetryJsonContext.Default.TelemetryState));
+            AtomicFile.WriteAllText(StatePath, JsonSerializer.Serialize(fresh, TelemetryJsonContext.Default.TelemetryState));
         }
         catch (Exception ex)
         {
@@ -293,7 +323,7 @@ public class TelemetryService : ITelemetryService, IDisposable
         {
             Directory.CreateDirectory(StateFolder);
             var json = JsonSerializer.Serialize(_state, TelemetryJsonContext.Default.TelemetryState);
-            File.WriteAllText(StatePath, json);
+            AtomicFile.WriteAllText(StatePath, json);
         }
         catch (Exception ex)
         {

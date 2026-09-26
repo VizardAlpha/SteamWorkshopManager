@@ -129,11 +129,7 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     private Avalonia.Layout.VerticalAlignment _toastVerticalAlignment = Avalonia.Layout.VerticalAlignment.Bottom;
 
-    [ObservableProperty]
-    private bool _isUpdateAvailable;
-
-    [ObservableProperty]
-    private UpdateInfo? _updateInfo;
+    public UpdateController Updates { get; }
 
     /// <summary>
     /// True while <see cref="SwitchSessionAsync"/> is in flight - drives a
@@ -214,7 +210,8 @@ public partial class MainViewModel : ViewModelBase
         App.Services.GetRequiredService<SessionHost>(),
         App.Services.GetRequiredService<SessionCleanupService>(),
         App.Services.GetRequiredService<SteamAppMetadataService>(),
-        App.Services.GetRequiredService<IDiscordPresenceService>())
+        App.Services.GetRequiredService<IDiscordPresenceService>(),
+        App.Services.GetRequiredService<UpdateController>())
     { }
 
     public MainViewModel(
@@ -227,8 +224,10 @@ public partial class MainViewModel : ViewModelBase
         SessionHost sessionHost,
         SessionCleanupService sessionCleanup,
         SteamAppMetadataService appMetadata,
-        IDiscordPresenceService presence)
+        IDiscordPresenceService presence,
+        UpdateController updates)
     {
+        Updates = updates;
         _steamService = steamService;
         _fileDialogService = fileDialogService;
         _settingsService = settingsService;
@@ -265,7 +264,8 @@ public partial class MainViewModel : ViewModelBase
             {
                 if (p.Percentage < 100) ApplyToastPosition();
                 IsUploadInProgress = p.Percentage < 100;
-                UploadStatusMessage = p.Status;
+                // The worker sends localization keys.
+                UploadStatusMessage = string.IsNullOrEmpty(p.Status) ? string.Empty : Loc[p.Status];
                 UploadProgress = p.Percentage;
 
                 if (p.BytesTotal > 0)
@@ -309,12 +309,28 @@ public partial class MainViewModel : ViewModelBase
 
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
+                // Fresh instances come from disk: carry decoded icons over instead of
+                // re-decoding them, and release the ones of removed sessions.
+                var previous = Sessions.ToDictionary(s => s.Id);
+                foreach (var session in sessions)
+                {
+                    if (previous.Remove(session.Id, out var old) && old.IconBitmap is { } icon)
+                    {
+                        session.IconBitmap = icon;
+                        old.DetachIconBitmap();
+                    }
+                }
+                foreach (var removed in previous.Values)
+                {
+                    if (!ReferenceEquals(removed.IconBitmap, ActiveSessionIcon)) removed.IconBitmap = null;
+                }
+
                 Sessions = new ObservableCollection<WorkshopSession>(sessions);
             });
 
             // Kick off icon loads right away so the pill/flyout paint quickly
             // with whatever is already cached on disk (or the header fallback).
-            foreach (var session in sessions)
+            foreach (var session in sessions.Where(s => s.IconBitmap is null))
             {
                 _ = LoadSessionIconAsync(session);
             }
@@ -410,6 +426,8 @@ public partial class MainViewModel : ViewModelBase
         // threadpool after Process.Exited bubbles through the respawn pipeline.
         Dispatcher.UIThread.Post(() =>
         {
+            // The dead worker never sent its final progress report.
+            IsUploadInProgress = false;
             IsSteamConnected = _sessionHost.LastInitResult == SteamInitResult.Success;
             ConnectionState = IsSteamConnected
                 ? SteamConnectionState.Connected
@@ -433,6 +451,7 @@ public partial class MainViewModel : ViewModelBase
     {
         Dispatcher.UIThread.Post(() =>
         {
+            IsUploadInProgress = false;
             IsSteamConnected = false;
             ConnectionState = SteamConnectionState.Disconnected;
             HomeViewModel.ConnectionState = SteamConnectionState.Disconnected;
@@ -674,7 +693,11 @@ public partial class MainViewModel : ViewModelBase
 
     partial void OnCurrentViewChanged(ViewModelBase? value) => RefreshPresence();
 
-    partial void OnIsUploadInProgressChanged(bool value) => RefreshPresence();
+    partial void OnIsUploadInProgressChanged(bool value)
+    {
+        Updates.IsUploadInProgress = value;
+        RefreshPresence();
+    }
 
     /// <summary>
     /// Feeds the shell's current state to Discord. The service decides how much
@@ -824,6 +847,22 @@ public partial class MainViewModel : ViewModelBase
         }
     }
 
+    [ObservableProperty]
+    private bool _showCloseDuringUploadConfirmation;
+
+    /// <summary>Raised when the user confirms quitting despite a running upload.</summary>
+    public event Action? ForceCloseRequested;
+
+    [RelayCommand]
+    private void CancelCloseDuringUpload() => ShowCloseDuringUploadConfirmation = false;
+
+    [RelayCommand]
+    private void ConfirmCloseDuringUpload()
+    {
+        ShowCloseDuringUploadConfirmation = false;
+        ForceCloseRequested?.Invoke();
+    }
+
     [RelayCommand]
     private void RequestDeleteSession(WorkshopSession? session)
     {
@@ -904,27 +943,14 @@ public partial class MainViewModel : ViewModelBase
 
     private async Task CheckForUpdatesAsync()
     {
-        var info = await UpdateCheckerService.CheckForUpdateAsync(_settingsService.Settings.IncludePrereleases);
-        if (info is not null)
+        try
         {
-            await Dispatcher.UIThread.InvokeAsync(() =>
-            {
-                UpdateInfo = info;
-                IsUpdateAvailable = true;
-            });
+            await Updates.CheckAsync();
+            await Updates.ShowWhatsNewIfNeededAsync();
         }
-    }
-
-    [RelayCommand]
-    private void OpenReleasePage()
-    {
-        if (UpdateInfo?.ReleaseUrl is not { } url) return;
-        Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
-    }
-
-    [RelayCommand]
-    private void DismissUpdate()
-    {
-        IsUpdateAvailable = false;
+        catch (Exception ex)
+        {
+            Log.Debug($"Update check failed: {ex.Message}");
+        }
     }
 }

@@ -19,6 +19,7 @@ using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Notifications;
 using SteamWorkshopManager.Services.Presence;
 using SteamWorkshopManager.Services.Session;
+using SteamWorkshopManager.Services.Steam;
 using SteamWorkshopManager.Services.Telemetry;
 
 namespace SteamWorkshopManager.ViewModels;
@@ -31,6 +32,7 @@ public partial class SettingsViewModel : ViewModelBase
     private const string PrivacyPolicyUrl = "https://swm-stats.com/Privacy";
     private const string StatsSiteUrl = "https://swm-stats.com";
     private const string ThirdPartyNoticesUrl = $"{GitHubRepoUrl}/blob/master/THIRD-PARTY-NOTICES.md";
+    private const string SteamAuthorizedDevicesUrl = "https://store.steampowered.com/account/authorizeddevices";
 
     private readonly ISettingsService _settingsService;
     private readonly ILogService _logService;
@@ -152,14 +154,14 @@ public partial class SettingsViewModel : ViewModelBase
     /// </summary>
     public string DataFolderPath { get; } = AppPaths.Root;
 
-    [ObservableProperty]
-    private bool _isUpdateAvailable;
+    public UpdateController Updates { get; }
 
+    /// <summary>Steam account behind the web session (changelog history, downloads), null when signed out.</summary>
     [ObservableProperty]
-    private UpdateInfo? _updateInfo;
+    [NotifyPropertyChangedFor(nameof(IsSteamSignedIn))]
+    private string? _steamAccountName = SteamAuthService.AccountName;
 
-    [ObservableProperty]
-    private bool _isCheckingUpdates;
+    public bool IsSteamSignedIn => SteamAccountName is not null;
 
     public string AppVersion => AppInfo.Version;
 
@@ -168,8 +170,10 @@ public partial class SettingsViewModel : ViewModelBase
         ILogService logService,
         ITelemetryService telemetry,
         INotificationService notificationService,
-        IDiscordPresenceService presence)
+        IDiscordPresenceService presence,
+        UpdateController updates)
     {
+        Updates = updates;
         _settingsService = settingsService;
         _logService = logService;
         _telemetry = telemetry;
@@ -194,13 +198,37 @@ public partial class SettingsViewModel : ViewModelBase
         _presence.ConnectionStateChanged += OnPresenceConnectionChanged;
         _logFilePath = _logService.GetLogFilePath();
         _logFolderSizeDisplay = Formatters.Bytes(_logService.GetLogFolderSize());
+        SteamAuthService.AuthStateChanged += OnAuthStateChanged;
 
-        _ = CheckForUpdatesAsync();
+        _ = Updates.CheckAsync();
     }
 
-    /// <summary>Drops the presence subscription. The shell builds a fresh
+    /// <summary>Drops the event subscriptions. The shell builds a fresh
     /// instance on every navigation, so without this each visit leaks one.</summary>
-    public void Detach() => _presence.ConnectionStateChanged -= OnPresenceConnectionChanged;
+    public void Detach()
+    {
+        _presence.ConnectionStateChanged -= OnPresenceConnectionChanged;
+        SteamAuthService.AuthStateChanged -= OnAuthStateChanged;
+    }
+
+    private void OnAuthStateChanged() =>
+        Dispatcher.UIThread.Post(() => SteamAccountName = SteamAuthService.AccountName);
+
+    [RelayCommand]
+    private void SignOutOfSteam()
+    {
+        SteamAuthService.SignOut();
+        _notificationService.ShowSuccess(Loc["SteamSignedOut"]);
+    }
+
+    [RelayCommand]
+    private void OpenSteamAuthorizedDevices() => OpenUrl(SteamAuthorizedDevicesUrl);
+
+    partial void OnActiveCategoryChanged(SettingsCategory value)
+    {
+        if (value == SettingsCategory.Updates && Updates.LatestReleaseNotes is null)
+            _ = Updates.LoadReleaseNotesAsync();
+    }
 
     // Raised from the library's connection thread.
     private void OnPresenceConnectionChanged() =>
@@ -295,7 +323,8 @@ public partial class SettingsViewModel : ViewModelBase
     {
         _settingsService.Settings.IncludePrereleases = value;
         _settingsService.Save();
-        _ = CheckForUpdatesAsync();
+        _ = Updates.CheckAsync();
+        _ = Updates.LoadReleaseNotesAsync();
     }
 
     partial void OnSelectedLanguageChanged(LanguageInfo? value)
@@ -353,28 +382,6 @@ public partial class SettingsViewModel : ViewModelBase
 
     [RelayCommand]
     private void OpenThirdPartyNotices() => OpenUrl(ThirdPartyNoticesUrl);
-
-    [RelayCommand]
-    private async Task CheckForUpdatesAsync()
-    {
-        IsCheckingUpdates = true;
-        try
-        {
-            var info = await UpdateCheckerService.CheckForUpdateAsync(IncludePrereleases);
-            UpdateInfo = info;
-            IsUpdateAvailable = info is not null;
-        }
-        finally
-        {
-            IsCheckingUpdates = false;
-        }
-    }
-
-    [RelayCommand]
-    private void OpenReleasePage()
-    {
-        if (UpdateInfo?.ReleaseUrl is { } url) OpenUrl(url);
-    }
 
     [RelayCommand]
     private void OpenLogFolder() => RevealInExplorer(LogFilePath);

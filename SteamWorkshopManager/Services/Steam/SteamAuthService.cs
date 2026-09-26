@@ -26,35 +26,38 @@ public static class SteamAuthService
     private static string? _refreshToken;
     private static string? _accountName;
     private static ulong _steamId64;
-    private static ISettingsService? _settingsService;
 
     public static bool IsAuthenticated =>
         _accessToken != null && _steamId64 != 0 && !IsJwtExpired(_accessToken);
     public static bool HasRefreshToken => !string.IsNullOrEmpty(_refreshToken) && !string.IsNullOrEmpty(_accountName);
+
+    /// <summary>Account the stored tokens belong to, null when signed out.</summary>
+    public static string? AccountName => HasRefreshToken ? _accountName : null;
 
     /// <summary>
     /// Fired when the QR challenge URL changes (UI should re-render the QR code).
     /// </summary>
     public static event Action<string>? QrChallengeUrlChanged;
 
+    /// <summary>Fired after sign-in, sign-out or a revoked token was cleared.</summary>
+    public static event Action? AuthStateChanged;
+
     /// <summary>
-    /// Load stored tokens from settings. Reuses the access token if still valid.
+    /// Load stored tokens. Reuses the access token if still valid.
     /// </summary>
     public static void Initialize(ISettingsService settingsService)
     {
-        _settingsService = settingsService;
-        _refreshToken = settingsService.Settings.SteamRefreshToken;
-        _accountName = settingsService.Settings.SteamAccountName;
-        _steamId64 = settingsService.Settings.SteamId64;
+        MigrateLegacyTokens(settingsService);
 
-        // Register sensitive values for log redaction
-        if (!string.IsNullOrEmpty(_accountName))
-            LogService.Instance.RegisterSensitiveValue(_accountName, "accountName");
-        if (_steamId64 != 0)
-            LogService.Instance.RegisterSensitiveValue(_steamId64.ToString(), "steamId64");
+        var stored = SteamCredentialStore.Load();
+        _refreshToken = stored?.RefreshToken;
+        _accountName = stored?.AccountName;
+        _steamId64 = stored?.SteamId64 ?? 0;
+
+        RegisterForRedaction();
 
         // Restore persisted access token if it hasn't expired
-        var savedAccessToken = settingsService.Settings.SteamAccessToken;
+        var savedAccessToken = stored?.AccessToken;
         if (!string.IsNullOrEmpty(savedAccessToken) && !IsJwtExpired(savedAccessToken))
         {
             _accessToken = savedAccessToken;
@@ -64,6 +67,39 @@ public static class SteamAuthService
         {
             Log.Debug($"Initialized: hasRefreshToken={HasRefreshToken}, accessToken={(savedAccessToken != null ? "expired" : "none")}");
         }
+    }
+
+    /// <summary>Moves tokens older builds kept in plaintext settings.json into the protected store.</summary>
+    private static void MigrateLegacyTokens(ISettingsService settingsService)
+    {
+        var s = settingsService.Settings;
+        if (s.SteamRefreshToken is null && s.SteamAccessToken is null && s.SteamAccountName is null && s.SteamId64 == 0)
+            return;
+
+        if (SteamCredentialStore.Load() is null)
+            SteamCredentialStore.Save(new SteamCredentials(s.SteamRefreshToken, s.SteamAccessToken, s.SteamAccountName, s.SteamId64));
+
+        s.SteamRefreshToken = null;
+        s.SteamAccessToken = null;
+        s.SteamAccountName = null;
+        s.SteamId64 = 0;
+        settingsService.Save();
+        Log.Info("Migrated Steam credentials out of settings.json");
+    }
+
+    private static void RegisterForRedaction()
+    {
+        if (!string.IsNullOrEmpty(_accountName))
+            LogService.Instance.RegisterSensitiveValue(_accountName, "accountName");
+        if (_steamId64 != 0)
+            LogService.Instance.RegisterSensitiveValue(_steamId64.ToString(), "steamId64");
+    }
+
+    /// <summary>Forgets the stored tokens. Steam-side revocation is done from the account's Authorized Devices page.</summary>
+    public static void SignOut()
+    {
+        Log.Info("Signing out of Steam web session");
+        ClearTokens();
     }
 
     /// <summary>
@@ -214,7 +250,8 @@ public static class SteamAuthService
 
             Log.Debug("Waiting for user to scan QR code...");
             var pollResult = await authSession.PollingWaitForResultAsync(linkedCts.Token);
-            Log.Info($"QR auth successful for account: {pollResult.AccountName}");
+            LogService.Instance.RegisterSensitiveValue(pollResult.AccountName, "accountName");
+            Log.Info("QR auth successful");
 
             // Now log on to get the SteamID
             var steamUser = client.GetHandler<SteamUser>()!;
@@ -247,11 +284,10 @@ public static class SteamAuthService
             if (!string.IsNullOrEmpty(tokenResult.RefreshToken))
                 _refreshToken = tokenResult.RefreshToken;
 
-            // Register newly authenticated values for log redaction
-            LogService.Instance.RegisterSensitiveValue(_accountName, "accountName");
-            LogService.Instance.RegisterSensitiveValue(_steamId64.ToString(), "steamId64");
+            RegisterForRedaction();
 
             SaveTokens();
+            AuthStateChanged?.Invoke();
             Log.Debug($"Auth complete. SteamID64={_steamId64}");
 
             steamUser.LogOff();
@@ -275,8 +311,8 @@ public static class SteamAuthService
         var sessionId = Convert.ToHexString(RandomNumberGenerator.GetBytes(12)).ToLowerInvariant();
 
         cookieContainer.Add(new Uri("https://steamcommunity.com"), new Cookie("steamLoginSecure",
-            $"{_steamId64}%7C%7C{_accessToken}"));
-        cookieContainer.Add(new Uri("https://steamcommunity.com"), new Cookie("sessionid", sessionId));
+            $"{_steamId64}%7C%7C{_accessToken}") { Secure = true, HttpOnly = true });
+        cookieContainer.Add(new Uri("https://steamcommunity.com"), new Cookie("sessionid", sessionId) { Secure = true });
 
         var handler = new HttpClientHandler { CookieContainer = cookieContainer };
         var httpClient = new HttpClient(handler);
@@ -294,17 +330,11 @@ public static class SteamAuthService
         _accountName = null;
         _steamId64 = 0;
         SaveTokens();
+        AuthStateChanged?.Invoke();
     }
 
-    private static void SaveTokens()
-    {
-        if (_settingsService == null) return;
-        _settingsService.Settings.SteamRefreshToken = _refreshToken;
-        _settingsService.Settings.SteamAccessToken = _accessToken;
-        _settingsService.Settings.SteamAccountName = _accountName;
-        _settingsService.Settings.SteamId64 = _steamId64;
-        _settingsService.Save();
-    }
+    private static void SaveTokens() =>
+        SteamCredentialStore.Save(new SteamCredentials(_refreshToken, _accessToken, _accountName, _steamId64));
 
     /// <summary>
     /// Checks if a JWT access token has expired by reading the exp claim.

@@ -97,7 +97,7 @@ public sealed class WorkshopOrchestrator(
             telemetry.Track(TelemetryEventTypes.ModCreated, AppConfig.AppId);
 
             var id = (ulong)fileId;
-            var folderInfo = ModFileInfoBuilder.BuildForFolder(request.ContentFolderPath);
+            var folderInfo = await Task.Run(() => ModFileInfoBuilder.BuildForFolder(request.ContentFolderPath));
             if (folderInfo is not null) settingsService.SetContentFolderInfo(id, folderInfo);
             var imageInfo = ModFileInfoBuilder.BuildForFile(request.PreviewImagePath);
             if (imageInfo is not null) settingsService.SetPreviewImageInfo(id, imageInfo);
@@ -149,7 +149,7 @@ public sealed class WorkshopOrchestrator(
             var id = (ulong)request.FileId;
             if (!string.IsNullOrEmpty(request.ContentFolderPath))
             {
-                var folderInfo = ModFileInfoBuilder.BuildForFolder(request.ContentFolderPath);
+                var folderInfo = await Task.Run(() => ModFileInfoBuilder.BuildForFolder(request.ContentFolderPath));
                 if (folderInfo is not null) settingsService.SetContentFolderInfo(id, folderInfo);
             }
             if (!string.IsNullOrEmpty(request.PreviewImagePath))

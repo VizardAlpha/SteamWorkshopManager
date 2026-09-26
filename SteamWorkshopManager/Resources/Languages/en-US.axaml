@@ -151,6 +151,26 @@
     <x:String x:Key="DeleteSessionFinalWarning">Mods on Steam Workshop are not affected. This only erases local data.</x:String>
     <x:String x:Key="DeleteSessionSuccess">Session deleted</x:String>
     <x:String x:Key="DeleteSessionFailed">Failed to delete session</x:String>
+    <x:String x:Key="PreviewDownloadFailed">Could not download an existing preview image from Steam. Nothing was changed, please try again.</x:String>
+    <x:String x:Key="CloseDuringUploadTitle">Upload in progress</x:String>
+    <x:String x:Key="CloseDuringUploadBody">Closing now will interrupt the upload to Steam. The item may be left incomplete.</x:String>
+    <x:String x:Key="CloseDuringUploadKeep">Keep uploading</x:String>
+    <x:String x:Key="CloseDuringUploadQuit">Quit anyway</x:String>
+    <x:String x:Key="UpdateInstall">Update and restart</x:String>
+    <x:String x:Key="UpdateDownloading">Downloading update...</x:String>
+    <x:String x:Key="UpdateRestarting">Installing, the app will restart...</x:String>
+    <x:String x:Key="UpdateInstallFailed">Update failed</x:String>
+    <x:String x:Key="UpdateManualOnly">This version can't be installed from the app. Download it from the release page.</x:String>
+    <x:String x:Key="ReleaseNotesTitle">Release notes</x:String>
+    <x:String x:Key="ReleaseNotesLoading">Loading release notes...</x:String>
+    <x:String x:Key="WhatsNewTitle">What's new</x:String>
+    <x:String x:Key="WhatsNewClose">Got it</x:String>
+    <x:String x:Key="SteamAccountTitle">Steam account</x:String>
+    <x:String x:Key="SteamAccountDescription">Web session used to read changelog history and download past versions. The login token is stored encrypted on this computer only.</x:String>
+    <x:String x:Key="SteamNotSignedIn">Not signed in</x:String>
+    <x:String x:Key="SteamAuthorizedDevices">Manage authorized devices on Steam</x:String>
+    <x:String x:Key="SteamSignOut">Sign out</x:String>
+    <x:String x:Key="SteamSignedOut">Signed out of Steam</x:String>
     <x:String x:Key="DeleteSessionTooltip">Delete this session</x:String>
 
     <!-- Bulk actions -->

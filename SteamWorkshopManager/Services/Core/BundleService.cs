@@ -39,8 +39,17 @@ public static class BundleService
                     Log.Warning($"Embedded resource Languages.{lang}.axaml not found");
                     continue;
                 }
-                using var fileStream = File.Create(targetPath);
-                stream.CopyTo(fileStream);
+                using var buffer = new MemoryStream();
+                stream.CopyTo(buffer);
+                var bytes = buffer.ToArray();
+
+                // Skip the write when the file already matches (every launch but the first after an update).
+                if (File.Exists(targetPath) && File.ReadAllBytes(targetPath).AsSpan().SequenceEqual(bytes))
+                    continue;
+
+                var tmp = targetPath + ".tmp";
+                File.WriteAllBytes(tmp, bytes);
+                File.Move(tmp, targetPath, overwrite: true);
             }
             catch (Exception ex)
             {

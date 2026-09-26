@@ -61,6 +61,8 @@ public static class CrashLog
             if (note != null) header += $" ({note})";
 
             var body = exception?.ToString() ?? "No exception object supplied.";
+            // Users paste these into bug reports: strip profile paths and registered secrets.
+            try { body = LogService.Instance.SanitizeMessage(body); } catch { /* keep raw rather than lose the crash */ }
             lock (FileLock)
             {
                 // Shell and worker share this file, so a sharing violation is possible.

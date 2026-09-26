@@ -56,6 +56,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<INotificationService, NotificationService>();
         services.AddSingleton<IFileDialogService, FileDialogService>();
         services.AddSingleton<IDiscordPresenceService, DiscordPresenceService>();
+        services.AddSingleton<ViewModels.UpdateController>();
 
         // Workshop + dependency services
         services.AddSingleton<WorkshopTagsService>();

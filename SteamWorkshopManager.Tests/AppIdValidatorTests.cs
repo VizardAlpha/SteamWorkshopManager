@@ -139,6 +139,22 @@ public class AppIdValidatorTests
     }
 
     [TestMethod]
+    [DataRow(HttpStatusCode.TooManyRequests)]
+    [DataRow(HttpStatusCode.ServiceUnavailable)]
+    public async Task ValidateAsync_WorkshopProbeRateLimitedOrDown_ReturnsNetworkError(HttpStatusCode status)
+    {
+        const uint appId = 1022980;
+        var (validator, _) = CreateValidator(
+            (SteamUrls.AppDetails(appId), StoreResponse(appId, "Ostranauts", withWorkshopCategory: false)),
+            (SteamUrls.WorkshopPage(appId), StubResponse.WithStatus(status)));
+
+        var result = await validator.ValidateAsync(appId);
+
+        Assert.IsFalse(result.IsValid);
+        Assert.AreEqual("NetworkError", result.ErrorKey);
+    }
+
+    [TestMethod]
     public async Task ValidateAsync_WorkshopProbeRequestFails_ReturnsNetworkError()
     {
         const uint appId = 1022980;

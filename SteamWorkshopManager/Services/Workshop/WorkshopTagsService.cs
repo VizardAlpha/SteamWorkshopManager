@@ -244,7 +244,7 @@ public class WorkshopTagsService
             };
 
             var json = JsonSerializer.Serialize(entry, TagsCacheJsonContext.Default.TagsCacheEntry);
-            await File.WriteAllTextAsync(GetCacheFilePath(appId), json);
+            await AtomicFile.WriteAllTextAsync(GetCacheFilePath(appId), json);
             Log.Debug($"Tags cached for AppId {appId}");
         }
         catch (Exception ex)

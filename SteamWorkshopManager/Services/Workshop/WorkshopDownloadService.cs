@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading;
 using System.Threading.Tasks;
 using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Models;
@@ -79,8 +80,9 @@ public class WorkshopDownloadService
     }
 
     public async Task<string?> DownloadVersionAsync(uint appId, ulong publishedFileId, string modName,
-        ChangeLogEntry entry, IProgress<double>? progress = null)
+        ChangeLogEntry entry, IProgress<double>? progress = null, CancellationToken ct = default)
     {
+        string? partPath = null;
         try
         {
             var downloadUrl = await GetDownloadUrlAsync(publishedFileId, entry.Timestamp, entry.ManifestId);
@@ -88,57 +90,78 @@ public class WorkshopDownloadService
                 return null;
 
             var sanitizedName = SanitizeModName(modName);
-            var versionFolder = Path.Combine(AppPaths.WorkshopForApp(appId), $"{sanitizedName}_{entry.Timestamp}");
+            var versionFolder = AppPaths.WorkshopVersionFolder(appId, sanitizedName, entry.Timestamp);
             Directory.CreateDirectory(versionFolder);
 
             var filePath = Path.Combine(versionFolder, $"{sanitizedName}_{entry.Timestamp}.zip");
+            // Written as .part and renamed on success, so a cut download never looks complete.
+            partPath = filePath + ".part";
 
             Log.Info($"Downloading version to {filePath}");
 
             // Use regular HttpClient for CDN download (URL is pre-signed, no auth needed)
-            using var response = await _httpClient.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead);
+            using var response = await _httpClient.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead, ct);
             response.EnsureSuccessStatusCode();
 
             var totalBytes = response.Content.Headers.ContentLength ?? -1;
             var bytesRead = 0L;
+            var lastReport = Stopwatch.StartNew();
 
-            await using var contentStream = await response.Content.ReadAsStreamAsync();
-            await using var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true);
-
-            var buffer = new byte[8192];
-            int read;
-            while ((read = await contentStream.ReadAsync(buffer)) > 0)
+            await using (var contentStream = await response.Content.ReadAsStreamAsync(ct))
+            await using (var fileStream = new FileStream(partPath, FileMode.Create, FileAccess.Write, FileShare.None, 81920, true))
             {
-                await fileStream.WriteAsync(buffer.AsMemory(0, read));
-                bytesRead += read;
+                var buffer = new byte[81920];
+                int read;
+                while ((read = await contentStream.ReadAsync(buffer, ct)) > 0)
+                {
+                    await fileStream.WriteAsync(buffer.AsMemory(0, read), ct);
+                    bytesRead += read;
 
-                if (totalBytes > 0)
-                    progress?.Report((double)bytesRead / totalBytes);
+                    // Throttled: one report per 8 KB chunk used to flood the UI dispatcher.
+                    if (totalBytes > 0 && lastReport.ElapsedMilliseconds >= 100)
+                    {
+                        progress?.Report((double)bytesRead / totalBytes);
+                        lastReport.Restart();
+                    }
+                }
             }
+
+            File.Move(partPath, filePath, overwrite: true);
+            partPath = null;
 
             progress?.Report(1.0);
             Log.Info($"Download complete: {filePath} ({bytesRead} bytes)");
             return filePath;
+        }
+        catch (OperationCanceledException)
+        {
+            Log.Info($"Download cancelled for file {publishedFileId}");
+            return null;
         }
         catch (Exception ex)
         {
             Log.Error($"Failed to download version for file {publishedFileId}", ex);
             return null;
         }
+        finally
+        {
+            if (partPath is not null)
+            {
+                try { File.Delete(partPath); } catch { /* best effort */ }
+            }
+        }
     }
 
     public bool IsVersionDownloaded(uint appId, string modName, long timestamp)
     {
-        var sanitizedName = SanitizeModName(modName);
-        var versionFolder = Path.Combine(AppPaths.WorkshopForApp(appId), $"{sanitizedName}_{timestamp}");
+        var versionFolder = AppPaths.WorkshopVersionFolder(appId, SanitizeModName(modName), timestamp);
         return Directory.Exists(versionFolder) &&
                Directory.GetFiles(versionFolder, "*.zip").Length > 0;
     }
 
     public void OpenVersionFolder(uint appId, string modName, long timestamp)
     {
-        var sanitizedName = SanitizeModName(modName);
-        var versionFolder = Path.Combine(AppPaths.WorkshopForApp(appId), $"{sanitizedName}_{timestamp}");
+        var versionFolder = AppPaths.WorkshopVersionFolder(appId, SanitizeModName(modName), timestamp);
 
         if (!Directory.Exists(versionFolder))
             return;

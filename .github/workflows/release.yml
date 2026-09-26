@@ -1,18 +1,22 @@
-﻿name: Release
+name: Release
 
 on:
   push:
     tags:
       - 'v*'
 
+# Read-only by default; only the release job gets write access.
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
         with:
           dotnet-version: '10.0.x'
 
@@ -37,10 +41,10 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
         with:
           dotnet-version: '10.0.x'
 
@@ -55,12 +59,13 @@ jobs:
         run: Compress-Archive -Path dist/* -DestinationPath SteamWorkshopManager-${{ matrix.artifact }}.zip
         shell: pwsh
 
+      # Zip from inside dist/ so the archive root matches Windows (no "dist/" prefix).
       - name: Create archive (Unix)
         if: matrix.os != 'windows-latest'
-        run: zip -r SteamWorkshopManager-${{ matrix.artifact }}.zip dist/*
+        run: cd dist && zip -r ../SteamWorkshopManager-${{ matrix.artifact }}.zip .
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: SteamWorkshopManager-${{ matrix.artifact }}
           path: SteamWorkshopManager-${{ matrix.artifact }}.zip
@@ -73,12 +78,24 @@ jobs:
 
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           path: artifacts
 
+      # The in-app updater refuses to install a package missing from this file.
+      - name: Compute checksums
+        run: |
+          cd artifacts
+          find . -name '*.zip' -exec mv {} . \;
+          sha256sum *.zip > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
       - name: Create Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
-          files: artifacts/**/*.zip
+          files: |
+            artifacts/*.zip
+            artifacts/SHA256SUMS.txt
           generate_release_notes: true
+          # v1.9.0-beta.1, v2.0.0-alpha.2, ...: never offered to stable-channel users.
+          prerelease: ${{ contains(github.ref_name, '-') }}

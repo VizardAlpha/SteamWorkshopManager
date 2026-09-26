@@ -70,7 +70,7 @@ public sealed class SteamWorkerClient : IAsyncDisposable
             PipeDirection.InOut,
             maxNumberOfServerInstances: 1,
             PipeTransmissionMode.Byte,
-            PipeOptions.Asynchronous);
+            PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
 
         var exePath = Process.GetCurrentProcess().MainModule?.FileName
                       ?? throw new InvalidOperationException("Unable to locate host executable path.");
@@ -110,8 +110,14 @@ public sealed class SteamWorkerClient : IAsyncDisposable
         // Fire-and-forget: the worker holds this call open for the lifetime
         // of the session so its IProgress<LogEntryDto> sink stays valid.
         _ = Proxy.SetLogSinkAsync(
-            new Progress<LogEntryDto>(IngestWorkerLog),
+            new DirectProgress<LogEntryDto>(IngestWorkerLog),
             LogService.Instance.IsDebugEnabled);
+    }
+
+    // Progress<T> would capture the UI context and post every worker log line to it.
+    private sealed class DirectProgress<T>(Action<T> handler) : IProgress<T>
+    {
+        public void Report(T value) => handler(value);
     }
 
     private static void IngestWorkerLog(LogEntryDto dto) =>

@@ -151,6 +151,26 @@
     <x:String x:Key="DeleteSessionFinalWarning">Les mods sur le Workshop Steam ne sont pas touchés. Seules les données locales sont effacées.</x:String>
     <x:String x:Key="DeleteSessionSuccess">Session supprimée</x:String>
     <x:String x:Key="DeleteSessionFailed">Échec de la suppression de la session</x:String>
+    <x:String x:Key="PreviewDownloadFailed">Impossible de télécharger une image de prévisualisation existante depuis Steam. Rien n'a été modifié, réessaie.</x:String>
+    <x:String x:Key="CloseDuringUploadTitle">Upload en cours</x:String>
+    <x:String x:Key="CloseDuringUploadBody">Fermer maintenant interrompra l'envoi vers Steam. L'item risque de rester incomplet.</x:String>
+    <x:String x:Key="CloseDuringUploadKeep">Continuer l'upload</x:String>
+    <x:String x:Key="CloseDuringUploadQuit">Quitter quand même</x:String>
+    <x:String x:Key="UpdateInstall">Mettre à jour et redémarrer</x:String>
+    <x:String x:Key="UpdateDownloading">Téléchargement de la mise à jour...</x:String>
+    <x:String x:Key="UpdateRestarting">Installation, l'application va redémarrer...</x:String>
+    <x:String x:Key="UpdateInstallFailed">Échec de la mise à jour</x:String>
+    <x:String x:Key="UpdateManualOnly">Cette version ne peut pas être installée depuis l'application. Télécharge-la depuis la page de la release.</x:String>
+    <x:String x:Key="ReleaseNotesTitle">Notes de version</x:String>
+    <x:String x:Key="ReleaseNotesLoading">Chargement des notes de version...</x:String>
+    <x:String x:Key="WhatsNewTitle">Nouveautés</x:String>
+    <x:String x:Key="WhatsNewClose">Compris</x:String>
+    <x:String x:Key="SteamAccountTitle">Compte Steam</x:String>
+    <x:String x:Key="SteamAccountDescription">Session web utilisée pour lire l'historique des changelogs et télécharger les anciennes versions. Le jeton de connexion est stocké chiffré, uniquement sur cet ordinateur.</x:String>
+    <x:String x:Key="SteamNotSignedIn">Non connecté</x:String>
+    <x:String x:Key="SteamAuthorizedDevices">Gérer les appareils autorisés sur Steam</x:String>
+    <x:String x:Key="SteamSignOut">Se déconnecter</x:String>
+    <x:String x:Key="SteamSignedOut">Déconnecté de Steam</x:String>
     <x:String x:Key="DeleteSessionTooltip">Supprimer cette session</x:String>
 
     <!-- Bulk actions -->

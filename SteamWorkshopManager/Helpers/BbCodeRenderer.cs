@@ -30,8 +30,14 @@ namespace SteamWorkshopManager.Helpers;
 public static class BbCodeRenderer
 {
     private static readonly Logger Log = LogService.GetLogger<object>();
-    private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(10) };
-    private static readonly ConcurrentDictionary<string, Bitmap> ImageCache = new();
+    private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(10), MaxResponseContentBufferSize = 20 * 1024 * 1024 };
+
+    // One shared fetch per URL (concurrent re-renders reuse it), bounded so a long
+    // editing session doesn't pile up bitmaps. Evicted bitmaps aren't disposed: a live
+    // Image may still show them, the GC reclaims them once it's gone.
+    private const int MaxCachedImages = 32;
+    private static readonly ConcurrentDictionary<string, Task<Bitmap?>> ImageCache = new();
+    private static readonly ConcurrentQueue<string> ImageCacheOrder = new();
 
     // Values below are lifted from Steam's own CSS (shared_global.css, workshop.css)
     // so the preview matches what the Workshop page will actually show.
@@ -464,23 +470,35 @@ public static class BbCodeRenderer
     {
         if (!IsWebUrl(url)) return;
 
-        if (ImageCache.TryGetValue(url, out var cached))
+        var fetch = ImageCache.GetOrAdd(url, u =>
         {
-            target.Source = cached;
-            return;
-        }
+            ImageCacheOrder.Enqueue(u);
+            while (ImageCacheOrder.Count > MaxCachedImages && ImageCacheOrder.TryDequeue(out var oldest))
+                ImageCache.TryRemove(oldest, out _);
+            return FetchImageAsync(u);
+        });
 
+        var bitmap = await fetch;
+        if (bitmap is not null)
+            await Dispatcher.UIThread.InvokeAsync(() => target.Source = bitmap);
+    }
+
+    private static async Task<Bitmap?> FetchImageAsync(string url)
+    {
         try
         {
-            var bytes = await Http.GetByteArrayAsync(url);
-            using var stream = new MemoryStream(bytes);
-            var bitmap = new Bitmap(stream);
-            ImageCache[url] = bitmap;
-            await Dispatcher.UIThread.InvokeAsync(() => target.Source = bitmap);
+            var bytes = await Http.GetByteArrayAsync(url).ConfigureAwait(false);
+            // Decode off the UI thread.
+            return await Task.Run(() =>
+            {
+                using var stream = new MemoryStream(bytes);
+                return new Bitmap(stream);
+            }).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
             Log.Debug($"BbCodeRenderer: image fetch failed for {url}: {ex.Message}");
+            return null;
         }
     }
 }

@@ -6,9 +6,9 @@
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
 
-        <Version>1.8.9</Version>
-        <AssemblyVersion>1.8.9.0</AssemblyVersion>
-        <FileVersion>1.8.9.0</FileVersion>
+        <Version>1.8.10-beta.1</Version>
+        <AssemblyVersion>1.8.10.1</AssemblyVersion>
+        <FileVersion>1.8.10.1</FileVersion>
         
         <!-- Default ingest URL points to a local dev endpoint. -->
         <TelemetryEndpoint>http://localhost:5000/ingest</TelemetryEndpoint>
@@ -71,6 +71,7 @@
         <PackageReference Include="SteamKit2" Version="3.4.0" />
         <PackageReference Include="Steamworks.NET" Version="2025.163.0" />
         <PackageReference Include="StreamJsonRpc" Version="2.25.29" />
+        <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.12" />
     </ItemGroup>
 
     <ItemGroup>

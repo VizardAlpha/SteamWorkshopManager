@@ -61,6 +61,9 @@ public sealed class SessionHost : IAsyncDisposable
     /// </summary>
     public event Action? WorkerUnrecoverable;
 
+    private static readonly TimeSpan InitTimeout = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan ShutdownTimeout = TimeSpan.FromSeconds(5);
+
     public async Task<SteamInitResult> StartSessionAsync(uint appId)
     {
         if (_client is not null && ActiveAppId == appId)
@@ -88,11 +91,18 @@ public sealed class SessionHost : IAsyncDisposable
 
         try
         {
-            LastInitResult = await client.Proxy.InitializeAsync();
+            LastInitResult = await client.Proxy.InitializeAsync().WaitAsync(InitTimeout);
             CurrentUserId = LastInitResult == SteamInitResult.Success
-                ? await client.Proxy.GetCurrentUserIdAsync()
+                ? await client.Proxy.GetCurrentUserIdAsync().WaitAsync(InitTimeout)
                 : 0;
             Log.Info($"Session worker ready for AppId {appId}: {LastInitResult}");
+        }
+        catch (TimeoutException)
+        {
+            // A wedged SteamAPI.Init would otherwise keep the shell waiting forever.
+            Log.Error($"Steam worker for AppId {appId} did not initialize within {InitTimeout.TotalSeconds:0}s, killing it");
+            await StopAsync();
+            LastInitResult = SteamInitResult.SteamNotRunning;
         }
         catch (Exception ex)
         {
@@ -112,7 +122,8 @@ public sealed class SessionHost : IAsyncDisposable
         // silent - otherwise each session switch would look like a crash.
         _client.MarkIntentionalShutdown();
 
-        try { await _client.Proxy.ShutdownAsync(); } catch { }
+        // A busy worker must not block a session switch: past the timeout it's disposed (killed) anyway.
+        try { await _client.Proxy.ShutdownAsync().WaitAsync(ShutdownTimeout); } catch { }
         try { await _client.DisposeAsync(); } catch { }
 
         _client = null;

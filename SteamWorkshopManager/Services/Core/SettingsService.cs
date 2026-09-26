@@ -34,7 +34,7 @@ public class SettingsService : ISettingsService
         {
             Directory.CreateDirectory(SettingsFolder);
             var json = JsonSerializer.Serialize(Settings, SettingsJsonContext.Default.AppSettings);
-            File.WriteAllText(SettingsPath, json);
+            AtomicFile.WriteAllText(SettingsPath, json);
         }
         catch (Exception ex)
         {
@@ -93,7 +93,7 @@ public class SettingsService : ISettingsService
         else
             session.ContentFolderInfos[key] = new ItemFileInfo { Path = path };
 
-        SaveSessionAsync(session);
+        SaveSession(session);
     }
 
     public void SetContentFolderInfo(ulong publishedFileId, ItemFileInfo? info)
@@ -107,7 +107,7 @@ public class SettingsService : ISettingsService
         else
             session.ContentFolderInfos[key] = info;
 
-        SaveSessionAsync(session);
+        SaveSession(session);
     }
 
     public ItemFileInfo? GetPreviewImageInfo(ulong publishedFileId)
@@ -127,7 +127,7 @@ public class SettingsService : ISettingsService
         else
             session.PreviewImageInfos[key] = new ItemFileInfo { Path = path };
 
-        SaveSessionAsync(session);
+        SaveSession(session);
     }
 
     public void SetPreviewImageInfo(ulong publishedFileId, ItemFileInfo? info)
@@ -141,16 +141,17 @@ public class SettingsService : ISettingsService
         else
             session.PreviewImageInfos[key] = info;
 
-        SaveSessionAsync(session);
+        SaveSession(session);
     }
 
-    private static async void SaveSessionAsync(WorkshopSession session)
+    // Synchronous on purpose: snapshotting at call time keeps back-to-back saves in order.
+    private static void SaveSession(WorkshopSession session)
     {
         try
         {
             var filePath = AppPaths.SessionFile(session.Id);
             var json = JsonSerializer.Serialize(session, SessionJsonContext.Default.WorkshopSession);
-            await File.WriteAllTextAsync(filePath, json);
+            AtomicFile.WriteAllText(filePath, json);
         }
         catch (Exception ex)
         {

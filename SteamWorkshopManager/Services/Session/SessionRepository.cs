@@ -114,7 +114,7 @@ public class SessionRepository : ISessionRepository
             Directory.CreateDirectory(SessionsFolder);
             var filePath = GetSessionFilePath(session.Id);
             var json = JsonSerializer.Serialize(session, SessionJsonContext.Default.WorkshopSession);
-            await File.WriteAllTextAsync(filePath, json);
+            await AtomicFile.WriteAllTextAsync(filePath, json);
             Log.Debug($"Session saved: {session.Name} ({session.Id})");
         }
         catch (Exception ex)

@@ -44,7 +44,7 @@ public static class SteamWorkerHost
                 ".",
                 args.PipeName,
                 PipeDirection.InOut,
-                PipeOptions.Asynchronous);
+                PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
 
             await pipe.ConnectAsync(10_000);
 

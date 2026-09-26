@@ -8,7 +8,6 @@ using SteamWorkshopManager.Models;
 using Steamworks;
 using SteamWorkshopManager.Services.Core;
 using SteamWorkshopManager.Services.Log;
-using static SteamWorkshopManager.Services.Core.LocalizationService;
 
 namespace SteamWorkshopManager.Services.Steam;
 
@@ -19,6 +18,9 @@ public class SteamService : ISteamService
     // Steam can still be reconnecting when Init returns, so a false BLoggedOn
     // is only conclusive after a short grace period.
     private static readonly TimeSpan LogonGrace = TimeSpan.FromSeconds(3);
+
+    // Uploads only time out when Steam reports no progress for this long.
+    private static readonly TimeSpan UploadStallTimeout = TimeSpan.FromMinutes(5);
 
     private bool _isInitialized;
 
@@ -336,7 +338,10 @@ public class SteamService : ISteamService
         Log.Debug($"Tags: {string.Join(", ", tags)}");
 
         var expectedTotal = ComputeExpectedTotalBytes(contentFolderPath, previewImagePath, previewOps);
-        ReportProgress(progress, GetString("CreatingItem"), 0, expectedTotal, 0);
+        ReportProgress(progress, "CreatingItem", 0, expectedTotal, 0);
+
+        // Set once Steam allocates the item, cleared on success; anything left is deleted.
+        PublishedFileId_t? orphanId = null;
 
         try
         {
@@ -379,9 +384,10 @@ public class SteamService : ISteamService
         }
 
         var fileId = createResult.m_nPublishedFileId;
+        orphanId = fileId;
         Log.Info($"Item created successfully with FileId: {fileId}");
 
-        ReportProgress(progress, GetString("ConfiguringItem"), 0, expectedTotal, 5);
+        ReportProgress(progress, "ConfiguringItem", 0, expectedTotal, 5);
 
         // Update with content
         var updateHandle = SteamUGC.StartItemUpdate(
@@ -417,30 +423,23 @@ public class SteamService : ISteamService
                 submitTcs.SetResult(result);
         });
 
-        ReportProgress(progress, GetString("Uploading"), 0, expectedTotal, 10);
+        ReportProgress(progress, "Uploading", 0, expectedTotal, 10);
 
         var submitHandle = SteamUGC.SubmitItemUpdate(updateHandle, changelog ?? "Initial version");
         submitCallResult.Set(submitHandle);
 
-        timeout = DateTime.UtcNow.AddSeconds(300); // 5 minutes for large uploads
-        while (!submitTcs.Task.IsCompleted && DateTime.UtcNow < timeout)
+        if (!await PumpUploadAsync(submitTcs.Task, updateHandle, progress, expectedTotal))
         {
-            SteamAPI.RunCallbacks();
-            PollAndReportProgress(updateHandle, progress, expectedTotal);
-            await Task.Delay(100);
-        }
-
-        if (!submitTcs.Task.IsCompleted)
-        {
-            Log.Error("Submit item update request timed out");
+            Log.Error("Submit item update stalled: no progress from Steam");
             return CreateItemOutcome.Failed(EResult.k_EResultTimeout);
         }
 
         var submitResult = await submitTcs.Task;
         if (submitResult.m_eResult == EResult.k_EResultOK)
         {
+            orphanId = null;
             Log.Info($"Item '{title}' published successfully");
-            ReportProgress(progress, GetString("Done"), expectedTotal, expectedTotal, 100);
+            ReportProgress(progress, "Done", expectedTotal, expectedTotal, 100);
             return CreateItemOutcome.Created(fileId);
         }
 
@@ -450,8 +449,51 @@ public class SteamService : ISteamService
         }
         finally
         {
-            EnsureProgressDismissed(progress, GetString("OperationFailed"));
+            if (orphanId is { } orphan)
+                await DeleteOrphanAsync(orphan);
+            EnsureProgressDismissed(progress, "OperationFailed");
         }
+    }
+
+    /// <summary>Removes the empty item left behind by a failed create so a retry doesn't pile up duplicates.</summary>
+    private async Task DeleteOrphanAsync(PublishedFileId_t fileId)
+    {
+        Log.Warning($"Create failed after Steam allocated FileId {fileId}, deleting the empty item");
+        try
+        {
+            if (!await DeleteItemAsync(fileId))
+                Log.Warning($"Could not delete orphan item {fileId}, it stays on the Workshop");
+        }
+        catch (Exception ex)
+        {
+            Log.Warning($"Could not delete orphan item {fileId}: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Pumps callbacks until the submit completes. Returns false only when Steam
+    /// reports no status or byte change for <see cref="UploadStallTimeout"/>.
+    /// </summary>
+    private static async Task<bool> PumpUploadAsync(Task submitTask, UGCUpdateHandle_t updateHandle,
+        IProgress<UploadProgress>? progress, ulong expectedTotal)
+    {
+        var lastSignal = (EItemUpdateStatus.k_EItemUpdateStatusInvalid, 0UL);
+        var stallDeadline = DateTime.UtcNow + UploadStallTimeout;
+
+        while (!submitTask.IsCompleted)
+        {
+            if (DateTime.UtcNow >= stallDeadline) return false;
+
+            SteamAPI.RunCallbacks();
+            var signal = PollAndReportProgress(updateHandle, progress, expectedTotal);
+            if (signal != lastSignal)
+            {
+                lastSignal = signal;
+                stallDeadline = DateTime.UtcNow + UploadStallTimeout;
+            }
+            await Task.Delay(100);
+        }
+        return true;
     }
 
     public async Task<bool> UpdateItemAsync(PublishedFileId_t fileId, string? title,
@@ -472,7 +514,7 @@ public class SteamService : ISteamService
         if (tags != null) Log.Debug($"Tags: {string.Join(", ", tags)}");
 
         var expectedTotal = ComputeExpectedTotalBytes(contentFolderPath, previewImagePath, previewOps);
-        ReportProgress(progress, GetString("PreparingUpdate"), 0, expectedTotal, 0);
+        ReportProgress(progress, "PreparingUpdate", 0, expectedTotal, 0);
 
         try
         {
@@ -518,22 +560,14 @@ public class SteamService : ISteamService
                 tcs.SetResult(result);
         });
 
-        ReportProgress(progress, GetString("Uploading"), 0, expectedTotal, 5);
+        ReportProgress(progress, "Uploading", 0, expectedTotal, 5);
 
         var handle = SteamUGC.SubmitItemUpdate(updateHandle, changelog ?? "");
         callResult.Set(handle);
 
-        var timeout = DateTime.UtcNow.AddSeconds(300); // 5 minutes for large uploads
-        while (!tcs.Task.IsCompleted && DateTime.UtcNow < timeout)
+        if (!await PumpUploadAsync(tcs.Task, updateHandle, progress, expectedTotal))
         {
-            SteamAPI.RunCallbacks();
-            PollAndReportProgress(updateHandle, progress, expectedTotal);
-            await Task.Delay(100);
-        }
-
-        if (!tcs.Task.IsCompleted)
-        {
-            Log.Error("Update item request timed out");
+            Log.Error("Update item stalled: no progress from Steam");
             return false;
         }
 
@@ -541,7 +575,7 @@ public class SteamService : ISteamService
         if (result.m_eResult == EResult.k_EResultOK)
         {
             Log.Info($"Item {fileId} updated successfully");
-            ReportProgress(progress, GetString("Done"), expectedTotal, expectedTotal, 100);
+            ReportProgress(progress, "Done", expectedTotal, expectedTotal, 100);
             return true;
         }
 
@@ -551,7 +585,7 @@ public class SteamService : ISteamService
         }
         finally
         {
-            EnsureProgressDismissed(progress, GetString("OperationFailed"));
+            EnsureProgressDismissed(progress, "OperationFailed");
         }
     }
 
@@ -670,21 +704,24 @@ public class SteamService : ISteamService
     /// pre-computed <paramref name="expectedTotal"/> rather than Steam's
     /// per-phase total so the user doesn't see the displayed total jump
     /// between phases (preview file = 1 MB, content = 100 MB, etc.).
+    /// Returns the raw (status, bytes) pair so the caller can detect stalls.
     /// </summary>
-    private static void PollAndReportProgress(UGCUpdateHandle_t updateHandle,
-        IProgress<UploadProgress>? progress, ulong expectedTotal)
+    private static (EItemUpdateStatus Status, ulong BytesProcessed) PollAndReportProgress(
+        UGCUpdateHandle_t updateHandle, IProgress<UploadProgress>? progress, ulong expectedTotal)
     {
-        if (progress is null) return;
-
         var status = SteamUGC.GetItemUpdateProgress(updateHandle, out var bytesProcessed, out var bytesTotal);
+        var signal = (status, bytesProcessed);
+        if (progress is null) return signal;
+
+        // Localization keys: the worker has no Avalonia resources, the shell translates.
         var statusText = status switch
         {
-            EItemUpdateStatus.k_EItemUpdateStatusPreparingConfig => GetString("Preparing"),
-            EItemUpdateStatus.k_EItemUpdateStatusPreparingContent => GetString("PreparingContent"),
-            EItemUpdateStatus.k_EItemUpdateStatusUploadingContent => GetString("UploadingContent"),
-            EItemUpdateStatus.k_EItemUpdateStatusUploadingPreviewFile => GetString("UploadingImage"),
-            EItemUpdateStatus.k_EItemUpdateStatusCommittingChanges => GetString("Finalizing"),
-            _ => GetString("Uploading")
+            EItemUpdateStatus.k_EItemUpdateStatusPreparingConfig => "Preparing",
+            EItemUpdateStatus.k_EItemUpdateStatusPreparingContent => "PreparingContent",
+            EItemUpdateStatus.k_EItemUpdateStatusUploadingContent => "UploadingContent",
+            EItemUpdateStatus.k_EItemUpdateStatusUploadingPreviewFile => "UploadingImage",
+            EItemUpdateStatus.k_EItemUpdateStatusCommittingChanges => "Finalizing",
+            _ => "Uploading"
         };
 
         // During the actual content upload, Steam reports bytes against the
@@ -693,7 +730,7 @@ public class SteamService : ISteamService
         if (status == EItemUpdateStatus.k_EItemUpdateStatusUploadingContent && bytesTotal > 0)
         {
             progress.Report(new UploadProgress(statusText, bytesProcessed, bytesTotal));
-            return;
+            return signal;
         }
 
         // Other phases: keep the total stable and drive the bar by hint
@@ -709,6 +746,7 @@ public class SteamService : ISteamService
             _ => 0.0,
         };
         ReportProgress(progress, statusText, 0, expectedTotal, hint);
+        return signal;
     }
 
     /// <summary>
@@ -816,6 +854,10 @@ public class SteamService : ISteamService
                 ERemoteStoragePublishedFileVisibility.k_ERemoteStoragePublishedFileVisibilityUnlisted,
             _ => ERemoteStoragePublishedFileVisibility.k_ERemoteStoragePublishedFileVisibilityPrivate
         };
+
+    public Task<List<GameBranch>?> GetGameBranchesAsync() => Task.FromResult<List<GameBranch>?>(GetGameBranches());
+
+    public Task<string?> GetCurrentBranchNameAsync() => Task.FromResult<string?>(GetCurrentBranchName());
 
     public List<GameBranch> GetGameBranches()
     {

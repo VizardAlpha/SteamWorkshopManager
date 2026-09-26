@@ -40,13 +40,13 @@ public sealed class DraftService
     /// </summary>
     public string Save(CreateDraft draft)
     {
-        var tempId = string.IsNullOrEmpty(draft.TempId) ? Guid.NewGuid().ToString("N") : draft.TempId;
+        var tempId = IsValidTempId(draft.TempId) ? draft.TempId : Guid.NewGuid().ToString("N");
         var folder = Path.Combine(DraftsRoot, tempId);
         Directory.CreateDirectory(folder);
 
         var final = draft with { TempId = tempId, UpdatedAt = DateTime.UtcNow };
         var json = JsonSerializer.Serialize(final, DraftJsonContext.Default.CreateDraft);
-        File.WriteAllText(Path.Combine(folder, FileName), json);
+        AtomicFile.WriteAllText(Path.Combine(folder, FileName), json);
 
         Log.Debug($"Draft saved: {tempId} (\"{final.DisplayName}\")");
         return tempId;
@@ -71,11 +71,20 @@ public sealed class DraftService
         return results.OrderByDescending(d => d.UpdatedAt).ToList();
     }
 
-    public CreateDraft? Load(string tempId) => TryLoad(Path.Combine(DraftsRoot, tempId));
+    public CreateDraft? Load(string tempId) =>
+        IsValidTempId(tempId) ? TryLoad(Path.Combine(DraftsRoot, tempId)) : null;
+
+    /// <summary>TempIds come from draft.json content, so only a GUID may reach a path (no "..\").</summary>
+    public static bool IsValidTempId(string? tempId) => Guid.TryParse(tempId, out _);
 
     public void Delete(string tempId)
     {
         if (string.IsNullOrEmpty(tempId)) return;
+        if (!IsValidTempId(tempId))
+        {
+            Log.Warning("Refusing to delete a draft with a non-GUID id");
+            return;
+        }
         var folder = Path.Combine(DraftsRoot, tempId);
         if (!Directory.Exists(folder)) return;
 

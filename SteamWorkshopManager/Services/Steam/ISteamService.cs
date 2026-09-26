@@ -75,14 +75,14 @@ public interface ISteamService
 
     /// <summary>
     /// Gets the list of game branches (betas) available for the current AppId.
-    /// Returns an empty list if versioning is not enabled.
+    /// Empty when versioning is not enabled, null when the call failed (don't cache that).
     /// </summary>
-    List<GameBranch> GetGameBranches();
+    Task<List<GameBranch>?> GetGameBranchesAsync();
 
     /// <summary>
-    /// Gets the current active beta branch name. Returns "public" if on the default branch.
+    /// Gets the current active beta branch name. "public" on the default branch, null on failure.
     /// </summary>
-    string GetCurrentBranchName();
+    Task<string?> GetCurrentBranchNameAsync();
 }
 
 public record UploadProgress(string Status, ulong BytesProcessed, ulong BytesTotal, double PercentHint = 0)

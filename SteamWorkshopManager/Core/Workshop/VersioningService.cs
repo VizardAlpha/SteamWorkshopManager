@@ -29,33 +29,30 @@ public sealed class VersioningService(ISteamService steamService, SessionHost ho
     private List<GameBranch>? _cachedBranches;
     private string? _cachedCurrentBranch;
 
-    private void EnsureBranchesCached()
+    /// <summary>False when the worker call failed; nothing is cached then so the next open retries.</summary>
+    private async Task<bool> EnsureBranchesCachedAsync()
     {
         var currentAppId = AppConfig.AppId;
-        if (_cachedBranches is not null && _cachedAppId == currentAppId) return;
+        if (_cachedBranches is not null && _cachedAppId == currentAppId) return true;
 
-        _cachedBranches = steamService.GetGameBranches();
-        _cachedCurrentBranch = steamService.GetCurrentBranchName();
+        var branches = await steamService.GetGameBranchesAsync();
+        if (branches is null) return false;
+        var current = await steamService.GetCurrentBranchNameAsync();
+
+        _cachedBranches = branches;
+        _cachedCurrentBranch = current;
         _cachedAppId = currentAppId;
+        return true;
     }
 
-    public bool IsVersioningEnabled()
-    {
-        EnsureBranchesCached();
-        return _cachedBranches!.Count > 0;
-    }
+    public async Task<bool> IsVersioningEnabledAsync() =>
+        await EnsureBranchesCachedAsync() && _cachedBranches!.Count > 0;
 
-    public List<GameBranch> GetAvailableBranches()
-    {
-        EnsureBranchesCached();
-        return _cachedBranches!.Where(b => !b.IsPrivate).ToList();
-    }
+    public async Task<List<GameBranch>> GetAvailableBranchesAsync() =>
+        await EnsureBranchesCachedAsync() ? _cachedBranches!.Where(b => !b.IsPrivate).ToList() : [];
 
-    public string GetCurrentBranch()
-    {
-        EnsureBranchesCached();
-        return _cachedCurrentBranch ?? "public";
-    }
+    public async Task<string> GetCurrentBranchAsync() =>
+        await EnsureBranchesCachedAsync() ? _cachedCurrentBranch ?? "public" : "public";
 
     public async Task<List<ModVersionInfo>> GetModVersionsAsync(PublishedFileId_t fileId)
     {

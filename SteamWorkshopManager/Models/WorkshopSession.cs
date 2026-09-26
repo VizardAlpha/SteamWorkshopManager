@@ -59,6 +59,9 @@ public class WorkshopSession : INotifyPropertyChanged
         }
     }
 
+    /// <summary>Drops the icon without disposing it, once ownership moved to another instance.</summary>
+    public void DetachIconBitmap() => _iconBitmap = null;
+
     /// <summary>
     /// Unique identifier for this session.
     /// </summary>

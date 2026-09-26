@@ -2,7 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
+using System.Threading.Channels;
+using System.Threading.Tasks;
 using SteamWorkshopManager.Helpers;
 
 namespace SteamWorkshopManager.Services.Log;
@@ -31,6 +34,16 @@ public class LogService : ILogService
 
     private readonly string _userProfilePath;
 
+    // Disk writes go through a queue drained on a background thread, so logging never
+    // blocks the caller (often the UI thread). Errors and process exit flush synchronously.
+    private readonly Channel<(string Path, string Text)> _writeQueue =
+        Channel.CreateUnbounded<(string Path, string Text)>();
+    private readonly Lock _fileLock = new();
+    private int _writerStarted;
+
+    private const int RetentionDays = 14;
+    private const long MaxDebugLogBytes = 50L * 1024 * 1024;
+
     private LogService()
     {
         Directory.CreateDirectory(AppPaths.LocalRoot);
@@ -38,6 +51,73 @@ public class LogService : ILogService
         _appLogPath = Path.Combine(AppPaths.LocalRoot, $"app_{day}.log");
         _debugLogPath = Path.Combine(AppPaths.LocalRoot, $"debug_{day}.log");
         _userProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        AppDomain.CurrentDomain.ProcessExit += (_, _) => Flush();
+    }
+
+    /// <summary>Deletes log files older than the retention window. Called once at shell startup.</summary>
+    public void PurgeOldLogs()
+    {
+        try
+        {
+            var cutoff = DateTime.Now.AddDays(-RetentionDays);
+            foreach (var path in EnumerateLogFiles())
+            {
+                try
+                {
+                    if (File.GetLastWriteTime(path) < cutoff) File.Delete(path);
+                }
+                catch { /* in use by another process */ }
+            }
+        }
+        catch
+        {
+            // Ignore enumeration failures
+        }
+    }
+
+    /// <summary>Writes every queued line now. Safe to call from any thread.</summary>
+    public void Flush()
+    {
+        lock (_fileLock) DrainQueue();
+    }
+
+    private void EnsureWriter()
+    {
+        if (Interlocked.Exchange(ref _writerStarted, 1) == 1) return;
+        _ = Task.Run(async () =>
+        {
+            while (await _writeQueue.Reader.WaitToReadAsync())
+            {
+                lock (_fileLock) DrainQueue();
+            }
+        });
+    }
+
+    // Caller holds _fileLock. Batches lines per file so each file is opened once per drain.
+    private void DrainQueue()
+    {
+        Dictionary<string, StringBuilder>? batches = null;
+        while (_writeQueue.Reader.TryRead(out var item))
+        {
+            batches ??= new Dictionary<string, StringBuilder>();
+            if (!batches.TryGetValue(item.Path, out var sb)) batches[item.Path] = sb = new StringBuilder();
+            sb.Append(item.Text);
+        }
+        if (batches is null) return;
+
+        foreach (var (path, sb) in batches)
+        {
+            try
+            {
+                if (path == _debugLogPath && File.Exists(path) && new FileInfo(path).Length > MaxDebugLogBytes)
+                    continue;
+                AppendWithRetry(path, sb.ToString());
+            }
+            catch
+            {
+                // Ignore file write errors
+            }
+        }
     }
 
     /// <summary>Switches this process into worker mode: writes are forwarded
@@ -103,7 +183,7 @@ public class LogService : ILogService
         }
     }
 
-    private string SanitizeMessage(string message)
+    public string SanitizeMessage(string message)
     {
         // Replace user profile path with %USERPROFILE%
         if (!string.IsNullOrEmpty(_userProfilePath))
@@ -248,10 +328,11 @@ public class LogService : ILogService
             // Debug chatter goes to its own file so it can't drown the entries
             // that matter when diagnosing a user report.
             var path = entry.Level == LogLevel.Debug ? _debugLogPath : _appLogPath;
-            lock (_lock)
-            {
-                AppendWithRetry(path, line + Environment.NewLine);
-            }
+            _writeQueue.Writer.TryWrite((path, line + Environment.NewLine));
+
+            // An error may precede a crash: make sure it reaches the disk.
+            if (entry.Level == LogLevel.Error) Flush();
+            else EnsureWriter();
         }
         catch
         {
@@ -304,6 +385,7 @@ public class LogService : ILogService
         {
             _logs.Clear();
         }
+        Flush();
 
         try
         {

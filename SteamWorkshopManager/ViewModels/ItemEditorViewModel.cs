@@ -21,6 +21,7 @@ using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Models;
 using Steamworks;
 using SteamWorkshopManager.Services.Core;
+using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Notifications;
 using SteamWorkshopManager.Services.Session;
 using SteamWorkshopManager.Services.Steam;
@@ -57,6 +58,8 @@ public partial class ItemEditorViewModel : ViewModelBase
     private bool _dependenciesLoaded;
     private bool _versionsLoaded;
     private static readonly HttpClient HttpClient = new();
+    private static readonly Logger Log = LogService.GetLogger<ItemEditorViewModel>();
+    private string? _previewTempDir;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsInfoComplete))]
@@ -96,14 +99,26 @@ public partial class ItemEditorViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(OriginalFolderSizeDisplay))]
     private string? _contentFolderPath;
 
-    public string ContentFolderSize
+    // Folder scans can walk thousands of files: done off the UI thread, getters read the cache.
+    private FileFingerprint _folderFingerprint = FileFingerprint.Empty;
+    private int _folderScanVersion;
+
+    partial void OnContentFolderPathChanged(string? value) => _ = RefreshFolderFingerprintAsync();
+
+    private async Task RefreshFolderFingerprintAsync()
     {
-        get
-        {
-            var size = ModFileInfoBuilder.InspectFolder(ContentFolderPath).Size;
-            return size > 0 ? Formatters.Bytes(size) : string.Empty;
-        }
+        var version = ++_folderScanVersion;
+        var path = ContentFolderPath;
+        var fp = await Task.Run(() => ModFileInfoBuilder.InspectFolder(path));
+        if (version != _folderScanVersion) return;
+
+        _folderFingerprint = fp;
+        OnPropertyChanged(nameof(ContentFolderSize));
+        OnPropertyChanged(nameof(IsFolderSizeChanged));
     }
+
+    public string ContentFolderSize =>
+        _folderFingerprint.Size > 0 ? Formatters.Bytes(_folderFingerprint.Size) : string.Empty;
 
     /// <summary>True when the folder has changed and we have a previous-upload
     /// fingerprint to diff against - drives the red→green size badge.</summary>
@@ -406,6 +421,7 @@ public partial class ItemEditorViewModel : ViewModelBase
         _initialContentFolderPath = _contentFolderPath;
         _initialFolderSize = savedFolderInfo?.Size ?? 0;
         _initialFolderModified = savedFolderInfo?.LastModifiedUtc ?? DateTime.MinValue;
+        _ = RefreshFolderFingerprintAsync();
 
         // Load tags by category from current session
         var selectedTagNames = item.Tags.Select(t => t.Name).ToHashSet();
@@ -485,20 +501,19 @@ public partial class ItemEditorViewModel : ViewModelBase
         return null;
     }
 
+    // Fire-and-forget by design; everything is caught so it can't take the app down.
     private async void LoadPreviewThumbnailAsync(WorkshopPreview preview)
     {
         try
         {
-            var response = await HttpClient.GetAsync(preview.RemoteUrl);
-            if (response.IsSuccessStatusCode)
-            {
-                var stream = await response.Content.ReadAsStreamAsync();
-                preview.Thumbnail = new Bitmap(stream);
-            }
+            if (string.IsNullOrEmpty(preview.RemoteUrl)) return;
+            // Shared with the item grid: throttled, disk-cached, decoded downscaled off the UI thread.
+            var bitmap = await ThumbnailCache.GetAsync(preview.RemoteUrl, CancellationToken.None);
+            if (bitmap is not null) preview.Thumbnail = bitmap;
         }
-        catch
+        catch (Exception ex)
         {
-            // Ignore preview thumbnail failures
+            Log.Debug($"Preview thumbnail failed: {ex.Message}");
         }
     }
 
@@ -517,16 +532,20 @@ public partial class ItemEditorViewModel : ViewModelBase
 
         try
         {
-            var response = await HttpClient.GetAsync(url);
-            if (response.IsSuccessStatusCode)
+            using var response = await HttpClient.GetAsync(url);
+            if (!response.IsSuccessStatusCode) return;
+
+            var bytes = await response.Content.ReadAsByteArrayAsync();
+            // Decode off the UI thread; the continuation sets the property back on it.
+            PreviewImage = await Task.Run(() =>
             {
-                var stream = await response.Content.ReadAsStreamAsync();
-                PreviewImage = new Bitmap(stream);
-            }
+                using var stream = new MemoryStream(bytes);
+                return new Bitmap(stream);
+            });
         }
-        catch
+        catch (Exception ex)
         {
-            // Ignore image load failures
+            Log.Debug($"Preview image load failed: {ex.Message}");
         }
     }
 
@@ -584,6 +603,8 @@ public partial class ItemEditorViewModel : ViewModelBase
 
         try
         {
+            // Files may have changed since the folder was picked: rescan before diffing.
+            await RefreshFolderFingerprintAsync();
             var contentFolder = HasContentFolderChanged() ? ContentFolderPath : null;
             var previewImage = HasPreviewImageChanged() ? PreviewImagePath : null;
 
@@ -595,6 +616,11 @@ public partial class ItemEditorViewModel : ViewModelBase
             }
 
             var previewOps = await BuildPreviewOpsAsync();
+            if (previewOps is null)
+            {
+                ErrorMessage = Loc["PreviewDownloadFailed"];
+                return;
+            }
 
             var request = new UpdateModRequest(
                 _originalItem.PublishedFileId,
@@ -617,9 +643,9 @@ public partial class ItemEditorViewModel : ViewModelBase
                 // check uses the just-uploaded state.
                 if (!string.IsNullOrEmpty(ContentFolderPath))
                 {
-                    var fp = ModFileInfoBuilder.InspectFolder(ContentFolderPath);
-                    _initialFolderSize = fp.Size;
-                    _initialFolderModified = fp.LastModifiedUtc;
+                    // Fingerprint was refreshed right before the upload.
+                    _initialFolderSize = _folderFingerprint.Size;
+                    _initialFolderModified = _folderFingerprint.LastModifiedUtc;
                 }
                 if (!string.IsNullOrEmpty(PreviewImagePath))
                 {
@@ -644,8 +670,24 @@ public partial class ItemEditorViewModel : ViewModelBase
         }
         finally
         {
+            CleanupPreviewTempDir();
             IsSaving = false;
         }
+    }
+
+    private void CleanupPreviewTempDir()
+    {
+        if (_previewTempDir is null) return;
+        try
+        {
+            if (Directory.Exists(_previewTempDir))
+                Directory.Delete(_previewTempDir, recursive: true);
+        }
+        catch (Exception ex)
+        {
+            Log.Debug($"Could not delete preview temp dir: {ex.Message}");
+        }
+        _previewTempDir = null;
     }
 
     [RelayCommand]
@@ -729,15 +771,15 @@ public partial class ItemEditorViewModel : ViewModelBase
         IsLoadingVersions = true;
         try
         {
-            IsVersioningEnabled = _versioningService.IsVersioningEnabled();
+            IsVersioningEnabled = await _versioningService.IsVersioningEnabledAsync();
             if (!IsVersioningEnabled)
             {
                 _versionsLoaded = true;
                 return;
             }
 
-            CurrentBranch = _versioningService.GetCurrentBranch();
-            AvailableBranches = _versioningService.GetAvailableBranches();
+            CurrentBranch = await _versioningService.GetCurrentBranchAsync();
+            AvailableBranches = await _versioningService.GetAvailableBranchesAsync();
             OnPropertyChanged(nameof(AvailableBranches));
 
             var versions = await _versioningService.GetModVersionsAsync(_originalItem.PublishedFileId);
@@ -1327,8 +1369,9 @@ public partial class ItemEditorViewModel : ViewModelBase
     /// entries; falls back to a full rebuild - including downloading any
     /// existing image we still want to keep - when the in-list order no
     /// longer matches what Steam will hold after a naive replay.
+    /// Returns null when a kept image can't be downloaded, so the save aborts.
     /// </summary>
-    private async Task<List<PreviewOp>> BuildPreviewOpsAsync()
+    private async Task<List<PreviewOp>?> BuildPreviewOpsAsync()
     {
         if (IsReorderNeeded())
             return await BuildRebuildOpsAsync();
@@ -1342,7 +1385,7 @@ public partial class ItemEditorViewModel : ViewModelBase
     }
 
 
-    private async Task<List<PreviewOp>> BuildRebuildOpsAsync()
+    private async Task<List<PreviewOp>?> BuildRebuildOpsAsync()
     {
         var ops = new List<PreviewOp>();
 
@@ -1361,12 +1404,17 @@ public partial class ItemEditorViewModel : ViewModelBase
 
         var tempDir = AppPaths.TempPreviewDir();
         Directory.CreateDirectory(tempDir);
+        _previewTempDir = tempDir;
 
         foreach (var p in ImagePreviews)
         {
             var path = p.LocalPath;
             if (string.IsNullOrEmpty(path) && !string.IsNullOrEmpty(p.RemoteUrl))
+            {
+                // The rebuild removes every existing image first: a missing re-add would delete it for good.
                 path = await DownloadPreviewToTempAsync(p.RemoteUrl, tempDir);
+                if (path is null) return null;
+            }
             if (!string.IsNullOrEmpty(path))
                 ops.Add(new PreviewOp.AddImage(path));
         }
@@ -1386,7 +1434,11 @@ public partial class ItemEditorViewModel : ViewModelBase
         try
         {
             using var response = await HttpClient.GetAsync(url);
-            if (!response.IsSuccessStatusCode) return null;
+            if (!response.IsSuccessStatusCode)
+            {
+                Log.Warning($"Preview download failed ({(int)response.StatusCode}): {url}");
+                return null;
+            }
 
             // Steam CDN URLs typically end in .png/.jpg; fall back to .jpg
             // when there's no extension we recognize.
@@ -1398,8 +1450,9 @@ public partial class ItemEditorViewModel : ViewModelBase
             await response.Content.CopyToAsync(fs);
             return path;
         }
-        catch
+        catch (Exception ex)
         {
+            Log.Warning($"Preview download failed: {url}: {ex.Message}");
             return null;
         }
     }
@@ -1499,7 +1552,7 @@ public partial class ItemEditorViewModel : ViewModelBase
     {
         if (ContentFolderPath != _initialContentFolderPath) return true;
         if (string.IsNullOrEmpty(ContentFolderPath)) return false;
-        var fp = ModFileInfoBuilder.InspectFolder(ContentFolderPath);
+        var fp = _folderFingerprint;
         return fp.Size != _initialFolderSize || fp.LastModifiedUtc != _initialFolderModified;
     }
 

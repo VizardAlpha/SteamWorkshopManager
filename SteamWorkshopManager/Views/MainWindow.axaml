@@ -5,6 +5,7 @@
         xmlns:local="using:SteamWorkshopManager"
         xmlns:helpers="using:SteamWorkshopManager.Helpers"
         xmlns:icons="using:Material.Icons.Avalonia"
+        xmlns:controls="using:SteamWorkshopManager.Views.Controls"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="700"
@@ -33,7 +34,7 @@
 
             <!-- Update banner -->
             <Border Grid.Row="1"
-                    IsVisible="{Binding IsUpdateAvailable}"
+                    IsVisible="{Binding Updates.IsBannerVisible}"
                     Background="{DynamicResource SurfaceElevatedBrush}"
                     BorderBrush="{DynamicResource BorderSubtleBrush}"
                     BorderThickness="0,0,0,1"
@@ -44,21 +45,42 @@
                                    Foreground="{DynamicResource AccentSecondaryBrush}"
                                    FontSize="13"
                                    VerticalAlignment="Center"/>
-                        <TextBlock Text="{Binding UpdateInfo.LatestVersion}"
+                        <TextBlock Text="{Binding Updates.UpdateInfo.LatestVersion}"
                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                    FontWeight="SemiBold"
                                    FontSize="13"
                                    VerticalAlignment="Center"/>
+                        <!-- Download progress / error while installing from the banner -->
+                        <TextBlock Text="{Binding Updates.InstallStatus}"
+                                   IsVisible="{Binding Updates.IsInstalling}"
+                                   Foreground="{DynamicResource TextMutedBrush}"
+                                   FontSize="12"
+                                   VerticalAlignment="Center"/>
+                        <ProgressBar Value="{Binding Updates.InstallProgress}"
+                                     IsVisible="{Binding Updates.IsInstalling}"
+                                     Minimum="0" Maximum="100"
+                                     Width="140" Height="4"
+                                     VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding Updates.InstallError}"
+                                   IsVisible="{Binding Updates.InstallError, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                   Foreground="{DynamicResource FeedbackDangerTextBrush}"
+                                   FontSize="12"
+                                   TextTrimming="CharacterEllipsis"
+                                   MaxWidth="420"
+                                   VerticalAlignment="Center"/>
                     </StackPanel>
                     <Button Grid.Column="1"
-                            Command="{Binding OpenReleasePageCommand}"
+                            Command="{Binding Updates.InstallCommand}"
                             Classes="accent"
                             Padding="12,6"
                             FontSize="12">
-                        <TextBlock Text="{DynamicResource Download}"/>
+                        <Panel>
+                            <TextBlock Text="{DynamicResource UpdateInstall}" IsVisible="{Binding Updates.CanInstallInApp}"/>
+                            <TextBlock Text="{DynamicResource Download}" IsVisible="{Binding !Updates.CanInstallInApp}"/>
+                        </Panel>
                     </Button>
                     <Button Grid.Column="2"
-                            Command="{Binding DismissUpdateCommand}"
+                            Command="{Binding Updates.DismissBannerCommand}"
                             Classes="ghost"
                             Padding="8,4"
                             Margin="8,0,0,0"
@@ -345,6 +367,109 @@
                                 <TextBlock Text="..."
                                            IsVisible="{Binding IsDeletingSession}"/>
                             </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Border>
+
+        <!-- What's new: notes of the running version, once per version -->
+        <Border IsVisible="{Binding Updates.ShowWhatsNew}"
+                Background="#CC0E141B"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch">
+            <Border MaxWidth="640"
+                    Margin="24"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Background="{DynamicResource SurfaceCardBrush}"
+                    BorderBrush="{DynamicResource BorderSubtleBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Padding="24"
+                    BoxShadow="{DynamicResource ShadowOverlay}">
+                <Grid RowDefinitions="Auto,*,Auto" RowSpacing="14">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <icons:MaterialIcon Kind="RocketLaunchOutline"
+                                            Width="22" Height="22"
+                                            Foreground="{DynamicResource AccentPrimaryBrush}"
+                                            VerticalAlignment="Center"/>
+                        <TextBlock Text="{DynamicResource WhatsNewTitle}"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding Updates.WhatsNewVersion}"
+                                   FontSize="14"
+                                   Foreground="{DynamicResource TextMutedBrush}"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <controls:BbCodePreviewControl Grid.Row="1"
+                                                   MaxHeight="420"
+                                                   Text="{Binding Updates.WhatsNewBbCode}"/>
+
+                    <Button Grid.Row="2"
+                            HorizontalAlignment="Right"
+                            Command="{Binding Updates.CloseWhatsNewCommand}"
+                            Classes="accent"
+                            Padding="16,8">
+                        <TextBlock Text="{DynamicResource WhatsNewClose}"/>
+                    </Button>
+                </Grid>
+            </Border>
+        </Border>
+
+        <!-- Close-during-upload confirmation -->
+        <Border IsVisible="{Binding ShowCloseDuringUploadConfirmation}"
+                Background="#CC0E141B"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch">
+            <Border MaxWidth="460"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Background="{DynamicResource SurfaceCardBrush}"
+                    BorderBrush="{DynamicResource BorderSubtleBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Padding="24"
+                    BoxShadow="{DynamicResource ShadowOverlay}">
+                <StackPanel Spacing="14">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <icons:MaterialIcon Kind="CloudUploadOutline"
+                                            Width="22" Height="22"
+                                            Foreground="{DynamicResource FeedbackWarningBrush}"
+                                            VerticalAlignment="Center"/>
+                        <TextBlock Text="{DynamicResource CloseDuringUploadTitle}"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <TextBlock Text="{DynamicResource CloseDuringUploadBody}"
+                               TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               FontSize="13"/>
+
+                    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                        <Button Command="{Binding CancelCloseDuringUploadCommand}"
+                                Background="{DynamicResource SurfaceElevatedBrush}"
+                                BorderBrush="{DynamicResource BorderSubtleBrush}"
+                                BorderThickness="1"
+                                Foreground="{DynamicResource TextPrimaryBrush}"
+                                Padding="14,8"
+                                CornerRadius="6">
+                            <TextBlock Text="{DynamicResource CloseDuringUploadKeep}"/>
+                        </Button>
+                        <Button Command="{Binding ConfirmCloseDuringUploadCommand}"
+                                Background="{DynamicResource FeedbackDangerBrush}"
+                                Foreground="White"
+                                BorderThickness="0"
+                                Padding="14,8"
+                                CornerRadius="6"
+                                FontWeight="SemiBold">
+                            <TextBlock Text="{DynamicResource CloseDuringUploadQuit}"/>
                         </Button>
                     </StackPanel>
                 </StackPanel>

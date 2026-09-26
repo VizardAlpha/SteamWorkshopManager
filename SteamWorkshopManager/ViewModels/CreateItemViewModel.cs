@@ -14,6 +14,7 @@ using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Models;
 using Steamworks;
 using SteamWorkshopManager.Services.Core;
+using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Notifications;
 using SteamWorkshopManager.Services.Session;
 using SteamWorkshopManager.Services.Steam;
@@ -32,6 +33,7 @@ public partial class CreateItemViewModel : ViewModelBase
     private readonly IProgress<UploadProgress>? _uploadProgress;
     private readonly DependencyService _dependencyService;
     private readonly AppDependencyService _appDependencyService;
+    private static readonly Logger Log = LogService.GetLogger<CreateItemViewModel>();
     private readonly VersioningService _versioningService;
     private readonly DraftService _draftService;
     private readonly TagSelectionService _tagSelection;
@@ -75,14 +77,25 @@ public partial class CreateItemViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(IsInfoComplete))]
     private string? _contentFolderPath;
 
-    public string ContentFolderSize
+    // Folder scan runs off the UI thread; the getter reads the last result.
+    private long _contentFolderBytes;
+    private int _folderScanVersion;
+
+    partial void OnContentFolderPathChanged(string? value) => _ = RefreshFolderSizeAsync(value);
+
+    private async Task RefreshFolderSizeAsync(string? path)
     {
-        get
-        {
-            var size = ModFileInfoBuilder.InspectFolder(ContentFolderPath).Size;
-            return size > 0 ? Formatters.Bytes(size) : string.Empty;
-        }
+        var version = ++_folderScanVersion;
+        _contentFolderBytes = 0;
+        var size = await Task.Run(() => ModFileInfoBuilder.InspectFolder(path).Size);
+        if (version != _folderScanVersion) return;
+
+        _contentFolderBytes = size;
+        OnPropertyChanged(nameof(ContentFolderSize));
     }
+
+    public string ContentFolderSize =>
+        _contentFolderBytes > 0 ? Formatters.Bytes(_contentFolderBytes) : string.Empty;
 
     public string PreviewImageSize
     {
@@ -484,22 +497,35 @@ public partial class CreateItemViewModel : ViewModelBase
 
     private void ReloadVersioningFromCurrentSession()
     {
-        IsVersioningEnabled = _versioningService.IsVersioningEnabled();
-        if (IsVersioningEnabled)
-        {
-            CurrentBranch = _versioningService.GetCurrentBranch();
-            AvailableBranches = _versioningService.GetAvailableBranches();
-        }
-        else
-        {
-            CurrentBranch = string.Empty;
-            AvailableBranches = [];
-        }
         SelectedBranchMin = null;
         SelectedBranchMax = null;
         TargetAllVersions = true;
         IsBranchRangeInvalid = false;
-        OnPropertyChanged(nameof(AvailableBranches));
+        _ = LoadBranchesAsync();
+    }
+
+    // Branches come from the worker over RPC: never block the UI thread on it.
+    private async Task LoadBranchesAsync()
+    {
+        try
+        {
+            IsVersioningEnabled = await _versioningService.IsVersioningEnabledAsync();
+            if (IsVersioningEnabled)
+            {
+                CurrentBranch = await _versioningService.GetCurrentBranchAsync();
+                AvailableBranches = await _versioningService.GetAvailableBranchesAsync();
+            }
+            else
+            {
+                CurrentBranch = string.Empty;
+                AvailableBranches = [];
+            }
+            OnPropertyChanged(nameof(AvailableBranches));
+        }
+        catch (Exception ex)
+        {
+            Log.Debug($"Loading game branches failed: {ex.Message}");
+        }
     }
 
     private void ReloadTagsFromCurrentSession()

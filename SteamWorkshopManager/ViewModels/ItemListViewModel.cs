@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
-using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -25,7 +25,6 @@ public partial class ItemListViewModel : ViewModelBase
     private readonly ISteamService _steamService;
     private readonly INotificationService? _notifications;
     private readonly ITelemetryService _telemetry;
-    private static readonly HttpClient HttpClient = new();
 
     [ObservableProperty]
     private string? _errorMessage;
@@ -110,11 +109,21 @@ public partial class ItemListViewModel : ViewModelBase
         {
             var items = await _steamService.GetPublishedItemsAsync();
             DisposeAndClearItems();
-            foreach (var item in items)
+
+            // One filter pass for the whole batch instead of one per Add.
+            _suspendItemsChanged = true;
+            try
             {
-                Items.Add(item);
-                _ = LoadItemPreviewAsync(item);
+                foreach (var item in items) Items.Add(item);
             }
+            finally
+            {
+                _suspendItemsChanged = false;
+            }
+            ApplyFilter();
+            RecomputeSelectionState();
+
+            foreach (var item in items) _ = LoadItemPreviewAsync(item);
         }
         catch (Exception ex)
         {
@@ -177,8 +186,14 @@ public partial class ItemListViewModel : ViewModelBase
 
     partial void OnSearchQueryChanged(string value) => ApplyFilter();
 
+    private bool _suspendItemsChanged;
+
+    // Cancelled when the list is cleared so late thumbnails don't land on detached items.
+    private CancellationTokenSource _thumbnailCts = new();
+
     private void OnItemsChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
+        if (_suspendItemsChanged) return;
         ApplyFilter();
         RecomputeSelectionState();
     }
@@ -190,6 +205,10 @@ public partial class ItemListViewModel : ViewModelBase
     /// </summary>
     public void DisposeAndClearItems()
     {
+        _thumbnailCts.Cancel();
+        _thumbnailCts.Dispose();
+        _thumbnailCts = new CancellationTokenSource();
+
         foreach (var item in Items)
         {
             item.PreviewBitmap = null;
@@ -212,21 +231,16 @@ public partial class ItemListViewModel : ViewModelBase
     {
         if (string.IsNullOrEmpty(item.PreviewImageUrl)) return;
 
-        try
+        var ct = _thumbnailCts.Token;
+        var bitmap = await ThumbnailCache.GetAsync(item.PreviewImageUrl, ct);
+        if (bitmap is null) return;
+
+        if (ct.IsCancellationRequested || !Items.Contains(item))
         {
-            Log.Debug($"Loading thumbnail for '{item.Title}': {item.PreviewImageUrl}");
-            var response = await HttpClient.GetAsync(item.PreviewImageUrl);
-            if (response.IsSuccessStatusCode)
-            {
-                var stream = await response.Content.ReadAsStreamAsync();
-                item.PreviewBitmap = new Bitmap(stream);
-                Log.Debug($"Thumbnail loaded for '{item.Title}'");
-            }
+            bitmap.Dispose();
+            return;
         }
-        catch (Exception ex)
-        {
-            Log.Warning($"Failed to load thumbnail for '{item.Title}': {ex.Message}");
-        }
+        item.PreviewBitmap = bitmap;
     }
 
     [RelayCommand]

@@ -98,13 +98,13 @@ public sealed class WorkerSteamService(SessionHost host) : ISteamService
         }
     }
 
-    public List<GameBranch> GetGameBranches()
+    public async Task<List<GameBranch>?> GetGameBranchesAsync()
     {
-        if (host.Worker is null) return [];
+        if (host.Worker is null) return null;
 
         try
         {
-            var dtos = Task.Run(() => host.Worker.GetGameBranchesAsync()).GetAwaiter().GetResult();
+            var dtos = await host.Worker.GetGameBranchesAsync();
             return dtos.Select(b => new GameBranch
             {
                 Name = b.Name,
@@ -115,23 +115,23 @@ public sealed class WorkerSteamService(SessionHost host) : ISteamService
         }
         catch (Exception ex)
         {
-            LogRpcFailure(nameof(GetGameBranches), ex);
-            return [];
+            LogRpcFailure(nameof(GetGameBranchesAsync), ex);
+            return null;
         }
     }
 
-    public string GetCurrentBranchName()
+    public async Task<string?> GetCurrentBranchNameAsync()
     {
-        if (host.Worker is null) return "public";
+        if (host.Worker is null) return null;
 
         try
         {
-            return Task.Run(() => host.Worker.GetCurrentBranchNameAsync()).GetAwaiter().GetResult();
+            return await host.Worker.GetCurrentBranchNameAsync();
         }
         catch (Exception ex)
         {
-            LogRpcFailure(nameof(GetCurrentBranchName), ex);
-            return "public";
+            LogRpcFailure(nameof(GetCurrentBranchNameAsync), ex);
+            return null;
         }
     }
 
@@ -162,9 +162,10 @@ public sealed class WorkerSteamService(SessionHost host) : ISteamService
             visibility, tags, changelog, branchMin, branchMax,
             previewOps?.Select(ToDto).ToList());
 
+        var bridge = BridgeProgress(progress);
         try
         {
-            var result = await host.Worker.CreateItemAsync(request, BridgeProgress(progress));
+            var result = await host.Worker.CreateItemAsync(request, bridge);
             if (result.FileId != 0UL) return CreateItemOutcome.Created(new PublishedFileId_t(result.FileId));
 
             return CreateItemOutcome.Failed(result.ErrorCode == 0 ? null : (EResult)result.ErrorCode);
@@ -172,6 +173,7 @@ public sealed class WorkerSteamService(SessionHost host) : ISteamService
         catch (Exception ex)
         {
             LogRpcFailure(nameof(CreateItemAsync), ex);
+            DismissProgress(bridge);
             return CreateItemOutcome.Failed();
         }
     }
@@ -190,16 +192,25 @@ public sealed class WorkerSteamService(SessionHost host) : ISteamService
             previewImagePath, visibility, tags, changelog, branchMin, branchMax,
             previewOps?.Select(ToDto).ToList());
 
+        var bridge = BridgeProgress(progress);
         try
         {
-            return await host.Worker.UpdateItemAsync(request, BridgeProgress(progress));
+            return await host.Worker.UpdateItemAsync(request, bridge);
         }
         catch (Exception ex)
         {
             LogRpcFailure(nameof(UpdateItemAsync), ex);
+            DismissProgress(bridge);
             return false;
         }
     }
+
+    /// <summary>
+    /// A dead worker never sends its final report, which would leave the UI locked.
+    /// Goes through the bridge so it lands after any report still queued there.
+    /// </summary>
+    private static void DismissProgress(IProgress<UploadProgressDto>? bridge) =>
+        bridge?.Report(new UploadProgressDto("OperationFailed", 0, 0, 100));
 
     private static PreviewOpDto ToDto(PreviewOp op) => op switch
     {

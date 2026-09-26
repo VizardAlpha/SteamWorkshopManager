@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using SteamWorkshopManager.Models;
 
 namespace SteamWorkshopManager.Services.Core;
@@ -26,25 +27,21 @@ public class AppSettings
     /// </summary>
     public string? ActiveSessionId { get; set; }
 
-    /// <summary>
-    /// SteamKit2 refresh token for web authentication (~200 day lifetime).
-    /// </summary>
+    // Legacy plaintext Steam credentials, read once for migration to SteamCredentialStore then cleared.
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? SteamRefreshToken { get; set; }
 
-    /// <summary>
-    /// SteamKit2 access token (JWT, ~24h lifetime). Persisted to avoid CM reconnect on restart.
-    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? SteamAccessToken { get; set; }
 
-    /// <summary>
-    /// Steam account name associated with the refresh token.
-    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? SteamAccountName { get; set; }
 
-    /// <summary>
-    /// Steam ID 64 associated with the refresh token.
-    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public ulong SteamId64 { get; set; }
+
+    /// <summary>Last app version whose release notes were shown, drives the "What's new" dialog.</summary>
+    public string? LastSeenVersion { get; set; }
 
     /// <summary>
     /// Whether usage statistics are sent to swm-stats.com. Off by default so

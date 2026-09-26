@@ -34,9 +34,16 @@ public static class AppPaths
     public static string CacheHeaders { get; } = Path.Combine(Root, "cache", "headers");
     public static string CacheIcons { get; } = Path.Combine(Root, "cache", "icons");
     public static string CacheTags { get; } = Path.Combine(Root, "cache", "tags");
+    public static string CacheThumbnails { get; } = Path.Combine(LocalRoot, "cache", "thumbnails");
 
     public static string SettingsFile { get; } = Path.Combine(Root, "settings.json");
     public static string TelemetryStateFile { get; } = Path.Combine(Root, "telemetry.json");
+
+    /// <summary>Steam login tokens. Machine-local (never roamed), DPAPI-encrypted on Windows, 0600 elsewhere.</summary>
+    public static string CredentialsFile { get; } = Path.Combine(LocalRoot, "credentials.bin");
+
+    /// <summary>Downloaded and extracted update packages.</summary>
+    public static string Updates { get; } = Path.Combine(LocalRoot, "updates");
 
     /// <summary>Steam Workshop's native loader reads the AppId from a file
     /// next to the binary. <see cref="AppContext.BaseDirectory"/> is where
@@ -48,9 +55,10 @@ public static class AppPaths
     public static string IconForApp(uint appId) => Path.Combine(CacheIcons, $"{appId}.jpg");
     public static string TagsForApp(uint appId) => Path.Combine(CacheTags, $"{appId}.json");
     public static string WorkshopForApp(uint appId) => Path.Combine(Workshop, appId.ToString());
+    public static string WorkshopVersionFolder(uint appId, string sanitizedModName, long timestamp) =>
+        Path.Combine(WorkshopForApp(appId), $"{sanitizedModName}_{timestamp}");
 
-    /// <summary>Scratch directory under the OS temp folder for the rebuild
-    /// path of preview ops - files here exist only for the duration of one
-    /// Steam UGC update.</summary>
-    public static string TempPreviewDir() => Path.Combine(Path.GetTempPath(), AppName, "previews", Guid.NewGuid().ToString("N"));
+    /// <summary>Scratch directory for the rebuild path of preview ops, alive for one
+    /// Steam UGC update. Per-user on purpose: a shared /tmp parent could be pre-created by another user.</summary>
+    public static string TempPreviewDir() => Path.Combine(LocalRoot, "tmp", "previews", Guid.NewGuid().ToString("N"));
 }

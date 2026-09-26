@@ -177,6 +177,9 @@ public partial class AppIdValidator
         var url = SteamUrls.WorkshopPage(appId);
         // Headers are enough; the page body runs to ~1 MB and we never read it.
         using var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+        // Rate limiting or a Steam outage says nothing about the Workshop: report a network error, not "no Workshop".
+        if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests || (int)response.StatusCode >= 500)
+            throw new HttpRequestException($"Steam returned {(int)response.StatusCode}", null, response.StatusCode);
         if (!response.IsSuccessStatusCode) return false;
 
         var landedOn = response.RequestMessage?.RequestUri?.AbsolutePath ?? string.Empty;

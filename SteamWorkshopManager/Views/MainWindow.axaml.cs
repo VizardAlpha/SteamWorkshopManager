@@ -34,6 +34,30 @@ public partial class MainWindow : Window
         };
 
         viewModel.OpenAddSessionWizard += OnOpenAddSessionWizard;
+        viewModel.ForceCloseRequested += () =>
+        {
+            _forceClose = true;
+            Close();
+        };
+    }
+
+    private bool _forceClose;
+
+    /// <summary>
+    /// Shows the upload guard instead of closing when an upload is running.
+    /// Also called from App's ShutdownRequested (e.g. Cmd+Q on macOS).
+    /// </summary>
+    public bool InterceptCloseDuringUpload()
+    {
+        if (_forceClose || DataContext is not MainViewModel { IsUploadInProgress: true } vm) return false;
+        vm.ShowCloseDuringUploadConfirmation = true;
+        return true;
+    }
+
+    protected override void OnClosing(WindowClosingEventArgs e)
+    {
+        if (InterceptCloseDuringUpload()) e.Cancel = true;
+        base.OnClosing(e);
     }
 
     private async void OnOpenAddSessionWizard()

@@ -2,6 +2,7 @@ using Avalonia;
 using Microsoft.Extensions.DependencyInjection;
 using SteamWorkshopManager.Services;
 using SteamWorkshopManager.Services.Log;
+using SteamWorkshopManager.Services.Notifications;
 using SteamWorkshopManager.Services.Steam.Worker.Contracts;
 using SteamWorkshopManager.Services.Steam.Worker.Host;
 using System;
@@ -48,6 +49,11 @@ sealed class Program
             SteamWorkerHost.RunAsync(workerArgs).GetAwaiter().GetResult();
             return;
         }
+
+        // Update installer mode: this is the freshly downloaded copy replacing the install folder.
+        if (AppUpdater.TryRunInstaller(args)) return;
+        AppUpdater.CleanupStaleUpdates();
+        LogService.Instance.PurgeOldLogs();
 
         // Dev affordance: `--force-setup-wizard` makes startup treat the session
         // repository as empty so the wizard is shown even when a session exists.
