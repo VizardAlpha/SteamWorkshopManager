@@ -127,7 +127,9 @@ public partial class ItemListViewModel : ViewModelBase
             ApplyFilter();
             RecomputeSelectionState();
 
-            foreach (var item in items) _ = LoadItemPreviewAsync(item);
+            // The grid asks for its visible thumbnails itself; the home dashboard shows the recent ones.
+            foreach (var item in items.OrderByDescending(i => i.UpdatedAt).Take(RecentItemsCount))
+                RequestThumbnail(item);
         }
         catch (Exception ex)
         {
@@ -184,7 +186,7 @@ public partial class ItemListViewModel : ViewModelBase
         }
 
         HasNoItems = Items.Count == 0;
-        _ = LoadItemPreviewAsync(fetched);
+        RequestThumbnail(fetched);
         return fetched;
     }
 
@@ -194,6 +196,18 @@ public partial class ItemListViewModel : ViewModelBase
 
     // Cancelled when the list is cleared so late thumbnails don't land on detached items.
     private CancellationTokenSource _thumbnailCts = new();
+
+    // Thumbnails load on demand (card shown, or recent on the home page), once per item.
+    private readonly HashSet<WorkshopItem> _thumbnailRequested = new(ReferenceEqualityComparer.Instance);
+
+    /// <summary>Number of recent items the home dashboard shows.</summary>
+    public const int RecentItemsCount = 8;
+
+    public void RequestThumbnail(WorkshopItem item)
+    {
+        if (item.PreviewBitmap is not null || !_thumbnailRequested.Add(item)) return;
+        _ = LoadItemPreviewAsync(item);
+    }
 
     private void OnItemsChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
@@ -212,6 +226,7 @@ public partial class ItemListViewModel : ViewModelBase
         _thumbnailCts.Cancel();
         _thumbnailCts.Dispose();
         _thumbnailCts = new CancellationTokenSource();
+        _thumbnailRequested.Clear();
 
         foreach (var item in Items)
         {

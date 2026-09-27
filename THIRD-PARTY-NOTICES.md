@@ -13,6 +13,7 @@ Last reviewed: 2026-09-27.
 | Avalonia.Desktop | 12.1.3 | Avalonia Team | https://github.com/AvaloniaUI/Avalonia |
 | Avalonia.Themes.Fluent | 12.1.3 | Avalonia Team | https://github.com/AvaloniaUI/Avalonia |
 | Avalonia.Fonts.Inter | 12.1.3 | Avalonia Team | https://github.com/AvaloniaUI/Avalonia |
+| Avalonia.Controls.ItemsRepeater | 12.0.0 | Avalonia Team | https://github.com/AvaloniaUI/Avalonia |
 | CommunityToolkit.Mvvm | 8.4.2 | Microsoft | https://github.com/CommunityToolkit/dotnet |
 | DiscordRichPresence | 1.143.0 | Lachee | https://github.com/Lachee/discord-rpc-csharp |
 | Material.Icons.Avalonia | 3.0.2 | SKProCH | https://github.com/AvaloniaUtils/Material.Icons.Avalonia |

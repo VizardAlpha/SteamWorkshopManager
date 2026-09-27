@@ -20,7 +20,7 @@
 
 ## My mods
 
-- Grid of your published items with thumbnails and search by title.
+- Grid of your published items with thumbnails and search by title. The grid is virtualized: only visible cards are created and fetch their thumbnail, so large accounts stay fast.
 - Selection mode for bulk actions: change visibility, or delete (confirmed by typing `DELETE`).
 
 ## Item editor

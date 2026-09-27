@@ -55,7 +55,7 @@ public partial class HomeViewModel : ViewModelBase
 
     /// <summary>Capped to two rows (4 cols × 2) - the dashboard is a snapshot;
     /// "See all" routes to the full list view.</summary>
-    private const int RecentModsLimit = 8;
+    private const int RecentModsLimit = ItemListViewModel.RecentItemsCount;
 
     public IEnumerable<WorkshopItem> RecentMods =>
         ItemList.Items.OrderByDescending(i => i.UpdatedAt).Take(RecentModsLimit);

@@ -359,22 +359,19 @@
                            HorizontalAlignment="Center"/>
             </StackPanel>
 
-            <!-- Grid -->
+            <!-- Grid: virtualized, only the visible cards are created (and load their thumbnail). -->
             <ScrollViewer IsVisible="{Binding !IsLoading}">
-                <ItemsControl ItemsSource="{Binding FilteredItems}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel Orientation="Horizontal"/>
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
+                <ItemsRepeater x:Name="ModGrid" ItemsSource="{Binding FilteredItems}">
+                    <ItemsRepeater.Layout>
+                        <UniformGridLayout MinItemWidth="220" MinColumnSpacing="14" MinRowSpacing="14"/>
+                    </ItemsRepeater.Layout>
+                    <ItemsRepeater.ItemTemplate>
                         <DataTemplate DataType="models:WorkshopItem">
                             <Button Classes="mod-card"
                                     Classes.selected="{Binding IsSelected}"
-                                    Command="{Binding $parent[ItemsControl].((vm:ItemListViewModel)DataContext).SelectItemCommand, FallbackValue={x:Null}}"
+                                    Command="{Binding $parent[ItemsRepeater].((vm:ItemListViewModel)DataContext).SelectItemCommand, FallbackValue={x:Null}}"
                                     CommandParameter="{Binding}"
-                                    Width="220"
-                                    Margin="0,0,14,14">
+                                    Width="220">
                                 <StackPanel>
                                     <!-- Thumbnail -->
                                     <Border Height="124"
@@ -396,7 +393,7 @@
                                                  read-only here. -->
                                             <Border Classes="select-check"
                                                     Classes.checked="{Binding IsSelected}"
-                                                    IsVisible="{Binding $parent[ItemsControl].((vm:ItemListViewModel)DataContext).SelectionMode, FallbackValue=False}">
+                                                    IsVisible="{Binding $parent[ItemsRepeater].((vm:ItemListViewModel)DataContext).SelectionMode, FallbackValue=False}">
                                                 <icons:MaterialIcon Kind="Check"
                                                                     Width="16" Height="16"
                                                                     Foreground="White"
@@ -480,8 +477,8 @@
                                 </StackPanel>
                             </Button>
                         </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                    </ItemsRepeater.ItemTemplate>
+                </ItemsRepeater>
             </ScrollViewer>
 
         </Grid>
