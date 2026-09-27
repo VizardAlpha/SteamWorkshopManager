@@ -9,6 +9,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Models;
+using SteamWorkshopManager.Core.Sessions;
 using SteamWorkshopManager.Services.Core;
 using SteamWorkshopManager.Services.Log;
 
@@ -32,18 +33,21 @@ public partial class HomeViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isRefreshingHeader;
 
-    public HomeViewModel(ItemListViewModel itemList)
+    private readonly ISessionContext _context;
+
+    public HomeViewModel(ItemListViewModel itemList, ISessionContext context)
     {
+        _context = context;
         ItemList = itemList;
         ItemList.Items.CollectionChanged += OnItemsCollectionChanged;
         _ = LoadHeaderImageAsync();
     }
 
-    public string ActiveGameName => AppConfig.CurrentSession?.GameName ?? string.Empty;
+    public string ActiveGameName => _context.Current?.GameName ?? string.Empty;
 
-    public uint ActiveAppId => AppConfig.AppId;
+    public uint ActiveAppId => _context.AppId;
 
-    public bool HasActiveSession => AppConfig.CurrentSession is not null;
+    public bool HasActiveSession => _context.Current is not null;
 
     public int ModCount => ItemList.Items.Count;
 
@@ -101,7 +105,7 @@ public partial class HomeViewModel : ViewModelBase
 
     /// <summary>
     /// Called by the shell when the active session changes so the dashboard
-    /// re-derives everything that keys off <c>AppConfig.CurrentSession</c>
+    /// re-derives everything that keys off the active session
     /// and reloads the hero image for the new AppId.
     /// </summary>
     public void OnSessionChanged()

@@ -43,7 +43,7 @@ public class WorkshopDownloadService
             if (SteamAuthService.IsAuthenticated)
             {
                 Log.Debug("Using authenticated HttpClient for download URL request");
-                using var authClient = SteamAuthService.CreateAuthenticatedHttpClient();
+                var authClient = SteamAuthService.GetAuthenticatedHttpClient();
                 json = await authClient.GetStringAsync(url);
             }
             else

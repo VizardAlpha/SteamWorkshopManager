@@ -70,6 +70,10 @@ Discord Rich Presence is a separate **opt-in**, off until enabled in the setup w
 
 Enabling it always starts at the narrowest level: the section you are in, with no game name and no item title. **Settings → Customization** widens it from there, adding the game you are modding, or everything including the title of the item being edited. Turning it off clears the activity immediately.
 
+## Documentation
+
+How the app works, feature by feature and under the hood, is described in the [Documentation](Documentation/README.md) folder: overview, features, architecture, Steam worker, data and storage, security and privacy, updates and releases, development.
+
 
 ## 💙 Support / Donations
 

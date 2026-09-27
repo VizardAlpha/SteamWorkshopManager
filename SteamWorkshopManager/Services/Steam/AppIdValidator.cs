@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Steam;
 
-namespace SteamWorkshopManager.Core.Steam;
+namespace SteamWorkshopManager.Services.Steam;
 
 /// <summary>
 /// Validates Steam AppIds and retrieves game metadata.

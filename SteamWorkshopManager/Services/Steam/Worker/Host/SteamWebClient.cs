@@ -4,12 +4,12 @@ using System.Threading.Tasks;
 using SteamWorkshopManager.Services.Log;
 using Steamworks;
 
-namespace SteamWorkshopManager.Services.Steam;
+namespace SteamWorkshopManager.Services.Steam.Worker.Host;
 
 /// <summary>
 /// Wraps SteamHTTP into async methods with a shared cookie container.
 /// </summary>
-public static class SteamWebClient
+internal static class SteamWebClient
 {
     private static readonly Logger Log = new("SteamWebClient", LogService.Instance);
     private static HTTPCookieContainerHandle _cookieContainer;
@@ -58,7 +58,6 @@ public static class SteamWebClient
             var timeout = DateTime.UtcNow.AddSeconds(timeoutSeconds);
             while (!tcs.Task.IsCompleted && DateTime.UtcNow < timeout)
             {
-                SteamAPI.RunCallbacks();
                 await Task.Delay(100);
             }
 

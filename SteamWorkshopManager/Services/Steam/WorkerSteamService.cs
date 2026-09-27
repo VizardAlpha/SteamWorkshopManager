@@ -17,10 +17,7 @@ namespace SteamWorkshopManager.Services.Steam;
 /// never touches <c>SteamAPI</c> directly once this implementation is wired
 /// through DI - everything round-trips through JSON-RPC.
 ///
-/// The sync <c>Initialize</c> / <c>Shutdown</c> surface on
-/// <see cref="ISteamService"/> is preserved for compatibility with existing
-/// callers; the real lifecycle is driven by <see cref="SessionHost"/>, which
-/// is started up front by the app entry point.
+/// The worker lifecycle is owned by <see cref="SessionHost"/>, started up front by the app entry point.
 ///
 /// Upload progress for Create/Update flows streams back over the same pipe:
 /// StreamJsonRpc marshals <see cref="IProgress{T}"/> natively, so every
@@ -34,19 +31,6 @@ public sealed class WorkerSteamService(SessionHost host) : ISteamService
     public bool IsInitialized => host.LastInitResult == SteamInitResult.Success;
 
     public CSteamID? CurrentUserId => host.CurrentUserId == 0 ? null : new CSteamID(host.CurrentUserId);
-
-    public SteamInitResult Initialize()
-    {
-        // The worker has already been spawned and initialized at session
-        // start; we just report the cached outcome so existing callers work.
-        return host.LastInitResult;
-    }
-
-    public void Shutdown()
-    {
-        // Worker shutdown is owned by SessionHost.Dispose. Swallow here so
-        // legacy call sites don't double-tear-down.
-    }
 
     public async Task<List<WorkshopItem>> GetPublishedItemsAsync()
     {

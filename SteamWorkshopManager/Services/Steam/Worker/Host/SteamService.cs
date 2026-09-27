@@ -9,9 +9,10 @@ using Steamworks;
 using SteamWorkshopManager.Services.Core;
 using SteamWorkshopManager.Services.Log;
 
-namespace SteamWorkshopManager.Services.Steam;
+namespace SteamWorkshopManager.Services.Steam.Worker.Host;
 
-public class SteamService : ISteamService
+/// <summary>Steamworks calls for one game. Lives in the worker process only; the shell goes through <see cref="SteamWorkerImpl"/>.</summary>
+internal sealed class SteamService(uint appId)
 {
     private static readonly Logger Log = LogService.GetLogger<SteamService>();
 
@@ -22,6 +23,8 @@ public class SteamService : ISteamService
     // Uploads only time out when Steam reports no progress for this long.
     private static readonly TimeSpan UploadStallTimeout = TimeSpan.FromMinutes(5);
 
+    // The worker process serves exactly one game.
+    private readonly uint _appId = appId;
     private bool _isInitialized;
 
     public bool IsInitialized => _isInitialized;
@@ -33,10 +36,9 @@ public class SteamService : ISteamService
 
         try
         {
-            Log.Info($"Initializing Steam for AppId: {AppConfig.AppId}");
-            Log.Debug($"Current session: {AppConfig.CurrentSession?.GameName ?? "none"}");
+            Log.Info($"Initializing Steam for AppId: {_appId}");
 
-            var appIdStr = AppConfig.AppId.ToString();
+            var appIdStr = _appId.ToString();
             var envAppId = Environment.GetEnvironmentVariable("SteamAppId");
             var envGameId = Environment.GetEnvironmentVariable("SteamGameId");
 
@@ -62,6 +64,9 @@ public class SteamService : ISteamService
 
             if (_isInitialized)
             {
+                // Every CallResult below is dispatched by this single pump.
+                SteamCallbackPump.Start();
+
                 if (!WaitForLogon(LogonGrace))
                 {
                     // Init succeeds against a Steam client in offline mode, so
@@ -74,9 +79,9 @@ public class SteamService : ISteamService
                 var steamAppId = SteamUtils.GetAppID();
                 Log.Debug($"Steam AppID from SteamUtils: {steamAppId}");
 
-                if (steamAppId.m_AppId != AppConfig.AppId)
+                if (steamAppId.m_AppId != _appId)
                 {
-                    Log.Warning($"AppId mismatch! Expected: {AppConfig.AppId}, Steam reports: {steamAppId.m_AppId}");
+                    Log.Warning($"AppId mismatch! Expected: {_appId}, Steam reports: {steamAppId.m_AppId}");
                 }
 
                 var currentBranch = GetCurrentBranchName();
@@ -109,7 +114,6 @@ public class SteamService : ISteamService
         while (!SteamUser.BLoggedOn())
         {
             if (DateTime.UtcNow >= deadline) return false;
-            SteamAPI.RunCallbacks();
             Thread.Sleep(200);
         }
 
@@ -120,6 +124,7 @@ public class SteamService : ISteamService
     {
         if (!_isInitialized) return;
         Log.Info("Shutting down Steam API");
+        SteamCallbackPump.Stop();
         SteamAPI.Shutdown();
         _isInitialized = false;
     }
@@ -163,15 +168,15 @@ public class SteamService : ISteamService
 
     /// <exception cref="SteamQueryException">The query could not be answered.
     /// Distinct from a query that succeeds with zero results.</exception>
-    private static async Task<SteamUGCQueryCompleted_t> QueryPublishedPageAsync(AccountID_t accountId, uint page)
+    private async Task<SteamUGCQueryCompleted_t> QueryPublishedPageAsync(AccountID_t accountId, uint page)
     {
         var query = SteamUGC.CreateQueryUserUGCRequest(
             accountId,
             EUserUGCList.k_EUserUGCList_Published,
             EUGCMatchingUGCType.k_EUGCMatchingUGCType_Items,
             EUserUGCListSortOrder.k_EUserUGCListSortOrder_CreationOrderDesc,
-            new AppId_t(AppConfig.AppId),
-            new AppId_t(AppConfig.AppId),
+            new AppId_t(_appId),
+            new AppId_t(_appId),
             page
         );
 
@@ -195,7 +200,6 @@ public class SteamService : ISteamService
         var timeout = DateTime.UtcNow.AddSeconds(timeoutSeconds);
         while (!tcs.Task.IsCompleted && DateTime.UtcNow < timeout)
         {
-            SteamAPI.RunCallbacks();
             await Task.Delay(100);
         }
 
@@ -253,7 +257,6 @@ public class SteamService : ISteamService
         var timeout = DateTime.UtcNow.AddSeconds(15);
         while (!tcs.Task.IsCompleted && DateTime.UtcNow < timeout)
         {
-            SteamAPI.RunCallbacks();
             await Task.Delay(50);
         }
 
@@ -357,7 +360,7 @@ public class SteamService : ISteamService
         });
 
         var createHandle = SteamUGC.CreateItem(
-            new AppId_t(AppConfig.AppId),
+            new AppId_t(_appId),
             EWorkshopFileType.k_EWorkshopFileTypeCommunity
         );
         createCallResult.Set(createHandle);
@@ -365,7 +368,6 @@ public class SteamService : ISteamService
         var timeout = DateTime.UtcNow.AddSeconds(30);
         while (!createTcs.Task.IsCompleted && DateTime.UtcNow < timeout)
         {
-            SteamAPI.RunCallbacks();
             await Task.Delay(100);
         }
 
@@ -391,7 +393,7 @@ public class SteamService : ISteamService
 
         // Update with content
         var updateHandle = SteamUGC.StartItemUpdate(
-            new AppId_t(AppConfig.AppId),
+            new AppId_t(_appId),
             fileId
         );
 
@@ -484,7 +486,6 @@ public class SteamService : ISteamService
         {
             if (DateTime.UtcNow >= stallDeadline) return false;
 
-            SteamAPI.RunCallbacks();
             var signal = PollAndReportProgress(updateHandle, progress, expectedTotal);
             if (signal != lastSignal)
             {
@@ -520,7 +521,7 @@ public class SteamService : ISteamService
         {
 
         var updateHandle = SteamUGC.StartItemUpdate(
-            new AppId_t(AppConfig.AppId),
+            new AppId_t(_appId),
             fileId
         );
 
@@ -614,7 +615,6 @@ public class SteamService : ISteamService
         var timeout = DateTime.UtcNow.AddSeconds(30);
         while (!tcs.Task.IsCompleted && DateTime.UtcNow < timeout)
         {
-            SteamAPI.RunCallbacks();
             await Task.Delay(100);
         }
 
@@ -854,10 +854,6 @@ public class SteamService : ISteamService
                 ERemoteStoragePublishedFileVisibility.k_ERemoteStoragePublishedFileVisibilityUnlisted,
             _ => ERemoteStoragePublishedFileVisibility.k_ERemoteStoragePublishedFileVisibilityPrivate
         };
-
-    public Task<List<GameBranch>?> GetGameBranchesAsync() => Task.FromResult<List<GameBranch>?>(GetGameBranches());
-
-    public Task<string?> GetCurrentBranchNameAsync() => Task.FromResult<string?>(GetCurrentBranchName());
 
     public List<GameBranch> GetGameBranches()
     {

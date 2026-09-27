@@ -118,11 +118,18 @@ public class WorkshopTagsService
         Log.Debug($"Fetching tags from Steam Workshop for AppId {appId}");
 
         var html = await _httpClient.GetStringAsync(SteamUrls.WorkshopPage(appId));
+        var result = ParseWorkshopPage(html);
+        Log.Debug($"Parsed {result.TagsByCategory.Count} categories with {result.TagsByCategory.Values.Sum(v => v.Count)} tags for AppId {appId}");
+        return result;
+    }
 
+    /// <summary>Tag catalog from the SSR payload of a Workshop browse page; empty when the page structure changed.</summary>
+    internal static TagsResult ParseWorkshopPage(string html)
+    {
         var match = LoaderDataRegex.Match(html);
         if (!match.Success)
         {
-            Log.Warning($"Steam page structure changed for AppId {appId}: window.SSR.loaderData not found.");
+            Log.Warning("Steam page structure changed: window.SSR.loaderData not found.");
             return new TagsResult(new Dictionary<string, List<string>>(), []);
         }
 
@@ -135,7 +142,7 @@ public class WorkshopTagsService
         var declared = FindDeclaredTags(loaderEntries);
         if (declared is null)
         {
-            Log.Warning($"No declaredTags found in SSR payload for AppId {appId}.");
+            Log.Warning("No declaredTags found in SSR payload.");
             return new TagsResult(new Dictionary<string, List<string>>(), []);
         }
 
@@ -171,7 +178,6 @@ public class WorkshopTagsService
             }
         }
 
-        Log.Debug($"Parsed {categories.Count} categories with {categories.Values.Sum(v => v.Count)} tags for AppId {appId}");
         return new TagsResult(categories, dropdowns);
     }
 

@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using SteamWorkshopManager.Core.Steam;
+using SteamWorkshopManager.Core.Sessions;
 using SteamWorkshopManager.Models;
+using SteamWorkshopManager.Services.Workshop;
 using SteamWorkshopManager.Services.Core;
 using SteamWorkshopManager.Services.Notifications;
 using SteamWorkshopManager.Services.Steam;
@@ -62,7 +64,8 @@ public sealed class WorkshopOrchestrator(
     ITelemetryService telemetry,
     DependencyService dependencyService,
     AppDependencyService appDependencyService,
-    DraftService draftService)
+    DraftService draftService,
+    ISessionContext context)
 {
     public async Task<WorkshopActionResult> PublishAsync(
         CreateModRequest request,
@@ -94,7 +97,7 @@ public sealed class WorkshopOrchestrator(
                 return new WorkshopActionResult(false, null, "CreationFailed", null);
             }
 
-            telemetry.Track(TelemetryEventTypes.ModCreated, AppConfig.AppId);
+            telemetry.Track(TelemetryEventTypes.ModCreated, context.AppId);
 
             var id = (ulong)fileId;
             var folderInfo = await Task.Run(() => ModFileInfoBuilder.BuildForFolder(request.ContentFolderPath));
@@ -158,7 +161,7 @@ public sealed class WorkshopOrchestrator(
                 if (imageInfo is not null) settingsService.SetPreviewImageInfo(id, imageInfo);
             }
 
-            telemetry.Track(TelemetryEventTypes.ModUpdated, AppConfig.AppId);
+            telemetry.Track(TelemetryEventTypes.ModUpdated, context.AppId);
             notifications.ShowSuccess(LocalizationService.GetString("ItemUpdatedSuccess"));
             return new WorkshopActionResult(true, request.FileId, null, null);
         }
@@ -183,7 +186,7 @@ public sealed class WorkshopOrchestrator(
             var id = (ulong)fileId;
             settingsService.SetContentFolderInfo(id, null);
             settingsService.SetPreviewImageInfo(id, null);
-            telemetry.Track(TelemetryEventTypes.ModDeleted, AppConfig.AppId);
+            telemetry.Track(TelemetryEventTypes.ModDeleted, context.AppId);
             notifications.ShowSuccess(LocalizationService.GetString("ItemDeletedSuccess"));
             return new WorkshopActionResult(true, fileId, null, null);
         }

@@ -83,7 +83,7 @@ public partial class App : Application
             {
                 // No session - show setup wizard as main window
                 Log.Info("No active session, showing setup wizard");
-                var wizard = new SetupWizardWindow();
+                var wizard = new SetupWizardWindow(Services.GetRequiredService<IViewModelFactory>().Create<SetupWizardViewModel>());
                 var sessionWasCreated = false;
 
                 // When session is created, show MainWindow then close wizard
@@ -100,8 +100,8 @@ public partial class App : Application
                             return;
                         }
 
-                        // Initialize AppConfig and show main window FIRST
-                        AppConfig.Initialize(newSession);
+                        // Activate the session and show main window FIRST
+                        Services.GetRequiredService<ISessionContext>().Activate(newSession);
                         Log.Info($"Starting with session: {newSession.GameName} (AppId: {newSession.AppId})");
 
                         // Spawn the Steam worker for the newly-created session.
@@ -112,7 +112,7 @@ public partial class App : Application
                         // respects the toggle.
                         telemetry.Track(TelemetryEventTypes.AppStart, newSession.AppId);
 
-                        var mainWindow = new MainWindow();
+                        var mainWindow = CreateMainWindow();
                         desktop.MainWindow = mainWindow;
                         mainWindow.Show();
 
@@ -166,7 +166,7 @@ public partial class App : Application
 
     private static async Task StartWithSessionAsync(IClassicDesktopStyleApplicationLifetime desktop, ITelemetryService telemetry, Models.WorkshopSession session)
     {
-        AppConfig.Initialize(session);
+        Services.GetRequiredService<ISessionContext>().Activate(session);
         Log.Info($"Starting with session: {session.GameName} (AppId: {session.AppId})");
 
         // Spawn the Steam worker before the UI queries Steam so the
@@ -177,10 +177,12 @@ public partial class App : Application
         // Track now - the toggle is honored inside Track().
         telemetry.Track(TelemetryEventTypes.AppStart, session.AppId);
 
-        var mainWindow = new MainWindow();
+        var mainWindow = CreateMainWindow();
         desktop.MainWindow = mainWindow;
         mainWindow.Show();
     }
+
+    private static MainWindow CreateMainWindow() => new(Services.GetRequiredService<MainViewModel>());
 
     private static void ShowConsentThenStart(
         IClassicDesktopStyleApplicationLifetime desktop,

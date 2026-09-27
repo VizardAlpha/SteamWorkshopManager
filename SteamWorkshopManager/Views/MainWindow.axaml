@@ -17,10 +17,6 @@
         Width="1100" Height="750"
         Background="{DynamicResource WindowBackgroundBrush}">
 
-    <Design.DataContext>
-        <vm:MainViewModel/>
-    </Design.DataContext>
-
     <Window.KeyBindings>
         <KeyBinding Gesture="Ctrl+S" Command="{Binding SaveCurrentCommand}"/>
         <KeyBinding Gesture="Ctrl+N" Command="{Binding NavigateToCreateCommand}"/>

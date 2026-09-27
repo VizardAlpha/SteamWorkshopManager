@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using SteamWorkshopManager.Core.Sessions;
 using SteamWorkshopManager.Models;
 using SteamWorkshopManager.Services.Core;
 using SteamWorkshopManager.Services.Log;
@@ -8,7 +9,7 @@ using SteamWorkshopManager.Services.Session;
 using SteamWorkshopManager.Services.Steam;
 using Steamworks;
 
-namespace SteamWorkshopManager.Core.Workshop;
+namespace SteamWorkshopManager.Services.Workshop;
 
 /// <summary>
 /// Shell-side facade around the game's branch/version surface. Branch
@@ -21,7 +22,7 @@ namespace SteamWorkshopManager.Core.Workshop;
 /// matching log lines). Cache invalidates automatically when the active
 /// session swaps to a different AppId.
 /// </summary>
-public sealed class VersioningService(ISteamService steamService, SessionHost host)
+public sealed class VersioningService(ISteamService steamService, SessionHost host, ISessionContext context)
 {
     private static readonly Logger Log = LogService.GetLogger<VersioningService>();
 
@@ -32,7 +33,7 @@ public sealed class VersioningService(ISteamService steamService, SessionHost ho
     /// <summary>False when the worker call failed; nothing is cached then so the next open retries.</summary>
     private async Task<bool> EnsureBranchesCachedAsync()
     {
-        var currentAppId = AppConfig.AppId;
+        var currentAppId = context.AppId;
         if (_cachedBranches is not null && _cachedAppId == currentAppId) return true;
 
         var branches = await steamService.GetGameBranchesAsync();

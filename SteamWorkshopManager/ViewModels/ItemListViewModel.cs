@@ -9,6 +9,7 @@ using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Steamworks;
+using SteamWorkshopManager.Core.Sessions;
 using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Models;
 using SteamWorkshopManager.Services.Core;
@@ -25,6 +26,7 @@ public partial class ItemListViewModel : ViewModelBase
     private readonly ISteamService _steamService;
     private readonly INotificationService? _notifications;
     private readonly ITelemetryService _telemetry;
+    private readonly ISessionContext _context;
 
     [ObservableProperty]
     private string? _errorMessage;
@@ -85,10 +87,12 @@ public partial class ItemListViewModel : ViewModelBase
     public ItemListViewModel(
         ISteamService steamService,
         ITelemetryService telemetry,
+        ISessionContext context,
         INotificationService? notifications = null)
     {
         _steamService = steamService;
         _telemetry = telemetry;
+        _context = context;
         _notifications = notifications;
         Items.CollectionChanged += OnItemsChanged;
     }
@@ -344,7 +348,7 @@ public partial class ItemListViewModel : ViewModelBase
                         tags: null, changelog: null);
 
                     if (ok)
-                        _telemetry.Track(TelemetryEventTypes.ModUpdated, AppConfig.AppId);
+                        _telemetry.Track(TelemetryEventTypes.ModUpdated, _context.AppId);
                     else
                         failed.Add(item.Title);
                 }
@@ -415,7 +419,7 @@ public partial class ItemListViewModel : ViewModelBase
                     var ok = await _steamService.DeleteItemAsync(item.PublishedFileId);
                     if (ok)
                     {
-                        _telemetry.Track(TelemetryEventTypes.ModDeleted, AppConfig.AppId);
+                        _telemetry.Track(TelemetryEventTypes.ModDeleted, _context.AppId);
                     }
                     else
                     {

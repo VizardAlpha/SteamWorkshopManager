@@ -27,7 +27,7 @@ namespace SteamWorkshopManager.Helpers;
 public static class SteamImageCache
 {
     private static readonly Logger Log = LogService.GetLogger<object>();
-    private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(10) };
+    private static readonly HttpClient Http = SteamHttpClientFactory.Create(timeout: TimeSpan.FromSeconds(10));
 
     static SteamImageCache()
     {

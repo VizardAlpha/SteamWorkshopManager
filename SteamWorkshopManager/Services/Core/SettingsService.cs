@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using SteamWorkshopManager.Core.Sessions;
 using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Models;
 using SteamWorkshopManager.Services.Log;
@@ -23,8 +24,11 @@ public class SettingsService : ISettingsService
 
     public AppSettings Settings { get; private set; } = new();
 
-    public SettingsService()
+    private readonly ISessionContext _context;
+
+    public SettingsService(ISessionContext context)
     {
+        _context = context;
         Load();
     }
 
@@ -79,13 +83,13 @@ public class SettingsService : ISettingsService
     public ItemFileInfo? GetContentFolderInfo(ulong publishedFileId)
     {
         var key = publishedFileId.ToString();
-        return AppConfig.CurrentSession?.ContentFolderInfos.TryGetValue(key, out var info) == true ? info : null;
+        return _context.Current?.ContentFolderInfos.TryGetValue(key, out var info) == true ? info : null;
     }
 
     public void SetContentFolderPath(ulong publishedFileId, string? path)
     {
         var key = publishedFileId.ToString();
-        var session = AppConfig.CurrentSession;
+        var session = _context.Current;
         if (session == null) return;
 
         if (string.IsNullOrEmpty(path))
@@ -99,7 +103,7 @@ public class SettingsService : ISettingsService
     public void SetContentFolderInfo(ulong publishedFileId, ItemFileInfo? info)
     {
         var key = publishedFileId.ToString();
-        var session = AppConfig.CurrentSession;
+        var session = _context.Current;
         if (session == null) return;
 
         if (info == null)
@@ -113,13 +117,13 @@ public class SettingsService : ISettingsService
     public ItemFileInfo? GetPreviewImageInfo(ulong publishedFileId)
     {
         var key = publishedFileId.ToString();
-        return AppConfig.CurrentSession?.PreviewImageInfos.TryGetValue(key, out var info) == true ? info : null;
+        return _context.Current?.PreviewImageInfos.TryGetValue(key, out var info) == true ? info : null;
     }
 
     public void SetPreviewImagePath(ulong publishedFileId, string? path)
     {
         var key = publishedFileId.ToString();
-        var session = AppConfig.CurrentSession;
+        var session = _context.Current;
         if (session == null) return;
 
         if (string.IsNullOrEmpty(path))
@@ -133,7 +137,7 @@ public class SettingsService : ISettingsService
     public void SetPreviewImageInfo(ulong publishedFileId, ItemFileInfo? info)
     {
         var key = publishedFileId.ToString();
-        var session = AppConfig.CurrentSession;
+        var session = _context.Current;
         if (session == null) return;
 
         if (info == null)

@@ -70,7 +70,7 @@ public class ChangelogScraperService(SessionHost host)
         if (SteamAuthService.IsAuthenticated)
         {
             Log.Debug("Using authenticated HttpClient for changelog fetch");
-            using var httpClient = SteamAuthService.CreateAuthenticatedHttpClient();
+            var httpClient = SteamAuthService.GetAuthenticatedHttpClient();
             html = await httpClient.GetStringAsync(url);
         }
         else
@@ -88,6 +88,12 @@ public class ChangelogScraperService(SessionHost host)
             return [];
         }
 
+        return Parse(html);
+    }
+
+    /// <summary>Extracts the <c>changeLogs[n] = {...}</c> entries embedded in the changelog page.</summary>
+    internal static List<ChangeLogEntry> Parse(string html)
+    {
         var matches = ChangeLogRegex.Matches(html);
         Log.Debug($"Regex found {matches.Count} changelog entries");
 

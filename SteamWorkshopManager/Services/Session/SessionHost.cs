@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Steam;
@@ -18,8 +19,8 @@ namespace SteamWorkshopManager.Services.Session;
 /// <see cref="Worker"/> is the typed RPC proxy consumed by
 /// <c>WorkerSteamService</c>. <see cref="LastInitResult"/> and
 /// <see cref="CurrentUserId"/> cache the outcome of the last init call so the
-/// sync <c>ISteamService.Initialize</c> surface can respond without another
-/// RPC round-trip.
+/// shell can read the connection state without another RPC round-trip.
+/// Start, stop and crash recovery are serialized.
 ///
 /// Unexpected worker exits (crashes) are caught via
 /// <see cref="SteamWorkerClient.UnexpectedExit"/>. The host then respawns with
@@ -34,6 +35,9 @@ public sealed class SessionHost : IAsyncDisposable
     private const int MaxRestartsPerWindow = 3;
     private static readonly TimeSpan RestartWindow = TimeSpan.FromSeconds(60);
 
+    // Start, stop and crash recovery run one at a time: a switch during a respawn backoff
+    // could otherwise spawn two workers.
+    private readonly SemaphoreSlim _lifecycle = new(1, 1);
     private readonly object _recoveryLock = new();
     private int _restartCount;
     private DateTime _firstRestartAt;
@@ -66,13 +70,27 @@ public sealed class SessionHost : IAsyncDisposable
 
     public async Task<SteamInitResult> StartSessionAsync(uint appId)
     {
+        await _lifecycle.WaitAsync();
+        try { return await StartCoreAsync(appId); }
+        finally { _lifecycle.Release(); }
+    }
+
+    public async Task StopAsync()
+    {
+        await _lifecycle.WaitAsync();
+        try { await StopCoreAsync(); }
+        finally { _lifecycle.Release(); }
+    }
+
+    private async Task<SteamInitResult> StartCoreAsync(uint appId)
+    {
         if (_client is not null && ActiveAppId == appId)
             return LastInitResult;
 
-        await StopAsync();
+        await StopCoreAsync();
 
         var client = new SteamWorkerClient();
-        client.UnexpectedExit += () => _ = HandleCrashAsync(appId);
+        client.UnexpectedExit += () => _ = HandleCrashAsync(client, appId);
 
         try
         {
@@ -101,7 +119,7 @@ public sealed class SessionHost : IAsyncDisposable
         {
             // A wedged SteamAPI.Init would otherwise keep the shell waiting forever.
             Log.Error($"Steam worker for AppId {appId} did not initialize within {InitTimeout.TotalSeconds:0}s, killing it");
-            await StopAsync();
+            await StopCoreAsync();
             LastInitResult = SteamInitResult.SteamNotRunning;
         }
         catch (Exception ex)
@@ -114,9 +132,14 @@ public sealed class SessionHost : IAsyncDisposable
         return LastInitResult;
     }
 
-    public async Task StopAsync()
+    private async Task StopCoreAsync()
     {
-        if (_client is null) return;
+        if (_client is null)
+        {
+            // Also cancels a crash respawn waiting in its backoff.
+            ActiveAppId = 0;
+            return;
+        }
 
         // Flag the shutdown before tearing down so the Exited watcher stays
         // silent - otherwise each session switch would look like a crash.
@@ -137,10 +160,10 @@ public sealed class SessionHost : IAsyncDisposable
     /// respawn for the same AppId. Aborts if the user swapped sessions during
     /// the delay or if the restart budget is exhausted.
     /// </summary>
-    private async Task HandleCrashAsync(uint crashedAppId)
+    private async Task HandleCrashAsync(SteamWorkerClient crashed, uint crashedAppId)
     {
-        // Ignore late events from a client that has already been torn down.
-        if (ActiveAppId != crashedAppId) return;
+        // Ignore late events from a client that has already been replaced or torn down.
+        if (!ReferenceEquals(_client, crashed)) return;
 
         int attempt;
         int delaySeconds;
@@ -167,45 +190,51 @@ public sealed class SessionHost : IAsyncDisposable
             }
         }
 
-        if (attempt < 0)
+        await _lifecycle.WaitAsync();
+        try
         {
-            // Drop the dead client so the UI reflects "disconnected" state.
+            // A switch or stop may have replaced the client meanwhile.
+            if (!ReferenceEquals(_client, crashed)) return;
+
+            // Drop the dead client; ActiveAppId stays set so a switch during the backoff is detectable.
             _client = null;
             LastInitResult = SteamInitResult.SteamNotRunning;
             CurrentUserId = 0;
+            try { await crashed.DisposeAsync(); } catch { }
+        }
+        finally
+        {
+            _lifecycle.Release();
+        }
+
+        if (attempt < 0)
+        {
             try { WorkerUnrecoverable?.Invoke(); } catch { }
             return;
         }
 
         Log.Warning($"Steam worker crashed for AppId {crashedAppId} - respawn attempt {attempt}/{MaxRestartsPerWindow} in {delaySeconds}s.");
-
-        // Tear down the broken client so StartSessionAsync's early-return
-        // guard (`_client != null && ActiveAppId == appId`) doesn't kick in.
-        var broken = _client;
-        _client = null;
-        LastInitResult = SteamInitResult.SteamNotRunning;
-        CurrentUserId = 0;
-        if (broken is not null)
-        {
-            try { await broken.DisposeAsync(); } catch { }
-        }
-
         await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
-
-        // Session may have been switched or stopped during the backoff.
-        if (ActiveAppId != crashedAppId || ActiveAppId == 0)
-        {
-            Log.Debug($"Session no longer on AppId {crashedAppId} - aborting respawn.");
-            return;
-        }
-
-        // Reset ActiveAppId so StartSessionAsync does a full spawn (its guard
-        // would otherwise skip because ActiveAppId still matches crashedAppId).
-        ActiveAppId = 0;
 
         try
         {
-            var result = await StartSessionAsync(crashedAppId);
+            SteamInitResult result;
+            await _lifecycle.WaitAsync();
+            try
+            {
+                // Session switched, stopped or already respawned during the backoff.
+                if (_client is not null || ActiveAppId != crashedAppId)
+                {
+                    Log.Debug($"Session no longer on a dead AppId {crashedAppId} worker - aborting respawn.");
+                    return;
+                }
+                result = await StartCoreAsync(crashedAppId);
+            }
+            finally
+            {
+                _lifecycle.Release();
+            }
+
             if (result == SteamInitResult.Success)
             {
                 Log.Info($"Worker recovered for AppId {crashedAppId}");

@@ -11,7 +11,7 @@ using SteamWorkshopManager.Services.Session;
 using SteamWorkshopManager.Services.Steam;
 using Steamworks;
 
-namespace SteamWorkshopManager.Core.Workshop;
+namespace SteamWorkshopManager.Services.Workshop;
 
 /// <summary>
 /// Shell-side facade over the worker's app-dependency RPC. SteamUGC work runs
@@ -21,14 +21,17 @@ namespace SteamWorkshopManager.Core.Workshop;
 public sealed class AppDependencyService(SessionHost host)
 {
     private static readonly Logger Log = LogService.GetLogger<AppDependencyService>();
-    private static readonly HttpClient HttpClient = new();
+    private static readonly HttpClient HttpClient = SteamHttpClientFactory.Create(timeout: TimeSpan.FromSeconds(10));
     private static readonly ConcurrentDictionary<uint, string?> AppNameCache = new();
 
     public async Task<List<AppDependencyInfo>> GetAppDependenciesAsync(PublishedFileId_t modId)
     {
         if (host.Worker is null) return [];
         var dtos = await host.Worker.GetAppDependenciesAsync(modId.m_PublishedFileId);
-        return dtos.Select(d => new AppDependencyInfo { AppId = d.AppId, Name = d.Name }).ToList();
+
+        // The worker only knows the AppIds; names come from the Store, looked up in parallel.
+        var names = await Task.WhenAll(dtos.Select(d => d.Name is null ? ResolveAppNameAsync(d.AppId) : Task.FromResult<string?>(d.Name)));
+        return dtos.Select((d, i) => new AppDependencyInfo { AppId = d.AppId, Name = names[i] }).ToList();
     }
 
     public async Task<bool> AddAppDependencyAsync(PublishedFileId_t modId, AppId_t appId)
@@ -53,24 +56,22 @@ public sealed class AppDependencyService(SessionHost host)
         {
             var url = SteamUrls.AppDetails(appId);
             using var response = await HttpClient.GetAsync(url);
-            if (!response.IsSuccessStatusCode) { AppNameCache[appId] = null; return null; }
+            // Transient failures (rate limit, outage) aren't cached so a later render retries.
+            if (!response.IsSuccessStatusCode) return null;
 
             var json = await response.Content.ReadAsStringAsync();
             using var doc = JsonDocument.Parse(json);
-            if (SteamAppDetailsParser.TryGetData(doc.RootElement, appId, out var data) &&
-                data.TryGetProperty("name", out var name))
-            {
-                var appName = name.GetString();
-                AppNameCache[appId] = appName;
-                return appName;
-            }
+            var appName = SteamAppDetailsParser.TryGetData(doc.RootElement, appId, out var data) &&
+                          data.TryGetProperty("name", out var name)
+                ? name.GetString()
+                : null;
+            AppNameCache[appId] = appName;
+            return appName;
         }
         catch (Exception ex)
         {
             Log.Debug($"Failed to resolve app name for {appId}: {ex.Message}");
+            return null;
         }
-
-        AppNameCache[appId] = null;
-        return null;
     }
 }

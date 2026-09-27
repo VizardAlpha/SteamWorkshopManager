@@ -6,7 +6,7 @@ using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Session;
 using Steamworks;
 
-namespace SteamWorkshopManager.Core.Workshop;
+namespace SteamWorkshopManager.Services.Workshop;
 
 /// <summary>
 /// Shell-side facade over the worker's mod-dependency RPC. The raw SteamUGC

@@ -22,13 +22,11 @@ namespace SteamWorkshopManager.Services.Steam.Worker.Host;
 /// RPC calls are thin wrappers - they marshal domain models to the DTOs
 /// defined under <see cref="Contracts.Dtos"/>, nothing more.
 /// </summary>
-internal sealed class SteamWorkerImpl : ISteamWorker
+internal sealed class SteamWorkerImpl(uint appId) : ISteamWorker
 {
     private static readonly Logger Log = LogService.GetLogger<SteamWorkerImpl>();
-    private static readonly HttpClient HttpClient = new();
-    private static readonly ConcurrentDictionary<uint, string?> AppNameCache = new();
 
-    private readonly SteamService _steam = new();
+    private readonly SteamService _steam = new(appId);
     private CancellationTokenSource? _logSinkCts;
 
     public Task<string> PingAsync() => Task.FromResult("pong");
@@ -85,9 +83,6 @@ internal sealed class SteamWorkerImpl : ISteamWorker
         _steam.Shutdown();
         return Task.CompletedTask;
     }
-
-    public Task<bool> IsInitializedAsync() =>
-        Task.FromResult(_steam.IsInitialized);
 
     public Task<ulong> GetCurrentUserIdAsync() =>
         Task.FromResult(_steam.CurrentUserId?.m_SteamID ?? 0UL);
@@ -240,8 +235,8 @@ internal sealed class SteamWorkerImpl : ISteamWorker
         for (uint i = 0; i < result.m_nNumAppDependencies; i++)
         {
             var appId = result.m_rgAppIDs[i];
-            var name = await ResolveAppNameAsync(appId.m_AppId);
-            deps.Add(new AppDependencyInfoDto(appId.m_AppId, name));
+            // Names are resolved shell-side (AppDependencyService), which owns the cache.
+            deps.Add(new AppDependencyInfoDto(appId.m_AppId, null));
         }
         return deps;
     }
@@ -424,43 +419,9 @@ internal sealed class SteamWorkerImpl : ISteamWorker
         var timeout = DateTime.UtcNow.AddSeconds(timeoutSeconds);
         while (!task.IsCompleted && DateTime.UtcNow < timeout)
         {
-            SteamAPI.RunCallbacks();
             await Task.Delay(100);
         }
         return task.IsCompleted;
-    }
-
-    /// <summary>
-    /// Resolves a Steam App name via the public Store API. Cached in-process to
-    /// spare hitting Valve for every Dependency's render.
-    /// </summary>
-    private static async Task<string?> ResolveAppNameAsync(uint appId)
-    {
-        if (AppNameCache.TryGetValue(appId, out var cached)) return cached;
-
-        try
-        {
-            var url = SteamUrls.AppDetails(appId);
-            using var response = await HttpClient.GetAsync(url);
-            if (!response.IsSuccessStatusCode) { AppNameCache[appId] = null; return null; }
-
-            var json = await response.Content.ReadAsStringAsync();
-            using var doc = JsonDocument.Parse(json);
-            if (SteamAppDetailsParser.TryGetData(doc.RootElement, appId, out var data) &&
-                data.TryGetProperty("name", out var name))
-            {
-                var appName = name.GetString();
-                AppNameCache[appId] = appName;
-                return appName;
-            }
-        }
-        catch (Exception ex)
-        {
-            Log.Debug($"Failed to resolve app name for {appId}: {ex.Message}");
-        }
-
-        AppNameCache[appId] = null;
-        return null;
     }
 
     public Task<List<GameBranchDto>> GetGameBranchesAsync()

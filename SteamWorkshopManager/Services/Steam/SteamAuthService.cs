@@ -299,14 +299,33 @@ public static class SteamAuthService
         }
     }
 
+    private static HttpClient? _authClient;
+    private static string? _authClientToken;
+    private static readonly Lock AuthClientLock = new();
+
     /// <summary>
-    /// Creates an HttpClient with the steamLoginSecure cookie set.
+    /// Shared HttpClient carrying the steamLoginSecure cookie, rebuilt only when the
+    /// access token changes. Callers must not dispose it.
     /// </summary>
-    public static HttpClient CreateAuthenticatedHttpClient()
+    public static HttpClient GetAuthenticatedHttpClient()
     {
         if (!IsAuthenticated)
             throw new InvalidOperationException("Not authenticated");
 
+        lock (AuthClientLock)
+        {
+            // The previous client isn't disposed: an in-flight request may still use it.
+            if (_authClient is null || _authClientToken != _accessToken)
+            {
+                _authClient = CreateAuthenticatedHttpClient();
+                _authClientToken = _accessToken;
+            }
+            return _authClient;
+        }
+    }
+
+    private static HttpClient CreateAuthenticatedHttpClient()
+    {
         var cookieContainer = new CookieContainer();
         var sessionId = Convert.ToHexString(RandomNumberGenerator.GetBytes(12)).ToLowerInvariant();
 

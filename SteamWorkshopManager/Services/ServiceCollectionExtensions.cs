@@ -27,6 +27,9 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddAppServices(this IServiceCollection services)
     {
+        // Active session, read wherever the current game matters
+        services.AddSingleton<ISessionContext, SessionContext>();
+
         // Persistence + settings
         services.AddSingleton<ISettingsService, SettingsService>();
         services.AddSingleton<ISessionRepository, SessionRepository>();
@@ -72,6 +75,17 @@ public static class ServiceCollectionExtensions
         // Session orchestration
         services.AddSingleton<SessionManager>();
         services.AddSingleton<SessionCleanupService>();
+
+        // View-models: the shell is built once, the rest through the factory (they take runtime args)
+        services.AddSingleton<ViewModels.IViewModelFactory, ViewModels.ViewModelFactory>();
+        services.AddTransient<ViewModels.MainViewModel>();
+
+        // Editor sections shared by the create and edit views: one instance per view.
+        services.AddTransient<ViewModels.Editor.TagEditorViewModel>();
+        services.AddTransient<ViewModels.Editor.VersionRangeViewModel>();
+        services.AddTransient<ViewModels.Editor.DependencyEditorViewModel>();
+        services.AddTransient<ViewModels.Editor.PreviewGalleryViewModel>();
+        services.AddTransient<ViewModels.Editor.ChangelogHistoryViewModel>();
 
         return services;
     }

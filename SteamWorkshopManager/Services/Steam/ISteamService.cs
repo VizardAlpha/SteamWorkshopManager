@@ -52,8 +52,6 @@ public interface ISteamService
     bool IsInitialized { get; }
     CSteamID? CurrentUserId { get; }
 
-    SteamInitResult Initialize();
-    void Shutdown();
 
     Task<List<WorkshopItem>> GetPublishedItemsAsync();
 

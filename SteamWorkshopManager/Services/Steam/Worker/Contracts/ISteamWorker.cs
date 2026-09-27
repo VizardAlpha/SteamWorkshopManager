@@ -40,9 +40,6 @@ public partial interface ISteamWorker
     /// <summary>Calls <c>SteamAPI.Shutdown()</c>.</summary>
     Task ShutdownAsync();
 
-    /// <summary>Whether Steam is currently initialized in the worker process.</summary>
-    Task<bool> IsInitializedAsync();
-
     /// <summary>Steam user id of the signed-in user, or 0 if not initialized.</summary>
     Task<ulong> GetCurrentUserIdAsync();
 

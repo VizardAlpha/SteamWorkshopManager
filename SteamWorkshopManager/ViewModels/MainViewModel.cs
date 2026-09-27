@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Extensions.DependencyInjection;
 using Steamworks;
 using SteamWorkshopManager.Core.Sessions;
 using SteamWorkshopManager.Core.Steam;
@@ -35,6 +34,8 @@ public partial class MainViewModel : ViewModelBase
     private readonly SessionCleanupService _sessionCleanup;
     private readonly SteamAppMetadataService _appMetadata;
     private readonly IDiscordPresenceService _presence;
+    private readonly ISessionContext _context;
+    private readonly IViewModelFactory _viewModels;
     private string _statusKey = "ConnectingToSteam";
 
     [ObservableProperty]
@@ -70,17 +71,17 @@ public partial class MainViewModel : ViewModelBase
     /// <summary>
     /// The name of the currently active game/session for display in the shell.
     /// </summary>
-    public string ActiveGameName => AppConfig.CurrentSession?.GameName ?? Loc["AppTitle"];
+    public string ActiveGameName => _context.Current?.GameName ?? Loc["AppTitle"];
 
     /// <summary>
     /// Single-character avatar for the session pill (first letter of the game name).
     /// </summary>
     public string ActiveGameInitial =>
-        string.IsNullOrEmpty(AppConfig.CurrentSession?.GameName)
+        string.IsNullOrEmpty(_context.Current?.GameName)
             ? "?"
-            : AppConfig.CurrentSession.GameName![..1].ToUpperInvariant();
+            : _context.Current.GameName![..1].ToUpperInvariant();
 
-    public bool HasActiveSession => AppConfig.CurrentSession is not null;
+    public bool HasActiveSession => _context.Current is not null;
 
     /// <summary>
     /// The window title including the active game name.
@@ -197,23 +198,6 @@ public partial class MainViewModel : ViewModelBase
 
     public IProgress<UploadProgress> UploadProgressReporter { get; }
 
-    /// <summary>Parameterless ctor required by Avalonia's design-time tooling.
-    /// Pulls everything from the runtime DI container so the production path
-    /// matches what's registered in <c>ServiceCollectionExtensions</c>.</summary>
-    public MainViewModel() : this(
-        App.Services.GetRequiredService<ISteamService>(),
-        App.Services.GetRequiredService<IFileDialogService>(),
-        App.Services.GetRequiredService<ISettingsService>(),
-        App.Services.GetRequiredService<INotificationService>(),
-        App.Services.GetRequiredService<ISessionRepository>(),
-        App.Services.GetRequiredService<SessionManager>(),
-        App.Services.GetRequiredService<SessionHost>(),
-        App.Services.GetRequiredService<SessionCleanupService>(),
-        App.Services.GetRequiredService<SteamAppMetadataService>(),
-        App.Services.GetRequiredService<IDiscordPresenceService>(),
-        App.Services.GetRequiredService<UpdateController>())
-    { }
-
     public MainViewModel(
         ISteamService steamService,
         IFileDialogService fileDialogService,
@@ -225,9 +209,13 @@ public partial class MainViewModel : ViewModelBase
         SessionCleanupService sessionCleanup,
         SteamAppMetadataService appMetadata,
         IDiscordPresenceService presence,
-        UpdateController updates)
+        UpdateController updates,
+        ISessionContext context,
+        IViewModelFactory viewModels)
     {
         Updates = updates;
+        _context = context;
+        _viewModels = viewModels;
         _steamService = steamService;
         _fileDialogService = fileDialogService;
         _settingsService = settingsService;
@@ -270,8 +258,8 @@ public partial class MainViewModel : ViewModelBase
 
                 if (p.BytesTotal > 0)
                 {
-                    var processed = FormatBytes(p.BytesProcessed);
-                    var total = FormatBytes(p.BytesTotal);
+                    var processed = Formatters.Bytes((long)p.BytesProcessed);
+                    var total = Formatters.Bytes((long)p.BytesTotal);
                     UploadProgressText = $"{processed} / {total} ({p.Percentage:F0}%)";
                 }
                 else
@@ -281,19 +269,18 @@ public partial class MainViewModel : ViewModelBase
             });
         });
 
-        ItemListViewModel = ActivatorUtilities.CreateInstance<ItemListViewModel>(
-            App.Services, _notificationService);
+        ItemListViewModel = _viewModels.Create<ItemListViewModel>(_notificationService);
         ItemListViewModel.ItemSelected += OnItemSelected;
         ItemListViewModel.CreateRequested += OnCreateRequested;
 
-        HomeViewModel = new HomeViewModel(ItemListViewModel);
+        HomeViewModel = new HomeViewModel(ItemListViewModel, _context);
 
         CurrentView = HomeViewModel;
         ActiveTab = ShellTab.Home;
 
         _presence.Sync();
 
-        InitializeSteamAsync();
+        _ = ApplyInitialConnectionAsync();
         _ = CheckForUpdatesAsync();
         _ = LoadSessionsAsync();
     }
@@ -303,7 +290,7 @@ public partial class MainViewModel : ViewModelBase
         try
         {
             var sessions = await _sessionRepository.GetAllSessionsAsync();
-            var activeId = AppConfig.CurrentSession?.Id;
+            var activeId = _context.Current?.Id;
             foreach (var session in sessions)
                 session.IsActive = session.Id == activeId;
 
@@ -404,17 +391,6 @@ public partial class MainViewModel : ViewModelBase
 
     private static readonly Logger Log = LogService.GetLogger<MainViewModel>();
 
-    private static string FormatBytes(ulong bytes)
-    {
-        return bytes switch
-        {
-            < 1024 => $"{bytes} B",
-            < 1024 * 1024 => $"{bytes / 1024.0:F1} KB",
-            < 1024 * 1024 * 1024 => $"{bytes / (1024.0 * 1024):F1} MB",
-            _ => $"{bytes / (1024.0 * 1024 * 1024):F1} GB"
-        };
-    }
-
     private void OnLanguageChanged()
     {
         StatusMessage = Loc[_statusKey];
@@ -505,11 +481,24 @@ public partial class MainViewModel : ViewModelBase
         StatusMessage = Loc[key];
     }
 
-    private async void InitializeSteamAsync()
+    /// <summary>The worker is started before the window: reflect its init result and load the items.</summary>
+    private async Task ApplyInitialConnectionAsync()
+    {
+        try
+        {
+            await ApplyInitialConnectionCoreAsync();
+        }
+        catch (Exception ex)
+        {
+            Log.Error("Initial Steam state could not be applied", ex);
+        }
+    }
+
+    private async Task ApplyInitialConnectionCoreAsync()
     {
         SetStatus("ConnectingToSteam");
         ConnectionState = SteamConnectionState.Connecting;
-        var result = await Task.Run(() => _steamService.Initialize());
+        var result = _sessionHost.LastInitResult;
 
         await Dispatcher.UIThread.InvokeAsync(async () =>
         {
@@ -549,6 +538,7 @@ public partial class MainViewModel : ViewModelBase
             case ItemEditorViewModel editor:
                 editor.ItemUpdated -= OnItemUpdated;
                 editor.ItemDeleted -= OnItemDeleted;
+                editor.Dispose();
                 break;
             case CreateItemViewModel creator:
                 creator.ItemCreated -= OnItemCreated;
@@ -563,8 +553,7 @@ public partial class MainViewModel : ViewModelBase
     {
         DetachCurrentView();
         SelectedItem = item;
-        var editor = ActivatorUtilities.CreateInstance<ItemEditorViewModel>(
-            App.Services, item, UploadProgressReporter);
+        var editor = _viewModels.Create<ItemEditorViewModel>(item, UploadProgressReporter);
         editor.ItemUpdated += OnItemUpdated;
         editor.ItemDeleted += OnItemDeleted;
         CurrentView = editor;
@@ -574,8 +563,7 @@ public partial class MainViewModel : ViewModelBase
     private void OnCreateRequested()
     {
         DetachCurrentView();
-        var creator = ActivatorUtilities.CreateInstance<CreateItemViewModel>(
-            App.Services, UploadProgressReporter);
+        var creator = _viewModels.Create<CreateItemViewModel>(UploadProgressReporter);
         creator.ItemCreated += OnItemCreated;
         CurrentView = creator;
     }
@@ -585,23 +573,26 @@ public partial class MainViewModel : ViewModelBase
     /// just-saved state - only refresh the matching list row in background so
     /// the catalog is accurate the next time they navigate to "My mods".
     /// </summary>
-    private async void OnItemUpdated(PublishedFileId_t fileId)
+    private void OnItemUpdated(PublishedFileId_t fileId) => FireAndForget(async () =>
     {
-        var refreshed = await ItemListViewModel.RefreshItemAsync(fileId);
-        if (refreshed is null)
-        {
-            // Single-item fetch failed; trigger a best-effort full reload so
-            // the next list visit isn't stale.
+        // Single-item fetch failed: best-effort full reload so the next list visit isn't stale.
+        if (await ItemListViewModel.RefreshItemAsync(fileId) is null)
             await ItemListViewModel.LoadItemsAsync();
-        }
-    }
+    }, "Post-save refresh");
 
-    private async void OnItemDeleted()
+    private void OnItemDeleted() => FireAndForget(async () =>
     {
         DetachCurrentView();
         CurrentView = ItemListViewModel;
         SelectedItem = null;
         await ItemListViewModel.LoadItemsAsync();
+    }, "Post-delete reload");
+
+    /// <summary>Event handlers can't be awaited: log failures instead of letting them crash the app.</summary>
+    private static async void FireAndForget(Func<Task> action, string operation)
+    {
+        try { await action(); }
+        catch (Exception ex) { Log.Error($"{operation} failed", ex); }
     }
 
     /// <summary>
@@ -612,7 +603,9 @@ public partial class MainViewModel : ViewModelBase
     /// the freshly-published id (indexing latency, network), fall back to the
     /// list view + full reload + a notification rather than stranding the user.
     /// </summary>
-    private async void OnItemCreated(PublishedFileId_t fileId)
+    private void OnItemCreated(PublishedFileId_t fileId) => FireAndForget(() => OnItemCreatedAsync(fileId), "Post-publish navigation");
+
+    private async Task OnItemCreatedAsync(PublishedFileId_t fileId)
     {
         DetachCurrentView();
 
@@ -620,8 +613,7 @@ public partial class MainViewModel : ViewModelBase
         if (item is not null)
         {
             SelectedItem = item;
-            var editor = ActivatorUtilities.CreateInstance<ItemEditorViewModel>(
-                App.Services, item, UploadProgressReporter);
+            var editor = _viewModels.Create<ItemEditorViewModel>(item, UploadProgressReporter);
             editor.ItemUpdated += OnItemUpdated;
             editor.ItemDeleted += OnItemDeleted;
             CurrentView = editor;
@@ -665,7 +657,7 @@ public partial class MainViewModel : ViewModelBase
     private void NavigateToSettings()
     {
         DetachCurrentView();
-        CurrentView = ActivatorUtilities.CreateInstance<SettingsViewModel>(App.Services);
+        CurrentView = _viewModels.Create<SettingsViewModel>();
         ActiveTab = ShellTab.Settings;
     }
 
@@ -705,8 +697,8 @@ public partial class MainViewModel : ViewModelBase
     /// </summary>
     private void RefreshPresence() => _presence.Update(new PresenceState(
         ActiveTab,
-        AppConfig.CurrentSession?.GameName,
-        AppConfig.CurrentSession?.AppId ?? 0,
+        _context.Current?.GameName,
+        _context.Current?.AppId ?? 0,
         (CurrentView as ItemEditorViewModel)?.Title,
         IsUploadInProgress));
 
@@ -715,7 +707,7 @@ public partial class MainViewModel : ViewModelBase
     [RelayCommand]
     private async Task SwitchSessionAsync(WorkshopSession? session)
     {
-        if (session is null || session.Id == AppConfig.CurrentSession?.Id) return;
+        if (session is null || session.Id == _context.Current?.Id) return;
 
         Log.Debug($"Switching to session: {session.Name}");
         IsSwitchingSession = true;
@@ -732,7 +724,7 @@ public partial class MainViewModel : ViewModelBase
             HomeViewModel.ConnectionState = SteamConnectionState.Connecting;
             SetStatus("ConnectingToSteam");
 
-            // Swap the worker + update AppConfig to the new session.
+            // Swap the worker + activate the new session.
             var initResult = await _sessionManager.SwitchSessionAsync(session);
 
             // Reconcile the Sessions pill checkmark across all entries.
@@ -761,7 +753,7 @@ public partial class MainViewModel : ViewModelBase
                 _ => "SteamNotAvailable",
             });
 
-            // Notify header / pill / window title bindings that read AppConfig.
+            // Notify header / pill / window title bindings that read the session context.
             OnPropertyChanged(nameof(ActiveGameName));
             OnPropertyChanged(nameof(ActiveGameInitial));
             OnPropertyChanged(nameof(HasActiveSession));
@@ -820,7 +812,7 @@ public partial class MainViewModel : ViewModelBase
     {
         await _sessionHost.StopAsync();
 
-        AppConfig.Clear();
+        _context.Clear();
         _settingsService.Settings.ActiveSessionId = null;
         _settingsService.Save();
 
@@ -890,7 +882,7 @@ public partial class MainViewModel : ViewModelBase
 
         var session = SessionToDelete;
         var snapshot = Sessions.ToList();
-        var wasActive = session.Id == AppConfig.CurrentSession?.Id;
+        var wasActive = session.Id == _context.Current?.Id;
 
         IsDeletingSession = true;
         try
@@ -939,6 +931,28 @@ public partial class MainViewModel : ViewModelBase
     private void OnAddSessionRequested()
     {
         OpenAddSessionWizard?.Invoke();
+    }
+
+    public AddSessionViewModel CreateAddSessionViewModel() => _viewModels.Create<AddSessionViewModel>();
+
+    /// <summary>Routes a freshly created session through the regular switch path (items, hero, KPIs).</summary>
+    public async Task OnSessionAddedAsync()
+    {
+        try
+        {
+            var newActive = await _sessionRepository.GetActiveSessionAsync();
+            if (newActive is null) return;
+
+            await LoadSessionsAsync();
+
+            var sessionInPill = Sessions.FirstOrDefault(s => s.Id == newActive.Id);
+            if (sessionInPill is not null)
+                await SwitchSessionCommand.ExecuteAsync(sessionInPill);
+        }
+        catch (Exception ex)
+        {
+            Log.Error("Failed to activate the new session", ex);
+        }
     }
 
     private async Task CheckForUpdatesAsync()

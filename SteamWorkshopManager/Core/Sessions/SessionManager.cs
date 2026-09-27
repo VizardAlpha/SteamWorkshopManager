@@ -23,17 +23,20 @@ public class SessionManager
     private readonly WorkshopTagsService _tagsService;
     private readonly AppIdValidator _appIdValidator;
     private readonly SessionHost _sessionHost;
+    private readonly ISessionContext _context;
 
     public SessionManager(
         ISessionRepository sessionRepository,
         WorkshopTagsService tagsService,
         AppIdValidator appIdValidator,
-        SessionHost sessionHost)
+        SessionHost sessionHost,
+        ISessionContext context)
     {
         _sessionRepository = sessionRepository;
         _tagsService = tagsService;
         _appIdValidator = appIdValidator;
         _sessionHost = sessionHost;
+        _context = context;
     }
 
     /// <summary>
@@ -96,10 +99,8 @@ public class SessionManager
         // and calls SteamAPI.Init() inside the fresh process.
         var initResult = await _sessionHost.StartSessionAsync(newSession.AppId);
 
-        // Update global app state only after the worker is live, so any code
-        // reading AppConfig.CurrentSession sees a consistent snapshot.
-        AppConfig.Clear();
-        AppConfig.Initialize(newSession);
+        // Activated only once the worker is live, so readers see a consistent snapshot.
+        _context.Activate(newSession);
 
         newSession.LastUsedAt = DateTime.UtcNow;
         try { await _sessionRepository.SaveSessionAsync(newSession); }
@@ -109,27 +110,15 @@ public class SessionManager
     }
 
     /// <summary>
-    /// Updates the steam_appid.txt file with the new AppId.
-    /// Steam reads this from the working directory, so we write to multiple locations.
+    /// Updates steam_appid.txt next to the binary. Legacy fallback only: the worker
+    /// gets its AppId from the SteamAppId environment variable.
     /// </summary>
     public static async Task UpdateSteamAppIdFileAsync(uint appId)
     {
         try
         {
-            var appIdContent = appId.ToString();
-
-            // Write to AppContext.BaseDirectory
-            await File.WriteAllTextAsync(AppPaths.SteamAppIdFile, appIdContent);
+            await File.WriteAllTextAsync(AppPaths.SteamAppIdFile, appId.ToString());
             Log.Debug($"Updated steam_appid.txt to {appId} at {AppPaths.SteamAppIdFile}");
-
-            // Also write to current working directory if different
-            var workingDir = Environment.CurrentDirectory;
-            if (!string.Equals(workingDir, AppContext.BaseDirectory, StringComparison.OrdinalIgnoreCase))
-            {
-                var workingPath = Path.Combine(workingDir, "steam_appid.txt");
-                await File.WriteAllTextAsync(workingPath, appIdContent);
-                Log.Debug($"Also updated steam_appid.txt at {workingPath}");
-            }
         }
         catch (Exception ex)
         {
@@ -152,11 +141,7 @@ public class SessionManager
 
         await _sessionRepository.SaveSessionAsync(session);
 
-        // Update AppConfig if this is the current session
-        if (AppConfig.CurrentSession?.Id == session.Id)
-        {
-            AppConfig.UpdateSession(session);
-        }
+        if (_context.Current?.Id == session.Id) _context.Update(session);
 
         Log.Debug($"Tags refreshed: {tagsResult.TagsByCategory.Count} categories");
     }

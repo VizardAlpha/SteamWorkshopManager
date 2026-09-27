@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Core;
+using SteamWorkshopManager.Core.Sessions;
 using SteamWorkshopManager.Services.Session;
 
 namespace SteamWorkshopManager.Core.Workshop;
@@ -13,13 +13,13 @@ namespace SteamWorkshopManager.Core.Workshop;
 /// custom-tag changes to the active session via <see cref="ISessionRepository"/>
 /// so the VMs no longer need to chase the service locator.
 /// </summary>
-public sealed class TagSelectionService(ISessionRepository sessionRepository)
+public sealed class TagSelectionService(ISessionRepository sessionRepository, ISessionContext context)
 {
     /// <summary>Adds a custom tag to the active session if not already present
     /// (case-insensitive). Fire-and-forget persist - failures are ignored.</summary>
     public void AddCustomTagToSession(string tagName)
     {
-        var session = AppConfig.CurrentSession;
+        var session = context.Current;
         if (session is null) return;
         if (session.CustomTags.Contains(tagName, StringComparer.OrdinalIgnoreCase)) return;
 
@@ -29,7 +29,7 @@ public sealed class TagSelectionService(ISessionRepository sessionRepository)
 
     public void RemoveCustomTagFromSession(string tagName)
     {
-        var session = AppConfig.CurrentSession;
+        var session = context.Current;
         if (session is null) return;
 
         var index = session.CustomTags.FindIndex(t =>

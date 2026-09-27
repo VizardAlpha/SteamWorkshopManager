@@ -32,12 +32,6 @@ public static class SteamWorkerHost
     /// </summary>
     public static async Task RunAsync(SteamWorkerArgs args)
     {
-        // The worker has its own process-local AppConfig (static classes live
-        // per process). Steamworks wrappers inside SteamService read
-        // AppConfig.AppId when building UGC queries - if it's zero, every
-        // query comes back empty. Seed it from the CLI args.
-        SteamWorkshopManager.Services.Core.AppConfig.InitializeAppIdOnly(args.AppId);
-
         try
         {
             await using var pipe = new NamedPipeClientStream(
@@ -48,7 +42,8 @@ public static class SteamWorkerHost
 
             await pipe.ConnectAsync(10_000);
 
-            var target = new SteamWorkerImpl();
+            // The AppId comes from the CLI args: every UGC query is scoped to it.
+            var target = new SteamWorkerImpl(args.AppId);
             using var rpc = JsonRpc.Attach(pipe, target);
             await rpc.Completion;
         }

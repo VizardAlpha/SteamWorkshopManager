@@ -3,23 +3,24 @@
 SteamWorkshopManager redistributes the components listed below. Each one remains
 under its own licence, reproduced or referenced here as those licences require.
 
-Last reviewed: 2026-08-16.
+Last reviewed: 2026-09-27.
 
 ## MIT licence
 
 | Component | Version | Author | Source |
 | --- | --- | --- | --- |
-| Avalonia | 12.1.1 | Avalonia Team | https://github.com/AvaloniaUI/Avalonia |
-| Avalonia.Desktop | 12.1.1 | Avalonia Team | https://github.com/AvaloniaUI/Avalonia |
-| Avalonia.Themes.Fluent | 12.1.1 | Avalonia Team | https://github.com/AvaloniaUI/Avalonia |
-| Avalonia.Fonts.Inter | 12.1.1 | Avalonia Team | https://github.com/AvaloniaUI/Avalonia |
+| Avalonia | 12.1.3 | Avalonia Team | https://github.com/AvaloniaUI/Avalonia |
+| Avalonia.Desktop | 12.1.3 | Avalonia Team | https://github.com/AvaloniaUI/Avalonia |
+| Avalonia.Themes.Fluent | 12.1.3 | Avalonia Team | https://github.com/AvaloniaUI/Avalonia |
+| Avalonia.Fonts.Inter | 12.1.3 | Avalonia Team | https://github.com/AvaloniaUI/Avalonia |
 | CommunityToolkit.Mvvm | 8.4.2 | Microsoft | https://github.com/CommunityToolkit/dotnet |
 | DiscordRichPresence | 1.143.0 | Lachee | https://github.com/Lachee/discord-rpc-csharp |
 | Material.Icons.Avalonia | 3.0.2 | SKProCH | https://github.com/AvaloniaUtils/Material.Icons.Avalonia |
-| Microsoft.Extensions.DependencyInjection | 10.0.11 | Microsoft | https://github.com/dotnet/dotnet |
+| Microsoft.Extensions.DependencyInjection | 10.0.12 | Microsoft | https://github.com/dotnet/dotnet |
 | QRCoder | 1.8.0 | Raffael Herrmann, Shane Krueger | https://github.com/Shane32/QRCoder |
 | Steamworks.NET | 2025.163.0 | Riley Labrecque | https://github.com/rlabrecque/Steamworks.NET |
 | StreamJsonRpc | 2.25.29 | Microsoft | https://github.com/microsoft/vs-streamjsonrpc |
+| System.Security.Cryptography.ProtectedData | 10.0.12 | Microsoft | https://github.com/dotnet/dotnet |
 
 Copyright remains with the respective authors listed above. The MIT licence
 text below applies to every component in this table.

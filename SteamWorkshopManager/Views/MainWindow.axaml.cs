@@ -1,8 +1,7 @@
-using System.Linq;
+using System;
 using Avalonia.Controls;
 using Avalonia.Media;
-using Microsoft.Extensions.DependencyInjection;
-using SteamWorkshopManager.Services.Session;
+using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.ViewModels;
 
 namespace SteamWorkshopManager.Views;
@@ -12,11 +11,11 @@ public partial class MainWindow : Window
     private static readonly IBrush ConnectedBrush = new SolidColorBrush(Color.Parse("#a4d007"));
     private static readonly IBrush DisconnectedBrush = new SolidColorBrush(Color.Parse("#c23b2e"));
 
-    public MainWindow()
-    {
-        InitializeComponent();
+    // Required by the XAML previewer.
+    public MainWindow() => InitializeComponent();
 
-        var viewModel = new MainViewModel();
+    public MainWindow(MainViewModel viewModel) : this()
+    {
         DataContext = viewModel;
 
         viewModel.PropertyChanged += (_, e) =>
@@ -62,29 +61,19 @@ public partial class MainWindow : Window
 
     private async void OnOpenAddSessionWizard()
     {
-        var sessionRepository = App.Services.GetRequiredService<ISessionRepository>();
-        var addSessionWindow = new AddSessionWindow();
+        if (DataContext is not MainViewModel vm) return;
 
-        // The dialog auto-closes itself on success; here we refresh the pill
-        // collection and route through the ViewModel's SwitchSessionCommand so
-        // the new session flows through the same UI-update path as a manual
-        // switch (items reload, hero image refresh, KPI recalc…).
-        addSessionWindow.SessionCreatedAndReady += async () =>
+        // The dialog auto-closes itself on success; the view-model then routes the
+        // new session through the same switch path as a manual pick.
+        try
         {
-            if (DataContext is not MainViewModel vm) return;
-
-            var newActive = await sessionRepository.GetActiveSessionAsync();
-            if (newActive is null) return;
-
-            await vm.LoadSessionsAsync();
-
-            var sessionInPill = vm.Sessions.FirstOrDefault(s => s.Id == newActive.Id);
-            if (sessionInPill is not null)
-            {
-                await vm.SwitchSessionCommand.ExecuteAsync(sessionInPill);
-            }
-        };
-
-        await addSessionWindow.ShowDialog(this);
+            var addSessionWindow = new AddSessionWindow(vm.CreateAddSessionViewModel());
+            addSessionWindow.SessionCreatedAndReady += async () => await vm.OnSessionAddedAsync();
+            await addSessionWindow.ShowDialog(this);
+        }
+        catch (Exception ex)
+        {
+            LogService.GetLogger<MainWindow>().Error("Add-session dialog failed", ex);
+        }
     }
 }

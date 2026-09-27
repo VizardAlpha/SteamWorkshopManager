@@ -39,6 +39,7 @@ public partial class SettingsViewModel : ViewModelBase
     private readonly ITelemetryService _telemetry;
     private readonly INotificationService _notificationService;
     private readonly IDiscordPresenceService _presence;
+    private readonly SessionHost _sessionHost;
 
     /// <summary>
     /// Which category is currently shown in the right-hand content pane.
@@ -171,9 +172,11 @@ public partial class SettingsViewModel : ViewModelBase
         ITelemetryService telemetry,
         INotificationService notificationService,
         IDiscordPresenceService presence,
-        UpdateController updates)
+        UpdateController updates,
+        SessionHost sessionHost)
     {
         Updates = updates;
+        _sessionHost = sessionHost;
         _settingsService = settingsService;
         _logService = logService;
         _telemetry = telemetry;
@@ -307,9 +310,10 @@ public partial class SettingsViewModel : ViewModelBase
 
         // Mirror the toggle into the running worker so it stops emitting at
         // the source instead of relying on the shell to drop entries.
-        var sessionHost = App.Services.GetService<SessionHost>();
-        if (sessionHost?.Worker is { } worker)
-            _ = worker.SetDebugModeAsync(value);
+        if (_sessionHost.Worker is { } worker)
+            _ = worker.SetDebugModeAsync(value).ContinueWith(
+                t => Log.Debug($"Worker debug toggle failed: {t.Exception?.GetBaseException().Message}"),
+                TaskContinuationOptions.OnlyOnFaulted);
     }
 
     partial void OnIsTelemetryEnabledChanged(bool value)
