@@ -67,6 +67,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ChangelogScraperService>();
         services.AddSingleton<DependencyService>();
         services.AddSingleton<AppDependencyService>();
+        services.AddSingleton<ItemTranslationService>();
         services.AddSingleton<AppIdValidator>();
         services.AddSingleton<DraftService>();
         services.AddSingleton<TagSelectionService>();
@@ -86,6 +87,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<ViewModels.Editor.DependencyEditorViewModel>();
         services.AddTransient<ViewModels.Editor.PreviewGalleryViewModel>();
         services.AddTransient<ViewModels.Editor.ChangelogHistoryViewModel>();
+        services.AddTransient<ViewModels.Editor.TranslationEditorViewModel>();
 
         return services;
     }

@@ -36,7 +36,7 @@ The shell never calls Steamworks. Every Steam operation goes through `SessionHos
 
 ## Editor view-models
 
-The create and edit screens share five child view-models under `ViewModels/Editor/`:
+The create and edit screens share child view-models under `ViewModels/Editor/`:
 
 | Child | Responsibility |
 | --- | --- |
@@ -45,6 +45,7 @@ The create and edit screens share five child view-models under `ViewModels/Edito
 | `DependencyEditorViewModel` | Required items and apps; staged in create, applied live in edit after `AttachTo` |
 | `PreviewGalleryViewModel` | Extra images and videos, reorder, translating edits into preview operations |
 | `ChangelogHistoryViewModel` | Past versions, archive download, Steam QR sign-in (edit only) |
+| `TranslationEditorViewModel` | Per-language titles and descriptions, sent after the main update (edit only) |
 
 `ItemEditorViewModel` and `CreateItemViewModel` own only the item's own fields and delegate the rest. XAML binds through the children, for example `Tags.CustomTags` or `Gallery.ImagePreviews`.
 

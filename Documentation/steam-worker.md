@@ -30,6 +30,10 @@ An unexpected exit triggers a respawn with a 1 s, 2 s then 5 s backoff, at most 
 
 Steamworks expects one callback pump. `SteamCallbackPump` runs `SteamAPI.RunCallbacks` every 50 ms on a dedicated thread; operations only wait for their CallResult. Uploads poll `GetItemUpdateProgress` and fail only after 5 minutes without any progress.
 
+## Languages
+
+Workshop queries and updates carry a language. Item queries set `english` explicitly so the editor always loads the base text, whatever the user's Steam client language; otherwise a translation could be saved back as the base. The main update sets `english` as its update language too. `GetItemTextAsync` and `UpdateItemTextAsync` read and write the title and description of any other language (see `SteamLanguages` for the codes).
+
 ## Progress and logs
 
 - Upload progress streams back through an `IProgress<T>` argument, which StreamJsonRpc marshals natively. Status strings are localization keys translated by the shell.

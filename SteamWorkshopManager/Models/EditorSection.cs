@@ -12,4 +12,5 @@ public enum EditorSection
     History,
     Dependencies,
     Previews,
+    Translations,
 }

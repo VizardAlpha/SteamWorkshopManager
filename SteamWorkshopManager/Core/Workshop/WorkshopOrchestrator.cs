@@ -6,6 +6,7 @@ using SteamWorkshopManager.Core.Sessions;
 using SteamWorkshopManager.Models;
 using SteamWorkshopManager.Services.Workshop;
 using SteamWorkshopManager.Services.Core;
+using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Notifications;
 using SteamWorkshopManager.Services.Steam;
 using SteamWorkshopManager.Services.Telemetry;
@@ -64,9 +65,12 @@ public sealed class WorkshopOrchestrator(
     ITelemetryService telemetry,
     DependencyService dependencyService,
     AppDependencyService appDependencyService,
+    ItemTranslationService translationService,
     DraftService draftService,
     ISessionContext context)
 {
+    private static readonly Logger Log = LogService.GetLogger<WorkshopOrchestrator>();
+
     public async Task<WorkshopActionResult> PublishAsync(
         CreateModRequest request,
         IProgress<UploadProgress>? progress = null,
@@ -170,6 +174,32 @@ public sealed class WorkshopOrchestrator(
             notifications.ShowError(LocalizationService.GetString("UpdateFailed"));
             return new WorkshopActionResult(false, request.FileId, "UpdateFailed", ex.Message);
         }
+    }
+
+    /// <summary>One submit per language, after the main update. Returns the languages that failed.</summary>
+    public async Task<IReadOnlyList<string>> UpdateTranslationsAsync(
+        PublishedFileId_t fileId,
+        IReadOnlyList<TranslationChange> changes,
+        IProgress<UploadProgress>? progress = null)
+    {
+        var failed = new List<string>();
+        for (var i = 0; i < changes.Count; i++)
+        {
+            var change = changes[i];
+            progress?.Report(new UploadProgress("UploadingTranslations", 0, 0, i * 100.0 / changes.Count));
+            try
+            {
+                if (!await translationService.UpdateTextAsync(fileId, change.Language, change.Text))
+                    failed.Add(change.Language);
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Translation {change.Language} failed: {ex.Message}");
+                failed.Add(change.Language);
+            }
+        }
+        progress?.Report(new UploadProgress("Done", 0, 0, 100));
+        return failed;
     }
 
     public async Task<WorkshopActionResult> DeleteAsync(PublishedFileId_t fileId)

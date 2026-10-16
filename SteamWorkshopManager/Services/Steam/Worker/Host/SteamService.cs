@@ -4,6 +4,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using SteamWorkshopManager.Core.Steam;
+using SteamWorkshopManager.Core.Workshop;
 using SteamWorkshopManager.Models;
 using Steamworks;
 using SteamWorkshopManager.Services.Core;
@@ -180,6 +181,8 @@ internal sealed class SteamService(uint appId)
             page
         );
 
+        // Base text, not the viewer's Steam language: the editor writes it back as the base.
+        SteamUGC.SetLanguage(query, SteamLanguages.BaseCode);
         SteamUGC.SetReturnLongDescription(query, true);
         SteamUGC.SetReturnMetadata(query, true);
         SteamUGC.SetReturnAdditionalPreviews(query, true);
@@ -242,6 +245,7 @@ internal sealed class SteamService(uint appId)
         Log.Debug($"Fetching single Workshop item: {fileId}");
 
         var query = SteamUGC.CreateQueryUGCDetailsRequest([fileId], 1);
+        SteamUGC.SetLanguage(query, SteamLanguages.BaseCode);
         SteamUGC.SetReturnLongDescription(query, true);
         SteamUGC.SetReturnMetadata(query, true);
         SteamUGC.SetReturnAdditionalPreviews(query, true);
@@ -525,6 +529,9 @@ internal sealed class SteamService(uint appId)
             fileId
         );
 
+        if (!string.IsNullOrEmpty(title) || !string.IsNullOrEmpty(description))
+            SteamUGC.SetItemUpdateLanguage(updateHandle, SteamLanguages.BaseCode);
+
         if (!string.IsNullOrEmpty(title))
             SteamUGC.SetItemTitle(updateHandle, title);
 
@@ -588,6 +595,113 @@ internal sealed class SteamService(uint appId)
         {
             EnsureProgressDismissed(progress, "OperationFailed");
         }
+    }
+
+    public async Task<ItemText?> GetItemTextAsync(PublishedFileId_t fileId, string language, bool fullDescription)
+    {
+        if (!_isInitialized)
+        {
+            Log.Warning("GetItemTextAsync called but Steam is not initialized");
+            return null;
+        }
+
+        var query = SteamUGC.CreateQueryUGCDetailsRequest([fileId], 1);
+        SteamUGC.SetLanguage(query, language);
+        SteamUGC.SetReturnLongDescription(query, fullDescription);
+        // The on-disk cache may hold this item's details from a query in another language.
+        SteamUGC.SetAllowCachedResponse(query, 0);
+
+        var tcs = new TaskCompletionSource<SteamUGCQueryCompleted_t>();
+        var callResult = CallResult<SteamUGCQueryCompleted_t>.Create((result, failure) =>
+        {
+            if (failure) tcs.SetException(new Exception("Item text query failed"));
+            else tcs.SetResult(result);
+        });
+        callResult.Set(SteamUGC.SendQueryUGCRequest(query));
+
+        var timeout = DateTime.UtcNow.AddSeconds(15);
+        while (!tcs.Task.IsCompleted && DateTime.UtcNow < timeout)
+        {
+            await Task.Delay(50);
+        }
+
+        if (!tcs.Task.IsCompleted)
+        {
+            Log.Error($"Item text query timed out for {fileId} ({language})");
+            SteamUGC.ReleaseQueryUGCRequest(query);
+            return null;
+        }
+
+        var queryResult = await tcs.Task;
+        ItemText? text = null;
+        if (queryResult.m_eResult == EResult.k_EResultOK && queryResult.m_unNumResultsReturned > 0
+            && SteamUGC.GetQueryUGCResult(queryResult.m_handle, 0, out var details))
+        {
+            text = new ItemText(details.m_rgchTitle, details.m_rgchDescription);
+            Log.Debug($"Item text {fileId} [{language}, full={fullDescription}]: cached={queryResult.m_bCachedData}, " +
+                      $"title='{text.Title}', description={text.Description.Length} chars");
+        }
+        else
+        {
+            Log.Warning($"Item text query returned no result for {fileId} ({language}, EResult: {queryResult.m_eResult})");
+        }
+
+        SteamUGC.ReleaseQueryUGCRequest(queryResult.m_handle);
+        return text;
+    }
+
+    public async Task<bool> UpdateItemTextAsync(PublishedFileId_t fileId, string language, ItemText text)
+    {
+        if (!_isInitialized)
+        {
+            Log.Warning("UpdateItemTextAsync called but Steam is not initialized");
+            return false;
+        }
+
+        // Steam stores an empty title as a blank translation, it does not delete it.
+        if (string.IsNullOrWhiteSpace(text.Title))
+        {
+            Log.Error($"Refusing to send an empty title for {language}");
+            return false;
+        }
+
+        Log.Info($"Updating item text: FileId={fileId}, Language={language}");
+
+        var updateHandle = SteamUGC.StartItemUpdate(new AppId_t(_appId), fileId);
+        var languageSet = SteamUGC.SetItemUpdateLanguage(updateHandle, language);
+        var titleSet = SteamUGC.SetItemTitle(updateHandle, text.Title);
+        var descriptionSet = SteamUGC.SetItemDescription(updateHandle, text.Description);
+        Log.Debug($"SetItemUpdateLanguage={languageSet}, SetItemTitle={titleSet}, SetItemDescription={descriptionSet}");
+
+        if (!languageSet)
+        {
+            Log.Error($"Steam rejected update language '{language}'");
+            return false;
+        }
+
+        var tcs = new TaskCompletionSource<SubmitItemUpdateResult_t>();
+        var callResult = CallResult<SubmitItemUpdateResult_t>.Create((result, failure) =>
+        {
+            if (failure) tcs.SetException(new Exception("Item text update failed"));
+            else tcs.SetResult(result);
+        });
+        callResult.Set(SteamUGC.SubmitItemUpdate(updateHandle, ""));
+
+        if (!await PumpUploadAsync(tcs.Task, updateHandle, null, 0))
+        {
+            Log.Error($"Item text update stalled for {fileId} ({language})");
+            return false;
+        }
+
+        var result = await tcs.Task;
+        if (result.m_eResult == EResult.k_EResultOK)
+        {
+            Log.Info($"Item {fileId} text updated for {language}");
+            return true;
+        }
+
+        Log.Error($"Failed to update item text ({language}): {SteamErrorMapper.GetTechnicalDescription(result.m_eResult)}");
+        return false;
     }
 
     public async Task<bool> DeleteItemAsync(PublishedFileId_t fileId)

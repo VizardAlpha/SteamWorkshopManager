@@ -313,6 +313,27 @@
     <!-- Inline errors -->
     <x:String x:Key="SessionSwitchFailed">Session switch failed</x:String>
     <x:String x:Key="LoadVersionsFailed">Failed to load versions</x:String>
+    <x:String x:Key="TranslationsTab">Translations</x:String>
+    <x:String x:Key="TranslationsHeader">Translations</x:String>
+    <x:String x:Key="TranslationsHeaderSub">Title and description shown to visitors according to their Steam language. Images, tags and files are shared by every language.</x:String>
+    <x:String x:Key="TranslationsLanguages">Languages</x:String>
+    <x:String x:Key="TranslationsBaseHint">base, edited in Info</x:String>
+    <x:String x:Key="AddLanguage">Add a language</x:String>
+    <x:String x:Key="TranslationsScanning">Checking languages on Steam</x:String>
+    <x:String x:Key="TranslationsEmpty">No translation yet. Add a language to start.</x:String>
+    <x:String x:Key="TranslationSelectHint">Select a language to edit its title and description.</x:String>
+    <x:String x:Key="CopyBaseText">Copy the base text</x:String>
+    <x:String x:Key="RemoveTranslation">Remove this language</x:String>
+    <x:String x:Key="TranslationEmptyOnSteam">This translation is blank on Steam: visitors in this language see no title and no description. Steam cannot delete a translation, so write the text or use "Copy the base text", then save.</x:String>
+    <x:String x:Key="TranslationModified">Modified, not sent yet</x:String>
+    <x:String x:Key="TranslationFallbackHint">An empty field uses the base text.</x:String>
+    <x:String x:Key="TranslationCannotDelete">Steam cannot delete a translation, not even from its website. To make this language show the base text, use "Copy the base text" and save.</x:String>
+    <x:String x:Key="TranslationLoading">Loading the text from Steam...</x:String>
+    <x:String x:Key="TranslationsLoadFailed">Could not check translations on Steam.</x:String>
+    <x:String x:Key="TranslationsPartiallyLoaded">{0} language(s) could not be checked: Steam did not answer.</x:String>
+    <x:String x:Key="TranslationLoadFailed">Could not load this translation from Steam.</x:String>
+    <x:String x:Key="TranslationsUpdateFailed">Item saved, but these translations failed: {0}</x:String>
+    <x:String x:Key="UploadingTranslations">Uploading translations...</x:String>
     <x:String x:Key="InvalidAppId">This AppId does not exist</x:String>
     <x:String x:Key="NoWorkshop">This game has no Workshop</x:String>
     <x:String x:Key="NetworkError">Network error during validation</x:String>

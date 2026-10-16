@@ -140,6 +140,15 @@ internal sealed class SteamWorkerImpl(uint appId) : ISteamWorker
             request.PreviewOps?.Select(FromDto).ToList());
     }
 
+    public async Task<ItemTextDto?> GetItemTextAsync(ulong publishedFileId, string language, bool fullDescription)
+    {
+        var text = await _steam.GetItemTextAsync(new PublishedFileId_t(publishedFileId), language, fullDescription);
+        return text is null ? null : new ItemTextDto(text.Title, text.Description);
+    }
+
+    public Task<bool> UpdateItemTextAsync(ulong publishedFileId, string language, string title, string description) =>
+        _steam.UpdateItemTextAsync(new PublishedFileId_t(publishedFileId), language, new Models.ItemText(title, description));
+
     private static PreviewOp FromDto(PreviewOpDto dto) => dto.Kind switch
     {
         PreviewOpKind.Remove => new PreviewOp.Remove(dto.RemoveIndex ?? 0u),

@@ -69,6 +69,16 @@ public partial interface ISteamWorker
     Task<bool> UpdateItemAsync(UpdateItemRequestDto request, IProgress<UploadProgressDto>? progress);
 
     /// <summary>
+    /// Title and description in one Steam API language. Steam returns the base
+    /// text when that language has no translation. Without
+    /// <paramref name="fullDescription"/> the description is truncated by Steam.
+    /// </summary>
+    Task<ItemTextDto?> GetItemTextAsync(ulong publishedFileId, string language, bool fullDescription);
+
+    /// <summary>Submits the title and description for one language only.</summary>
+    Task<bool> UpdateItemTextAsync(ulong publishedFileId, string language, string title, string description);
+
+    /// <summary>
     /// Available game branches for the AppId. Empty when versioning
     /// isn't supported by the game.
     /// </summary>

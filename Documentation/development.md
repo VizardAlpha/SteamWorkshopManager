@@ -11,7 +11,7 @@
 
 - MSTest, in `SteamWorkshopManager.Tests/`: `dotnet test SteamWorkshopManager.Tests -o build_test`.
 - Tests never hit the network: HTTP calls go through stub handlers and parsers are tested on inline fixtures.
-- Covered today: AppId parsing and validation, SemVer and release channels, updater checksums, atomic writes, credential storage, BBCode and Markdown conversion, Workshop tag and changelog parsing, preview ordering, tag selection, session context, Steam error mapping.
+- Covered today: AppId parsing and validation, SemVer and release channels, updater checksums, atomic writes, credential storage, BBCode and Markdown conversion, Workshop tag and changelog parsing, preview ordering, tag selection, session context, Steam error mapping, translation planning.
 
 ## Steamworks.NET
 

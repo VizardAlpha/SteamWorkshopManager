@@ -33,8 +33,15 @@
 | History | Past versions from the Workshop changelog, download a past version as a zip (requires a Steam QR sign-in) |
 | Dependencies | Required Workshop items (ordered) and required apps (DLC, tools), applied on Steam immediately |
 | Previews | Extra images and YouTube videos, drag to reorder; Sketchfab models are shown read-only |
+| Translations | Title and description per Steam language (the Info section holds the English base); sent on save, one submit per changed language |
 
 Other editor actions: copy the item id, delete the item (confirmed by typing `DELETE`). Only what changed is uploaded.
+
+### Translations
+
+- Opening the section checks, one query per language, which of the 29 Steam languages already have a translation. Full descriptions are compared, since translations often share the title and the opening lines with the base (about 5 KB per language). The result stays in memory while the editor is open; nothing is cached on disk.
+- An empty title or description in a translation falls back to the base text when sent. The app never sends an empty title.
+- Steam cannot delete a translation, neither through the API nor on its website, so the editor can only drop a language that was never sent. To make a language show the base text, copy the base into it and save. Sending empty texts does not delete it either: Steam keeps a blank translation and visitors in that language see no title and no description. The editor flags such blank translations so they can be rewritten.
 
 ## Create an item
 

@@ -313,6 +313,27 @@
     <!-- Erreurs inline -->
     <x:String x:Key="SessionSwitchFailed">Échec du changement de session</x:String>
     <x:String x:Key="LoadVersionsFailed">Échec du chargement des versions</x:String>
+    <x:String x:Key="TranslationsTab">Traductions</x:String>
+    <x:String x:Key="TranslationsHeader">Traductions</x:String>
+    <x:String x:Key="TranslationsHeaderSub">Titre et description affichés selon la langue Steam du visiteur. Les images, tags et fichiers sont communs à toutes les langues.</x:String>
+    <x:String x:Key="TranslationsLanguages">Langues</x:String>
+    <x:String x:Key="TranslationsBaseHint">base, modifiée dans Infos</x:String>
+    <x:String x:Key="AddLanguage">Ajouter une langue</x:String>
+    <x:String x:Key="TranslationsScanning">Vérification des langues sur Steam</x:String>
+    <x:String x:Key="TranslationsEmpty">Aucune traduction pour l'instant. Ajoutez une langue pour commencer.</x:String>
+    <x:String x:Key="TranslationSelectHint">Sélectionnez une langue pour modifier son titre et sa description.</x:String>
+    <x:String x:Key="CopyBaseText">Copier la base</x:String>
+    <x:String x:Key="RemoveTranslation">Retirer la langue</x:String>
+    <x:String x:Key="TranslationEmptyOnSteam">Cette traduction est vide sur Steam : les visiteurs dans cette langue ne voient ni titre ni description. Steam ne permet pas de supprimer une traduction : écrivez le texte ou utilisez « Copier la base », puis enregistrez.</x:String>
+    <x:String x:Key="TranslationModified">Modifiée, pas encore envoyée</x:String>
+    <x:String x:Key="TranslationFallbackHint">Un champ vide reprend le texte de base.</x:String>
+    <x:String x:Key="TranslationCannotDelete">Steam ne permet pas de supprimer une traduction, même depuis son site. Pour que cette langue affiche le texte de base, utilisez « Copier la base » puis enregistrez.</x:String>
+    <x:String x:Key="TranslationLoading">Chargement du texte depuis Steam...</x:String>
+    <x:String x:Key="TranslationsLoadFailed">Impossible de vérifier les traductions sur Steam.</x:String>
+    <x:String x:Key="TranslationsPartiallyLoaded">{0} langue(s) n'ont pas pu être vérifiées : Steam n'a pas répondu.</x:String>
+    <x:String x:Key="TranslationLoadFailed">Impossible de charger cette traduction depuis Steam.</x:String>
+    <x:String x:Key="TranslationsUpdateFailed">Item enregistré, mais ces traductions ont échoué : {0}</x:String>
+    <x:String x:Key="UploadingTranslations">Envoi des traductions...</x:String>
     <x:String x:Key="InvalidAppId">Cet AppId n'existe pas</x:String>
     <x:String x:Key="NoWorkshop">Ce jeu n'a pas de Workshop</x:String>
     <x:String x:Key="NetworkError">Erreur réseau lors de la validation</x:String>

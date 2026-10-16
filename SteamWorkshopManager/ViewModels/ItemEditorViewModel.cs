@@ -55,6 +55,7 @@ public partial class ItemEditorViewModel : ViewModelBase, IDisposable
     public DependencyEditorViewModel Dependencies { get; }
     public PreviewGalleryViewModel Gallery { get; }
     public ChangelogHistoryViewModel History { get; }
+    public TranslationEditorViewModel Translations { get; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsInfoComplete))]
@@ -166,6 +167,7 @@ public partial class ItemEditorViewModel : ViewModelBase, IDisposable
     [NotifyPropertyChangedFor(nameof(IsHistoryActive))]
     [NotifyPropertyChangedFor(nameof(IsDependenciesActive))]
     [NotifyPropertyChangedFor(nameof(IsPreviewsActive))]
+    [NotifyPropertyChangedFor(nameof(IsTranslationsActive))]
     private EditorSection _activeSection = EditorSection.Info;
 
     public bool IsInfoActive => ActiveSection == EditorSection.Info;
@@ -174,6 +176,7 @@ public partial class ItemEditorViewModel : ViewModelBase, IDisposable
     public bool IsHistoryActive => ActiveSection == EditorSection.History;
     public bool IsDependenciesActive => ActiveSection == EditorSection.Dependencies;
     public bool IsPreviewsActive => ActiveSection == EditorSection.Previews;
+    public bool IsTranslationsActive => ActiveSection == EditorSection.Translations;
 
     [RelayCommand] private void NavigateToInfo() => ActiveSection = EditorSection.Info;
     [RelayCommand] private void NavigateToChangelog() => ActiveSection = EditorSection.Changelog;
@@ -181,6 +184,7 @@ public partial class ItemEditorViewModel : ViewModelBase, IDisposable
     [RelayCommand] private void NavigateToHistory() => ActiveSection = EditorSection.History;
     [RelayCommand] private void NavigateToDependencies() => ActiveSection = EditorSection.Dependencies;
     [RelayCommand] private void NavigateToPreviews() => ActiveSection = EditorSection.Previews;
+    [RelayCommand] private void NavigateToTranslations() => ActiveSection = EditorSection.Translations;
 
     /// <summary>Section-ready flags for the left nav's green check.</summary>
     public bool IsInfoComplete => !string.IsNullOrWhiteSpace(Title) && !IsImageTooLarge;
@@ -203,6 +207,7 @@ public partial class ItemEditorViewModel : ViewModelBase, IDisposable
         DependencyEditorViewModel dependencies,
         PreviewGalleryViewModel gallery,
         ChangelogHistoryViewModel history,
+        TranslationEditorViewModel translations,
         IProgress<UploadProgress>? uploadProgress = null)
     {
         _originalItem = item;
@@ -217,6 +222,7 @@ public partial class ItemEditorViewModel : ViewModelBase, IDisposable
         Dependencies = dependencies;
         Gallery = gallery;
         History = history;
+        Translations = translations;
 
         _title = item.Title;
         _description = item.Description;
@@ -241,6 +247,7 @@ public partial class ItemEditorViewModel : ViewModelBase, IDisposable
         Dependencies.AttachTo(item.PublishedFileId);
         Gallery.LoadExisting(item.AdditionalPreviews);
         History.AttachTo(item);
+        Translations.AttachTo(item.PublishedFileId, () => new ItemText(Title, Description));
 
         _ = LoadPreviewImageAsync(item.PreviewImageUrl);
     }
@@ -263,6 +270,9 @@ public partial class ItemEditorViewModel : ViewModelBase, IDisposable
                 break;
             case EditorSection.Dependencies when !Dependencies.IsLoaded:
                 Dependencies.LoadDependenciesCommand.Execute(null);
+                break;
+            case EditorSection.Translations when !Translations.IsLoaded:
+                Translations.LoadCommand.Execute(null);
                 break;
         }
     }
@@ -420,6 +430,7 @@ public partial class ItemEditorViewModel : ViewModelBase, IDisposable
                 OnPropertyChanged(nameof(OriginalImageSizeDisplay));
 
                 NewChangelog = string.Empty;
+                await SaveTranslationsAsync();
                 ItemUpdated?.Invoke(_originalItem.PublishedFileId);
             }
             else
@@ -433,6 +444,22 @@ public partial class ItemEditorViewModel : ViewModelBase, IDisposable
         {
             Gallery.CleanupTempFiles();
             IsSaving = false;
+        }
+    }
+
+    /// <summary>Runs after a successful main update, which carries the base text the fallbacks use.</summary>
+    private async Task SaveTranslationsAsync()
+    {
+        var changes = Translations.GetPendingChanges(new ItemText(Title, Description));
+        if (changes.Count == 0) return;
+
+        var failed = await _orchestrator.UpdateTranslationsAsync(_originalItem.PublishedFileId, changes, _uploadProgress);
+        Translations.ApplySaved(changes, failed.ToHashSet());
+
+        if (failed.Count > 0)
+        {
+            var names = failed.Select(code => SteamLanguages.Find(code)?.NativeName ?? code);
+            ErrorMessage = string.Format(Loc["TranslationsUpdateFailed"], string.Join(", ", names));
         }
     }
 
@@ -502,5 +529,6 @@ public partial class ItemEditorViewModel : ViewModelBase, IDisposable
     {
         Versions.PropertyChanged -= OnVersionsPropertyChanged;
         History.Dispose();
+        Translations.Dispose();
     }
 }
