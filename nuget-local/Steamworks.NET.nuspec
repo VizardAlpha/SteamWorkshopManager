@@ -2,12 +2,12 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2013/01/nuspec.xsd">
   <metadata>
     <id>Steamworks.NET</id>
-    <version>2025.163.0</version>
+    <version>2025.165.0</version>
     <authors>rileylabrecque</authors>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="expression">MIT</license>
     <projectUrl>https://github.com/rlabrecque/Steamworks.NET</projectUrl>
-    <description>Steamworks.NET - Local build from GitHub release 2025.163.0 (ISteamUGC v021)</description>
+    <description>Steamworks.NET - Local build from GitHub release 2025.165.0, Steamworks SDK 1.65 (ISteamUGC v021)</description>
     <dependencies>
       <group targetFramework=".NETStandard2.1" />
     </dependencies>

@@ -872,7 +872,7 @@ internal sealed class SteamService(uint appId)
             for (var i = 0; i < totalBetas; i++)
             {
                 if (SteamApps.GetBetaInfo(i, out var flags, out var buildId,
-                        out var betaName, 128, out var description, 256))
+                        out var betaName, 128, out var description, 256, out _))
                 {
                     branches.Add(new GameBranch
                     {

@@ -19,7 +19,7 @@ Last reviewed: 2026-09-27.
 | Material.Icons.Avalonia | 3.0.2 | SKProCH | https://github.com/AvaloniaUtils/Material.Icons.Avalonia |
 | Microsoft.Extensions.DependencyInjection | 10.0.12 | Microsoft | https://github.com/dotnet/dotnet |
 | QRCoder | 1.8.0 | Raffael Herrmann, Shane Krueger | https://github.com/Shane32/QRCoder |
-| Steamworks.NET | 2025.163.0 | Riley Labrecque | https://github.com/rlabrecque/Steamworks.NET |
+| Steamworks.NET | 2025.165.0 | Riley Labrecque | https://github.com/rlabrecque/Steamworks.NET |
 | StreamJsonRpc | 2.25.29 | Microsoft | https://github.com/microsoft/vs-streamjsonrpc |
 | System.Security.Cryptography.ProtectedData | 10.0.12 | Microsoft | https://github.com/dotnet/dotnet |
 

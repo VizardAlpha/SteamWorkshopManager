@@ -13,6 +13,16 @@
 - Tests never hit the network: HTTP calls go through stub handlers and parsers are tested on inline fixtures.
 - Covered today: AppId parsing and validation, SemVer and release channels, updater checksums, atomic writes, credential storage, BBCode and Markdown conversion, Workshop tag and changelog parsing, preview ordering, tag selection, session context, Steam error mapping.
 
+## Steamworks.NET
+
+Steamworks.NET is not on nuget.org in recent versions, so the app restores it from a local feed, `nuget-local/` (declared in `nuget.config`). The package holds one managed build for Windows and one for Linux/macOS. To move to a new release:
+
+1. In a clone of `rlabrecque/Steamworks.NET`, build `Standalone2.0/Steamworks.NET.Standard.csproj` twice: `-c Windows -p:Platform=x64` and `-c OSX-Linux -p:Platform=x64`.
+2. Copy the Windows DLL to `nuget-local/lib`, `ref` and `runtimes/win-x64`, the OSX-Linux DLL to `runtimes/linux-x64` and `runtimes/osx-x64`.
+3. Bump the version in `nuget-local/Steamworks.NET.nuspec`, pack it into `nuget-local/` and remove the old `.nupkg`.
+4. Replace the native libraries next to the csproj (`steam_api64.dll`, `libsteam_api.so`, `libsteam_api.dylib`) with the ones from the clone's `com.rlabrecque.steamworks.net/Plugins/`. They must match the managed build.
+5. Update the version in `SteamWorkshopManager.csproj` and `THIRD-PARTY-NOTICES.md`.
+
 ## Conventions
 
 - File-scoped namespaces, nullable enabled, `_camelCase` fields.
