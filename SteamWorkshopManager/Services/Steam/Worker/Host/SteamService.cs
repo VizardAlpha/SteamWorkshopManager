@@ -176,7 +176,8 @@ internal sealed class SteamService(uint appId)
             EUserUGCList.k_EUserUGCList_Published,
             EUGCMatchingUGCType.k_EUGCMatchingUGCType_Items,
             EUserUGCListSortOrder.k_EUserUGCListSortOrder_CreationOrderDesc,
-            new AppId_t(_appId),
+            // Any creator: items published through a separate tool (e.g. REDkit) carry the tool's AppId as creator.
+            AppId_t.Invalid,
             new AppId_t(_appId),
             page
         );
