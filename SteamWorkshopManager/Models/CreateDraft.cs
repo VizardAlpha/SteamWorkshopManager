@@ -25,9 +25,13 @@ public sealed record CreateDraft(
     DateTime CreatedAt,
     DateTime UpdatedAt,
     List<string>? CustomTags = null,
-    List<string>? SelectedTags = null
+    List<string>? SelectedTags = null,
+    List<DraftTranslation>? Translations = null
 )
 {
     /// <summary>Display label fallback when the draft has no title yet.</summary>
     public string DisplayName => string.IsNullOrWhiteSpace(Title) ? "Untitled draft" : Title;
 }
+
+/// <summary>A staged translation: Steam language API code plus the typed texts.</summary>
+public sealed record DraftTranslation(string Language, string Title, string Description);

@@ -3,6 +3,8 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:SteamWorkshopManager.ViewModels"
+             xmlns:editor="using:SteamWorkshopManager.ViewModels.Editor"
+             xmlns:workshop="using:SteamWorkshopManager.Core.Workshop"
              xmlns:models="using:SteamWorkshopManager.Models"
              xmlns:converters="using:SteamWorkshopManager.Converters"
              xmlns:controls="using:SteamWorkshopManager.Views.Controls"
@@ -265,6 +267,26 @@
                             <icons:MaterialIcon Grid.Column="0" Kind="ImageMultipleOutline" Width="16" Height="16"/>
                             <TextBlock Grid.Column="1" Margin="10,0,0,0"
                                        Text="{DynamicResource PreviewsTab}" VerticalAlignment="Center"/>
+                        </Grid>
+                    </Button>
+                    <Button Classes="nav-item"
+                            Classes.active="{Binding IsTranslationsActive}"
+                            Command="{Binding NavigateToTranslationsCommand}"
+                            HorizontalContentAlignment="Stretch">
+                        <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                            <icons:MaterialIcon Grid.Column="0" Kind="Translate" Width="16" Height="16"/>
+                            <TextBlock Grid.Column="1" Margin="10,0,0,0"
+                                       Text="{DynamicResource TranslationsTab}" VerticalAlignment="Center"/>
+                            <!-- Number of languages with text to send -->
+                            <Border Grid.Column="2"
+                                    Background="{DynamicResource SurfaceOverlayBrush}"
+                                    CornerRadius="10" Padding="6,1" MinWidth="18"
+                                    IsVisible="{Binding Translations.HasTranslations}">
+                                <TextBlock Text="{Binding Translations.TranslatedCount}"
+                                           FontSize="10" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           HorizontalAlignment="Center"/>
+                            </Border>
                         </Grid>
                     </Button>
 
@@ -1239,6 +1261,151 @@
                         </StackPanel>
                     </StackPanel>
                 </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- TRANSLATIONS section: sent right after the item is created -->
+        <ScrollViewer IsVisible="{Binding IsTranslationsActive}">
+            <StackPanel Spacing="14" Margin="0,20">
+
+                <!-- Panel header -->
+                <StackPanel Margin="0,0,0,6">
+                    <TextBlock Classes="panel-title" Text="{DynamicResource TranslationsHeader}"/>
+                    <TextBlock Classes="panel-sub" Text="{DynamicResource TranslationsHeaderSub}"
+                               TextWrapping="Wrap" Margin="0,4,0,0"/>
+                </StackPanel>
+
+                <Grid ColumnDefinitions="240,*">
+
+                    <!-- ── Card: Languages ── -->
+                    <Border Grid.Column="0" Classes="section-card" VerticalAlignment="Top">
+                        <StackPanel>
+                            <Grid Margin="16,14,16,12" ColumnDefinitions="*,Auto">
+                                <TextBlock Classes="card-title" Text="{DynamicResource TranslationsLanguages}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="1" Classes="card-meta"
+                                           Text="{Binding Translations.TranslatedCount}"
+                                           VerticalAlignment="Center"/>
+                            </Grid>
+                            <Border Height="1" Background="{DynamicResource BorderSubtleBrush}"/>
+                            <StackPanel Margin="8" Spacing="4">
+                                <!-- Base language: edited in the Info section -->
+                                <StackPanel Margin="10,6">
+                                    <TextBlock Text="{Binding Translations.BaseLanguage.NativeName}"
+                                               FontSize="13" FontWeight="Medium"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                    <TextBlock Text="{DynamicResource TranslationsBaseHint}"
+                                               FontSize="11" Foreground="{DynamicResource TextMutedBrush}"/>
+                                </StackPanel>
+
+                                <ListBox ItemsSource="{Binding Translations.Entries}"
+                                         SelectedItem="{Binding Translations.Selected}"
+                                         Background="Transparent">
+                                    <ListBox.Styles>
+                                        <Style Selector="ListBoxItem">
+                                            <Setter Property="Padding" Value="10,8"/>
+                                            <Setter Property="CornerRadius" Value="6"/>
+                                        </Style>
+                                    </ListBox.Styles>
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate DataType="editor:TranslationEntryViewModel">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <TextBlock Text="{Binding Language.NativeName}"
+                                                           FontSize="13"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           VerticalAlignment="Center"/>
+                                                <!-- Has text to send -->
+                                                <Ellipse Grid.Column="1" Width="8" Height="8"
+                                                         Margin="8,0,0,0"
+                                                         Fill="{DynamicResource AccentPrimaryBrush}"
+                                                         VerticalAlignment="Center"
+                                                         IsVisible="{Binding IsDirty}"/>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+
+                                <TextBlock Text="{DynamicResource TranslationsEmpty}"
+                                           Foreground="{DynamicResource TextMutedBrush}"
+                                           FontSize="12" TextWrapping="Wrap"
+                                           Margin="10,4"
+                                           IsVisible="{Binding !Translations.HasEntries}"/>
+
+                                <ComboBox ItemsSource="{Binding Translations.AvailableLanguages}"
+                                          SelectedItem="{Binding Translations.LanguageToAdd}"
+                                          PlaceholderText="{DynamicResource AddLanguage}"
+                                          HorizontalAlignment="Stretch"
+                                          Margin="0,6,0,0">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate DataType="workshop:SteamLanguage">
+                                            <TextBlock Text="{Binding NativeName}"/>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- ── Card: Selected language ── -->
+                    <Border Grid.Column="1" Classes="section-card" Margin="16,0,0,0" VerticalAlignment="Top">
+                        <Panel>
+                            <TextBlock Text="{DynamicResource TranslationSelectHint}"
+                                       Foreground="{DynamicResource TextMutedBrush}"
+                                       FontSize="12" TextWrapping="Wrap"
+                                       HorizontalAlignment="Center"
+                                       Margin="24,32"
+                                       IsVisible="{Binding !Translations.HasSelection}"/>
+
+                            <StackPanel IsVisible="{Binding Translations.HasSelection}">
+                                <Grid Margin="16,14,16,12" ColumnDefinitions="*,Auto">
+                                    <TextBlock Classes="card-title" VerticalAlignment="Center"
+                                               Text="{Binding Translations.Selected.Language.NativeName, FallbackValue=''}"/>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                        <Button Command="{Binding Translations.CopyBaseCommand}"
+                                                Background="{DynamicResource SurfaceElevatedBrush}"
+                                                BorderBrush="{DynamicResource BorderSubtleBrush}"
+                                                BorderThickness="1"
+                                                Foreground="{DynamicResource TextPrimaryBrush}"
+                                                CornerRadius="6" Padding="10,5" FontSize="12">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <icons:MaterialIcon Kind="ContentCopy" Width="12" Height="12"/>
+                                                <TextBlock Text="{DynamicResource CopyBaseText}" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Command="{Binding Translations.RemoveCommand}"
+                                                CommandParameter="{Binding Translations.Selected}"
+                                                Background="Transparent"
+                                                BorderBrush="{DynamicResource BorderSubtleBrush}"
+                                                BorderThickness="1"
+                                                Foreground="{DynamicResource FeedbackDangerTextBrush}"
+                                                CornerRadius="6" Padding="10,5" FontSize="12">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <icons:MaterialIcon Kind="TrashCanOutline" Width="12" Height="12"/>
+                                                <TextBlock Text="{DynamicResource RemoveTranslation}" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                                <Border Height="1" Background="{DynamicResource BorderSubtleBrush}"/>
+
+                                <StackPanel Margin="16" Spacing="16">
+                                    <StackPanel>
+                                        <TextBlock Classes="field-label" Text="{DynamicResource Title}"/>
+                                        <!-- The base title as placeholder: it is what an empty field falls back to -->
+                                        <TextBox Text="{Binding Translations.Selected.Title, FallbackValue=''}" MaxLength="128"
+                                                 PlaceholderText="{Binding Title}"/>
+                                    </StackPanel>
+                                    <StackPanel>
+                                        <TextBlock Classes="field-label" Text="{DynamicResource Description}"/>
+                                        <controls:BbCodeEditorControl Text="{Binding Translations.Selected.Description, FallbackValue=''}"
+                                                                      EditorHeight="200"
+                                                                      PlaceholderText="{DynamicResource DescriptionPlaceholder}"/>
+                                    </StackPanel>
+                                    <TextBlock Classes="card-meta" Text="{DynamicResource TranslationFallbackHint}"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Panel>
+                    </Border>
+                </Grid>
             </StackPanel>
         </ScrollViewer>
             </Grid>

@@ -219,7 +219,7 @@
     <x:String x:Key="RefreshTags">Refresh tags</x:String>
     <x:String x:Key="TagsUpdated">Updated:</x:String>
     <x:String x:Key="RefreshingTags">Refreshing...</x:String>
-    <x:String x:Key="NoTagsForWorkshop">No tags available for this workshop</x:String>
+    <x:String x:Key="NoTagsForWorkshop">The developer of this game declared no Workshop tags. Add your own as custom tags.</x:String>
 
     <!-- Custom Tags -->
     <x:String x:Key="CustomTags">Custom Tags</x:String>
@@ -333,6 +333,7 @@
     <x:String x:Key="TranslationsPartiallyLoaded">{0} language(s) could not be checked: Steam did not answer.</x:String>
     <x:String x:Key="TranslationLoadFailed">Could not load this translation from Steam.</x:String>
     <x:String x:Key="TranslationsUpdateFailed">Item saved, but these translations failed: {0}</x:String>
+    <x:String x:Key="TranslationsCreateFailed">Item created, but these translations failed: {0}. Add them again from the item's Translations section.</x:String>
     <x:String x:Key="UploadingTranslations">Uploading translations...</x:String>
     <x:String x:Key="InvalidAppId">This AppId does not exist</x:String>
     <x:String x:Key="NoWorkshop">This game has no Workshop</x:String>

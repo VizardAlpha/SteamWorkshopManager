@@ -21,14 +21,14 @@ public class ScraperParsingTests
         }}
         """;
 
-    // The page embeds loaderData as an array of JSON-encoded strings.
+    // The page embeds loaderData as an array of JSON-encoded strings inside the valve-ssr-data block.
     private static string WorkshopPage(params string[] loaderEntries) =>
-        $"<html><script>window.SSR.loaderData = {JsonSerializer.Serialize(loaderEntries)};</script></html>";
+        $"""<html><script type="application/json" id="valve-ssr-data" nonce="n">{JsonSerializer.Serialize(new { route = "/app/:appid/workshop/", loaderData = loaderEntries })}</script></html>""";
 
     [TestMethod]
     public void ParseWorkshopPage_ReadsReadyToUseGroups()
     {
-        var result = WorkshopTagsService.ParseWorkshopPage(WorkshopPage("not json", DeclaredTagsEntry));
+        var result = WorkshopTagsService.ParseWorkshopPage(WorkshopPage("not json", DeclaredTagsEntry))!;
 
         CollectionAssert.AreEqual(new[] { "Mod" }, result.TagsByCategory["Type"], "admin-only and duplicate tags are dropped");
         CollectionAssert.AreEqual(new[] { "misc" }, result.TagsByCategory["Tags"], "untitled group and missing display name fall back");
@@ -41,21 +41,44 @@ public class ScraperParsingTests
     {
         const string entry = """{"declaredTags":{"readytouse_tags":[],"mtx_tags":[{"name":"Legacy","htmlelement":null,"tags":[{"name":"x","display_name":"X","admin_only":false}]}]}}""";
 
-        var result = WorkshopTagsService.ParseWorkshopPage(WorkshopPage(entry));
+        var result = WorkshopTagsService.ParseWorkshopPage(WorkshopPage(entry))!;
 
         CollectionAssert.AreEqual(new[] { "X" }, result.TagsByCategory["Legacy"]);
         Assert.AreEqual(0, result.DropdownCategories.Count);
     }
 
+    // Same groups with and without declared_tags, the marker of a Workshop with no developer tag list.
+    private const string UploadedGroup = """[{"name":"","htmlelement":"checkbox","tags":[{"name":"tag1","display_name":"tag1","admin_only":false}]}]""";
+
+    [TestMethod]
+    public void ParseWorkshopPage_NoDeveloperTagList_ReturnsEmptyCatalog()
+    {
+        var entry = $$$"""{"declaredTags":{"declared_tags":{{{UploadedGroup}}},"readytouse_tags":{{{UploadedGroup}}},"mtx_tags":{{{UploadedGroup}}}}}""";
+
+        var result = WorkshopTagsService.ParseWorkshopPage(WorkshopPage(entry));
+
+        Assert.IsNotNull(result, "a Workshop without developer tags is a valid answer, not a parse failure");
+        Assert.AreEqual(0, result.TagsByCategory.Count);
+    }
+
+    [TestMethod]
+    public void ParseWorkshopPage_DeveloperListWithoutTitle_IsKeptWhole()
+    {
+        var entry = $$$"""{"declaredTags":{"readytouse_tags":{{{UploadedGroup}}},"mtx_tags":{{{UploadedGroup}}}}}""";
+
+        var result = WorkshopTagsService.ParseWorkshopPage(WorkshopPage(entry))!;
+
+        CollectionAssert.AreEqual(new[] { "tag1" }, result.TagsByCategory["Tags"]);
+    }
+
     [TestMethod]
     [DataRow("<html>no ssr payload</html>")]
     [DataRow("<script>window.SSR.loaderData = [\"{}\"];</script>")]
-    public void ParseWorkshopPage_UnexpectedPage_ReturnsEmpty(string html)
+    [DataRow("<script type=\"application/json\" id=\"valve-ssr-data\">{\"loaderData\":[\"{}\"]}</script>")]
+    [DataRow("<script type=\"application/json\" id=\"valve-ssr-data\">not json</script>")]
+    public void ParseWorkshopPage_UnexpectedPage_ReturnsNull(string html)
     {
-        var result = WorkshopTagsService.ParseWorkshopPage(html);
-
-        Assert.AreEqual(0, result.TagsByCategory.Count);
-        Assert.AreEqual(0, result.DropdownCategories.Count);
+        Assert.IsNull(WorkshopTagsService.ParseWorkshopPage(html));
     }
 
     [TestMethod]

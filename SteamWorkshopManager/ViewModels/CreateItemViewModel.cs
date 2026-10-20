@@ -23,7 +23,7 @@ namespace SteamWorkshopManager.ViewModels;
 
 /// <summary>
 /// Create form. Owns the new item's own fields and drafts; tags, branches,
-/// dependencies and gallery come from child view-models shared with the editor.
+/// dependencies, gallery and translations come from child view-models shared with the editor.
 /// </summary>
 public partial class CreateItemViewModel : ViewModelBase
 {
@@ -45,6 +45,7 @@ public partial class CreateItemViewModel : ViewModelBase
     public VersionRangeViewModel Versions { get; }
     public DependencyEditorViewModel Dependencies { get; }
     public PreviewGalleryViewModel Gallery { get; }
+    public TranslationEditorViewModel Translations { get; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsInfoComplete))]
@@ -120,23 +121,26 @@ public partial class CreateItemViewModel : ViewModelBase
     public bool IsVersionsComplete => !Versions.IsBranchRangeInvalid;
     public bool IsDependenciesComplete => true;
 
-    /// <summary>Side-panel nav: Info, Versions, Dependencies and Previews apply to a new item.</summary>
+    /// <summary>Side-panel nav: Info, Versions, Dependencies, Previews and Translations apply to a new item.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsInfoActive))]
     [NotifyPropertyChangedFor(nameof(IsVersionsActive))]
     [NotifyPropertyChangedFor(nameof(IsDependenciesActive))]
     [NotifyPropertyChangedFor(nameof(IsPreviewsActive))]
+    [NotifyPropertyChangedFor(nameof(IsTranslationsActive))]
     private EditorSection _activeSection = EditorSection.Info;
 
     public bool IsInfoActive => ActiveSection == EditorSection.Info;
     public bool IsVersionsActive => ActiveSection == EditorSection.Versions;
     public bool IsDependenciesActive => ActiveSection == EditorSection.Dependencies;
     public bool IsPreviewsActive => ActiveSection == EditorSection.Previews;
+    public bool IsTranslationsActive => ActiveSection == EditorSection.Translations;
 
     [RelayCommand] private void NavigateToInfo() => ActiveSection = EditorSection.Info;
     [RelayCommand] private void NavigateToVersions() => ActiveSection = EditorSection.Versions;
     [RelayCommand] private void NavigateToDependencies() => ActiveSection = EditorSection.Dependencies;
     [RelayCommand] private void NavigateToPreviews() => ActiveSection = EditorSection.Previews;
+    [RelayCommand] private void NavigateToTranslations() => ActiveSection = EditorSection.Translations;
 
     /// <summary>Saved drafts for the current AppId, most recently updated first.</summary>
     public ObservableCollection<CreateDraft> AvailableDrafts { get; } = [];
@@ -161,6 +165,7 @@ public partial class CreateItemViewModel : ViewModelBase
         VersionRangeViewModel versions,
         DependencyEditorViewModel dependencies,
         PreviewGalleryViewModel gallery,
+        TranslationEditorViewModel translations,
         IProgress<UploadProgress>? uploadProgress = null)
     {
         _fileDialogService = fileDialogService;
@@ -174,6 +179,8 @@ public partial class CreateItemViewModel : ViewModelBase
         Versions = versions;
         Dependencies = dependencies;
         Gallery = gallery;
+        Translations = translations;
+        Translations.UseBase(() => new ItemText(Title, Description));
         Versions.PropertyChanged += OnVersionsPropertyChanged;
 
         ReloadFromSession();
@@ -233,7 +240,8 @@ public partial class CreateItemViewModel : ViewModelBase
             UpdatedAt: DateTime.UtcNow,
             // Every custom tag (checked or not) so the chip list survives a reload, plus the ticked names.
             CustomTags: Tags.CustomTags.Select(t => t.Name).ToList(),
-            SelectedTags: Tags.SelectedNames);
+            SelectedTags: Tags.SelectedNames,
+            Translations: Translations.GetStaged());
 
         _currentDraftId = _draftService.Save(draft);
         _draftCreatedAt = createdAt;
@@ -253,6 +261,7 @@ public partial class CreateItemViewModel : ViewModelBase
         Versions.TargetAllVersions = draft.TargetAllVersions;
         Versions.SelectByName(draft.BranchMin, draft.BranchMax);
         Tags.RestoreFromDraft(draft);
+        Translations.RestoreStaged(draft.Translations);
 
         _currentDraftId = draft.TempId;
         _draftCreatedAt = draft.CreatedAt;
@@ -348,7 +357,8 @@ public partial class CreateItemViewModel : ViewModelBase
                 branchMax,
                 previewOps.Count > 0 ? previewOps : null,
                 Dependencies.Dependencies,
-                Dependencies.AppDependencies);
+                Dependencies.AppDependencies,
+                Translations.GetPendingChanges(new ItemText(Title, Description)));
 
             var result = await _orchestrator.PublishAsync(request, _uploadProgress, _currentDraftId);
 

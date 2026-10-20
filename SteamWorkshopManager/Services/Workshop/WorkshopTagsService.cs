@@ -37,8 +37,8 @@ internal partial class TagsCacheJsonContext : JsonSerializerContext;
 /// <summary>
 /// Fetches Workshop tag groups for an AppId by scraping the new React-rendered
 /// Workshop browse page. Steam still server-renders a data blob
-/// (<c>window.SSR.loaderData</c>) containing <c>declaredTags</c>, so we can
-/// parse it without a headless browser.
+/// (<c>script id="valve-ssr-data"</c>, whose <c>loaderData</c> holds
+/// <c>declaredTags</c>), so we can parse it without a headless browser.
 ///
 /// Results are cached on disk at
 /// <c>%AppData%/SteamWorkshopManager/cache/tags/{appId}.json</c> with a 7-day
@@ -50,11 +50,9 @@ public class WorkshopTagsService
 
     private static readonly string CacheFolder = AppPaths.CacheTags;
 
-    // Matches `window.SSR.loaderData = [...]` up to the first `];` terminator.
-    // The loader entries are double-encoded JSON strings; their contents never
-    // close with a bare `];` sequence so the lazy match is safe in practice.
-    private static readonly Regex LoaderDataRegex = new(
-        @"window\.SSR\.loaderData\s*=\s*(\[[\s\S]*?\])\s*;",
+    // Body of `<script type="application/json" id="valve-ssr-data">`; JSON escapes `<`, so no early `</script>`.
+    private static readonly Regex SsrDataRegex = new(
+        @"<script[^>]*\bid=""valve-ssr-data""[^>]*>([\s\S]*?)</script>",
         RegexOptions.Compiled);
 
     private readonly HttpClient _httpClient;
@@ -84,21 +82,21 @@ public class WorkshopTagsService
 
         try
         {
-            var result = await FetchTagsFromSteamAsync(appId);
-            if (result.TagsByCategory.Count > 0)
+            // An empty catalog is a real answer: the developer declared no tags.
+            if (await FetchTagsFromSteamAsync(appId) is { } result)
             {
                 await SaveToCacheAsync(appId, result);
                 return result;
             }
-            Log.Warning($"Fetched tag catalog for AppId {appId} is empty; keeping any existing cache.");
+            Log.Warning($"Could not read the tag catalog for AppId {appId}; keeping any existing cache.");
         }
         catch (Exception ex)
         {
             Log.Error($"Failed to fetch tags for AppId {appId}: {ex.Message}", ex);
         }
 
-        // Fetch failed or returned nothing - fall back to whatever we have on
-        // disk, even if expired.
+        // Fetch failed or the page was not understood - fall back to whatever we
+        // have on disk, even if expired.
         if (TryReadCache(cacheFile, ignoreTtl: true, out var stale))
         {
             Log.Debug($"Using stale tag cache for AppId {appId}");
@@ -113,50 +111,64 @@ public class WorkshopTagsService
     /// payload. Prefers <c>readytouse_tags</c> (the set shown when publishing)
     /// and falls back to <c>mtx_tags</c> when the former is absent.
     /// </summary>
-    private async Task<TagsResult> FetchTagsFromSteamAsync(uint appId)
+    private async Task<TagsResult?> FetchTagsFromSteamAsync(uint appId)
     {
         Log.Debug($"Fetching tags from Steam Workshop for AppId {appId}");
 
         var html = await _httpClient.GetStringAsync(SteamUrls.WorkshopPage(appId));
         var result = ParseWorkshopPage(html);
-        Log.Debug($"Parsed {result.TagsByCategory.Count} categories with {result.TagsByCategory.Values.Sum(v => v.Count)} tags for AppId {appId}");
+        if (result is not null)
+            Log.Debug($"Parsed {result.TagsByCategory.Count} categories with {result.TagsByCategory.Values.Sum(v => v.Count)} tags for AppId {appId}");
         return result;
     }
 
-    /// <summary>Tag catalog from the SSR payload of a Workshop browse page; empty when the page structure changed.</summary>
-    internal static TagsResult ParseWorkshopPage(string html)
+    /// <summary>
+    /// Developer tag catalog from the SSR payload of a Workshop browse page: empty when
+    /// the developer declared none, null when the page structure changed.
+    /// </summary>
+    internal static TagsResult? ParseWorkshopPage(string html)
     {
-        var match = LoaderDataRegex.Match(html);
+        var match = SsrDataRegex.Match(html);
         if (!match.Success)
         {
-            Log.Warning("Steam page structure changed: window.SSR.loaderData not found.");
-            return new TagsResult(new Dictionary<string, List<string>>(), []);
+            Log.Warning("Steam page structure changed: valve-ssr-data not found.");
+            return null;
         }
 
-        // loaderData is an array of JSON-encoded strings; decode one level
-        // first, then parse each entry as its own JSON document.
-        var loaderEntries = JsonSerializer.Deserialize(
-            match.Groups[1].Value,
-            SteamWorkshopJsonContext.Default.ListString) ?? [];
+        SteamSsrData? ssr;
+        try
+        {
+            ssr = JsonSerializer.Deserialize(match.Groups[1].Value, SteamWorkshopJsonContext.Default.SteamSsrData);
+        }
+        catch (JsonException)
+        {
+            Log.Warning("Steam page structure changed: valve-ssr-data is not valid JSON.");
+            return null;
+        }
 
-        var declared = FindDeclaredTags(loaderEntries);
+        // loaderData is an array of JSON-encoded strings; each entry is its own JSON document.
+        var declared = FindDeclaredTags(ssr?.LoaderData ?? []);
         if (declared is null)
         {
             Log.Warning("No declaredTags found in SSR payload.");
-            return new TagsResult(new Dictionary<string, List<string>>(), []);
+            return null;
         }
+
+        var categories = new Dictionary<string, List<string>>();
+        var dropdowns = new List<string>();
+
+        // Without a developer tag list, Steam lists every tag any upload ever set
+        // (declared_tags); none of them were picked by the developer.
+        if (declared.UploadedTags is not null)
+            return new TagsResult(categories, dropdowns);
 
         var groups = declared.ReadyToUseTags?.Count > 0
             ? declared.ReadyToUseTags
             : declared.MtxTags ?? [];
 
-        var categories = new Dictionary<string, List<string>>();
-        var dropdowns = new List<string>();
-
         foreach (var group in groups)
         {
-            // Steam occasionally ships untitled orphan groups; bucket them under
-            // a generic label so the UI still has a home for the tags.
+            // A developer list without category titles; bucket it under a generic label.
             var categoryName = string.IsNullOrWhiteSpace(group.Name) ? "Tags" : group.Name;
             if (!categories.ContainsKey(categoryName))
                 categories[categoryName] = [];
@@ -234,8 +246,9 @@ public class WorkshopTagsService
 
     private static bool TryMaterialize(TagsCacheEntry entry, out TagsResult result)
     {
+        // An empty catalog is cached too: the game has no developer tags.
         result = new TagsResult(entry.TagsByCategory, entry.DropdownCategories);
-        return entry.TagsByCategory.Count > 0;
+        return true;
     }
 
     private static async Task SaveToCacheAsync(uint appId, TagsResult tagsResult)
@@ -296,8 +309,12 @@ public class WorkshopTagsService
 
 // ─── DTOs mirroring the Steam SSR payload ────────────────────────────────────
 
+/// <summary>Content of the <c>valve-ssr-data</c> script block.</summary>
+internal sealed record SteamSsrData(
+    [property: JsonPropertyName("loaderData")] List<string>? LoaderData);
+
 /// <summary>
-/// One entry of <c>window.SSR.loaderData</c>. Steam puts many of its React
+/// One entry of the SSR <c>loaderData</c> array. Steam puts many of its React
 /// route bundles through this array; we only care about the one that carries
 /// <c>declaredTags</c>.
 /// </summary>
@@ -308,11 +325,13 @@ internal sealed record SteamLoaderEntry(
 /// Container for the four tag-collection variants Steam exposes. For the
 /// Workshop publish flow, <c>readytouse_tags</c> is the authoritative set;
 /// <c>mtx_tags</c> holds the same data in a slightly different context and
-/// is kept as a fallback.
+/// is kept as a fallback. <c>declared_tags</c> only appears when the developer
+/// set no tag list: every group then holds the tags uploads ever set.
 /// </summary>
 internal sealed record SteamDeclaredTags(
     [property: JsonPropertyName("mtx_tags")] List<SteamTagGroup>? MtxTags,
-    [property: JsonPropertyName("readytouse_tags")] List<SteamTagGroup>? ReadyToUseTags);
+    [property: JsonPropertyName("readytouse_tags")] List<SteamTagGroup>? ReadyToUseTags,
+    [property: JsonPropertyName("declared_tags")] List<SteamTagGroup>? UploadedTags);
 
 internal sealed record SteamTagGroup(
     [property: JsonPropertyName("name")] string Name,
@@ -324,6 +343,6 @@ internal sealed record SteamTagEntry(
     [property: JsonPropertyName("display_name")] string? DisplayName,
     [property: JsonPropertyName("admin_only")] bool AdminOnly);
 
-[JsonSerializable(typeof(List<string>), TypeInfoPropertyName = "ListString")]
+[JsonSerializable(typeof(SteamSsrData))]
 [JsonSerializable(typeof(SteamLoaderEntry))]
 internal partial class SteamWorkshopJsonContext : JsonSerializerContext;

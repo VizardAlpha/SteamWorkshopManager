@@ -11,6 +11,7 @@
 - Session pill in the top bar to switch game; the Steam connection is restarted for the new game.
 - Add a session at any time; delete one with a preview of what will be removed (cache, downloaded versions, drafts).
 - Each session keeps its tag catalog, custom tags and the local folders you used for each item.
+- The tag catalog is the developer's tag list, read from the game's Workshop page. When the developer set none, Steam lists every tag any upload ever set instead; the app then shows no catalog and tags are added as custom tags.
 
 ## Home
 
@@ -49,6 +50,7 @@ Other editor actions: copy the item id, delete the item (confirmed by typing `DE
 - The title is prefilled from the folder name.
 - Drafts: save the form and reload it later, per game.
 - Dependencies are staged and applied right after the item is published.
+- Translations are staged too (and kept in drafts), then sent one language at a time right after the item is published. A language that fails is reported; it can be added again from the item's Translations section.
 
 ## Uploads
 

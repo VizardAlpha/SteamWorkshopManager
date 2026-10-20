@@ -219,7 +219,7 @@
     <x:String x:Key="RefreshTags">Actualiser les tags</x:String>
     <x:String x:Key="TagsUpdated">Mis à jour :</x:String>
     <x:String x:Key="RefreshingTags">Actualisation...</x:String>
-    <x:String x:Key="NoTagsForWorkshop">Pas de tags pour ce workshop</x:String>
+    <x:String x:Key="NoTagsForWorkshop">Le développeur de ce jeu n'a déclaré aucun tag Workshop. Ajoutez les vôtres en tags personnalisés.</x:String>
 
     <!-- Custom Tags -->
     <x:String x:Key="CustomTags">Tags personnalisés</x:String>
@@ -333,6 +333,7 @@
     <x:String x:Key="TranslationsPartiallyLoaded">{0} langue(s) n'ont pas pu être vérifiées : Steam n'a pas répondu.</x:String>
     <x:String x:Key="TranslationLoadFailed">Impossible de charger cette traduction depuis Steam.</x:String>
     <x:String x:Key="TranslationsUpdateFailed">Item enregistré, mais ces traductions ont échoué : {0}</x:String>
+    <x:String x:Key="TranslationsCreateFailed">Item créé, mais ces traductions ont échoué : {0}. Ajoutez-les à nouveau depuis la section Traductions de l'item.</x:String>
     <x:String x:Key="UploadingTranslations">Envoi des traductions...</x:String>
     <x:String x:Key="InvalidAppId">Cet AppId n'existe pas</x:String>
     <x:String x:Key="NoWorkshop">Ce jeu n'a pas de Workshop</x:String>

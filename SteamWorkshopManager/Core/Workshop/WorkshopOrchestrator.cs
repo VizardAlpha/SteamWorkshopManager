@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using SteamWorkshopManager.Core.Steam;
 using SteamWorkshopManager.Core.Sessions;
@@ -34,7 +35,8 @@ public sealed record CreateModRequest(
     string? BranchMax,
     IReadOnlyList<PreviewOp>? PreviewOps,
     IReadOnlyList<DependencyInfo> Dependencies,
-    IReadOnlyList<AppDependencyInfo> AppDependencies);
+    IReadOnlyList<AppDependencyInfo> AppDependencies,
+    IReadOnlyList<TranslationChange> Translations);
 
 /// <summary>Inputs for <see cref="WorkshopOrchestrator.UpdateAsync"/>. Each
 /// field is null when unchanged so Steam only re-uploads what actually moved.</summary>
@@ -114,10 +116,24 @@ public sealed class WorkshopOrchestrator(
             foreach (var appDep in request.AppDependencies)
                 await appDependencyService.AddAppDependencyAsync(fileId, new AppId_t(appDep.AppId));
 
+            // After the base submit, which carries the text the fallbacks use.
+            var failedTranslations = request.Translations.Count > 0
+                ? await UpdateTranslationsAsync(fileId, request.Translations, progress)
+                : [];
+
             if (!string.IsNullOrEmpty(draftIdToCleanup))
                 draftService.Delete(draftIdToCleanup);
 
-            notifications.ShowSuccess(LocalizationService.GetString("ItemCreatedSuccess"));
+            if (failedTranslations.Count > 0)
+            {
+                var names = failedTranslations.Select(code => SteamLanguages.Find(code)?.NativeName ?? code);
+                notifications.ShowError(string.Format(
+                    LocalizationService.GetString("TranslationsCreateFailed"), string.Join(", ", names)));
+            }
+            else
+            {
+                notifications.ShowSuccess(LocalizationService.GetString("ItemCreatedSuccess"));
+            }
             return new WorkshopActionResult(true, fileId, null, null);
         }
         catch (Exception ex)

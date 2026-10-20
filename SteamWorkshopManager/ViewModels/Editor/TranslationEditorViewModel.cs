@@ -18,9 +18,10 @@ using Steamworks;
 namespace SteamWorkshopManager.ViewModels.Editor;
 
 /// <summary>
-/// Per-language titles and descriptions of a published item. The base (english)
-/// text stays on the Info section; this view-model only holds the other languages.
-/// Results live in memory for the editor's lifetime, nothing is cached on disk.
+/// Per-language titles and descriptions. The base (english) text stays on the Info
+/// section; this view-model only holds the other languages. Staged mode (create view)
+/// only edits the texts; once <see cref="AttachTo"/> binds a published item, it reads
+/// what Steam holds. Results live in memory, nothing is cached on disk.
 /// </summary>
 public partial class TranslationEditorViewModel : ViewModelBase, IDisposable
 {
@@ -69,7 +70,10 @@ public partial class TranslationEditorViewModel : ViewModelBase, IDisposable
 
     public bool HasSelection => Selected is not null;
 
-    public int TranslatedCount => Entries.Count(e => e.ExistsOnSteam);
+    private bool IsAttached => _owner != PublishedFileId_t.Invalid;
+
+    /// <summary>Languages on Steam; in staged mode, the languages with text to send.</summary>
+    public int TranslatedCount => Entries.Count(e => IsAttached ? e.ExistsOnSteam : e.IsDirty);
 
     public bool HasTranslations => TranslatedCount > 0;
 
@@ -80,6 +84,29 @@ public partial class TranslationEditorViewModel : ViewModelBase, IDisposable
     {
         _owner = owner;
         _currentBase = currentBase;
+    }
+
+    /// <summary>Staged mode: <paramref name="currentBase"/> reads the Info section's title and description.</summary>
+    public void UseBase(Func<ItemText> currentBase) => _currentBase = currentBase;
+
+    /// <summary>Staged texts, for a create draft.</summary>
+    public List<DraftTranslation> GetStaged() =>
+        Entries.Where(e => e.IsDirty)
+            .Select(e => new DraftTranslation(e.Language.ApiCode, e.Title, e.Description))
+            .ToList();
+
+    /// <summary>Replaces the staged languages with a draft's.</summary>
+    public void RestoreStaged(IEnumerable<DraftTranslation>? staged)
+    {
+        Selected = null;
+        foreach (var entry in Entries.ToList()) Remove(entry);
+        foreach (var draft in staged ?? [])
+        {
+            if (SteamLanguages.Find(draft.Language) is not { } language || FindEntry(language) is not null) continue;
+            var entry = AddEntry(language);
+            entry.Title = draft.Title;
+            entry.Description = draft.Description;
+        }
     }
 
     /// <summary>
@@ -158,7 +185,7 @@ public partial class TranslationEditorViewModel : ViewModelBase, IDisposable
             var entry = AddEntry(value);
             Selected = entry;
             // The scan may still be running or have skipped this language: read it from Steam.
-            _ = LoadFullTextAsync(entry);
+            if (IsAttached) _ = LoadFullTextAsync(entry);
         });
     }
 
@@ -270,7 +297,7 @@ public partial class TranslationEditorViewModel : ViewModelBase, IDisposable
 
     private void OnEntryChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(TranslationEntryViewModel.SteamText))
+        if (e.PropertyName is nameof(TranslationEntryViewModel.SteamText) or nameof(TranslationEntryViewModel.IsDirty))
         {
             OnPropertyChanged(nameof(TranslatedCount));
             OnPropertyChanged(nameof(HasTranslations));
