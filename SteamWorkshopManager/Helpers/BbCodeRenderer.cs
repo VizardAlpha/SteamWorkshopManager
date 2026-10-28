@@ -77,11 +77,11 @@ public static class BbCodeRenderer
     private static void RenderBlocks(IReadOnlyList<BbCodeNode> nodes, Panel target)
     {
         var buffer = new List<BbCodeNode>();
+        var afterBlock = false;
 
         void Flush()
         {
-            // Steam turns every newline into a <br>, blank lines included, so nothing is trimmed here.
-            if (buffer.Count > 0) target.Children.Add(CreateParagraph(buffer));
+            if (buffer.Count > 0) AddParagraph(buffer, target);
             buffer.Clear();
         }
 
@@ -94,14 +94,41 @@ public static class BbCodeRenderer
                 // A [hr] left open swallows the rest of the text; render it after the rule.
                 if (string.Equals(element.Tag, "hr", StringComparison.OrdinalIgnoreCase))
                     RenderBlocks(element.Children, target);
+                afterBlock = true;
             }
             else
             {
-                buffer.Add(node);
+                // Steam eats the newline right after a block tag.
+                if (afterBlock && node is BbCodeText text)
+                    buffer.Add(new BbCodeText(StripLeadingBreak(text.Value)));
+                else
+                    buffer.Add(node);
+                afterBlock = false;
             }
         }
 
         Flush();
+    }
+
+    internal static string StripLeadingBreak(string value) =>
+        value.StartsWith("\r\n", StringComparison.Ordinal) ? value[2..]
+        : value.StartsWith('\n') ? value[1..]
+        : value;
+
+    private static void AddParagraph(List<BbCodeNode> nodes, Panel target)
+    {
+        // Steam turns every newline into a <br>, blank lines included.
+        var paragraph = CreateParagraph(nodes);
+        var inlines = paragraph.Inlines!;
+
+        // Like HTML, a <br> ending a block adds no line of its own.
+        var trailingBreak = inlines.Count > 0 && inlines[^1] is LineBreak;
+        if (trailingBreak) inlines.RemoveAt(inlines.Count - 1);
+
+        if (inlines.Count > 0)
+            target.Children.Add(paragraph);
+        else if (trailingBreak)
+            target.Children.Add(new Control { Height = BodyLineHeight });
     }
 
     private static Control RenderContent(IReadOnlyList<BbCodeNode> nodes)
