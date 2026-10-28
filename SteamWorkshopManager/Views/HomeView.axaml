@@ -240,6 +240,12 @@
                                                                 HorizontalAlignment="Center"
                                                                 VerticalAlignment="Center"
                                                                 IsVisible="{Binding PreviewBitmap, Converter={x:Static ObjectConverters.IsNull}}"/>
+                                            <Border Classes="refresh-badge"
+                                                    Classes.active="{Binding IsRefreshing}"
+                                                    IsVisible="{Binding IsRefreshing}"
+                                                    ToolTip.Tip="{DynamicResource ItemRefreshing}">
+                                                <icons:MaterialIcon Kind="Sync"/>
+                                            </Border>
                                         </Panel>
                                     </Border>
                                     <StackPanel Grid.Row="1" Spacing="4" Margin="12,10,12,12">

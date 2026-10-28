@@ -12,7 +12,6 @@
 | `bundle/` | Language files extracted from the executable (rewritten only when they change) |
 | `tempo/<guid>/draft.json` | Create-form drafts; ids are validated as GUIDs before any file operation |
 | `workshop/<appId>/` | Past versions downloaded from the item history |
-| `cache/headers`, `cache/icons`, `cache/tags` | Game header images, session icons, tag catalogs (7-day expiry) |
 
 On macOS and Linux both folders are the platform equivalents returned by .NET for `ApplicationData` and `LocalApplicationData`.
 
@@ -23,8 +22,36 @@ On macOS and Linux both folders are the platform equivalents returned by .NET fo
 | `app_YYYY-MM-DD.log`, `debug_*.log`, `crash_*.log` | Logs, kept 14 days; the debug log is capped at 50 MB per day |
 | `credentials.bin` | Steam login tokens, encrypted (see [Security and privacy](security-and-privacy.md)) |
 | `updates/` | Downloaded and extracted updates, removed on the next start |
-| `cache/thumbnails/` | Item thumbnails, at most 500 files |
 | `tmp/previews/` | Scratch files while re-uploading previews, deleted after each save |
+
+## Cache
+
+Data fetched from a platform lives in one cache shared by every platform (`Services/Cache/CacheStore`), in each OS's own cache folder (`AppPaths.CacheRoot`):
+
+| OS | Folder |
+| --- | --- |
+| Windows | `%LocalAppData%/SteamWorkshopManager/cache/` |
+| macOS | `~/Library/Caches/SteamWorkshopManager/` |
+| Linux | `$XDG_CACHE_HOME/SteamWorkshopManager/`, or `~/.cache/SteamWorkshopManager/` |
+
+One file per entry at `<platform>/<scope>/<name>` (`CacheKey`), for example `steam/app-294100/tags.json`. JSON entries carry an envelope with the fetch date and an optional version stamp; images are stored as-is.
+
+| Entry | Key | Freshness |
+| --- | --- | --- |
+| Store header, library icon | `steam/app-<id>/header.jpg`, `icon.jpg` | Until refreshed by hand |
+| Tag catalog | `steam/app-<id>/tags.json` | 7 days |
+| App names (dependencies) | `steam/app-<id>/name.json` | 30 days |
+| Item and gallery thumbnails | `shared/images/<url hash>` | Keyed by URL, which changes with the image |
+| "My mods" list (every field the list and the editor show) | `steam/app-<id>/items-<steamId>.json` | Shown at once, then always replaced by Steam's answer |
+
+The mod list is per Steam account: another login on the same machine has other mods. `ItemListViewModel` shows the cached list with a spinning badge on each card, asks Steam, and merges the answer with `PublishedItemsReconciler`: unchanged items keep their instance (thumbnail, selection), changed ones are swapped, missing ones removed. While a mod is being checked the editor can't save it, so a cached version never overwrites a newer one. If it changed on Steam, the editor reloads it, or warns when the user already edited it.
+
+- `GetOrFetchAsync` serves an entry while its policy says it is fresh, refetches otherwise, and falls back to the expired entry when the refetch fails. Concurrent requests for one key share a single fetch.
+- Entries not rewritten for 30 days, and orphan `.tmp` files, are deleted on startup.
+- Settings > Storage turns the cache on or off, sets the size limit (500 MB by default, or none) and clears it. Disabled, reads miss and nothing is written.
+- When the limit is reached nothing is evicted: writes that would grow the cache are paused and the shell shows a banner until the user raises the limit, disables or clears the cache.
+- Mod files are never cached; downloaded versions stay under `workshop/<appId>/`.
+- The per-feature folders used before 1.9.0 (`cache/` in the roaming folder, `cache/thumbnails/` in the local one) are deleted on startup.
 
 ## How files are written
 
@@ -34,4 +61,4 @@ On macOS and Linux both folders are the platform equivalents returned by .NET fo
 
 ## Deleting a session
 
-`SessionCleanupService` removes the session file, its caches, downloaded versions and drafts, after showing the user what will go. Data shared with another session for the same game is kept.
+`SessionCleanupService` removes the session file, its cache scope (`steam/app-<id>`), downloaded versions and drafts, after showing the user what will go. Data shared with another session for the same game is kept.

@@ -240,7 +240,7 @@
     <x:String x:Key="DebugModeDescription">When enabled, detailed logs are saved to help troubleshoot issues. Share the log file when reporting problems.</x:String>
     <x:String x:Key="LogFileLocation">Log file location:</x:String>
     <x:String x:Key="AppDataFolder">App data folder</x:String>
-    <x:String x:Key="AppDataFolderDescription">Settings, sessions, cache, telemetry queue, and downloads. Handy when reporting bugs or migrating to another machine.</x:String>
+    <x:String x:Key="AppDataFolderDescription">Settings, sessions, telemetry queue, and downloads. Handy when reporting bugs or migrating to another machine.</x:String>
     <x:String x:Key="LogFolderSize">Log folder size</x:String>
     <x:String x:Key="LogFolderSizeDescription">Total size of every debug log file produced by the app.</x:String>
     <x:String x:Key="ClearLogs">Clear logs</x:String>
@@ -542,4 +542,30 @@
     <x:String x:Key="YourInstanceIdDescription">Random identifier for this install. Include it in your deletion or access request so we can find your data: it's the only identifier we have.</x:String>
     <x:String x:Key="Copy">Copy</x:String>
     <x:String x:Key="Copied">Copied!</x:String>
+
+    <!-- Settings: storage / cache -->
+    <x:String x:Key="SettingsStorage">Storage</x:String>
+    <x:String x:Key="CacheEnable">Cache</x:String>
+    <x:String x:Key="CacheEnableDescription">Keeps data fetched from Steam (game artwork, tag catalogs, thumbnails...) between launches so it doesn't have to be downloaded again. Mod files are never stored in the cache.</x:String>
+    <x:String x:Key="CacheLimit">Size limit</x:String>
+    <x:String x:Key="CacheLimitDescription">When the limit is reached nothing is deleted: the cache stops growing until you raise the limit, turn it off or clear it.</x:String>
+    <x:String x:Key="MegabytesUnit">MB</x:String>
+    <x:String x:Key="CacheUnlimited">Unlimited</x:String>
+    <x:String x:Key="CacheUsage">Cache size</x:String>
+    <x:String x:Key="CacheLastUpdate">Last updated: {0}</x:String>
+    <x:String x:Key="CacheNeverUpdated">Empty</x:String>
+    <x:String x:Key="CacheFullWarning">The cache is full: new data is no longer saved.</x:String>
+    <x:String x:Key="ClearCache">Clear cache</x:String>
+    <x:String x:Key="CacheCleared">Cache cleared</x:String>
+    <x:String x:Key="CacheFolder">Cache folder</x:String>
+    <x:String x:Key="CacheFullBanner">The cache has reached its size limit ({0}) and is paused. Raise the limit or turn the cache off in Settings.</x:String>
+    <x:String x:Key="CacheOpenSettings">Open settings</x:String>
+
+    <!-- Cached mod list -->
+    <x:String x:Key="ItemRefreshing">Checking for changes on Steam</x:String>
+    <x:String x:Key="ItemsRefreshFailed">Steam could not be reached, the list shown may be out of date</x:String>
+    <x:String x:Key="ItemUpdatedFromSteam">This mod changed on Steam: the editor now shows the latest version</x:String>
+    <x:String x:Key="ItemChangedOnSteam">This mod changed on Steam since it was opened. Saving will overwrite those changes</x:String>
+    <x:String x:Key="ItemRemovedOnSteam">This mod is no longer on Steam</x:String>
+    <x:String x:Key="SaveWaitsForSteam">Checking Steam before saving...</x:String>
 </ResourceDictionary>

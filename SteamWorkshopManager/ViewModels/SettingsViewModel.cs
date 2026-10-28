@@ -1,6 +1,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -14,6 +15,7 @@ using CommunityToolkit.Mvvm.Input;
 using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Models;
 using Microsoft.Extensions.DependencyInjection;
+using SteamWorkshopManager.Services.Cache;
 using SteamWorkshopManager.Services.Core;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Notifications;
@@ -40,6 +42,11 @@ public partial class SettingsViewModel : ViewModelBase
     private readonly INotificationService _notificationService;
     private readonly IDiscordPresenceService _presence;
     private readonly SessionHost _sessionHost;
+    private readonly ICacheStore _cache;
+
+    private const int DefaultCacheLimitMb = 500;
+    private const int MinCacheLimitMb = 50;
+    private const int MaxCacheLimitMb = 100_000;
 
     /// <summary>
     /// Which category is currently shown in the right-hand content pane.
@@ -50,6 +57,7 @@ public partial class SettingsViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(IsGeneralActive))]
     [NotifyPropertyChangedFor(nameof(IsCustomizationActive))]
     [NotifyPropertyChangedFor(nameof(IsPrivacyActive))]
+    [NotifyPropertyChangedFor(nameof(IsStorageActive))]
     [NotifyPropertyChangedFor(nameof(IsDebugActive))]
     [NotifyPropertyChangedFor(nameof(IsUpdatesActive))]
     [NotifyPropertyChangedFor(nameof(IsAboutActive))]
@@ -58,6 +66,7 @@ public partial class SettingsViewModel : ViewModelBase
     public bool IsGeneralActive => ActiveCategory == SettingsCategory.General;
     public bool IsCustomizationActive => ActiveCategory == SettingsCategory.Customization;
     public bool IsPrivacyActive => ActiveCategory == SettingsCategory.Privacy;
+    public bool IsStorageActive => ActiveCategory == SettingsCategory.Storage;
     public bool IsDebugActive => ActiveCategory == SettingsCategory.Debug;
     public bool IsUpdatesActive => ActiveCategory == SettingsCategory.Updates;
     public bool IsAboutActive => ActiveCategory == SettingsCategory.About;
@@ -149,11 +158,30 @@ public partial class SettingsViewModel : ViewModelBase
     private string _logFolderSizeDisplay = string.Empty;
 
     /// <summary>
-    /// Root folder where app-state lives (bundle, settings, sessions, image
-    /// cache, telemetry queue, downloads, tags). Logs live separately under
-    /// LocalApplicationData - that's what <see cref="LogFilePath"/> points to.
+    /// Root folder where app-state lives (bundle, settings, sessions, telemetry
+    /// queue, downloads). Logs and the cache live in machine-local folders.
     /// </summary>
     public string DataFolderPath { get; } = AppPaths.Root;
+
+    [ObservableProperty]
+    private bool _isCacheEnabled;
+
+    [ObservableProperty]
+    private bool _isCacheUnlimited;
+
+    [ObservableProperty]
+    private decimal? _cacheLimitMb;
+
+    [ObservableProperty]
+    private string _cacheSizeDisplay = string.Empty;
+
+    [ObservableProperty]
+    private string _cacheLastUpdateDisplay = string.Empty;
+
+    [ObservableProperty]
+    private bool _isCacheFull;
+
+    public string CacheFolderPath => _cache.RootPath;
 
     public UpdateController Updates { get; }
 
@@ -173,10 +201,12 @@ public partial class SettingsViewModel : ViewModelBase
         INotificationService notificationService,
         IDiscordPresenceService presence,
         UpdateController updates,
-        SessionHost sessionHost)
+        SessionHost sessionHost,
+        ICacheStore cache)
     {
         Updates = updates;
         _sessionHost = sessionHost;
+        _cache = cache;
         _settingsService = settingsService;
         _logService = logService;
         _telemetry = telemetry;
@@ -203,6 +233,13 @@ public partial class SettingsViewModel : ViewModelBase
         _logFolderSizeDisplay = Formatters.Bytes(_logService.GetLogFolderSize());
         SteamAuthService.AuthStateChanged += OnAuthStateChanged;
 
+        _isCacheEnabled = _settingsService.Settings.CacheEnabled;
+        _isCacheUnlimited = _settingsService.Settings.CacheLimitMb <= 0;
+        _cacheLimitMb = _isCacheUnlimited ? DefaultCacheLimitMb : _settingsService.Settings.CacheLimitMb;
+        RefreshCacheInfo();
+        _cache.Changed += OnCacheChanged;
+        LocalizationService.Instance.LanguageChanged += RefreshCacheInfo;
+
         _ = Updates.CheckAsync();
     }
 
@@ -212,6 +249,60 @@ public partial class SettingsViewModel : ViewModelBase
     {
         _presence.ConnectionStateChanged -= OnPresenceConnectionChanged;
         SteamAuthService.AuthStateChanged -= OnAuthStateChanged;
+        _cache.Changed -= OnCacheChanged;
+        LocalizationService.Instance.LanguageChanged -= RefreshCacheInfo;
+    }
+
+    // Raised on every cache write, from any thread.
+    private void OnCacheChanged() => Dispatcher.UIThread.Post(RefreshCacheInfo);
+
+    private void RefreshCacheInfo()
+    {
+        CacheSizeDisplay = Formatters.Bytes(_cache.SizeBytes);
+        CacheLastUpdateDisplay = _cache.LastWriteUtc is { } last
+            ? string.Format(Loc["CacheLastUpdate"], last.ToLocalTime().ToString("g", CultureInfo.CurrentCulture))
+            : Loc["CacheNeverUpdated"];
+        IsCacheFull = _cache.IsEnabled && _cache.IsFull;
+    }
+
+    partial void OnIsCacheEnabledChanged(bool value) => ApplyCacheSettings();
+
+    partial void OnIsCacheUnlimitedChanged(bool value) => ApplyCacheSettings();
+
+    partial void OnCacheLimitMbChanged(decimal? value)
+    {
+        // Typed decimals are truncated: the setter re-enters with the whole value.
+        if (value is { } v && v != decimal.Truncate(v))
+        {
+            CacheLimitMb = decimal.Truncate(v);
+            return;
+        }
+        ApplyCacheSettings();
+    }
+
+    private void ApplyCacheSettings()
+    {
+        var megabytes = !IsCacheUnlimited
+            ? (int)Math.Clamp(CacheLimitMb ?? DefaultCacheLimitMb, MinCacheLimitMb, MaxCacheLimitMb)
+            : 0;
+
+        _settingsService.Settings.CacheEnabled = IsCacheEnabled;
+        _settingsService.Settings.CacheLimitMb = megabytes;
+        _settingsService.Save();
+        _cache.Configure(IsCacheEnabled, CacheStore.LimitFromMegabytes(megabytes));
+    }
+
+    [RelayCommand]
+    private async Task ClearCacheAsync()
+    {
+        await _cache.ClearAsync();
+        _notificationService.ShowSuccess(Loc["CacheCleared"]);
+    }
+
+    [RelayCommand]
+    private void OpenCacheFolder()
+    {
+        if (Directory.Exists(CacheFolderPath)) RevealFolder(CacheFolderPath);
     }
 
     private void OnAuthStateChanged() =>
@@ -255,6 +346,9 @@ public partial class SettingsViewModel : ViewModelBase
 
     [RelayCommand]
     private void NavigateToPrivacy() => ActiveCategory = SettingsCategory.Privacy;
+
+    [RelayCommand]
+    private void NavigateToStorage() => ActiveCategory = SettingsCategory.Storage;
 
     [RelayCommand]
     private void NavigateToDebug() => ActiveCategory = SettingsCategory.Debug;

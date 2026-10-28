@@ -12,6 +12,7 @@ using CommunityToolkit.Mvvm.Input;
 using SteamWorkshopManager.Core.Workshop;
 using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Models;
+using SteamWorkshopManager.Services.Cache;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Steam;
 using SteamWorkshopManager.Services.UI;
@@ -23,7 +24,7 @@ namespace SteamWorkshopManager.ViewModels.Editor;
 /// Additional previews (images, YouTube videos, read-only Sketchfab models) shared by
 /// the create and edit views, and the translation of the user's edits into preview ops.
 /// </summary>
-public partial class PreviewGalleryViewModel(IFileDialogService fileDialogService) : ViewModelBase
+public partial class PreviewGalleryViewModel(IFileDialogService fileDialogService, ThumbnailCache thumbnails) : ViewModelBase
 {
     private static readonly Logger Log = LogService.GetLogger<PreviewGalleryViewModel>();
     private static readonly HttpClient Http = SteamHttpClientFactory.Create(timeout: TimeSpan.FromSeconds(30));
@@ -265,9 +266,9 @@ public partial class PreviewGalleryViewModel(IFileDialogService fileDialogServic
         return null;
     }
 
-    private static async Task LoadThumbnailAsync(WorkshopPreview preview)
+    private async Task LoadThumbnailAsync(WorkshopPreview preview)
     {
-        var bitmap = await ThumbnailCache.GetAsync(preview.RemoteUrl!, CancellationToken.None);
+        var bitmap = await thumbnails.GetAsync(preview.RemoteUrl!, CancellationToken.None);
         if (bitmap is not null) preview.Thumbnail = bitmap;
     }
 

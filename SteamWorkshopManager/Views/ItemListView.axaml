@@ -388,6 +388,14 @@
                                                                 VerticalAlignment="Center"
                                                                 IsVisible="{Binding PreviewBitmap, Converter={x:Static ObjectConverters.IsNull}}"/>
 
+                                            <!-- Shown from the cache, being checked against Steam -->
+                                            <Border Classes="refresh-badge"
+                                                    Classes.active="{Binding IsRefreshing}"
+                                                    IsVisible="{Binding IsRefreshing}"
+                                                    ToolTip.Tip="{DynamicResource ItemRefreshing}">
+                                                <icons:MaterialIcon Kind="Sync"/>
+                                            </Border>
+
                                             <!-- Selection check overlay - only paints in selection mode.
                                                  The card button itself toggles IsSelected, the visual is
                                                  read-only here. -->

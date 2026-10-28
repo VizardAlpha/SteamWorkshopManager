@@ -1,11 +1,12 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using SteamWorkshopManager.Models;
+using SteamWorkshopManager.Services.Cache;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Session;
 using SteamWorkshopManager.Services.Steam;
@@ -18,11 +19,11 @@ namespace SteamWorkshopManager.Services.Workshop;
 /// in the worker; the public Steam Store HTTP lookup for app display names
 /// stays on the shell side since it doesn't need the SteamAPI.
 /// </summary>
-public sealed class AppDependencyService(SessionHost host)
+public sealed class AppDependencyService(SessionHost host, ICacheStore cache)
 {
     private static readonly Logger Log = LogService.GetLogger<AppDependencyService>();
     private static readonly HttpClient HttpClient = SteamHttpClientFactory.Create(timeout: TimeSpan.FromSeconds(10));
-    private static readonly ConcurrentDictionary<uint, string?> AppNameCache = new();
+    private static readonly CachePolicy NamePolicy = new(TimeSpan.FromDays(30));
 
     public async Task<List<AppDependencyInfo>> GetAppDependenciesAsync(PublishedFileId_t modId)
     {
@@ -50,8 +51,14 @@ public sealed class AppDependencyService(SessionHost host)
 
     public async Task<string?> ResolveAppNameAsync(uint appId)
     {
-        if (AppNameCache.TryGetValue(appId, out var cached)) return cached;
+        var entry = await cache.GetOrFetchAsync(
+            CacheKey.SteamApp(appId, "name.json"), AppNameJsonContext.Default.AppNameEntry,
+            () => FetchAppNameAsync(appId), NamePolicy);
+        return entry?.Name;
+    }
 
+    private static async Task<AppNameEntry?> FetchAppNameAsync(uint appId)
+    {
         try
         {
             var url = SteamUrls.AppDetails(appId);
@@ -61,12 +68,12 @@ public sealed class AppDependencyService(SessionHost host)
 
             var json = await response.Content.ReadAsStringAsync();
             using var doc = JsonDocument.Parse(json);
+            // A missing name is an answer too (delisted app): cached as null.
             var appName = SteamAppDetailsParser.TryGetData(doc.RootElement, appId, out var data) &&
                           data.TryGetProperty("name", out var name)
                 ? name.GetString()
                 : null;
-            AppNameCache[appId] = appName;
-            return appName;
+            return new AppNameEntry(appName);
         }
         catch (Exception ex)
         {
@@ -75,3 +82,8 @@ public sealed class AppDependencyService(SessionHost host)
         }
     }
 }
+
+internal sealed record AppNameEntry(string? Name);
+
+[JsonSerializable(typeof(AppNameEntry))]
+internal partial class AppNameJsonContext : JsonSerializerContext;

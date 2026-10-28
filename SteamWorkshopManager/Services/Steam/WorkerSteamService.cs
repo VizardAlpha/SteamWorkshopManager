@@ -39,7 +39,7 @@ public sealed class WorkerSteamService(SessionHost host) : ISteamService
         try
         {
             var dtos = await host.Worker.GetPublishedItemsAsync();
-            return dtos.Select(FromDto).ToList();
+            return dtos.Select(WorkshopItemMapper.ToModel).ToList();
         }
         catch (Exception ex)
         {
@@ -58,7 +58,7 @@ public sealed class WorkerSteamService(SessionHost host) : ISteamService
         try
         {
             var dto = await host.Worker.GetPublishedItemAsync(fileId.m_PublishedFileId);
-            return dto is null ? null : FromDto(dto);
+            return dto is null ? null : WorkshopItemMapper.ToModel(dto);
         }
         catch (Exception ex)
         {
@@ -215,31 +215,4 @@ public sealed class WorkerSteamService(SessionHost host) : ISteamService
         return new Progress<UploadProgressDto>(p =>
             sink.Report(new UploadProgress(p.Status, p.BytesProcessed, p.BytesTotal, p.PercentHint)));
     }
-
-    private static WorkshopItem FromDto(WorkshopItemDto dto) => new()
-    {
-        PublishedFileId = new PublishedFileId_t(dto.PublishedFileId),
-        Title = dto.Title,
-        Description = dto.Description,
-        PreviewImagePath = dto.PreviewImagePath,
-        PreviewImageUrl = dto.PreviewImageUrl,
-        Visibility = dto.Visibility,
-        Tags = dto.Tags.Select(t => new WorkshopTag(t.Name)).ToList(),
-        CreatedAt = dto.CreatedAt,
-        UpdatedAt = dto.UpdatedAt,
-        SubscriberCount = dto.SubscriberCount,
-        FileSize = dto.FileSize,
-        OwnerId = new CSteamID(dto.OwnerId),
-        IsOwner = dto.IsOwner,
-        AdditionalPreviews = dto.AdditionalPreviews.Select(FromDto).ToList(),
-    };
-
-    private static WorkshopPreview FromDto(WorkshopPreviewDto dto) => new()
-    {
-        Source = WorkshopPreviewSource.Existing,
-        PreviewType = (EItemPreviewType)dto.PreviewType,
-        OriginalIndex = dto.OriginalIndex,
-        RemoteUrl = dto.RemoteUrl,
-        OriginalFilename = dto.OriginalFilename,
-    };
 }

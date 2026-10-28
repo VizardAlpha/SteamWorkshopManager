@@ -154,6 +154,15 @@
                 </Button>
 
                 <Button Classes="nav-item"
+                        Classes.active="{Binding IsStorageActive}"
+                        Command="{Binding NavigateToStorageCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                        <icons:MaterialIcon Kind="DatabaseOutline" Width="16" Height="16"/>
+                        <TextBlock Text="{DynamicResource SettingsStorage}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+
+                <Button Classes="nav-item"
                         Classes.active="{Binding IsDebugActive}"
                         Command="{Binding NavigateToDebugCommand}">
                     <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
@@ -568,6 +577,151 @@
                                 </StackPanel>
                             </Button>
                         </Grid>
+                    </Border>
+                </StackPanel>
+
+                <!-- ── STORAGE ── -->
+                <StackPanel Spacing="12" IsVisible="{Binding IsStorageActive}">
+                    <TextBlock Text="{DynamicResource SettingsStorage}"
+                               FontSize="20"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimaryBrush}"/>
+
+                    <Border Classes="section">
+                        <StackPanel Spacing="0">
+                            <!-- Cache on/off -->
+                            <Grid Classes="row" ColumnDefinitions="*,Auto">
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock Classes="row-label" Text="{DynamicResource CacheEnable}"/>
+                                    <TextBlock Classes="row-desc" Text="{DynamicResource CacheEnableDescription}"/>
+                                </StackPanel>
+                                <ToggleSwitch Grid.Column="1"
+                                              IsChecked="{Binding IsCacheEnabled}"
+                                              OnContent="" OffContent=""
+                                              VerticalAlignment="Center"/>
+                            </Grid>
+
+                            <Border Height="1"
+                                    Background="{DynamicResource BorderSubtleBrush}"
+                                    Margin="16,0"/>
+
+                            <!-- Size limit -->
+                            <Grid Classes="row" IsEnabled="{Binding IsCacheEnabled}">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Classes="row-label" Text="{DynamicResource CacheLimit}"/>
+                                    <TextBlock Classes="row-desc" Text="{DynamicResource CacheLimitDescription}"/>
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <NumericUpDown Value="{Binding CacheLimitMb}"
+                                                       IsEnabled="{Binding !IsCacheUnlimited}"
+                                                       Minimum="50" Maximum="100000" Increment="100"
+                                                       FormatString="0"
+                                                       ParsingNumberStyle="Integer"
+                                                       Width="150"/>
+                                        <TextBlock Text="{DynamicResource MegabytesUnit}"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   VerticalAlignment="Center"/>
+                                        <ToggleButton IsChecked="{Binding IsCacheUnlimited}"
+                                                      Content="{DynamicResource CacheUnlimited}"
+                                                      Padding="12,6"
+                                                      VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Grid>
+
+                            <Border Height="1"
+                                    Background="{DynamicResource BorderSubtleBrush}"
+                                    Margin="16,0"/>
+
+                            <!-- Usage + Clear -->
+                            <Grid Classes="row" ColumnDefinitions="*,Auto">
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock Classes="row-label" Text="{DynamicResource CacheUsage}"/>
+                                    <TextBlock Classes="row-desc" Text="{Binding CacheLastUpdateDisplay}"/>
+                                    <Border Background="{DynamicResource SurfaceElevatedBrush}"
+                                            BorderBrush="{DynamicResource BorderSubtleBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="6"
+                                            Padding="8,5"
+                                            HorizontalAlignment="Left">
+                                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                            <icons:MaterialIcon Kind="DatabaseOutline" Width="12" Height="12"
+                                                                Foreground="{DynamicResource TextMutedBrush}"
+                                                                VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding CacheSizeDisplay}"
+                                                       FontSize="11"
+                                                       FontFamily="Consolas, Menlo, monospace"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                       VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <TextBlock Text="{DynamicResource CacheFullWarning}"
+                                               IsVisible="{Binding IsCacheFull}"
+                                               FontSize="12"
+                                               TextWrapping="Wrap"
+                                               Foreground="{DynamicResource FeedbackDangerTextBrush}"/>
+                                </StackPanel>
+                                <Button Grid.Column="1"
+                                        Command="{Binding ClearCacheCommand}"
+                                        Background="{DynamicResource SurfaceElevatedBrush}"
+                                        BorderBrush="{DynamicResource BorderStrongBrush}"
+                                        BorderThickness="1"
+                                        Foreground="{DynamicResource TextPrimaryBrush}"
+                                        CornerRadius="6"
+                                        Padding="12,8"
+                                        FontSize="13"
+                                        VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <icons:MaterialIcon Kind="DeleteOutline" Width="14" Height="14"/>
+                                        <TextBlock Text="{DynamicResource ClearCache}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+
+                            <Border Height="1"
+                                    Background="{DynamicResource BorderSubtleBrush}"
+                                    Margin="16,0"/>
+
+                            <!-- Cache folder -->
+                            <Grid Classes="row" ColumnDefinitions="*,Auto">
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock Classes="row-label" Text="{DynamicResource CacheFolder}"/>
+                                    <Border Background="{DynamicResource SurfaceElevatedBrush}"
+                                            BorderBrush="{DynamicResource BorderSubtleBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="6"
+                                            Padding="8,5"
+                                            HorizontalAlignment="Left">
+                                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                            <icons:MaterialIcon Kind="FolderOutline" Width="12" Height="12"
+                                                                Foreground="{DynamicResource TextMutedBrush}"
+                                                                VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding CacheFolderPath}"
+                                                       FontSize="11"
+                                                       FontFamily="Consolas, Menlo, monospace"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                       VerticalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       MaxWidth="540"/>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                                <Button Grid.Column="1"
+                                        Command="{Binding OpenCacheFolderCommand}"
+                                        Background="{DynamicResource SurfaceElevatedBrush}"
+                                        BorderBrush="{DynamicResource BorderStrongBrush}"
+                                        BorderThickness="1"
+                                        Foreground="{DynamicResource TextPrimaryBrush}"
+                                        CornerRadius="6"
+                                        Padding="12,8"
+                                        FontSize="13"
+                                        VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <icons:MaterialIcon Kind="FolderOpenOutline" Width="14" Height="14"/>
+                                        <TextBlock Text="{DynamicResource OpenFolder}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+                        </StackPanel>
                     </Border>
                 </StackPanel>
 

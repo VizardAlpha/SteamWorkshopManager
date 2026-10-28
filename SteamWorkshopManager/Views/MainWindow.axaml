@@ -28,9 +28,9 @@
             <!-- Top bar (Raycast-style nav shell) -->
             <shell:TopBarView Grid.Row="0"/>
 
+            <StackPanel Grid.Row="1">
             <!-- Update banner -->
-            <Border Grid.Row="1"
-                    IsVisible="{Binding Updates.IsBannerVisible}"
+            <Border IsVisible="{Binding Updates.IsBannerVisible}"
                     Background="{DynamicResource SurfaceElevatedBrush}"
                     BorderBrush="{DynamicResource BorderSubtleBrush}"
                     BorderThickness="0,0,0,1"
@@ -84,6 +84,37 @@
                             Content="✕"/>
                 </Grid>
             </Border>
+
+            <!-- Cache full banner: writes are paused until the limit changes -->
+            <Border IsVisible="{Binding IsCacheFullBannerVisible}"
+                    Background="{DynamicResource SurfaceElevatedBrush}"
+                    BorderBrush="{DynamicResource BorderSubtleBrush}"
+                    BorderThickness="0,0,0,1"
+                    Padding="16,10">
+                <Grid ColumnDefinitions="*,Auto,Auto">
+                    <TextBlock Text="{Binding CacheFullBannerText}"
+                               Foreground="{DynamicResource FeedbackDangerTextBrush}"
+                               FontSize="13"
+                               TextWrapping="Wrap"
+                               VerticalAlignment="Center"/>
+                    <Button Grid.Column="1"
+                            Command="{Binding OpenStorageSettingsCommand}"
+                            Classes="accent"
+                            Padding="12,6"
+                            Margin="12,0,0,0"
+                            FontSize="12">
+                        <TextBlock Text="{DynamicResource CacheOpenSettings}"/>
+                    </Button>
+                    <Button Grid.Column="2"
+                            Command="{Binding DismissCacheBannerCommand}"
+                            Classes="ghost"
+                            Padding="8,4"
+                            Margin="8,0,0,0"
+                            FontSize="14"
+                            Content="✕"/>
+                </Grid>
+            </Border>
+            </StackPanel>
 
             <!-- Main content (transparent so the window gradient shows through).
                  Two animation layers coexist:

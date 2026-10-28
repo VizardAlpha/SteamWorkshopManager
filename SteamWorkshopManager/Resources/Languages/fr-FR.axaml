@@ -240,7 +240,7 @@
     <x:String x:Key="DebugModeDescription">Lorsqu'activé, des logs détaillés sont enregistrés pour aider au diagnostic. Partagez le fichier de logs lors du signalement de problèmes.</x:String>
     <x:String x:Key="LogFileLocation">Emplacement du fichier de logs :</x:String>
     <x:String x:Key="AppDataFolder">Dossier de données de l'application</x:String>
-    <x:String x:Key="AppDataFolderDescription">Paramètres, sessions, cache, file de télémétrie et téléchargements. Utile pour signaler un bug ou migrer vers une autre machine.</x:String>
+    <x:String x:Key="AppDataFolderDescription">Paramètres, sessions, file de télémétrie et téléchargements. Utile pour signaler un bug ou migrer vers une autre machine.</x:String>
     <x:String x:Key="LogFolderSize">Taille du dossier de logs</x:String>
     <x:String x:Key="LogFolderSizeDescription">Taille totale de tous les fichiers de logs produits par l'application.</x:String>
     <x:String x:Key="ClearLogs">Vider les logs</x:String>
@@ -542,4 +542,30 @@
     <x:String x:Key="YourInstanceIdDescription">Identifiant aléatoire de cette installation. Incluez-le dans votre demande d'accès ou de suppression pour qu'on puisse retrouver vos données : c'est le seul identifiant dont nous disposons.</x:String>
     <x:String x:Key="Copy">Copier</x:String>
     <x:String x:Key="Copied">Copié !</x:String>
+
+    <!-- Settings: storage / cache -->
+    <x:String x:Key="SettingsStorage">Stockage</x:String>
+    <x:String x:Key="CacheEnable">Cache</x:String>
+    <x:String x:Key="CacheEnableDescription">Conserve les données récupérées depuis Steam (visuels des jeux, catalogues de tags, miniatures...) d'un lancement à l'autre pour ne pas les retélécharger. Les fichiers des mods ne sont jamais stockés dans le cache.</x:String>
+    <x:String x:Key="CacheLimit">Limite de taille</x:String>
+    <x:String x:Key="CacheLimitDescription">Quand la limite est atteinte, rien n'est supprimé : le cache arrête de grossir jusqu'à ce que vous augmentiez la limite, le désactiviez ou le vidiez.</x:String>
+    <x:String x:Key="MegabytesUnit">Mo</x:String>
+    <x:String x:Key="CacheUnlimited">Illimité</x:String>
+    <x:String x:Key="CacheUsage">Taille du cache</x:String>
+    <x:String x:Key="CacheLastUpdate">Dernière mise à jour : {0}</x:String>
+    <x:String x:Key="CacheNeverUpdated">Vide</x:String>
+    <x:String x:Key="CacheFullWarning">Le cache est plein : les nouvelles données ne sont plus enregistrées.</x:String>
+    <x:String x:Key="ClearCache">Vider le cache</x:String>
+    <x:String x:Key="CacheCleared">Cache vidé</x:String>
+    <x:String x:Key="CacheFolder">Dossier du cache</x:String>
+    <x:String x:Key="CacheFullBanner">Le cache a atteint sa limite de taille ({0}) et est en pause. Augmentez la limite ou désactivez le cache dans les paramètres.</x:String>
+    <x:String x:Key="CacheOpenSettings">Ouvrir les paramètres</x:String>
+
+    <!-- Cached mod list -->
+    <x:String x:Key="ItemRefreshing">Vérification des changements sur Steam</x:String>
+    <x:String x:Key="ItemsRefreshFailed">Steam est injoignable, la liste affichée n'est peut-être pas à jour</x:String>
+    <x:String x:Key="ItemUpdatedFromSteam">Ce mod a changé sur Steam : l'éditeur affiche maintenant la dernière version</x:String>
+    <x:String x:Key="ItemChangedOnSteam">Ce mod a changé sur Steam depuis son ouverture. Enregistrer écrasera ces changements</x:String>
+    <x:String x:Key="ItemRemovedOnSteam">Ce mod n'est plus sur Steam</x:String>
+    <x:String x:Key="SaveWaitsForSteam">Vérification sur Steam avant l'enregistrement...</x:String>
 </ResourceDictionary>

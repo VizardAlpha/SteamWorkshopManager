@@ -102,8 +102,11 @@ public sealed class SteamWorkerClient : IAsyncDisposable
         connectTimeout.CancelAfter(TimeSpan.FromSeconds(10));
         await _pipe.WaitForConnectionAsync(connectTimeout.Token);
 
-        _rpc = JsonRpc.Attach(_pipe);
+        // Progress and log notifications run in arrival order: on the default threadpool
+        // dispatch a late "Finalizing" report could land after the final one.
+        _rpc = new JsonRpc(_pipe) { SynchronizationContext = new Microsoft.VisualStudio.Threading.NonConcurrentSynchronizationContext(sticky: false) };
         Proxy = _rpc.Attach<ISteamWorker>();
+        _rpc.StartListening();
 
         Log.Debug("Steam worker RPC channel attached");
 

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace SteamWorkshopManager.Helpers;
 
 /// <summary>
-/// Crash-safe text writes: content goes to a sibling temp file which then replaces
+/// Crash-safe writes: content goes to a sibling temp file which then replaces
 /// the target, so readers never see a truncated file. Writes to the same path are serialized.
 /// </summary>
 public static class AtomicFile
@@ -37,7 +37,10 @@ public static class AtomicFile
         }
     }
 
-    public static async Task WriteAllTextAsync(string path, string contents)
+    public static Task WriteAllTextAsync(string path, string contents) =>
+        WriteAllBytesAsync(path, Utf8NoBom.GetBytes(contents));
+
+    public static async Task WriteAllBytesAsync(string path, byte[] contents)
     {
         var gate = GateFor(path);
         await gate.WaitAsync().ConfigureAwait(false);
@@ -47,7 +50,7 @@ public static class AtomicFile
             await using (var fs = new FileStream(tmp, FileMode.Create, FileAccess.Write, FileShare.None,
                              bufferSize: 4096, useAsync: true))
             {
-                await fs.WriteAsync(Utf8NoBom.GetBytes(contents)).ConfigureAwait(false);
+                await fs.WriteAsync(contents).ConfigureAwait(false);
                 fs.Flush(flushToDisk: true);
             }
             File.Move(tmp, path, overwrite: true);

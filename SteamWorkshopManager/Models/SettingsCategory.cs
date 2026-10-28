@@ -9,6 +9,7 @@ public enum SettingsCategory
     General,
     Customization,
     Privacy,
+    Storage,
     Debug,
     Updates,
     About,

@@ -6,7 +6,10 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Steamworks;
 using SteamWorkshopManager.Core.Sessions;
+using SteamWorkshopManager.Core.Workshop;
+using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Models;
+using SteamWorkshopManager.Services.Cache;
 using SteamWorkshopManager.Services.Core;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Notifications;
@@ -31,6 +34,7 @@ public partial class MainViewModel : ViewModelBase
     private readonly IDiscordPresenceService _presence;
     private readonly ISessionContext _context;
     private readonly IViewModelFactory _viewModels;
+    private readonly ICacheStore _cache;
 
     [ObservableProperty]
     private ViewModelBase? _currentView;
@@ -71,6 +75,11 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     private bool _showCloseDuringUploadConfirmation;
 
+    [ObservableProperty]
+    private bool _isCacheFullBannerVisible;
+
+    public string CacheFullBannerText => string.Format(Loc["CacheFullBanner"], Formatters.Bytes(_cache.LimitBytes ?? 0));
+
     public UpdateController Updates { get; }
     public ToastViewModel Toasts { get; }
     public UploadProgressViewModel Upload { get; }
@@ -94,11 +103,13 @@ public partial class MainViewModel : ViewModelBase
         IDiscordPresenceService presence,
         UpdateController updates,
         ISessionContext context,
-        IViewModelFactory viewModels)
+        IViewModelFactory viewModels,
+        ICacheStore cache)
     {
         Updates = updates;
         _context = context;
         _viewModels = viewModels;
+        _cache = cache;
         _settingsService = settingsService;
         _notificationService = notificationService;
         _sessionRepository = sessionRepository;
@@ -122,8 +133,9 @@ public partial class MainViewModel : ViewModelBase
         ItemListViewModel = _viewModels.Create<ItemListViewModel>(_notificationService);
         ItemListViewModel.ItemSelected += OpenEditor;
         ItemListViewModel.CreateRequested += OpenCreator;
+        ItemListViewModel.ItemsReconciled += OnItemsReconciled;
 
-        HomeViewModel = new HomeViewModel(ItemListViewModel, _context);
+        HomeViewModel = _viewModels.Create<HomeViewModel>(ItemListViewModel);
         Connection.StateChanged += state => HomeViewModel.ConnectionState = state;
 
         _sessionHost.WorkerRecovered += OnWorkerRecovered;
@@ -133,6 +145,10 @@ public partial class MainViewModel : ViewModelBase
         ActiveTab = ShellTab.Home;
 
         _presence.Sync();
+
+        _cache.LimitReached += OnCacheLimitReached;
+        _cache.Changed += OnCacheChanged;
+        LocalizationService.Instance.LanguageChanged += () => OnPropertyChanged(nameof(CacheFullBannerText));
 
         _ = ApplyInitialConnectionAsync();
         _ = CheckForUpdatesAsync();
@@ -318,6 +334,65 @@ public partial class MainViewModel : ViewModelBase
             case CreateItemViewModel creator when creator.CreateCommand.CanExecute(null):
                 creator.CreateCommand.Execute(null);
                 break;
+        }
+    }
+
+    #endregion
+
+    #region Cache
+
+    private void OnCacheLimitReached() => Dispatcher.UIThread.Post(() =>
+    {
+        OnPropertyChanged(nameof(CacheFullBannerText));
+        IsCacheFullBannerVisible = true;
+    });
+
+    // A raised limit, a disabled or cleared cache resumes writes: the warning is moot.
+    private void OnCacheChanged()
+    {
+        if (IsCacheFullBannerVisible && !_cache.IsFull) Dispatcher.UIThread.Post(() => IsCacheFullBannerVisible = false);
+    }
+
+    [RelayCommand]
+    private void OpenStorageSettings()
+    {
+        NavigateToSettings();
+        if (CurrentView is SettingsViewModel settings) settings.ActiveCategory = SettingsCategory.Storage;
+        IsCacheFullBannerVisible = false;
+    }
+
+    [RelayCommand]
+    private void DismissCacheBanner() => IsCacheFullBannerVisible = false;
+
+    #endregion
+
+    #region Steam refresh of the open mod
+
+    // A refresh can bring a newer Steam version of the mod open in the editor.
+    private void OnItemsReconciled(ItemsReconciliation outcome)
+    {
+        if (CurrentView is not ItemEditorViewModel editor || editor.IsSaving) return;
+
+        var replaced = outcome.Replaced.FirstOrDefault(r => r.Old.PublishedFileId == editor.ItemId);
+        if (replaced.Fresh is not null)
+        {
+            if (editor.HasUserEdits)
+            {
+                _notificationService.ShowError(Loc["ItemChangedOnSteam"]);
+                return;
+            }
+
+            var section = editor.ActiveSection;
+            OpenEditor(replaced.Fresh);
+            if (CurrentView is ItemEditorViewModel reopened) reopened.ActiveSection = section;
+            _notificationService.ShowSuccess(Loc["ItemUpdatedFromSteam"]);
+            return;
+        }
+
+        if (outcome.Removed.Any(i => i.PublishedFileId == editor.ItemId))
+        {
+            _notificationService.ShowError(Loc["ItemRemovedOnSteam"]);
+            if (!editor.HasUserEdits) NavigateToList();
         }
     }
 

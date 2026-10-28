@@ -159,6 +159,32 @@ public partial class ItemEditorViewModel : ViewModelBase, IDisposable
 
     public string ModId => ((ulong)_originalItem.PublishedFileId).ToString();
 
+    public PublishedFileId_t ItemId => _originalItem.PublishedFileId;
+
+    /// <summary>
+    /// Main fields changed since the editor opened. Decides whether a newer Steam
+    /// version can replace the editor silently or the user has to be warned.
+    /// </summary>
+    public bool HasUserEdits =>
+        Title != _originalItem.Title
+        || Description != _originalItem.Description
+        || Visibility != _originalItem.Visibility
+        || PreviewImagePath != _initialPreviewImagePath
+        || ContentFolderPath != _initialContentFolderPath
+        || !Tags.SelectedNames.ToHashSet().SetEquals(_originalItem.Tags.Select(t => t.Name));
+
+    /// <summary>Shown from the cache, Steam not checked yet: saving could overwrite a newer version.</summary>
+    public bool IsCheckingSteam => _originalItem.IsRefreshing;
+
+    private bool CanSave() => !IsCheckingSteam;
+
+    private void OnOriginalItemPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(WorkshopItem.IsRefreshing)) return;
+        OnPropertyChanged(nameof(IsCheckingSteam));
+        SaveCommand.NotifyCanExecuteChanged();
+    }
+
     /// <summary>Side-panel nav; the first visit of Versions / History / Dependencies triggers their load.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsInfoActive))]
@@ -211,6 +237,7 @@ public partial class ItemEditorViewModel : ViewModelBase, IDisposable
         IProgress<UploadProgress>? uploadProgress = null)
     {
         _originalItem = item;
+        _originalItem.PropertyChanged += OnOriginalItemPropertyChanged;
         _fileDialogService = fileDialogService;
         _settingsService = settingsService;
         _orchestrator = orchestrator;
@@ -365,7 +392,7 @@ public partial class ItemEditorViewModel : ViewModelBase, IDisposable
         _settingsService.SetContentFolderPath((ulong)_originalItem.PublishedFileId, path);
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanSave))]
     private async Task SaveAsync()
     {
         var validation = ModValidator.ValidateForUpdate(Title);
@@ -527,6 +554,7 @@ public partial class ItemEditorViewModel : ViewModelBase, IDisposable
     /// <summary>Called when the shell drops the editor: cancels pending sign-in / downloads.</summary>
     public void Dispose()
     {
+        _originalItem.PropertyChanged -= OnOriginalItemPropertyChanged;
         Versions.PropertyChanged -= OnVersionsPropertyChanged;
         History.Dispose();
         Translations.Dispose();

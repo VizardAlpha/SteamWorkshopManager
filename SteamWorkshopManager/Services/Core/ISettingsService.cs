@@ -76,4 +76,10 @@ public class AppSettings
     /// nothing is shared until the user opts in.
     /// </summary>
     public DiscordPresenceMode DiscordPresenceMode { get; set; } = DiscordPresenceMode.Off;
+
+    /// <summary>Keeps fetched platform data on disk between runs (see <c>CacheStore</c>).</summary>
+    public bool CacheEnabled { get; set; } = true;
+
+    /// <summary>Cache size limit in MB, 0 = unlimited. Writes pause when it is reached.</summary>
+    public int CacheLimitMb { get; set; } = 500;
 }

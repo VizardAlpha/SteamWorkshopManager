@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Models;
+using SteamWorkshopManager.Services.Cache;
 using SteamWorkshopManager.Services.Core;
 using SteamWorkshopManager.Services.Log;
 
@@ -12,7 +13,7 @@ namespace SteamWorkshopManager.Core.Sessions;
 
 /// <summary>
 /// Removes everything tied to a session: the session JSON, the AppId-keyed
-/// caches (headers, icons, tags), the downloaded mod versions and the drafts
+/// cache scope, the downloaded mod versions and the drafts
 /// authored against that AppId. AppId-keyed assets are only purged when no
 /// other session still references the same AppId - two sessions on the same
 /// game would otherwise lose shared cache for both.
@@ -22,10 +23,12 @@ public sealed class SessionCleanupService
     private static readonly Logger Log = LogService.GetLogger<SessionCleanupService>();
 
     private readonly DraftService _draftService;
+    private readonly ICacheStore _cache;
 
-    public SessionCleanupService(DraftService draftService)
+    public SessionCleanupService(DraftService draftService, ICacheStore cache)
     {
         _draftService = draftService;
+        _cache = cache;
     }
 
     /// <summary>
@@ -42,9 +45,7 @@ public sealed class SessionCleanupService
 
         long cacheSize = 0;
         if (!sharedAppId)
-            cacheSize = SafeFileSize(AppPaths.HeaderForApp(session.AppId))
-                       + SafeFileSize(AppPaths.IconForApp(session.AppId))
-                       + SafeFileSize(AppPaths.TagsForApp(session.AppId));
+            cacheSize = _cache.MeasureScope(CacheKey.Steam, CacheKey.AppScope(session.AppId));
 
         return new SessionCleanupReport
         {
@@ -71,9 +72,7 @@ public sealed class SessionCleanupService
 
             if (!sharedAppId)
             {
-                TryDeleteFile(AppPaths.HeaderForApp(session.AppId));
-                TryDeleteFile(AppPaths.IconForApp(session.AppId));
-                TryDeleteFile(AppPaths.TagsForApp(session.AppId));
+                _cache.RemoveScope(CacheKey.Steam, CacheKey.AppScope(session.AppId));
                 TryDeleteDirectory(AppPaths.WorkshopForApp(session.AppId));
             }
 
@@ -135,12 +134,6 @@ public sealed class SessionCleanupService
         {
             return (0, 0);
         }
-    }
-
-    private static long SafeFileSize(string path)
-    {
-        try { return File.Exists(path) ? new FileInfo(path).Length : 0; }
-        catch { return 0; }
     }
 
     private static void TryDeleteFile(string path)

@@ -10,13 +10,16 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Steamworks;
 using SteamWorkshopManager.Core.Sessions;
+using SteamWorkshopManager.Core.Workshop;
 using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Models;
+using SteamWorkshopManager.Services.Cache;
 using SteamWorkshopManager.Services.Core;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Notifications;
 using SteamWorkshopManager.Services.Steam;
 using SteamWorkshopManager.Services.Telemetry;
+using SteamWorkshopManager.Services.Workshop;
 
 namespace SteamWorkshopManager.ViewModels;
 
@@ -27,6 +30,8 @@ public partial class ItemListViewModel : ViewModelBase
     private readonly INotificationService? _notifications;
     private readonly ITelemetryService _telemetry;
     private readonly ISessionContext _context;
+    private readonly ThumbnailCache _thumbnails;
+    private readonly PublishedItemsCache _itemsCache;
 
     [ObservableProperty]
     private string? _errorMessage;
@@ -88,15 +93,29 @@ public partial class ItemListViewModel : ViewModelBase
         ISteamService steamService,
         ITelemetryService telemetry,
         ISessionContext context,
+        ThumbnailCache thumbnails,
+        PublishedItemsCache itemsCache,
         INotificationService? notifications = null)
     {
         _steamService = steamService;
         _telemetry = telemetry;
         _context = context;
+        _thumbnails = thumbnails;
+        _itemsCache = itemsCache;
         _notifications = notifications;
         Items.CollectionChanged += OnItemsChanged;
     }
 
+    /// <summary>Raised after a Steam refresh changed or removed items that were on screen.</summary>
+    public event Action<ItemsReconciliation>? ItemsReconciled;
+
+    // A newer load (session switch, manual refresh) supersedes an older one still in flight.
+    private int _loadGeneration;
+
+    /// <summary>
+    /// Shows the cached list right away when nothing is on screen, then asks Steam and
+    /// merges its answer: cards being checked spin, unchanged ones keep their instance.
+    /// </summary>
     [RelayCommand]
     public async Task LoadItemsAsync()
     {
@@ -106,40 +125,87 @@ public partial class ItemListViewModel : ViewModelBase
             return;
         }
 
-        IsLoading = true;
+        var generation = ++_loadGeneration;
+        var appId = _context.AppId;
+        var steamId = _steamService.CurrentUserId?.m_SteamID ?? 0;
         ErrorMessage = null;
+
+        if (Items.Count == 0)
+        {
+            IsLoading = true;
+            var cached = await _itemsCache.LoadAsync(appId, steamId);
+            if (generation != _loadGeneration) return;
+            if (cached is { Count: > 0 }) ShowItems(cached);
+        }
+
+        // The full-page loader only shows when there is nothing to show yet.
+        IsLoading = Items.Count == 0;
+        foreach (var item in Items) item.IsRefreshing = true;
 
         try
         {
-            var items = await _steamService.GetPublishedItemsAsync();
-            DisposeAndClearItems();
+            var fresh = await _steamService.GetPublishedItemsAsync();
+            if (generation != _loadGeneration) return;
 
-            // One filter pass for the whole batch instead of one per Add.
-            _suspendItemsChanged = true;
-            try
-            {
-                foreach (var item in items) Items.Add(item);
-            }
-            finally
-            {
-                _suspendItemsChanged = false;
-            }
-            ApplyFilter();
-            RecomputeSelectionState();
+            var outcome = PublishedItemsReconciler.Reconcile(Items, fresh);
+            ShowItems(outcome.Next, released: outcome.Removed.Concat(outcome.Replaced.Select(r => r.Old)));
+            _ = _itemsCache.SaveAsync(appId, steamId, Items);
 
-            // The grid asks for its visible thumbnails itself; the home dashboard shows the recent ones.
-            foreach (var item in items.OrderByDescending(i => i.UpdatedAt).Take(RecentItemsCount))
-                RequestThumbnail(item);
+            if (outcome.Replaced.Count > 0 || outcome.Removed.Count > 0)
+                ItemsReconciled?.Invoke(outcome);
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"{Loc["LoadingError"]}: {ex.Message}";
+            if (generation != _loadGeneration) return;
+            // Cached cards stay: Steam just could not confirm them.
+            if (Items.Count == 0) ErrorMessage = $"{Loc["LoadingError"]}: {ex.Message}";
+            else _notifications?.ShowError($"{Loc["ItemsRefreshFailed"]}: {ex.Message}");
         }
         finally
         {
-            IsLoading = false;
-            HasNoItems = Items.Count == 0;
+            if (generation == _loadGeneration)
+            {
+                foreach (var item in Items) item.IsRefreshing = false;
+                IsLoading = false;
+                HasNoItems = Items.Count == 0;
+            }
         }
+    }
+
+    /// <summary>Puts <paramref name="items"/> on screen, dropping the thumbnails of <paramref name="released"/>.</summary>
+    private void ShowItems(IReadOnlyList<WorkshopItem> items, IEnumerable<WorkshopItem>? released = null)
+    {
+        foreach (var gone in released ?? [])
+        {
+            gone.PreviewBitmap = null;
+            gone.IsRefreshing = false;
+            gone.PropertyChanged -= OnItemPropertyChanged;
+            _thumbnailRequested.Remove(gone);
+        }
+
+        // One filter pass for the whole batch instead of one per Add.
+        _suspendItemsChanged = true;
+        try
+        {
+            var kept = new HashSet<WorkshopItem>(Items, ReferenceEqualityComparer.Instance);
+            Items.Clear();
+            foreach (var item in items)
+            {
+                if (SelectionMode && !kept.Contains(item)) item.PropertyChanged += OnItemPropertyChanged;
+                Items.Add(item);
+            }
+        }
+        finally
+        {
+            _suspendItemsChanged = false;
+        }
+        ApplyFilter();
+        RecomputeSelectionState();
+        HasNoItems = Items.Count == 0;
+
+        // The grid asks for its visible thumbnails itself; the home dashboard shows the recent ones.
+        foreach (var item in items.OrderByDescending(i => i.UpdatedAt).Take(RecentItemsCount))
+            RequestThumbnail(item);
     }
 
     /// <summary>
@@ -176,6 +242,7 @@ public partial class ItemListViewModel : ViewModelBase
             // Replace in place so list position + scroll anchor are preserved.
             var stale = Items[existingIndex];
             stale.PreviewBitmap = null;
+            stale.IsRefreshing = false;
             stale.PropertyChanged -= OnItemPropertyChanged;
             Items[existingIndex] = fetched;
         }
@@ -187,6 +254,7 @@ public partial class ItemListViewModel : ViewModelBase
 
         HasNoItems = Items.Count == 0;
         RequestThumbnail(fetched);
+        _ = _itemsCache.SaveAsync(_context.AppId, _steamService.CurrentUserId?.m_SteamID ?? 0, Items);
         return fetched;
     }
 
@@ -223,6 +291,7 @@ public partial class ItemListViewModel : ViewModelBase
     /// </summary>
     public void DisposeAndClearItems()
     {
+        _loadGeneration++;
         _thumbnailCts.Cancel();
         _thumbnailCts.Dispose();
         _thumbnailCts = new CancellationTokenSource();
@@ -231,6 +300,7 @@ public partial class ItemListViewModel : ViewModelBase
         foreach (var item in Items)
         {
             item.PreviewBitmap = null;
+            item.IsRefreshing = false;
             item.PropertyChanged -= OnItemPropertyChanged;
         }
         Items.Clear();
@@ -251,7 +321,7 @@ public partial class ItemListViewModel : ViewModelBase
         if (string.IsNullOrEmpty(item.PreviewImageUrl)) return;
 
         var ct = _thumbnailCts.Token;
-        var bitmap = await ThumbnailCache.GetAsync(item.PreviewImageUrl, ct);
+        var bitmap = await _thumbnails.GetAsync(item.PreviewImageUrl, ct);
         if (bitmap is null) return;
 
         if (ct.IsCancellationRequested || !Items.Contains(item))

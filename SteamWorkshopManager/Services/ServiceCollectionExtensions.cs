@@ -2,6 +2,8 @@ using Microsoft.Extensions.DependencyInjection;
 using SteamWorkshopManager.Core.Sessions;
 using SteamWorkshopManager.Core.Steam;
 using SteamWorkshopManager.Core.Workshop;
+using SteamWorkshopManager.Services.Cache;
+using SteamWorkshopManager.Services.Cache;
 using SteamWorkshopManager.Services.Core;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Notifications;
@@ -62,7 +64,13 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ViewModels.UpdateController>();
 
         // Workshop + dependency services
+        // Cache shared by every platform
+        services.AddSingleton<ICacheStore, CacheStore>();
+        services.AddSingleton<SteamImageCache>();
+        services.AddSingleton<ThumbnailCache>();
+
         services.AddSingleton<WorkshopTagsService>();
+        services.AddSingleton<PublishedItemsCache>();
         services.AddSingleton<WorkshopDownloadService>();
         services.AddSingleton<ChangelogScraperService>();
         services.AddSingleton<DependencyService>();

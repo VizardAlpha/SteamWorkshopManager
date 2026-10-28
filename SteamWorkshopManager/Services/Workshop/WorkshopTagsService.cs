@@ -1,13 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using SteamWorkshopManager.Helpers;
+using SteamWorkshopManager.Services.Cache;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Steam;
 
@@ -27,11 +26,9 @@ public class TagsCacheEntry
 {
     public Dictionary<string, List<string>> TagsByCategory { get; set; } = new();
     public List<string> DropdownCategories { get; set; } = [];
-    public DateTime UpdatedAt { get; set; }
 }
 
 [JsonSerializable(typeof(TagsCacheEntry))]
-[JsonSourceGenerationOptions(WriteIndented = true)]
 internal partial class TagsCacheJsonContext : JsonSerializerContext;
 
 /// <summary>
@@ -40,70 +37,40 @@ internal partial class TagsCacheJsonContext : JsonSerializerContext;
 /// (<c>script id="valve-ssr-data"</c>, whose <c>loaderData</c> holds
 /// <c>declaredTags</c>), so we can parse it without a headless browser.
 ///
-/// Results are cached on disk at
-/// <c>%AppData%/SteamWorkshopManager/cache/tags/{appId}.json</c> with a 7-day
-/// TTL by default.
+/// Cached for 7 days; an expired catalog is still served when Steam can't be read.
 /// </summary>
-public class WorkshopTagsService
+public class WorkshopTagsService(ICacheStore cache)
 {
     private static readonly Logger Log = LogService.GetLogger<WorkshopTagsService>();
-
-    private static readonly string CacheFolder = AppPaths.CacheTags;
+    private static readonly CachePolicy Policy = new(TimeSpan.FromDays(7));
 
     // Body of `<script type="application/json" id="valve-ssr-data">`; JSON escapes `<`, so no early `</script>`.
     private static readonly Regex SsrDataRegex = new(
         @"<script[^>]*\bid=""valve-ssr-data""[^>]*>([\s\S]*?)</script>",
         RegexOptions.Compiled);
 
-    private readonly HttpClient _httpClient;
-    private readonly int _cacheExpirationDays;
+    private readonly HttpClient _httpClient = SteamHttpClientFactory.Create(withAgeGateCookies: true);
 
-    public WorkshopTagsService(HttpClient? httpClient = null, int cacheExpirationDays = 7)
-    {
-        _httpClient = httpClient ?? SteamHttpClientFactory.Create(withAgeGateCookies: true);
-        _cacheExpirationDays = cacheExpirationDays;
-        Directory.CreateDirectory(CacheFolder);
-    }
-
-    /// <summary>
-    /// Returns the tag catalog for <paramref name="appId"/>, hitting the cache
-    /// first. On cache miss (or <paramref name="forceRefresh"/>), fetches from
-    /// Steam and re-caches. Falls back to a stale cache if the fetch fails.
-    /// </summary>
     public async Task<TagsResult> GetTagsForAppAsync(uint appId, bool forceRefresh = false)
     {
-        var cacheFile = GetCacheFilePath(appId);
-
-        if (!forceRefresh && TryReadCache(cacheFile, ignoreTtl: false, out var fresh))
-        {
-            Log.Debug($"Using cached tags for AppId {appId}");
-            return fresh;
-        }
-
-        try
-        {
-            // An empty catalog is a real answer: the developer declared no tags.
-            if (await FetchTagsFromSteamAsync(appId) is { } result)
+        var entry = await cache.GetOrFetchAsync(
+            CacheKey.SteamApp(appId, "tags.json"),
+            TagsCacheJsonContext.Default.TagsCacheEntry,
+            async () =>
             {
-                await SaveToCacheAsync(appId, result);
-                return result;
-            }
-            Log.Warning($"Could not read the tag catalog for AppId {appId}; keeping any existing cache.");
-        }
-        catch (Exception ex)
-        {
-            Log.Error($"Failed to fetch tags for AppId {appId}: {ex.Message}", ex);
-        }
+                // An empty catalog is a real answer: the developer declared no tags.
+                if (await FetchTagsFromSteamAsync(appId) is { } result)
+                    return new TagsCacheEntry { TagsByCategory = result.TagsByCategory, DropdownCategories = result.DropdownCategories };
 
-        // Fetch failed or the page was not understood - fall back to whatever we
-        // have on disk, even if expired.
-        if (TryReadCache(cacheFile, ignoreTtl: true, out var stale))
-        {
-            Log.Debug($"Using stale tag cache for AppId {appId}");
-            return stale;
-        }
+                Log.Warning($"Could not read the tag catalog for AppId {appId}; keeping any cached one.");
+                return null;
+            },
+            Policy,
+            forceRefresh);
 
-        return new TagsResult(new Dictionary<string, List<string>>(), []);
+        return entry is null
+            ? new TagsResult(new Dictionary<string, List<string>>(), [])
+            : new TagsResult(entry.TagsByCategory, entry.DropdownCategories);
     }
 
     /// <summary>
@@ -216,95 +183,6 @@ public class WorkshopTagsService
         }
         return null;
     }
-
-    private bool TryReadCache(string path, bool ignoreTtl, out TagsResult result)
-    {
-        result = new TagsResult(new Dictionary<string, List<string>>(), []);
-        if (!File.Exists(path)) return false;
-
-        try
-        {
-            var json = File.ReadAllText(path);
-            var cached = JsonSerializer.Deserialize(json, TagsCacheJsonContext.Default.TagsCacheEntry);
-            if (cached is null) return false;
-
-            // Cached entries have no TTL in "ignore" mode - lets us surface a
-            // stale snapshot as a last-ditch fallback when Steam is unreachable.
-            return ignoreTtl
-                ? TryMaterialize(cached, out result)
-                : IsFresh(cached) && TryMaterialize(cached, out result);
-        }
-        catch (Exception ex)
-        {
-            Log.Warning($"Failed to read tags cache at {path}: {ex.Message}");
-            return false;
-        }
-    }
-
-    private bool IsFresh(TagsCacheEntry entry) =>
-        entry.UpdatedAt > DateTime.UtcNow.AddDays(-_cacheExpirationDays);
-
-    private static bool TryMaterialize(TagsCacheEntry entry, out TagsResult result)
-    {
-        // An empty catalog is cached too: the game has no developer tags.
-        result = new TagsResult(entry.TagsByCategory, entry.DropdownCategories);
-        return true;
-    }
-
-    private static async Task SaveToCacheAsync(uint appId, TagsResult tagsResult)
-    {
-        try
-        {
-            var entry = new TagsCacheEntry
-            {
-                TagsByCategory = tagsResult.TagsByCategory,
-                DropdownCategories = tagsResult.DropdownCategories,
-                UpdatedAt = DateTime.UtcNow,
-            };
-
-            var json = JsonSerializer.Serialize(entry, TagsCacheJsonContext.Default.TagsCacheEntry);
-            await AtomicFile.WriteAllTextAsync(GetCacheFilePath(appId), json);
-            Log.Debug($"Tags cached for AppId {appId}");
-        }
-        catch (Exception ex)
-        {
-            Log.Warning($"Failed to cache tags for AppId {appId}: {ex.Message}");
-        }
-    }
-
-    public void ClearCache(uint appId)
-    {
-        var cacheFile = GetCacheFilePath(appId);
-        if (!File.Exists(cacheFile)) return;
-
-        try
-        {
-            File.Delete(cacheFile);
-            Log.Debug($"Cache cleared for AppId {appId}");
-        }
-        catch (Exception ex)
-        {
-            Log.Warning($"Failed to clear tag cache for AppId {appId}: {ex.Message}");
-        }
-    }
-
-    public DateTime? GetCacheUpdateTime(uint appId)
-    {
-        var cacheFile = GetCacheFilePath(appId);
-        if (!File.Exists(cacheFile)) return null;
-
-        try
-        {
-            var json = File.ReadAllText(cacheFile);
-            return JsonSerializer.Deserialize(json, TagsCacheJsonContext.Default.TagsCacheEntry)?.UpdatedAt;
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    private static string GetCacheFilePath(uint appId) => AppPaths.TagsForApp(appId);
 }
 
 // ─── DTOs mirroring the Steam SSR payload ────────────────────────────────────

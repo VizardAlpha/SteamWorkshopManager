@@ -1,15 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using SteamWorkshopManager.Core.Sessions;
-using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Models;
+using SteamWorkshopManager.Services.Cache;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Session;
 using SteamWorkshopManager.Services.Steam;
@@ -20,6 +19,7 @@ namespace SteamWorkshopManager.ViewModels.Shell;
 public partial class SessionListViewModel(
     ISessionRepository repository,
     SteamAppMetadataService appMetadata,
+    SteamImageCache images,
     ISessionContext context) : ViewModelBase
 {
     private static readonly Logger Log = LogService.GetLogger<SessionListViewModel>();
@@ -97,10 +97,10 @@ public partial class SessionListViewModel(
         try
         {
             // Cache-only lookup: no URL needed when the icon is already on disk.
-            var bitmap = await SteamImageCache.GetIconAsync(session.AppId, iconUrl: null);
+            var bitmap = await images.GetIconAsync(session.AppId, iconUrl: null);
 
             // Fallback to the wide header while PICS is still resolving the icon hash.
-            bitmap ??= await SteamImageCache.GetHeaderAsync(session.AppId);
+            bitmap ??= await images.GetHeaderAsync(session.AppId);
             if (bitmap is not null) await ShowIconAsync(session, bitmap);
         }
         catch (Exception ex)
@@ -113,7 +113,7 @@ public partial class SessionListViewModel(
     {
         // Only sessions whose icon isn't on disk yet need a PICS round-trip.
         var missing = sessions
-            .Where(s => s.AppId > 0 && !File.Exists(SteamImageCache.IconCacheFilePath(s.AppId)))
+            .Where(s => s.AppId > 0 && !images.HasIcon(s.AppId))
             .ToList();
         if (missing.Count == 0) return;
 
@@ -125,7 +125,7 @@ public partial class SessionListViewModel(
             {
                 if (!urls.TryGetValue(session.AppId, out var url)) continue;
 
-                var bitmap = await SteamImageCache.GetIconAsync(session.AppId, url);
+                var bitmap = await images.GetIconAsync(session.AppId, url);
                 if (bitmap is not null) await ShowIconAsync(session, bitmap);
             }
         }

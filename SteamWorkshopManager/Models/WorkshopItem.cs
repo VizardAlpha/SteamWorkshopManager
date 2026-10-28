@@ -12,6 +12,7 @@ public class WorkshopItem : INotifyPropertyChanged
 {
     private Bitmap? _previewBitmap;
     private bool _isSelected;
+    private bool _isRefreshing;
 
     public required PublishedFileId_t PublishedFileId { get; init; }
     public required string Title { get; set; }
@@ -53,6 +54,18 @@ public class WorkshopItem : INotifyPropertyChanged
         {
             if (_isSelected == value) return;
             _isSelected = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>Shown from the cache while Steam is being asked for the current version.</summary>
+    public bool IsRefreshing
+    {
+        get => _isRefreshing;
+        set
+        {
+            if (_isRefreshing == value) return;
+            _isRefreshing = value;
             OnPropertyChanged();
         }
     }

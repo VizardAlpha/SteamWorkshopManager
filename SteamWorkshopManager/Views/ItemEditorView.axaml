@@ -382,6 +382,25 @@
                         </StackPanel>
                     </Button>
 
+                    <!-- Save waits until the cached data is confirmed by Steam -->
+                    <StackPanel Orientation="Horizontal" Spacing="6"
+                                HorizontalAlignment="Center"
+                                Margin="0,6,0,0"
+                                IsVisible="{Binding IsCheckingSteam}">
+                        <Border Classes="refresh-badge active"
+                                Width="16" Height="16" Margin="0"
+                                Background="Transparent"
+                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <icons:MaterialIcon Kind="Sync" Width="12" Height="12"
+                                                Foreground="{DynamicResource TextMutedBrush}"/>
+                        </Border>
+                        <TextBlock Text="{DynamicResource SaveWaitsForSteam}"
+                                   FontSize="11"
+                                   TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextMutedBrush}"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+
                     <!-- Danger action: delete -->
                     <Button Command="{Binding ShowDeleteDialogCommand}"
                             IsEnabled="{Binding !IsDeleting}"

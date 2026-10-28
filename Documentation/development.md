@@ -39,14 +39,14 @@ Steamworks.NET is not on nuget.org in recent versions, so the app restores it fr
 SteamWorkshopManager/
   Program.cs, App.axaml(.cs)      entry point, composition root, worker and installer modes
   Core/                           domain logic: Sessions, Steam (error mapping), Workshop
-  Services/                       adapters: Core (settings, drafts, localization), Log, Notifications
+  Services/                       adapters: Cache (shared on-disk cache), Core (settings, drafts, localization), Log, Notifications
                                   (updates), Session (host, repository), Steam (+ Worker), Telemetry,
                                   UI, Workshop (tags, changelog, downloads, dependencies, versioning)
   ViewModels/                     screens, UpdateController, ViewModelFactory
     Editor/                       child view-models shared by create and edit
     Shell/                        child view-models of the main window (toasts, upload, connection, sessions)
   Views/                          windows, views, controls, shell
-  Helpers/                        paths, atomic files, SemVer, BBCode, image caches
+  Helpers/                        paths, atomic files, SemVer, BBCode
   Models/                         data types
   Resources/Languages/            en-US, fr-FR
 SteamWorkshopManager.Tests/       MSTest suite

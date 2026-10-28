@@ -36,7 +36,7 @@ Workshop queries and updates carry a language. Item queries set `english` explic
 
 ## Progress and logs
 
-- Upload progress streams back through an `IProgress<T>` argument, which StreamJsonRpc marshals natively. Status strings are localization keys translated by the shell.
+- Upload progress streams back through an `IProgress<T>` argument, which StreamJsonRpc marshals natively. Status strings are localization keys translated by the shell. The shell's `JsonRpc` uses a `NonConcurrentSynchronizationContext`, so progress and log notifications are handled in arrival order (the default threadpool dispatch could deliver a late "Finalizing" after the final report and leave the toast stuck).
 - The worker forwards its log entries to the shell, which writes them to the shared log files.
 - If the worker dies during an upload, the shell sends the final progress report itself so the UI unlocks.
 

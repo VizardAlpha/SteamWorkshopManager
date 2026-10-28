@@ -31,10 +31,15 @@ public static class AppPaths
     public static string Workshop { get; } = Path.Combine(Root, "workshop");
     public static string Drafts { get; } = Path.Combine(Root, "tempo");
 
-    public static string CacheHeaders { get; } = Path.Combine(Root, "cache", "headers");
-    public static string CacheIcons { get; } = Path.Combine(Root, "cache", "icons");
-    public static string CacheTags { get; } = Path.Combine(Root, "cache", "tags");
-    public static string CacheThumbnails { get; } = Path.Combine(LocalRoot, "cache", "thumbnails");
+    /// <summary>Fetched platform data (see <c>CacheStore</c>), in each OS's own cache folder.</summary>
+    public static string CacheRoot { get; } = ResolveCacheRoot();
+
+    /// <summary>Per-feature cache folders used before 1.9.0, deleted on startup.</summary>
+    public static string[] LegacyCacheFolders { get; } =
+    [
+        Path.Combine(Root, "cache"),
+        Path.Combine(LocalRoot, "cache", "thumbnails"),
+    ];
 
     public static string SettingsFile { get; } = Path.Combine(Root, "settings.json");
     public static string TelemetryStateFile { get; } = Path.Combine(Root, "telemetry.json");
@@ -51,9 +56,6 @@ public static class AppPaths
     public static string SteamAppIdFile { get; } = Path.Combine(AppContext.BaseDirectory, "steam_appid.txt");
 
     public static string SessionFile(string sessionId) => Path.Combine(Sessions, $"{sessionId}.json");
-    public static string HeaderForApp(uint appId) => Path.Combine(CacheHeaders, $"{appId}.jpg");
-    public static string IconForApp(uint appId) => Path.Combine(CacheIcons, $"{appId}.jpg");
-    public static string TagsForApp(uint appId) => Path.Combine(CacheTags, $"{appId}.json");
     public static string WorkshopForApp(uint appId) => Path.Combine(Workshop, appId.ToString());
     public static string WorkshopVersionFolder(uint appId, string sanitizedModName, long timestamp) =>
         Path.Combine(WorkshopForApp(appId), $"{sanitizedModName}_{timestamp}");
@@ -61,4 +63,19 @@ public static class AppPaths
     /// <summary>Scratch directory for the rebuild path of preview ops, alive for one
     /// Steam UGC update. Per-user on purpose: a shared /tmp parent could be pre-created by another user.</summary>
     public static string TempPreviewDir() => Path.Combine(LocalRoot, "tmp", "previews", Guid.NewGuid().ToString("N"));
+
+    private static string ResolveCacheRoot()
+    {
+        if (OperatingSystem.IsWindows())
+            return Path.Combine(LocalRoot, "cache");
+
+        var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        if (OperatingSystem.IsMacOS())
+            return Path.Combine(home, "Library", "Caches", AppName);
+
+        // XDG spec: a relative value must be ignored.
+        var xdg = Environment.GetEnvironmentVariable("XDG_CACHE_HOME");
+        var baseDir = !string.IsNullOrEmpty(xdg) && Path.IsPathRooted(xdg) ? xdg : Path.Combine(home, ".cache");
+        return Path.Combine(baseDir, AppName);
+    }
 }

@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Core.Sessions;
 using SteamWorkshopManager.Core.Steam;
+using SteamWorkshopManager.Services.Cache;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Session;
 using SteamWorkshopManager.Services.Steam;
@@ -28,6 +29,7 @@ public partial class AddSessionViewModel : ViewModelBase
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     private readonly AppIdValidator _validator;
+    private readonly SteamImageCache _images;
     private readonly ISessionRepository _sessionRepository;
     private readonly SessionManager _sessionManager;
     private readonly ITelemetryService _telemetry;
@@ -72,12 +74,14 @@ public partial class AddSessionViewModel : ViewModelBase
         ISessionRepository sessionRepository,
         AppIdValidator validator,
         SessionManager sessionManager,
-        ITelemetryService telemetry)
+        ITelemetryService telemetry,
+        SteamImageCache images)
     {
         _sessionRepository = sessionRepository;
         _validator = validator;
         _sessionManager = sessionManager;
         _telemetry = telemetry;
+        _images = images;
     }
 
     /// <summary>
@@ -175,7 +179,7 @@ public partial class AddSessionViewModel : ViewModelBase
     {
         try
         {
-            GameHeaderImage = await SteamImageCache.GetHeaderAsync(appId);
+            GameHeaderImage = await _images.GetHeaderAsync(appId);
         }
         catch (Exception ex)
         {

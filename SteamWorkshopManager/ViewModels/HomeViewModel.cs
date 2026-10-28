@@ -10,6 +10,7 @@ using CommunityToolkit.Mvvm.Input;
 using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Models;
 using SteamWorkshopManager.Core.Sessions;
+using SteamWorkshopManager.Services.Cache;
 using SteamWorkshopManager.Services.Core;
 using SteamWorkshopManager.Services.Log;
 
@@ -34,11 +35,13 @@ public partial class HomeViewModel : ViewModelBase
     private bool _isRefreshingHeader;
 
     private readonly ISessionContext _context;
+    private readonly SteamImageCache _images;
 
-    public HomeViewModel(ItemListViewModel itemList, ISessionContext context)
+    public HomeViewModel(ItemListViewModel itemList, ISessionContext context, SteamImageCache images)
     {
         _context = context;
         ItemList = itemList;
+        _images = images;
         ItemList.Items.CollectionChanged += OnItemsCollectionChanged;
         _ = LoadHeaderImageAsync();
     }
@@ -131,7 +134,6 @@ public partial class HomeViewModel : ViewModelBase
         IsRefreshingHeader = true;
         try
         {
-            SteamImageCache.InvalidateHeader(appId);
             await LoadHeaderImageAsync(forceDownload: true);
         }
         finally
@@ -142,7 +144,7 @@ public partial class HomeViewModel : ViewModelBase
 
     private async Task LoadHeaderImageAsync(bool forceDownload = false)
     {
-        var bitmap = await SteamImageCache.GetHeaderAsync(ActiveAppId, forceDownload);
+        var bitmap = await _images.GetHeaderAsync(ActiveAppId, forceDownload);
         if (bitmap is not null)
             await Dispatcher.UIThread.InvokeAsync(() => HeaderImage = bitmap);
     }
