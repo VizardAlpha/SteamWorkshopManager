@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using SteamWorkshopManager.Helpers;
@@ -13,8 +14,26 @@ using SteamWorkshopManager.Services.Log;
 namespace SteamWorkshopManager.Services.Session;
 
 [JsonSerializable(typeof(WorkshopSession))]
-[JsonSourceGenerationOptions(WriteIndented = true)]
+[JsonSourceGenerationOptions(WriteIndented = true, AllowOutOfOrderMetadataProperties = true)]
 internal partial class SessionJsonContext : JsonSerializerContext;
+
+/// <summary>Session file format. Every session read or written goes through here.</summary>
+internal static class SessionSerializer
+{
+    public static string Serialize(WorkshopSession session) =>
+        JsonSerializer.Serialize(session, SessionJsonContext.Default.WorkshopSession);
+
+    public static WorkshopSession? Deserialize(string json)
+    {
+        if (JsonNode.Parse(json) is not JsonObject node) return null;
+
+        // Files written before mod.io support have no platform: they are Steam sessions.
+        if (!node.ContainsKey(WorkshopSession.PlatformProperty))
+            node[WorkshopSession.PlatformProperty] = WorkshopSession.SteamDiscriminator;
+
+        return node.Deserialize(SessionJsonContext.Default.WorkshopSession);
+    }
+}
 
 /// <summary>
 /// Repository for managing workshop sessions stored as JSON files.
@@ -52,7 +71,7 @@ public class SessionRepository : ISessionRepository
                 try
                 {
                     var json = await File.ReadAllTextAsync(file);
-                    var session = JsonSerializer.Deserialize(json, SessionJsonContext.Default.WorkshopSession);
+                    var session = SessionSerializer.Deserialize(json);
                     if (session != null)
                     {
                         sessions.Add(session);
@@ -98,7 +117,7 @@ public class SessionRepository : ISessionRepository
             }
 
             var json = await File.ReadAllTextAsync(filePath);
-            return JsonSerializer.Deserialize(json, SessionJsonContext.Default.WorkshopSession);
+            return SessionSerializer.Deserialize(json);
         }
         catch (Exception ex)
         {
@@ -113,7 +132,7 @@ public class SessionRepository : ISessionRepository
         {
             Directory.CreateDirectory(SessionsFolder);
             var filePath = GetSessionFilePath(session.Id);
-            var json = JsonSerializer.Serialize(session, SessionJsonContext.Default.WorkshopSession);
+            var json = SessionSerializer.Serialize(session);
             await AtomicFile.WriteAllTextAsync(filePath, json);
             Log.Debug($"Session saved: {session.Name} ({session.Id})");
         }

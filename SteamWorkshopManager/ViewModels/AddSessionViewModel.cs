@@ -201,7 +201,7 @@ public partial class AddSessionViewModel : ViewModelBase
         {
             Log.Info($"Creating session for {GameName} (AppId: {ValidatedAppId})");
 
-            var session = await _sessionManager.CreateSessionAsync(ValidatedAppId, GameName);
+            var session = await _sessionManager.CreateSteamSessionAsync(ValidatedAppId, GameName);
             await _sessionRepository.SetActiveSessionAsync(session.Id);
             await SessionManager.UpdateSteamAppIdFileAsync(ValidatedAppId);
 

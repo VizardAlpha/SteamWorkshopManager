@@ -28,11 +28,27 @@ public class ItemFileInfo
 }
 
 /// <summary>
-/// Represents a workshop session/profile for a specific game.
-/// Each session contains all data related to managing mods for one Steam Workshop.
+/// A workshop session/profile for one game on one platform, holding everything needed to manage its mods.
+/// The platform is the JSON discriminator; files written before it existed are Steam sessions.
 /// </summary>
-public class WorkshopSession : INotifyPropertyChanged
+[JsonPolymorphic(TypeDiscriminatorPropertyName = PlatformProperty)]
+[JsonDerivedType(typeof(SteamSession), "steam")]
+[JsonDerivedType(typeof(ModioSession), "modio")]
+public abstract class WorkshopSession : INotifyPropertyChanged
 {
+    internal const string PlatformProperty = "Platform";
+    internal const string SteamDiscriminator = "steam";
+
+    [JsonIgnore]
+    public abstract WorkshopPlatform Platform { get; }
+
+    /// <summary>True when <paramref name="other"/> targets the same game on the same platform.</summary>
+    public abstract bool IsSameGame(WorkshopSession other);
+
+    /// <summary>Platform id of the game, shown under its name in the session list.</summary>
+    [JsonIgnore]
+    public abstract string GameIdDisplay { get; }
+
     private Bitmap? _iconBitmap;
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -73,12 +89,7 @@ public class WorkshopSession : INotifyPropertyChanged
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
-    /// Steam App ID for this game (e.g., 1162750 for Songs of Syx).
-    /// </summary>
-    public uint AppId { get; set; }
-
-    /// <summary>
-    /// Game name retrieved automatically from Steam Workshop page.
+    /// Game name retrieved automatically from the platform.
     /// </summary>
     public string? GameName { get; set; }
 
@@ -94,7 +105,7 @@ public class WorkshopSession : INotifyPropertyChanged
     public List<string> DropdownCategories { get; set; } = [];
 
     /// <summary>
-    /// When the tags were last fetched from Steam.
+    /// When the tags were last fetched from the platform.
     /// </summary>
     public DateTime TagsLastUpdated { get; set; }
 

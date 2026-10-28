@@ -94,18 +94,21 @@ public partial class SessionListViewModel(
 
     private async Task LoadIconAsync(WorkshopSession session)
     {
+        // mod.io game logos arrive with the mod.io client.
+        if (session is not SteamSession steam) return;
+
         try
         {
             // Cache-only lookup: no URL needed when the icon is already on disk.
-            var bitmap = await images.GetIconAsync(session.AppId, iconUrl: null);
+            var bitmap = await images.GetIconAsync(steam.AppId, iconUrl: null);
 
             // Fallback to the wide header while PICS is still resolving the icon hash.
-            bitmap ??= await images.GetHeaderAsync(session.AppId);
+            bitmap ??= await images.GetHeaderAsync(steam.AppId);
             if (bitmap is not null) await ShowIconAsync(session, bitmap);
         }
         catch (Exception ex)
         {
-            Log.Debug($"LoadIconAsync failed for AppId {session.AppId}: {ex.Message}");
+            Log.Debug($"LoadIconAsync failed for {session}: {ex.Message}");
         }
     }
 
@@ -113,6 +116,7 @@ public partial class SessionListViewModel(
     {
         // Only sessions whose icon isn't on disk yet need a PICS round-trip.
         var missing = sessions
+            .OfType<SteamSession>()
             .Where(s => s.AppId > 0 && !images.HasIcon(s.AppId))
             .ToList();
         if (missing.Count == 0) return;

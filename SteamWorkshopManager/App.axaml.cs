@@ -102,15 +102,15 @@ public partial class App : Application
 
                         // Activate the session and show main window FIRST
                         Services.GetRequiredService<ISessionContext>().Activate(newSession);
-                        Log.Info($"Starting with session: {newSession.GameName} (AppId: {newSession.AppId})");
+                        Log.Info($"Starting with session: {newSession}");
 
                         // Spawn the Steam worker for the newly-created session.
-                        await Services.GetRequiredService<SessionHost>().StartSessionAsync(newSession.AppId);
+                        await Services.GetRequiredService<SessionHost>().StartSessionAsync(newSession);
 
                         // The wizard committed the user's telemetry choice to
                         // settings. AppStart fires now (post-consent) and
                         // respects the toggle.
-                        telemetry.Track(TelemetryEventTypes.AppStart, newSession.AppId);
+                        telemetry.Track(TelemetryEventTypes.AppStart, (newSession as Models.SteamSession)?.AppId);
 
                         var mainWindow = CreateMainWindow();
                         desktop.MainWindow = mainWindow;
@@ -167,15 +167,15 @@ public partial class App : Application
     private static async Task StartWithSessionAsync(IClassicDesktopStyleApplicationLifetime desktop, ITelemetryService telemetry, Models.WorkshopSession session)
     {
         Services.GetRequiredService<ISessionContext>().Activate(session);
-        Log.Info($"Starting with session: {session.GameName} (AppId: {session.AppId})");
+        Log.Info($"Starting with session: {session}");
 
         // Spawn the Steam worker before the UI queries Steam so the
         // first ISteamService.Initialize() call returns the live state.
-        await Services.GetRequiredService<SessionHost>().StartSessionAsync(session.AppId);
+        await Services.GetRequiredService<SessionHost>().StartSessionAsync(session);
 
         // Consent has already been committed (this run or a prior one).
         // Track now - the toggle is honored inside Track().
-        telemetry.Track(TelemetryEventTypes.AppStart, session.AppId);
+        telemetry.Track(TelemetryEventTypes.AppStart, (session as Models.SteamSession)?.AppId);
 
         var mainWindow = CreateMainWindow();
         desktop.MainWindow = mainWindow;

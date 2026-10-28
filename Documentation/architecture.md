@@ -26,7 +26,9 @@ The shell never calls Steamworks. Every Steam operation goes through `SessionHos
 
 ## Active session
 
-`ISessionContext` (`Core/Sessions/SessionContext`) holds the session being worked on and its AppId. It is an injected singleton; there is no static global state for the current game.
+`ISessionContext` (`Core/Sessions/SessionContext`) holds the session being worked on, its platform and, for Steam, its AppId. It is an injected singleton; there is no static global state for the current game.
+
+A session is bound to one platform for good: `WorkshopSession` is abstract, with `SteamSession` (AppId) and `ModioSession` (mod.io game id). Only Steam sessions start a worker (`SessionHost.StartSessionAsync(session)`); switching to another platform stops it. Two sessions share game data (cache, downloads, drafts) when `IsSameGame` says they target the same game on the same platform.
 
 ## Dependency injection
 

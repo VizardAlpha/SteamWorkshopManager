@@ -12,11 +12,11 @@ using SteamWorkshopManager.Services.Log;
 namespace SteamWorkshopManager.Core.Sessions;
 
 /// <summary>
-/// Removes everything tied to a session: the session JSON, the AppId-keyed
-/// cache scope, the downloaded mod versions and the drafts
-/// authored against that AppId. AppId-keyed assets are only purged when no
-/// other session still references the same AppId - two sessions on the same
-/// game would otherwise lose shared cache for both.
+/// Removes everything tied to a session: the session JSON, its game's cache
+/// scope and, for Steam, the downloaded mod versions and the drafts authored
+/// against that AppId. Game-keyed assets are only purged when no other session
+/// targets the same game - two sessions on the same game would otherwise lose
+/// shared cache for both.
 /// </summary>
 public sealed class SessionCleanupService
 {
@@ -38,18 +38,23 @@ public sealed class SessionCleanupService
     /// </summary>
     public SessionCleanupReport BuildReport(WorkshopSession session, IReadOnlyList<WorkshopSession> allSessions)
     {
-        var sharedAppId = allSessions.Any(s => s.Id != session.Id && s.AppId == session.AppId);
+        var sharedGame = IsGameShared(session, allSessions);
 
-        var (workshopSize, workshopVersionCount) = MeasureWorkshopFolder(session.AppId);
-        var (draftsSize, draftsCount) = MeasureDrafts(session.AppId);
+        // Downloaded versions and drafts only exist for Steam sessions.
+        var steam = session as SteamSession;
+        var (workshopSize, workshopVersionCount) = steam is null ? (0L, 0) : MeasureWorkshopFolder(steam.AppId);
+        var (draftsSize, draftsCount) = steam is null ? (0L, 0) : MeasureDrafts(steam.AppId);
 
         long cacheSize = 0;
-        if (!sharedAppId)
-            cacheSize = _cache.MeasureScope(CacheKey.Steam, CacheKey.AppScope(session.AppId));
+        if (!sharedGame)
+        {
+            var (platform, scope) = CacheKey.SessionScope(session);
+            cacheSize = _cache.MeasureScope(platform, scope);
+        }
 
         return new SessionCleanupReport
         {
-            AppIdSharedWithOtherSession = sharedAppId,
+            GameSharedWithOtherSession = sharedGame,
             CacheBytes = cacheSize,
             DownloadedVersionCount = workshopVersionCount,
             DownloadedBytes = workshopSize,
@@ -66,28 +71,31 @@ public sealed class SessionCleanupService
     {
         return Task.Run(() =>
         {
-            var sharedAppId = allSessions.Any(s => s.Id != session.Id && s.AppId == session.AppId);
+            var sharedGame = IsGameShared(session, allSessions);
 
             TryDeleteFile(AppPaths.SessionFile(session.Id));
 
-            if (!sharedAppId)
+            if (!sharedGame)
             {
-                _cache.RemoveScope(CacheKey.Steam, CacheKey.AppScope(session.AppId));
-                TryDeleteDirectory(AppPaths.WorkshopForApp(session.AppId));
+                var (platform, scope) = CacheKey.SessionScope(session);
+                _cache.RemoveScope(platform, scope);
+
+                if (session is SteamSession steam)
+                {
+                    TryDeleteDirectory(AppPaths.WorkshopForApp(steam.AppId));
+
+                    // Drafts are stored by tempId, not AppId, so we have to enumerate and filter.
+                    foreach (var draft in _draftService.ListForApp(steam.AppId))
+                        _draftService.Delete(draft.TempId);
+                }
             }
 
-            // Drafts are stored by tempId, not AppId, so we have to enumerate
-            // and filter. Drafts shared between two sessions on the same AppId
-            // are kept when sharedAppId is true.
-            if (!sharedAppId)
-            {
-                foreach (var draft in _draftService.ListForApp(session.AppId))
-                    _draftService.Delete(draft.TempId);
-            }
-
-            Log.Info($"Session purged: {session.Name} ({session.Id}, AppId={session.AppId}, sharedAppId={sharedAppId})");
+            Log.Info($"Session purged: {session} ({session.Id}, sharedGame={sharedGame})");
         });
     }
+
+    private static bool IsGameShared(WorkshopSession session, IReadOnlyList<WorkshopSession> allSessions) =>
+        allSessions.Any(s => s.Id != session.Id && s.IsSameGame(session));
 
     private static (long bytes, int versionCount) MeasureWorkshopFolder(uint appId)
     {
@@ -152,7 +160,7 @@ public sealed class SessionCleanupService
 
 public sealed record SessionCleanupReport
 {
-    public required bool AppIdSharedWithOtherSession { get; init; }
+    public required bool GameSharedWithOtherSession { get; init; }
     public required long CacheBytes { get; init; }
     public required int DownloadedVersionCount { get; init; }
     public required long DownloadedBytes { get; init; }
@@ -161,7 +169,7 @@ public sealed record SessionCleanupReport
 
     public long TotalBytes => CacheBytes + DownloadedBytes + DraftBytes;
 
-    public bool HasCache => !AppIdSharedWithOtherSession;
+    public bool HasCache => !GameSharedWithOtherSession;
     public bool HasDownloads => DownloadedVersionCount > 0;
     public bool HasDrafts => DraftCount > 0;
 

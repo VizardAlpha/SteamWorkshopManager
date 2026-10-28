@@ -8,7 +8,10 @@ public interface ISessionContext
 {
     WorkshopSession? Current { get; }
 
-    /// <summary>Steam AppId of <see cref="Current"/>, 0 when no session is active.</summary>
+    /// <summary>Platform of <see cref="Current"/>, null when no session is active.</summary>
+    WorkshopPlatform? Platform { get; }
+
+    /// <summary>Steam AppId of <see cref="Current"/>, 0 when no Steam session is active.</summary>
     uint AppId { get; }
 
     void Activate(WorkshopSession session);
@@ -25,12 +28,14 @@ public sealed class SessionContext : ISessionContext
 
     public WorkshopSession? Current { get; private set; }
 
-    public uint AppId => Current?.AppId ?? 0;
+    public WorkshopPlatform? Platform => Current?.Platform;
+
+    public uint AppId => (Current as SteamSession)?.AppId ?? 0;
 
     public void Activate(WorkshopSession session)
     {
         Current = session;
-        Log.Debug($"Active session: {session.GameName ?? session.Name} (AppId: {session.AppId})");
+        Log.Debug($"Active session: {session}");
     }
 
     public void Update(WorkshopSession session)

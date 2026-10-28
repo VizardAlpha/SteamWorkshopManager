@@ -429,7 +429,7 @@ public partial class MainViewModel : ViewModelBase
     private void RefreshPresence() => _presence.Update(new PresenceState(
         ActiveTab,
         _context.Current?.GameName,
-        _context.Current?.AppId ?? 0,
+        _context.AppId,
         (CurrentView as ItemEditorViewModel)?.Title,
         Upload.IsInProgress));
 

@@ -50,6 +50,8 @@ public partial class HomeViewModel : ViewModelBase
 
     public uint ActiveAppId => _context.AppId;
 
+    public string ActiveGameIdDisplay => _context.Current?.GameIdDisplay ?? string.Empty;
+
     public bool HasActiveSession => _context.Current is not null;
 
     public int ModCount => ItemList.Items.Count;
@@ -115,6 +117,7 @@ public partial class HomeViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(ActiveGameName));
         OnPropertyChanged(nameof(ActiveAppId));
+        OnPropertyChanged(nameof(ActiveGameIdDisplay));
         OnPropertyChanged(nameof(HasActiveSession));
         OnPropertyChanged(nameof(ModCount));
         OnPropertyChanged(nameof(HasMods));

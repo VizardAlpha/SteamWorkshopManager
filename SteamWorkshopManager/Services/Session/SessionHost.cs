@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using SteamWorkshopManager.Models;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Steam;
 using SteamWorkshopManager.Services.Steam.Worker.Client;
@@ -68,7 +69,16 @@ public sealed class SessionHost : IAsyncDisposable
     private static readonly TimeSpan InitTimeout = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan ShutdownTimeout = TimeSpan.FromSeconds(5);
 
-    public async Task<SteamInitResult> StartSessionAsync(uint appId)
+    /// <summary>Starts the worker a Steam session needs; sessions on other platforms run without one.</summary>
+    public async Task<SteamInitResult> StartSessionAsync(WorkshopSession session)
+    {
+        if (session is SteamSession steam) return await StartSessionAsync(steam.AppId);
+
+        await StopAsync();
+        return SteamInitResult.SteamNotRunning;
+    }
+
+    private async Task<SteamInitResult> StartSessionAsync(uint appId)
     {
         await _lifecycle.WaitAsync();
         try { return await StartCoreAsync(appId); }

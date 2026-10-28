@@ -228,7 +228,7 @@ public partial class SetupWizardViewModel : ViewModelBase
             _settingsService.Save();
 
             // Create the session
-            var session = await _sessionManager.CreateSessionAsync(_validatedAppId, GameName);
+            var session = await _sessionManager.CreateSteamSessionAsync(_validatedAppId, GameName);
 
             // Set it as active
             await _sessionRepository.SetActiveSessionAsync(session.Id);

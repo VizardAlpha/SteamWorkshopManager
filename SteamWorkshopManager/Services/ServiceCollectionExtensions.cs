@@ -3,7 +3,6 @@ using SteamWorkshopManager.Core.Sessions;
 using SteamWorkshopManager.Core.Steam;
 using SteamWorkshopManager.Core.Workshop;
 using SteamWorkshopManager.Services.Cache;
-using SteamWorkshopManager.Services.Cache;
 using SteamWorkshopManager.Services.Core;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Notifications;

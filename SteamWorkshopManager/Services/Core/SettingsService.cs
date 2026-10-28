@@ -154,7 +154,7 @@ public class SettingsService : ISettingsService
         try
         {
             var filePath = AppPaths.SessionFile(session.Id);
-            var json = JsonSerializer.Serialize(session, SessionJsonContext.Default.WorkshopSession);
+            var json = SessionSerializer.Serialize(session);
             AtomicFile.WriteAllText(filePath, json);
         }
         catch (Exception ex)

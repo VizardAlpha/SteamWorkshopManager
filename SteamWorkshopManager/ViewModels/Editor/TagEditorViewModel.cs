@@ -80,8 +80,7 @@ public partial class TagEditorViewModel(
     [RelayCommand]
     private async Task RefreshTagsAsync()
     {
-        var session = context.Current;
-        if (session == null) return;
+        if (context.Current is not SteamSession session) return;
 
         IsRefreshingTags = true;
         try

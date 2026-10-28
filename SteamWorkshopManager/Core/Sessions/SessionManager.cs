@@ -40,11 +40,11 @@ public class SessionManager
     }
 
     /// <summary>
-    /// Creates a new session from a validated AppId.
+    /// Creates a new Steam session from a validated AppId.
     /// </summary>
-    public async Task<WorkshopSession> CreateSessionAsync(uint appId, string gameName)
+    public async Task<SteamSession> CreateSteamSessionAsync(uint appId, string gameName)
     {
-        var session = new WorkshopSession
+        var session = new SteamSession
         {
             Id = Guid.NewGuid().ToString(),
             Name = gameName,
@@ -79,13 +79,13 @@ public class SessionManager
     /// <summary>
     /// Switches to a different session in-place: the shell process keeps
     /// running, the Steam worker child process is replaced with one bound to
-    /// the new AppId. Callers (<c>MainViewModel</c>) are responsible for
-    /// refreshing UI state (item list, hero image, pill bindings) once this
-    /// completes.
+    /// the new AppId (or stopped for a session on another platform). Callers
+    /// (<c>MainViewModel</c>) are responsible for refreshing UI state (item
+    /// list, hero image, pill bindings) once this completes.
     /// </summary>
     public async Task<SteamInitResult> SwitchSessionAsync(WorkshopSession newSession)
     {
-        Log.Info($"Switching to session: {newSession.Name} (AppId: {newSession.AppId})");
+        Log.Info($"Switching to session: {newSession}");
 
         // Persist the new active session first so a crash mid-switch still
         // lands on the right session at next startup.
@@ -93,11 +93,12 @@ public class SessionManager
 
         // Kept in sync for backward compatibility with any legacy tooling that
         // reads the file; the worker itself consumes SteamAppId via env var.
-        await UpdateSteamAppIdFileAsync(newSession.AppId);
+        if (newSession is SteamSession steam)
+            await UpdateSteamAppIdFileAsync(steam.AppId);
 
         // Swap the worker: old child dies, new one spawns with the new AppId
         // and calls SteamAPI.Init() inside the fresh process.
-        var initResult = await _sessionHost.StartSessionAsync(newSession.AppId);
+        var initResult = await _sessionHost.StartSessionAsync(newSession);
 
         // Activated only once the worker is live, so readers see a consistent snapshot.
         _context.Activate(newSession);
@@ -128,9 +129,9 @@ public class SessionManager
     }
 
     /// <summary>
-    /// Refreshes tags for the current session.
+    /// Refreshes the Steam tag catalog of a session.
     /// </summary>
-    public async Task RefreshTagsAsync(WorkshopSession session)
+    public async Task RefreshTagsAsync(SteamSession session)
     {
         Log.Debug($"Refreshing tags for session: {session.Name}");
 
@@ -167,7 +168,7 @@ public class SessionManager
 
             // Check if we already have a session for this AppId
             var sessions = await _sessionRepository.GetAllSessionsAsync();
-            var existing = sessions.Find(s => s.AppId == appId);
+            var existing = sessions.Find(s => s is SteamSession steam && steam.AppId == appId);
             if (existing != null)
             {
                 return existing;
@@ -180,7 +181,7 @@ public class SessionManager
 
             if (result.IsValid)
             {
-                var session = await CreateSessionAsync(appId, result.GameName ?? $"Game {appId}");
+                var session = await CreateSteamSessionAsync(appId, result.GameName ?? $"Game {appId}");
                 await _sessionRepository.SetActiveSessionAsync(session.Id);
                 return session;
             }

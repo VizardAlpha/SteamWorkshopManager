@@ -4,6 +4,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
+using SteamWorkshopManager.Models;
 
 namespace SteamWorkshopManager.Services.Cache;
 
@@ -38,6 +39,16 @@ public readonly partial record struct CacheKey
 
     /// <summary>Data about one Workshop item, dropped with its game's scope.</summary>
     public static CacheKey SteamItem(uint appId, ulong itemId, string name) => SteamApp(appId, $"item-{itemId}/{name}");
+
+    public static string GameScope(uint gameId) => $"game-{gameId}";
+
+    /// <summary>The scope holding everything cached for a session's game.</summary>
+    public static (string Platform, string Scope) SessionScope(WorkshopSession session) => session switch
+    {
+        SteamSession steam => (Steam, AppScope(steam.AppId)),
+        ModioSession modio => (ModIo, GameScope(modio.GameId)),
+        _ => throw new ArgumentOutOfRangeException(nameof(session), session.Platform, "Unknown platform."),
+    };
 
     /// <summary>Remote images keyed by URL: hosts change the URL when the image changes.</summary>
     public static CacheKey Image(string url) =>

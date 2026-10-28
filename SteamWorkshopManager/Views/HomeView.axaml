@@ -112,7 +112,7 @@
                                    FontWeight="Medium"
                                    Foreground="White"/>
                         <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding ActiveAppId, StringFormat='AppID {0}'}"
+                            <TextBlock Text="{Binding ActiveGameIdDisplay}"
                                        FontSize="13"
                                        Foreground="#8CFFFFFF"
                                        VerticalAlignment="Center"/>

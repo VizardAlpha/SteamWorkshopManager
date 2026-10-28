@@ -344,7 +344,7 @@
 
                     <Border Background="#1F5B9CF6" Padding="10" CornerRadius="6"
                             BorderBrush="{DynamicResource AccentPrimaryBrush}" BorderThickness="1"
-                            IsVisible="{Binding SessionDeletion.Report.AppIdSharedWithOtherSession}">
+                            IsVisible="{Binding SessionDeletion.Report.GameSharedWithOtherSession}">
                         <TextBlock Text="{DynamicResource DeleteSessionSharedAppId}"
                                    FontSize="12"
                                    TextWrapping="Wrap"

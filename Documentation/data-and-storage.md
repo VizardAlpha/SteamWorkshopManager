@@ -8,7 +8,7 @@
 | --- | --- |
 | `settings.json` | Global settings (language, toast position, channels, consent version) |
 | `telemetry.json` | Pseudonymous instance id, opt-in state and the queue of unsent events |
-| `sessions/<id>.json` | One file per session: game, tag catalog, custom tags, local folders and their fingerprints |
+| `sessions/<id>.json` | One file per session: platform (`steam` or `modio`, missing in files from before 1.9.0 and read as `steam`), game, tag catalog, custom tags, local folders and their fingerprints |
 | `bundle/` | Language files extracted from the executable (rewritten only when they change) |
 | `tempo/<guid>/draft.json` | Create-form drafts; ids are validated as GUIDs before any file operation |
 | `workshop/<appId>/` | Past versions downloaded from the item history |
@@ -66,4 +66,4 @@ The mod list is per Steam account: another login on the same machine has other m
 
 ## Deleting a session
 
-`SessionCleanupService` removes the session file, its cache scope (`steam/app-<id>`), downloaded versions and drafts, after showing the user what will go. Data shared with another session for the same game is kept.
+`SessionCleanupService` removes the session file, its cache scope (`steam/app-<id>` or `modio/game-<id>`) and, for Steam, downloaded versions and drafts, after showing the user what will go. Data shared with another session for the same game on the same platform is kept.

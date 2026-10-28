@@ -264,7 +264,7 @@
                                                                    FontWeight="Medium"
                                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    TextTrimming="CharacterEllipsis"/>
-                                                        <TextBlock Text="{Binding AppId, StringFormat='AppID: {0}'}"
+                                                        <TextBlock Text="{Binding GameIdDisplay}"
                                                                    FontSize="11"
                                                                    Foreground="{DynamicResource TextMutedBrush}"/>
                                                     </StackPanel>

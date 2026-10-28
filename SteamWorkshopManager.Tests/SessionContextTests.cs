@@ -92,7 +92,7 @@ public class SessionContextTests
 
     private static WorkshopSession Session(uint appId, string? id = null)
     {
-        var session = new WorkshopSession { AppId = appId, Name = $"Game {appId}" };
+        var session = new SteamSession { AppId = appId, Name = $"Game {appId}" };
         if (id is not null) session.Id = id;
         return session;
     }
