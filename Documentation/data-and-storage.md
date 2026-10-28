@@ -43,6 +43,11 @@ One file per entry at `<platform>/<scope>/<name>` (`CacheKey`), for example `ste
 | App names (dependencies) | `steam/app-<id>/name.json` | 30 days |
 | Item and gallery thumbnails | `shared/images/<url hash>` | Keyed by URL, which changes with the image |
 | "My mods" list (every field the list and the editor show) | `steam/app-<id>/items-<steamId>.json` | Shown at once, then always replaced by Steam's answer |
+| Translations (title and description per language) | `steam/app-<id>/item-<itemId>/text-<language>.json` | Item revision, 7 days at most |
+| Mod and app dependencies | `.../item-<itemId>/dependencies.json`, `app-dependencies.json` | Item revision, 1 day at most |
+| Changelog | `.../item-<itemId>/changelog.json`, `changelog-signed-in.json` | Item revision, 7 days at most; empty answers not cached |
+
+"Item revision" is Steam's last-update time of the item (`WorkshopItem.Revision`): an entry stored under another revision is a miss. The time cap covers edits made on the Steam website that may not change it. Every add, remove or translation sent from the app drops the matching entry. The changelog is cached apart when signed in, since only that page carries the manifest ids used to download past versions.
 
 The mod list is per Steam account: another login on the same machine has other mods. `ItemListViewModel` shows the cached list with a spinning badge on each card, asks Steam, and merges the answer with `PublishedItemsReconciler`: unchanged items keep their instance (thumbnail, selection), changed ones are swapped, missing ones removed. While a mod is being checked the editor can't save it, so a cached version never overwrites a newer one. If it changed on Steam, the editor reloads it, or warns when the user already edited it.
 

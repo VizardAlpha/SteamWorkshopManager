@@ -127,6 +127,20 @@ public class CacheStoreTests
     }
 
     [TestMethod]
+    public async Task GetOrFetch_OtherVersionIsAMiss()
+    {
+        var store = await CreateAsync();
+        await store.GetOrFetchAsync(Key, CacheTestJsonContext.Default.CachedThing, () => Fetched("v1"), OneHour, version: "1");
+
+        var same = await store.GetOrFetchAsync(Key, CacheTestJsonContext.Default.CachedThing, () => Fetched("unused"), OneHour, version: "1");
+        var newer = await store.GetOrFetchAsync(Key, CacheTestJsonContext.Default.CachedThing, () => Fetched("v2"), OneHour, version: "2");
+
+        Assert.AreEqual("v1", same!.Name);
+        Assert.AreEqual("v2", newer!.Name);
+        Assert.AreEqual("2", (await store.GetAsync(Key, CacheTestJsonContext.Default.CachedThing))!.Version);
+    }
+
+    [TestMethod]
     public async Task GetOrFetch_RefetchesExpiredEntry()
     {
         var store = await CreateAsync();

@@ -126,15 +126,17 @@ public sealed class CacheStore : ICacheStore
     }
 
     public async Task<T?> GetOrFetchAsync<T>(CacheKey key, JsonTypeInfo<T> type, Func<Task<T?>> fetch, CachePolicy policy,
-        bool forceRefresh = false) where T : class
+        bool forceRefresh = false, string? version = null) where T : class
     {
         var cached = await GetAsync(key, type).ConfigureAwait(false);
-        if (!forceRefresh && cached is not null && policy.IsFresh(cached.FetchedAtUtc)) return cached.Value;
+        if (!forceRefresh && cached is not null && policy.IsFresh(cached.FetchedAtUtc)
+            && (version is null || cached.Version == version))
+            return cached.Value;
 
         var fetched = await FetchOnceAsync(key, fetch).ConfigureAwait(false);
         if (fetched is not null)
         {
-            await SetAsync(key, fetched, type).ConfigureAwait(false);
+            await SetAsync(key, fetched, type, version).ConfigureAwait(false);
             return fetched;
         }
 

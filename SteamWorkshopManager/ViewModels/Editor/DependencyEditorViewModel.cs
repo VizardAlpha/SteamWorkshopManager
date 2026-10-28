@@ -27,6 +27,7 @@ public partial class DependencyEditorViewModel(
     ISessionContext context) : ViewModelBase
 {
     private PublishedFileId_t? _owner;
+    private string _revision = string.Empty;
 
     public ObservableCollection<DependencyInfo> Dependencies { get; } = [];
     public ObservableCollection<AppDependencyInfo> AppDependencies { get; } = [];
@@ -67,7 +68,11 @@ public partial class DependencyEditorViewModel(
     public bool IsLoaded { get; private set; }
 
     /// <summary>Switches to live mode for an existing item.</summary>
-    public void AttachTo(PublishedFileId_t owner) => _owner = owner;
+    public void AttachTo(PublishedFileId_t owner, string revision)
+    {
+        _owner = owner;
+        _revision = revision;
+    }
 
     [RelayCommand]
     private async Task LoadDependenciesAsync()
@@ -78,11 +83,11 @@ public partial class DependencyEditorViewModel(
         DependencyError = null;
         try
         {
-            var deps = await dependencyService.GetDependenciesAsync(owner);
+            var deps = await dependencyService.GetDependenciesAsync(owner, _revision);
             Dependencies.Clear();
             foreach (var dep in deps) Dependencies.Add(dep);
 
-            var appDeps = await appDependencyService.GetAppDependenciesAsync(owner);
+            var appDeps = await appDependencyService.GetAppDependenciesAsync(owner, _revision);
             AppDependencies.Clear();
             foreach (var appDep in appDeps) AppDependencies.Add(appDep);
 

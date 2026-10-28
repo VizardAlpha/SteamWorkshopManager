@@ -271,10 +271,10 @@ public partial class ItemEditorViewModel : ViewModelBase, IDisposable
 
         Tags.LoadFromSession(item.Tags.Select(t => t.Name).ToList(), adoptUnknown: true);
         Versions.PropertyChanged += OnVersionsPropertyChanged;
-        Dependencies.AttachTo(item.PublishedFileId);
+        Dependencies.AttachTo(item.PublishedFileId, item.Revision);
         Gallery.LoadExisting(item.AdditionalPreviews);
         History.AttachTo(item);
-        Translations.AttachTo(item.PublishedFileId, () => new ItemText(Title, Description));
+        Translations.AttachTo(item.PublishedFileId, item.Revision, () => new ItemText(Title, Description));
 
         _ = LoadPreviewImageAsync(item.PreviewImageUrl);
     }

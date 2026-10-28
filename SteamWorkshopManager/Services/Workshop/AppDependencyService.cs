@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using SteamWorkshopManager.Core.Sessions;
 using SteamWorkshopManager.Models;
 using SteamWorkshopManager.Services.Cache;
 using SteamWorkshopManager.Services.Log;
@@ -19,16 +20,23 @@ namespace SteamWorkshopManager.Services.Workshop;
 /// in the worker; the public Steam Store HTTP lookup for app display names
 /// stays on the shell side since it doesn't need the SteamAPI.
 /// </summary>
-public sealed class AppDependencyService(SessionHost host, ICacheStore cache)
+public sealed class AppDependencyService(SessionHost host, ICacheStore cache, ISessionContext context)
 {
     private static readonly Logger Log = LogService.GetLogger<AppDependencyService>();
     private static readonly HttpClient HttpClient = SteamHttpClientFactory.Create(timeout: TimeSpan.FromSeconds(10));
     private static readonly CachePolicy NamePolicy = new(TimeSpan.FromDays(30));
 
-    public async Task<List<AppDependencyInfo>> GetAppDependenciesAsync(PublishedFileId_t modId)
+    private CacheKey Key(PublishedFileId_t modId) =>
+        CacheKey.SteamItem(context.AppId, modId.m_PublishedFileId, "app-dependencies.json");
+
+    /// <summary>AppIds cached like mod dependencies (per revision, a day at most); names have their own cache.</summary>
+    public async Task<List<AppDependencyInfo>> GetAppDependenciesAsync(PublishedFileId_t modId, string revision)
     {
         if (host.Worker is null) return [];
-        var dtos = await host.Worker.GetAppDependenciesAsync(modId.m_PublishedFileId);
+        var dtos = await cache.GetOrFetchAsync(Key(modId), DependencyJsonContext.Default.ListAppDependencyInfoDto,
+            async () => host.Worker is { } worker ? await worker.GetAppDependenciesAsync(modId.m_PublishedFileId) : null,
+            DependencyService.Policy, version: revision)
+            ?? throw new InvalidOperationException("Steam did not return the app dependencies.");
 
         // The worker only knows the AppIds; names come from the Store, looked up in parallel.
         var names = await Task.WhenAll(dtos.Select(d => d.Name is null ? ResolveAppNameAsync(d.AppId) : Task.FromResult<string?>(d.Name)));
@@ -39,14 +47,18 @@ public sealed class AppDependencyService(SessionHost host, ICacheStore cache)
     {
         if (host.Worker is null) return false;
         Log.Info($"Adding app dependency: mod={modId}, app={appId}");
-        return await host.Worker.AddAppDependencyAsync(modId.m_PublishedFileId, appId.m_AppId);
+        var added = await host.Worker.AddAppDependencyAsync(modId.m_PublishedFileId, appId.m_AppId);
+        cache.Remove(Key(modId));
+        return added;
     }
 
     public async Task<bool> RemoveAppDependencyAsync(PublishedFileId_t modId, AppId_t appId)
     {
         if (host.Worker is null) return false;
         Log.Info($"Removing app dependency: mod={modId}, app={appId}");
-        return await host.Worker.RemoveAppDependencyAsync(modId.m_PublishedFileId, appId.m_AppId);
+        var removed = await host.Worker.RemoveAppDependencyAsync(modId.m_PublishedFileId, appId.m_AppId);
+        cache.Remove(Key(modId));
+        return removed;
     }
 
     public async Task<string?> ResolveAppNameAsync(uint appId)

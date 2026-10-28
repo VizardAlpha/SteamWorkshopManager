@@ -36,6 +36,9 @@ public readonly partial record struct CacheKey
 
     public static CacheKey SteamApp(uint appId, string name) => new(Steam, AppScope(appId), name);
 
+    /// <summary>Data about one Workshop item, dropped with its game's scope.</summary>
+    public static CacheKey SteamItem(uint appId, ulong itemId, string name) => SteamApp(appId, $"item-{itemId}/{name}");
+
     /// <summary>Remote images keyed by URL: hosts change the URL when the image changes.</summary>
     public static CacheKey Image(string url) =>
         new(Shared, "images", Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(url)))[..32].ToLowerInvariant());

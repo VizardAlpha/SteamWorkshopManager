@@ -5,7 +5,9 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using SteamWorkshopManager.Core.Sessions;
 using SteamWorkshopManager.Models;
+using SteamWorkshopManager.Services.Cache;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Session;
 using SteamWorkshopManager.Services.Steam;
@@ -13,17 +15,35 @@ using SteamWorkshopManager.Services.Steam;
 namespace SteamWorkshopManager.Services.Workshop;
 
 [JsonSerializable(typeof(ChangeLogEntry))]
+[JsonSerializable(typeof(List<ChangeLogEntry>))]
 internal partial class ChangelogJsonContext : JsonSerializerContext;
 
-public class ChangelogScraperService(SessionHost host)
+/// <summary>
+/// Version history scraped from the item's changelog page. Cached per item revision (a new
+/// version changes it), 7 days at most; an empty answer is never cached.
+/// </summary>
+public class ChangelogScraperService(SessionHost host, ICacheStore cache, ISessionContext context)
 {
     private static readonly Logger Log = LogService.GetLogger<ChangelogScraperService>();
+    private static readonly CachePolicy Policy = new(TimeSpan.FromDays(7), ServeStaleOnError: false);
 
     private static readonly Regex ChangeLogRegex = new(
         @"changeLogs\[\d+\]\s*=\s*(\{""timestamp"".*?""accountid"":\d+\});",
         RegexOptions.Singleline | RegexOptions.Compiled);
 
-    public async Task<List<ChangeLogEntry>> GetChangeLogsAsync(ulong publishedFileId)
+    public async Task<List<ChangeLogEntry>> GetChangeLogsAsync(ulong publishedFileId, string revision)
+    {
+        // Only a signed-in page carries the manifest ids that downloads need: kept apart from the anonymous one.
+        var name = SteamAuthService.IsAuthenticated ? "changelog-signed-in.json" : "changelog.json";
+        var entries = await cache.GetOrFetchAsync(
+            CacheKey.SteamItem(context.AppId, publishedFileId, name),
+            ChangelogJsonContext.Default.ListChangeLogEntry,
+            async () => await FetchChangeLogsAsync(publishedFileId) is { Count: > 0 } fetched ? fetched : null,
+            Policy, version: revision);
+        return entries ?? [];
+    }
+
+    private async Task<List<ChangeLogEntry>> FetchChangeLogsAsync(ulong publishedFileId)
     {
         var url = $"https://steamcommunity.com/sharedfiles/filedetails/changelog/{publishedFileId}";
         Log.Debug($"Fetching changelogs from {url}");

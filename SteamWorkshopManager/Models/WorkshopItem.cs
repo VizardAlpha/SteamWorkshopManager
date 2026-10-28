@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using Avalonia.Media.Imaging;
 using SteamWorkshopManager.Helpers;
@@ -31,6 +32,9 @@ public class WorkshopItem : INotifyPropertyChanged
     public List<WorkshopPreview> AdditionalPreviews { get; set; } = [];
     public DateTime CreatedAt { get; init; }
     public DateTime UpdatedAt { get; set; }
+
+    /// <summary>Steam's last-update stamp: cached data about the item is valid for this revision only.</summary>
+    public string Revision => UpdatedAt.Ticks.ToString(CultureInfo.InvariantCulture);
 
     /// <summary>Subscriber count reported by Steam (via GetQueryUGCStatistic).</summary>
     public ulong SubscriberCount { get; set; }

@@ -21,7 +21,7 @@ namespace SteamWorkshopManager.ViewModels.Editor;
 /// Per-language titles and descriptions. The base (english) text stays on the Info
 /// section; this view-model only holds the other languages. Staged mode (create view)
 /// only edits the texts; once <see cref="AttachTo"/> binds a published item, it reads
-/// what Steam holds. Results live in memory, nothing is cached on disk.
+/// what Steam holds, cached per item revision by <see cref="ItemTranslationService"/>.
 /// </summary>
 public partial class TranslationEditorViewModel : ViewModelBase, IDisposable
 {
@@ -30,6 +30,7 @@ public partial class TranslationEditorViewModel : ViewModelBase, IDisposable
     private readonly ItemTranslationService _translations;
     private readonly CancellationTokenSource _cts = new();
     private PublishedFileId_t _owner;
+    private string _revision = string.Empty;
     private Func<ItemText> _currentBase = () => new ItemText("", "");
     private ItemText? _steamBaseFull;
 
@@ -80,9 +81,10 @@ public partial class TranslationEditorViewModel : ViewModelBase, IDisposable
     public bool HasEntries => Entries.Count > 0;
 
     /// <summary>Binds to an item. <paramref name="currentBase"/> reads the Info section's title and description.</summary>
-    public void AttachTo(PublishedFileId_t owner, Func<ItemText> currentBase)
+    public void AttachTo(PublishedFileId_t owner, string revision, Func<ItemText> currentBase)
     {
         _owner = owner;
+        _revision = revision;
         _currentBase = currentBase;
     }
 
@@ -136,7 +138,7 @@ public partial class TranslationEditorViewModel : ViewModelBase, IDisposable
                 if (_cts.IsCancellationRequested) return;
                 if (FindEntry(language) is null)
                 {
-                    var text = await _translations.GetTextAsync(_owner, language.ApiCode, fullDescription: true);
+                    var text = await _translations.GetTextAsync(_owner, language.ApiCode, fullDescription: true, _revision);
                     if (text is null) unanswered++;
                     else if (ItemTranslations.IsTranslated(baseText, text) && FindEntry(language) is null)
                     {
@@ -195,7 +197,7 @@ public partial class TranslationEditorViewModel : ViewModelBase, IDisposable
         try
         {
             var baseText = await GetSteamBaseFullAsync();
-            var text = await _translations.GetTextAsync(_owner, entry.Language.ApiCode, fullDescription: true);
+            var text = await _translations.GetTextAsync(_owner, entry.Language.ApiCode, fullDescription: true, _revision);
             if (baseText is null || text is null)
             {
                 Error = Loc["TranslationLoadFailed"];
@@ -220,7 +222,7 @@ public partial class TranslationEditorViewModel : ViewModelBase, IDisposable
     }
 
     private async Task<ItemText?> GetSteamBaseFullAsync() =>
-        _steamBaseFull ??= await _translations.GetTextAsync(_owner, SteamLanguages.BaseCode, fullDescription: true);
+        _steamBaseFull ??= await _translations.GetTextAsync(_owner, SteamLanguages.BaseCode, fullDescription: true, _revision);
 
     [RelayCommand]
     private void CopyBase()

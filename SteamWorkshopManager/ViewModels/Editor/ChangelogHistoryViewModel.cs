@@ -72,7 +72,7 @@ public partial class ChangelogHistoryViewModel(
             // Shown alongside the entries so already-downloaded versions stay visible.
             NeedsSteamAuth = !SteamAuthService.IsAuthenticated;
 
-            var entries = await changelogScraper.GetChangeLogsAsync((ulong)item.PublishedFileId);
+            var entries = await changelogScraper.GetChangeLogsAsync((ulong)item.PublishedFileId, item.Revision);
             ChangeLogHistory.Clear();
             foreach (var entry in entries)
             {
