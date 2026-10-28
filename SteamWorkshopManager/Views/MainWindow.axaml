@@ -132,12 +132,12 @@
         </Grid>
 
         <!-- Upload progress toast -->
-        <Border IsVisible="{Binding IsUploadInProgress}"
+        <Border IsVisible="{Binding Upload.IsInProgress}"
                 Background="#F0242a35"
                 CornerRadius="12"
                 Padding="20,16"
-                HorizontalAlignment="{Binding ToastHorizontalAlignment}"
-                VerticalAlignment="{Binding ToastVerticalAlignment}"
+                HorizontalAlignment="{Binding Toasts.HorizontalAlignment}"
+                VerticalAlignment="{Binding Toasts.VerticalAlignment}"
                 Margin="24"
                 MinWidth="320"
                 BoxShadow="{DynamicResource ShadowOverlay}">
@@ -151,16 +151,16 @@
                                    VerticalAlignment="Center"/>
                     </Border>
                     <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="{Binding UploadStatusMessage}"
+                        <TextBlock Text="{Binding Upload.StatusMessage}"
                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                    FontWeight="SemiBold"
                                    FontSize="14"/>
-                        <TextBlock Text="{Binding UploadProgressText}"
+                        <TextBlock Text="{Binding Upload.ProgressText}"
                                    Foreground="{DynamicResource TextMutedBrush}"
                                    FontSize="12"/>
                     </StackPanel>
                 </StackPanel>
-                <ProgressBar Value="{Binding UploadProgress}"
+                <ProgressBar Value="{Binding Upload.Progress}"
                              Minimum="0"
                              Maximum="100"
                              Height="4"
@@ -171,12 +171,12 @@
         </Border>
 
         <!-- Success toast -->
-        <Border IsVisible="{Binding IsSuccessNotification}"
+        <Border IsVisible="{Binding Toasts.IsSuccess}"
                 Background="#F01e3a1e"
                 CornerRadius="12"
                 Padding="20,16"
-                HorizontalAlignment="{Binding ToastHorizontalAlignment}"
-                VerticalAlignment="{Binding ToastVerticalAlignment}"
+                HorizontalAlignment="{Binding Toasts.HorizontalAlignment}"
+                VerticalAlignment="{Binding Toasts.VerticalAlignment}"
                 Margin="24"
                 MinWidth="300"
                 BoxShadow="{DynamicResource ShadowOverlay}">
@@ -193,7 +193,7 @@
                                HorizontalAlignment="Center"
                                VerticalAlignment="Center"/>
                 </Border>
-                <TextBlock Text="{Binding NotificationMessage}"
+                <TextBlock Text="{Binding Toasts.Message}"
                            Foreground="{DynamicResource TextPrimaryBrush}"
                            FontWeight="SemiBold"
                            FontSize="14"
@@ -202,12 +202,12 @@
         </Border>
 
         <!-- Error toast -->
-        <Border IsVisible="{Binding IsErrorNotification}"
+        <Border IsVisible="{Binding Toasts.IsError}"
                 Background="#F03d1e1e"
                 CornerRadius="12"
                 Padding="20,16"
-                HorizontalAlignment="{Binding ToastHorizontalAlignment}"
-                VerticalAlignment="{Binding ToastVerticalAlignment}"
+                HorizontalAlignment="{Binding Toasts.HorizontalAlignment}"
+                VerticalAlignment="{Binding Toasts.VerticalAlignment}"
                 Margin="24"
                 MinWidth="300"
                 BoxShadow="{DynamicResource ShadowOverlay}">
@@ -224,7 +224,7 @@
                                HorizontalAlignment="Center"
                                VerticalAlignment="Center"/>
                 </Border>
-                <TextBlock Text="{Binding NotificationMessage}"
+                <TextBlock Text="{Binding Toasts.Message}"
                            Foreground="{DynamicResource TextPrimaryBrush}"
                            FontWeight="SemiBold"
                            FontSize="14"
@@ -234,7 +234,7 @@
 
         <!-- Delete-session confirmation modal: same type-to-confirm pattern
              as the per-mod delete in ItemEditorView. -->
-        <Border IsVisible="{Binding ShowDeleteSessionConfirmation}"
+        <Border IsVisible="{Binding SessionDeletion.IsOpen}"
                 Background="#CC0E141B"
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Stretch">
@@ -260,7 +260,7 @@
                                    VerticalAlignment="Center"/>
                     </StackPanel>
 
-                    <TextBlock Text="{Binding DeleteSessionIntroText}"
+                    <TextBlock Text="{Binding SessionDeletion.IntroText}"
                                TextWrapping="Wrap"
                                Foreground="{DynamicResource TextSecondaryBrush}"
                                FontSize="13"/>
@@ -276,7 +276,7 @@
                                        VerticalAlignment="Center"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Spacing="8"
-                                    IsVisible="{Binding SessionDeleteReport.HasCache}">
+                                    IsVisible="{Binding SessionDeletion.Report.HasCache}">
                             <icons:MaterialIcon Kind="CircleSmall" Width="14" Height="14"
                                                 Foreground="{DynamicResource TextMutedBrush}"
                                                 VerticalAlignment="Center"/>
@@ -286,34 +286,34 @@
                                        VerticalAlignment="Center"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Spacing="8"
-                                    IsVisible="{Binding SessionDeleteReport.HasDownloads}">
+                                    IsVisible="{Binding SessionDeletion.Report.HasDownloads}">
                             <icons:MaterialIcon Kind="CircleSmall" Width="14" Height="14"
                                                 Foreground="{DynamicResource TextMutedBrush}"
                                                 VerticalAlignment="Center"/>
-                            <TextBlock Text="{Binding DeleteSessionDownloadsText}"
+                            <TextBlock Text="{Binding SessionDeletion.DownloadsText}"
                                        FontSize="13"
                                        Foreground="{DynamicResource TextPrimaryBrush}"
                                        VerticalAlignment="Center"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Spacing="8"
-                                    IsVisible="{Binding SessionDeleteReport.HasDrafts}">
+                                    IsVisible="{Binding SessionDeletion.Report.HasDrafts}">
                             <icons:MaterialIcon Kind="CircleSmall" Width="14" Height="14"
                                                 Foreground="{DynamicResource TextMutedBrush}"
                                                 VerticalAlignment="Center"/>
-                            <TextBlock Text="{Binding DeleteSessionDraftsText}"
+                            <TextBlock Text="{Binding SessionDeletion.DraftsText}"
                                        FontSize="13"
                                        Foreground="{DynamicResource TextPrimaryBrush}"
                                        VerticalAlignment="Center"/>
                         </StackPanel>
                     </StackPanel>
 
-                    <TextBlock Text="{Binding DeleteSessionTotalText}"
+                    <TextBlock Text="{Binding SessionDeletion.TotalText}"
                                FontSize="12"
                                Foreground="{DynamicResource TextMutedBrush}"/>
 
                     <Border Background="#1F5B9CF6" Padding="10" CornerRadius="6"
                             BorderBrush="{DynamicResource AccentPrimaryBrush}" BorderThickness="1"
-                            IsVisible="{Binding SessionDeleteReport.AppIdSharedWithOtherSession}">
+                            IsVisible="{Binding SessionDeletion.Report.AppIdSharedWithOtherSession}">
                         <TextBlock Text="{DynamicResource DeleteSessionSharedAppId}"
                                    FontSize="12"
                                    TextWrapping="Wrap"
@@ -333,13 +333,13 @@
                                    FontSize="12"
                                    FontWeight="SemiBold"
                                    Foreground="{DynamicResource TextMutedBrush}"/>
-                        <TextBox Text="{Binding DeleteSessionTypedConfirmation}"
+                        <TextBox Text="{Binding SessionDeletion.TypedConfirmation}"
                                  PlaceholderText="{x:Static helpers:DangerousActions.ConfirmationPassphrase}"
                                  FontFamily="Consolas,Menlo,monospace"/>
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
-                        <Button Command="{Binding CancelDeleteSessionCommand}"
+                        <Button Command="{Binding SessionDeletion.CancelCommand}"
                                 Background="{DynamicResource SurfaceElevatedBrush}"
                                 BorderBrush="{DynamicResource BorderSubtleBrush}"
                                 BorderThickness="1"
@@ -348,8 +348,8 @@
                                 CornerRadius="6">
                             <TextBlock Text="{DynamicResource Cancel}"/>
                         </Button>
-                        <Button Command="{Binding ConfirmDeleteSessionCommand}"
-                                IsEnabled="{Binding IsDeleteSessionConfirmed}"
+                        <Button Command="{Binding SessionDeletion.ConfirmCommand}"
+                                IsEnabled="{Binding SessionDeletion.IsConfirmed}"
                                 Background="{DynamicResource FeedbackDangerBrush}"
                                 Foreground="White"
                                 BorderThickness="0"
@@ -359,9 +359,9 @@
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <icons:MaterialIcon Kind="TrashCanOutline" Width="14" Height="14"/>
                                 <TextBlock Text="{DynamicResource DeletePermanently}"
-                                           IsVisible="{Binding !IsDeletingSession}"/>
+                                           IsVisible="{Binding !SessionDeletion.IsDeleting}"/>
                                 <TextBlock Text="..."
-                                           IsVisible="{Binding IsDeletingSession}"/>
+                                           IsVisible="{Binding SessionDeletion.IsDeleting}"/>
                             </StackPanel>
                         </Button>
                     </StackPanel>

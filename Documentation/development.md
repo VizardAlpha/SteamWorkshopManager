@@ -44,6 +44,7 @@ SteamWorkshopManager/
                                   UI, Workshop (tags, changelog, downloads, dependencies, versioning)
   ViewModels/                     screens, UpdateController, ViewModelFactory
     Editor/                       child view-models shared by create and edit
+    Shell/                        child view-models of the main window (toasts, upload, connection, sessions)
   Views/                          windows, views, controls, shell
   Helpers/                        paths, atomic files, SemVer, BBCode, image caches
   Models/                         data types

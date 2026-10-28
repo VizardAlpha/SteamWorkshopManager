@@ -49,6 +49,18 @@ The create and edit screens share child view-models under `ViewModels/Editor/`:
 
 `ItemEditorViewModel` and `CreateItemViewModel` own only the item's own fields and delegate the rest. XAML binds through the children, for example `Tags.CustomTags` or `Gallery.ImagePreviews`.
 
+## Shell view-models
+
+`MainViewModel` only handles navigation, session switching and worker recovery. The shell widgets live in child view-models under `ViewModels/Shell/`, built through the factory:
+
+| Child | Responsibility |
+| --- | --- |
+| `ToastViewModel` | Success/error toasts from `INotificationService`, auto-hide, docking corner |
+| `UploadProgressViewModel` | Upload toast and the `IProgress<UploadProgress>` sink handed to the editors |
+| `ConnectionStatusViewModel` | Footer connection dot and status line, mapped from `SteamInitResult` |
+| `SessionListViewModel` | Sessions of the top-bar pill and flyout, game icon loading |
+| `SessionDeletionViewModel` | Type-to-confirm session deletion and the cleanup report |
+
 ## Publishing flow
 
 `WorkshopOrchestrator` is the single entry point for create, update and delete: it validates, calls the worker through `ISteamService`, records telemetry, stores the local folder fingerprints used for change detection, and applies dependencies after a create.

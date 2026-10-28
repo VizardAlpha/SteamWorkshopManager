@@ -35,10 +35,10 @@
             <!-- Steam connection indicator -->
             <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                 <Border Classes="status-dot"
-                        Classes.connecting="{Binding IsConnecting}"
-                        Classes.connected="{Binding IsConnected}"
-                        Classes.disconnected="{Binding IsDisconnected}"/>
-                <TextBlock Text="{Binding StatusMessage}"
+                        Classes.connecting="{Binding Connection.IsConnecting}"
+                        Classes.connected="{Binding Connection.IsConnected}"
+                        Classes.disconnected="{Binding Connection.IsDisconnected}"/>
+                <TextBlock Text="{Binding Connection.StatusMessage}"
                            FontSize="12"
                            Foreground="{DynamicResource TextMutedBrush}"
                            VerticalAlignment="Center"/>
