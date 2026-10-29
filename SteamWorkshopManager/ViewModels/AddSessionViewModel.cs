@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Core.Sessions;
 using SteamWorkshopManager.Core.Steam;
+using SteamWorkshopManager.Models;
 using SteamWorkshopManager.Services.Cache;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Session;
@@ -41,6 +42,7 @@ public partial class AddSessionViewModel : ViewModelBase
     private bool _isValidating;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanCreate))]
     private bool _isValid;
 
     [ObservableProperty]
@@ -67,6 +69,28 @@ public partial class AddSessionViewModel : ViewModelBase
     /// </summary>
     partial void OnGameHeaderImageChanging(Bitmap? value) => _gameHeaderImage?.Dispose();
 
+    /// <summary>Platform the new session publishes to.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsSteam), nameof(IsModio), nameof(CanCreate))]
+    private WorkshopPlatform _platform = WorkshopPlatform.Steam;
+
+    public bool IsSteam => Platform == WorkshopPlatform.Steam;
+
+    public bool IsModio => Platform == WorkshopPlatform.ModIo;
+
+    public ModioSessionSetupViewModel Modio { get; }
+
+    public bool CanCreate => IsSteam ? IsValid : Modio.IsReady;
+
+    [RelayCommand]
+    private void SelectPlatform(WorkshopPlatform platform) => Platform = platform;
+
+    partial void OnPlatformChanged(WorkshopPlatform value)
+    {
+        HasError = false;
+        ErrorMessage = null;
+    }
+
     public event Action? SessionCreated;
     public event Action? CancelRequested;
 
@@ -75,13 +99,16 @@ public partial class AddSessionViewModel : ViewModelBase
         AppIdValidator validator,
         SessionManager sessionManager,
         ITelemetryService telemetry,
-        SteamImageCache images)
+        SteamImageCache images,
+        ModioSessionSetupViewModel modio)
     {
         _sessionRepository = sessionRepository;
         _validator = validator;
         _sessionManager = sessionManager;
         _telemetry = telemetry;
         _images = images;
+        Modio = modio;
+        Modio.ReadinessChanged += () => OnPropertyChanged(nameof(CanCreate));
     }
 
     /// <summary>
@@ -190,15 +217,22 @@ public partial class AddSessionViewModel : ViewModelBase
     [RelayCommand]
     private async Task CreateSessionAsync()
     {
-        if (!IsValid || ValidatedAppId == 0 || string.IsNullOrEmpty(GameName))
-        {
-            return;
-        }
+        if (!CanCreate) return;
 
         IsCreating = true;
 
         try
         {
+            if (IsModio)
+            {
+                var modio = await _sessionManager.CreateModioSessionAsync(Modio.SelectedGame!);
+                await _sessionRepository.SetActiveSessionAsync(modio.Id);
+                SessionCreated?.Invoke();
+                return;
+            }
+
+            if (ValidatedAppId == 0 || string.IsNullOrEmpty(GameName)) return;
+
             Log.Info($"Creating session for {GameName} (AppId: {ValidatedAppId})");
 
             var session = await _sessionManager.CreateSteamSessionAsync(ValidatedAppId, GameName);

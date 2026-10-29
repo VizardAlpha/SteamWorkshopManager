@@ -312,7 +312,7 @@ internal sealed class SteamService(uint appId)
 
         return new WorkshopItem
         {
-            PublishedFileId = details.m_nPublishedFileId,
+            Id = details.m_nPublishedFileId.m_PublishedFileId,
             Title = details.m_rgchTitle,
             Description = details.m_rgchDescription,
             PreviewImageUrl = previewUrl,
@@ -322,7 +322,7 @@ internal sealed class SteamService(uint appId)
             UpdatedAt = DateTimeOffset.FromUnixTimeSeconds(details.m_rtimeUpdated).DateTime,
             SubscriberCount = subscribers,
             FileSize = details.m_nFileSize,
-            OwnerId = ownerId,
+            OwnerId = ownerId.m_SteamID,
             IsOwner = ownerId == currentUserId,
             AdditionalPreviews = ReadAdditionalPreviews(handle, index),
         };

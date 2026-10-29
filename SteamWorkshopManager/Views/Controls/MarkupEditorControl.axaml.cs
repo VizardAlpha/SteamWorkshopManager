@@ -14,16 +14,26 @@ using SteamWorkshopManager.Services.Core;
 
 namespace SteamWorkshopManager.Views.Controls;
 
-public partial class BbCodeEditorControl : UserControl
+public partial class MarkupEditorControl : UserControl
 {
     public static readonly StyledProperty<string> TextProperty =
-        AvaloniaProperty.Register<BbCodeEditorControl, string>(nameof(Text), defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
+        AvaloniaProperty.Register<MarkupEditorControl, string>(nameof(Text), defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
 
     public static readonly StyledProperty<double> EditorHeightProperty =
-        AvaloniaProperty.Register<BbCodeEditorControl, double>(nameof(EditorHeight), 150);
+        AvaloniaProperty.Register<MarkupEditorControl, double>(nameof(EditorHeight), 150);
 
     public static readonly StyledProperty<string> PlaceholderTextProperty =
-        AvaloniaProperty.Register<BbCodeEditorControl, string>(nameof(PlaceholderText), string.Empty);
+        AvaloniaProperty.Register<MarkupEditorControl, string>(nameof(PlaceholderText), string.Empty);
+
+    public static readonly StyledProperty<MarkupLanguage> MarkupProperty =
+        AvaloniaProperty.Register<MarkupEditorControl, MarkupLanguage>(nameof(Markup));
+
+    /// <summary>BBCode for Steam, HTML for mod.io: picks the toolbar and the preview.</summary>
+    public MarkupLanguage Markup
+    {
+        get => GetValue(MarkupProperty);
+        set => SetValue(MarkupProperty, value);
+    }
 
     public string Text
     {
@@ -47,14 +57,14 @@ public partial class BbCodeEditorControl : UserControl
     private int _savedSelectionEnd;
     private Border? _expandedOverlay;
     private TextBox? _expandedTextBox;
-    private BbCodePreviewControl? _expandedPreview;
+    private MarkupPreviewControl? _expandedPreview;
 
-    public BbCodeEditorControl()
+    public MarkupEditorControl()
     {
         InitializeComponent();
         BuildToolbar();
 
-        BbCodeToggle.IsCheckedChanged += OnToggleChanged;
+        MarkupToggle.IsCheckedChanged += OnToggleChanged;
         PreviewToggle.IsCheckedChanged += OnPreviewToggleChanged;
         EditorTextBox.PropertyChanged += OnEditorTextBoxPropertyChanged;
         ExpandButton.Click += OnExpandClick;
@@ -107,6 +117,15 @@ public partial class BbCodeEditorControl : UserControl
             if (PreviewPanel != null)
                 PreviewPanel.Height = EditorHeight;
         }
+        else if (change.Property == MarkupProperty)
+        {
+            if (ToolbarButtons is null) return;
+            ToolbarButtons.Children.Clear();
+            BuildToolbar();
+            MarkupToggle.Content = Markup == MarkupLanguage.Html ? "HTML" : "BBCode";
+            PreviewPanel.Markup = Markup;
+            if (_expandedPreview != null) _expandedPreview.Markup = Markup;
+        }
         else if (change.Property == PlaceholderTextProperty)
         {
             if (EditorTextBox != null)
@@ -132,7 +151,7 @@ public partial class BbCodeEditorControl : UserControl
 
     private void OnToggleChanged(object? sender, RoutedEventArgs e)
     {
-        ToolbarPanel.IsVisible = BbCodeToggle.IsChecked == true && PreviewToggle.IsChecked != true;
+        ToolbarPanel.IsVisible = MarkupToggle.IsChecked == true && PreviewToggle.IsChecked != true;
     }
 
     private void OnPreviewToggleChanged(object? sender, RoutedEventArgs e)
@@ -144,22 +163,28 @@ public partial class BbCodeEditorControl : UserControl
 
         PreviewPanel.IsVisible = previewing;
         EditorTextBox.IsVisible = !previewing;
-        ToolbarPanel.IsVisible = BbCodeToggle.IsChecked == true && !previewing;
+        ToolbarPanel.IsVisible = MarkupToggle.IsChecked == true && !previewing;
     }
+
+    private (IReadOnlyList<MarkupTag> Formatting, IReadOnlyList<MarkupTag> Structure, IReadOnlyList<MarkupTag> Content) TagGroups =>
+        Markup == MarkupLanguage.Html
+            ? (HtmlTags.Formatting, HtmlTags.Structure, HtmlTags.Content)
+            : (BbCodeTags.Formatting, BbCodeTags.Structure, BbCodeTags.Content);
 
     private void BuildToolbar()
     {
-        AddGroup(BbCodeTags.Formatting);
+        var groups = TagGroups;
+        AddGroup(groups.Formatting);
         AddSeparator();
-        AddGroup(BbCodeTags.Structure);
+        AddGroup(groups.Structure);
         AddSeparator();
-        AddGroup(BbCodeTags.Content);
+        AddGroup(groups.Content);
     }
 
     private static readonly IBrush ButtonBorder = new SolidColorBrush(Color.Parse("#3a4a5a"));
     private static readonly IBrush ButtonForeground = new SolidColorBrush(Color.Parse("#c7d5e0"));
 
-    private static Button CreateTagButton(BbCodeTag tag)
+    private static Button CreateTagButton(MarkupTag tag)
     {
         var btn = new Button
         {
@@ -182,7 +207,7 @@ public partial class BbCodeEditorControl : UserControl
         return btn;
     }
 
-    private void AddGroup(IReadOnlyList<BbCodeTag> tags)
+    private void AddGroup(IReadOnlyList<MarkupTag> tags)
     {
         foreach (var tag in tags)
         {
@@ -204,7 +229,7 @@ public partial class BbCodeEditorControl : UserControl
         });
     }
 
-    private void InsertTag(BbCodeTag tag, TextBox textBox)
+    private void InsertTag(MarkupTag tag, TextBox textBox)
     {
         var text = textBox.Text ?? string.Empty;
 
@@ -315,7 +340,7 @@ public partial class BbCodeEditorControl : UserControl
         var expandedToolbar = BuildExpandedToolbar();
 
         // Live preview beside the editor
-        _expandedPreview = new BbCodePreviewControl { Text = Text };
+        _expandedPreview = new MarkupPreviewControl { Text = Text, Markup = Markup };
 
         var splitter = new GridSplitter
         {
@@ -433,7 +458,7 @@ public partial class BbCodeEditorControl : UserControl
     {
         var buttonsPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 2 };
 
-        void AddExpandedGroup(IReadOnlyList<BbCodeTag> tags)
+        void AddExpandedGroup(IReadOnlyList<MarkupTag> tags)
         {
             foreach (var tag in tags)
             {
@@ -460,11 +485,12 @@ public partial class BbCodeEditorControl : UserControl
             });
         }
 
-        AddExpandedGroup(BbCodeTags.Formatting);
+        var groups = TagGroups;
+        AddExpandedGroup(groups.Formatting);
         AddExpandedSeparator();
-        AddExpandedGroup(BbCodeTags.Structure);
+        AddExpandedGroup(groups.Structure);
         AddExpandedSeparator();
-        AddExpandedGroup(BbCodeTags.Content);
+        AddExpandedGroup(groups.Content);
 
         return new ScrollViewer
         {

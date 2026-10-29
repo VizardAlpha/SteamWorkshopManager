@@ -12,6 +12,7 @@
 | `bundle/` | Language files extracted from the executable (rewritten only when they change) |
 | `tempo/<guid>/draft.json` | Create-form drafts; ids are validated as GUIDs before any file operation |
 | `workshop/<appId>/` | Past versions downloaded from the item history |
+| `workshop/modio-<gameId>/` | Files downloaded from a mod.io mod's published files (checked against mod.io's MD5) |
 
 On macOS and Linux both folders are the platform equivalents returned by .NET for `ApplicationData` and `LocalApplicationData`.
 
@@ -21,6 +22,7 @@ On macOS and Linux both folders are the platform equivalents returned by .NET fo
 | --- | --- |
 | `app_YYYY-MM-DD.log`, `debug_*.log`, `crash_*.log` | Logs, kept 14 days; the debug log is capped at 50 MB per day |
 | `credentials.bin` | Steam login tokens, encrypted (see [Security and privacy](security-and-privacy.md)) |
+| `modio-credentials.bin` | Your mod.io token and API path, encrypted the same way |
 | `updates/` | Downloaded and extracted updates, removed on the next start |
 | `tmp/previews/` | Scratch files while re-uploading previews, deleted after each save |
 
@@ -42,14 +44,17 @@ One file per entry at `<platform>/<scope>/<name>` (`CacheKey`), for example `ste
 | Tag catalog | `steam/app-<id>/tags.json` | 7 days |
 | App names (dependencies) | `steam/app-<id>/name.json` | 30 days |
 | Item and gallery thumbnails | `shared/images/<url hash>` | Keyed by URL, which changes with the image |
-| "My mods" list (every field the list and the editor show) | `steam/app-<id>/items-<steamId>.json` | Shown at once, then always replaced by Steam's answer |
+| "My mods" list (every field the list and the editor show) | `steam/app-<id>/items-<steamId>.json`, `modio/game-<id>/items-<userId>.json` | Shown at once, then always replaced by the platform's answer |
 | Translations (title and description per language) | `steam/app-<id>/item-<itemId>/text-<language>.json` | Item revision, 7 days at most |
 | Mod and app dependencies | `.../item-<itemId>/dependencies.json`, `app-dependencies.json` | Item revision, 1 day at most |
 | Changelog | `.../item-<itemId>/changelog.json`, `changelog-signed-in.json` | Item revision, 7 days at most; empty answers not cached |
+| mod.io game settings (dependencies allowed) | `modio/game-<id>/game.json` | 7 days; an old copy is used if mod.io is unreachable |
+| mod.io mod details (gallery, homepage, community options) | `modio/game-<id>/mod-<modId>/mod.json` | Mod revision, 1 day at most |
+| mod.io published files and dependencies | `.../mod-<modId>/files.json`, `dependencies.json` | Mod revision, 1 day at most; download links are always asked again |
 
-"Item revision" is Steam's last-update time of the item (`WorkshopItem.Revision`): an entry stored under another revision is a miss. The time cap covers edits made on the Steam website that may not change it. Every add, remove or translation sent from the app drops the matching entry. The changelog is cached apart when signed in, since only that page carries the manifest ids used to download past versions.
+"Item revision" (or mod revision) is the platform's last-update time of the item (`WorkshopItem.Revision`: Steam's time_updated, mod.io's date_updated): an entry stored under another revision is a miss. The time cap covers edits made on the Steam website that may not change it. Every add, remove or translation sent from the app drops the matching entry. The changelog is cached apart when signed in, since only that page carries the manifest ids used to download past versions.
 
-The mod list is per Steam account: another login on the same machine has other mods. `ItemListViewModel` shows the cached list with a spinning badge on each card, asks Steam, and merges the answer with `PublishedItemsReconciler`: unchanged items keep their instance (thumbnail, selection), changed ones are swapped, missing ones removed. While a mod is being checked the editor can't save it, so a cached version never overwrites a newer one. If it changed on Steam, the editor reloads it, or warns when the user already edited it.
+The mod list is per account (Steam or mod.io): another login on the same machine has other mods. `ItemListViewModel` shows the cached list with a spinning badge on each card, asks the platform, and merges the answer with `PublishedItemsReconciler`: unchanged items keep their instance (thumbnail, selection), changed ones are swapped, missing ones removed. While a mod is being checked the editor can't save it, so a cached version never overwrites a newer one. If it changed on Steam, the editor reloads it, or warns when the user already edited it.
 
 - `GetOrFetchAsync` serves an entry while its policy says it is fresh, refetches otherwise, and falls back to the expired entry when the refetch fails. Concurrent requests for one key share a single fetch.
 - Entries not rewritten for 30 days, and orphan `.tmp` files, are deleted on startup.
@@ -62,8 +67,8 @@ The mod list is per Steam account: another login on the same machine has other m
 
 - State files go through `Helpers/AtomicFile`: content is written to a temporary file then renamed over the target, with a per-path lock. A crash or power loss leaves either the old or the new file, never a truncated one.
 - Downloads are written as `.part` and renamed when complete.
-- Logs are queued and written by a background thread; errors and process exit flush immediately. User profile paths and registered secrets (account name, SteamID) are redacted from logs and crash logs.
+- Logs are queued and written by a background thread; errors and process exit flush immediately. User profile paths and registered secrets (account name, SteamID, telemetry instance id) are redacted from logs and crash logs.
 
 ## Deleting a session
 
-`SessionCleanupService` removes the session file, its cache scope (`steam/app-<id>` or `modio/game-<id>`) and, for Steam, downloaded versions and drafts, after showing the user what will go. Data shared with another session for the same game on the same platform is kept.
+`SessionCleanupService` removes the session file, its cache scope (`steam/app-<id>` or `modio/game-<id>`), downloaded versions and, for Steam, drafts, after showing the user what will go. Data shared with another session for the same game on the same platform is kept.

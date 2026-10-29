@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
@@ -36,13 +37,16 @@ public partial class HomeViewModel : ViewModelBase
 
     private readonly ISessionContext _context;
     private readonly SteamImageCache _images;
+    private readonly ThumbnailCache _thumbnails;
 
-    public HomeViewModel(ItemListViewModel itemList, ISessionContext context, SteamImageCache images)
+    public HomeViewModel(ItemListViewModel itemList, ISessionContext context, SteamImageCache images, ThumbnailCache thumbnails)
     {
         _context = context;
         ItemList = itemList;
         _images = images;
+        _thumbnails = thumbnails;
         ItemList.Items.CollectionChanged += OnItemsCollectionChanged;
+        LocalizationService.Instance.LanguageChanged += () => OnPropertyChanged(nameof(ConnectionText));
         _ = LoadHeaderImageAsync();
     }
 
@@ -76,11 +80,13 @@ public partial class HomeViewModel : ViewModelBase
             ? "-"
             : Formatters.TimeAgo(ItemList.Items.Max(i => i.UpdatedAt));
 
-    public string ConnectionText => ConnectionState switch
+    public string ConnectionText => (ConnectionState, _context.Platform) switch
     {
-        SteamConnectionState.Connected => "Connected to Steam",
-        SteamConnectionState.Connecting => "Connecting to Steam…",
-        _ => "Steam not available",
+        (SteamConnectionState.Connected, WorkshopPlatform.ModIo) => Loc["ConnectedToModio"],
+        (_, WorkshopPlatform.ModIo) => Loc["ModioSignedOutShort"],
+        (SteamConnectionState.Connected, _) => Loc["ConnectedToSteam"],
+        (SteamConnectionState.Connecting, _) => Loc["ConnectingToSteam"],
+        _ => Loc["SteamNotAvailableShort"],
     };
 
     public bool IsConnecting => ConnectionState == SteamConnectionState.Connecting;
@@ -115,6 +121,7 @@ public partial class HomeViewModel : ViewModelBase
     /// </summary>
     public void OnSessionChanged()
     {
+        OnPropertyChanged(nameof(ConnectionText));
         OnPropertyChanged(nameof(ActiveGameName));
         OnPropertyChanged(nameof(ActiveAppId));
         OnPropertyChanged(nameof(ActiveGameIdDisplay));
@@ -147,6 +154,14 @@ public partial class HomeViewModel : ViewModelBase
 
     private async Task LoadHeaderImageAsync(bool forceDownload = false)
     {
+        if (_context.Current is ModioSession modio)
+        {
+            var logo = modio.LogoUrl is { } url ? await _thumbnails.GetAsync(url, CancellationToken.None) : null;
+            await Dispatcher.UIThread.InvokeAsync(() => HeaderImage = logo);
+            return;
+        }
+        if (ActiveAppId == 0) return;
+
         var bitmap = await _images.GetHeaderAsync(ActiveAppId, forceDownload);
         if (bitmap is not null)
             await Dispatcher.UIThread.InvokeAsync(() => HeaderImage = bitmap);

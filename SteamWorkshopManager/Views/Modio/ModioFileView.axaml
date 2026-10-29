@@ -1,0 +1,323 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:modio="using:SteamWorkshopManager.ViewModels.Modio"
+             xmlns:behaviors="using:SteamWorkshopManager.Behaviors"
+             xmlns:icons="using:Material.Icons.Avalonia"
+             x:Class="SteamWorkshopManager.Views.Modio.ModioFileView"
+             x:DataType="modio:ModioFileViewModel">
+
+    <UserControl.Styles>
+        <StyleInclude Source="avares://SteamWorkshopManager/Themes/ModioEditorStyles.axaml"/>
+    </UserControl.Styles>
+
+    <StackPanel Spacing="14">
+
+        <StackPanel Margin="0,0,0,6">
+            <TextBlock Classes="panel-title" Text="{DynamicResource ModioFile}"/>
+            <TextBlock Classes="panel-sub" Text="{DynamicResource ModioFileSub}" Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <!-- Live file -->
+        <Border Classes="section-card" IsVisible="{Binding HasCurrentFile}">
+            <StackPanel Margin="16,12" Spacing="10">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <icons:MaterialIcon Kind="PackageVariantClosedCheck" Width="18" Height="18"
+                                        Foreground="{DynamicResource FeedbackSuccessBrush}" VerticalAlignment="Center"/>
+                    <StackPanel Grid.Column="1" Margin="10,0,0,0" Spacing="2">
+                        <TextBlock Classes="card-title" Text="{DynamicResource ModioCurrentFile}"/>
+                        <TextBlock Classes="card-meta" Text="{Binding CurrentFileText}"/>
+                    </StackPanel>
+
+                    <!-- Same actions as its row in the history -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center"
+                                IsVisible="{Binding HasLiveEntry}">
+                        <Button Classes="secondary-action" FontSize="12" Padding="8,4"
+                                Command="{Binding DownloadFileCommand}"
+                                CommandParameter="{Binding LiveEntry}"
+                                IsVisible="{Binding !LiveEntry.IsDownloaded, FallbackValue=False}"
+                                IsEnabled="{Binding !LiveEntry.IsDownloading, FallbackValue=False}"
+                                ToolTip.Tip="{DynamicResource Download}">
+                            <icons:MaterialIcon Kind="Download" Width="14" Height="14"/>
+                        </Button>
+                        <Button Classes="secondary-action" FontSize="12" Padding="8,4"
+                                Command="{Binding OpenFileFolderCommand}"
+                                CommandParameter="{Binding LiveEntry}"
+                                IsVisible="{Binding LiveEntry.IsDownloaded, FallbackValue=False}"
+                                ToolTip.Tip="{DynamicResource OpenFolder}">
+                            <icons:MaterialIcon Kind="FolderOpenOutline" Width="14" Height="14"/>
+                        </Button>
+                        <Button Classes="secondary-action" FontSize="12" Padding="8,4"
+                                Command="{Binding StartEditCommand}"
+                                CommandParameter="{Binding LiveEntry}"
+                                IsVisible="{Binding !LiveEntry.IsEditing, FallbackValue=False}"
+                                ToolTip.Tip="{DynamicResource ModioEditNotes}">
+                            <icons:MaterialIcon Kind="PencilOutline" Width="14" Height="14"/>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+
+                <ProgressBar Height="3" Minimum="0" Maximum="1"
+                             Value="{Binding LiveEntry.DownloadProgress, FallbackValue=0}"
+                             IsVisible="{Binding LiveEntry.IsDownloading, FallbackValue=False}"
+                             Background="{DynamicResource SurfaceOverlayBrush}"
+                             Foreground="{DynamicResource AccentPrimaryBrush}"/>
+
+                <!-- Inline edit of the live file's version and changelog -->
+                <StackPanel Spacing="8" IsVisible="{Binding LiveEntry.IsEditing, FallbackValue=False}">
+                    <TextBox Text="{Binding LiveEntry.EditVersion}" PlaceholderText="1.0.0" MaxWidth="200" HorizontalAlignment="Left"/>
+                    <TextBox Text="{Binding LiveEntry.EditChangelog}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="60"/>
+                    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                        <Button Classes="secondary-action" FontSize="12"
+                                Command="{Binding CancelEditCommand}"
+                                CommandParameter="{Binding LiveEntry}"
+                                Content="{DynamicResource Cancel}"/>
+                        <Button Classes="secondary-action" FontSize="12"
+                                Command="{Binding SaveEditCommand}"
+                                CommandParameter="{Binding LiveEntry}"
+                                IsEnabled="{Binding !LiveEntry.IsBusy, FallbackValue=False}"
+                                Content="{DynamicResource SaveChanges}"/>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Folder -->
+        <Border Classes="section-card">
+            <StackPanel>
+                <TextBlock Classes="card-title" Text="{DynamicResource ModFolder}" Margin="16,14,16,12"/>
+                <Border Height="1" Background="{DynamicResource BorderSubtleBrush}"/>
+                <ContentControl Classes="dropzone" Margin="16" Padding="32,24"
+                                behaviors:DropZone.Accepts="Folder"
+                                behaviors:DropZone.Command="{Binding FolderDroppedCommand}">
+                    <StackPanel HorizontalAlignment="Center" Spacing="10">
+                        <Border Width="44" Height="44" CornerRadius="10"
+                                Background="#1F5B9CF6"
+                                HorizontalAlignment="Center">
+                            <icons:MaterialIcon Kind="FolderArrowDownOutline" Width="22" Height="22"
+                                                Foreground="{DynamicResource AccentPrimaryBrush}"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="{DynamicResource DragDropFolder}"
+                                   FontSize="15" FontWeight="Medium"
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Text="{DynamicResource Or}"
+                                   FontSize="12"
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource TextMutedBrush}"/>
+                        <Button Classes="secondary-action"
+                                Command="{Binding BrowseContentFolderCommand}"
+                                Content="{DynamicResource BrowseFolders}"
+                                HorizontalAlignment="Center"/>
+                        <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center" Margin="0,4,0,0">
+                            <TextBlock Text="{Binding ContentFolderPath}"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource TextMutedBrush}"
+                                       MaxWidth="400"
+                                       TextTrimming="CharacterEllipsis"
+                                       VerticalAlignment="Center"
+                                       IsVisible="{Binding HasContentFolder}"/>
+                            <TextBlock Text="{DynamicResource NoFolderSelected}"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource TextMutedBrush}"
+                                       IsVisible="{Binding !HasContentFolder}"/>
+                            <TextBlock Text="{Binding ContentFolderSize}"
+                                       FontSize="12"
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Center"
+                                       Foreground="{DynamicResource AccentPrimaryBrush}"
+                                       IsVisible="{Binding ContentFolderSize, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                            <Button Classes="chip-remove"
+                                    Command="{Binding ClearContentFolderCommand}"
+                                    IsVisible="{Binding HasContentFolder}">
+                                <icons:MaterialIcon Kind="Close" Width="12" Height="12"/>
+                            </Button>
+                        </StackPanel>
+                    </StackPanel>
+                </ContentControl>
+                <TextBlock Classes="card-meta" Margin="16,0,16,14" TextWrapping="Wrap"
+                           Text="{DynamicResource ModioZipHint}"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Version and changelog -->
+        <Border Classes="section-card" IsVisible="{Binding HasContentFolder}">
+            <StackPanel>
+                <TextBlock Classes="card-title" Text="{DynamicResource ModioRelease}" Margin="16,14,16,12"/>
+                <Border Height="1" Background="{DynamicResource BorderSubtleBrush}"/>
+                <StackPanel Margin="16" Spacing="14">
+                    <StackPanel>
+                        <TextBlock Classes="field-label" Text="{DynamicResource ModioFileVersion}"/>
+                        <TextBox Text="{Binding Version}" PlaceholderText="1.0.0" MaxWidth="200" HorizontalAlignment="Left"/>
+                    </StackPanel>
+                    <StackPanel>
+                        <TextBlock Classes="field-label" Text="{DynamicResource ModioChangelog}"/>
+                        <TextBox Text="{Binding Changelog}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="80"/>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Published files -->
+        <Border Classes="section-card" IsVisible="{Binding ShowHistory}">
+            <StackPanel>
+                <Grid Margin="16,14,16,12" ColumnDefinitions="*,Auto">
+                    <TextBlock Classes="card-title" Text="{DynamicResource ModioFileHistory}" VerticalAlignment="Center"/>
+                    <Button Grid.Column="1" Classes="secondary-action" FontSize="12"
+                            Command="{Binding RefreshHistoryCommand}"
+                            IsEnabled="{Binding !IsLoadingHistory}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <icons:MaterialIcon Kind="Refresh" Width="12" Height="12"/>
+                            <TextBlock Text="{DynamicResource ModioRefresh}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+                <Border Height="1" Background="{DynamicResource BorderSubtleBrush}"/>
+                <StackPanel Margin="16" Spacing="10">
+                    <ProgressBar IsIndeterminate="True" Height="3" IsVisible="{Binding IsLoadingHistory}"
+                                 Background="{DynamicResource SurfaceOverlayBrush}"
+                                 Foreground="{DynamicResource AccentPrimaryBrush}"/>
+                    <TextBlock Classes="field-error" Text="{Binding HistoryError}"
+                               IsVisible="{Binding HistoryError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                    <TextBlock Classes="card-meta" Text="{DynamicResource ModioNoFiles}">
+                        <TextBlock.IsVisible>
+                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                <Binding Path="!HasHistory"/>
+                                <Binding Path="!IsLoadingHistory"/>
+                            </MultiBinding>
+                        </TextBlock.IsVisible>
+                    </TextBlock>
+
+                    <ItemsControl ItemsSource="{Binding History}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="modio:ModioFileEntry">
+                                <Border Margin="0,0,0,8" Padding="12,10" CornerRadius="8"
+                                        Background="{DynamicResource SurfaceElevatedBrush}"
+                                        BorderBrush="{DynamicResource BorderSubtleBrush}"
+                                        BorderThickness="1">
+                                    <StackPanel Spacing="8">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <StackPanel Spacing="2">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <TextBlock Text="{Binding VersionLabel}" FontSize="13" FontWeight="SemiBold"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                                    <Border Padding="6,1" CornerRadius="8" Background="#1F5EC384" IsVisible="{Binding IsLive}">
+                                                        <TextBlock Text="{DynamicResource ModioLive}" FontSize="10" FontWeight="SemiBold"
+                                                                   Foreground="{DynamicResource FeedbackSuccessBrush}"/>
+                                                    </Border>
+                                                    <Border Padding="6,1" CornerRadius="8" Background="#1FC23B2E" IsVisible="{Binding IsFlagged}">
+                                                        <TextBlock Text="{DynamicResource ModioFlagged}" FontSize="10" FontWeight="SemiBold"
+                                                                   Foreground="{DynamicResource FeedbackDangerTextBrush}"/>
+                                                    </Border>
+                                                    <Border Padding="6,1" CornerRadius="8" Background="{DynamicResource SurfaceOverlayBrush}" IsVisible="{Binding IsScanning}">
+                                                        <TextBlock Text="{DynamicResource ModioScanning}" FontSize="10"
+                                                                   Foreground="{DynamicResource TextMutedBrush}"/>
+                                                    </Border>
+                                                </StackPanel>
+                                                <TextBlock Classes="card-meta" Text="{Binding Details}"/>
+                                            </StackPanel>
+
+                                            <!-- Actions -->
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Top"
+                                                        IsVisible="{Binding !IsEditing}">
+                                                <Button Classes="secondary-action" FontSize="12" Padding="8,4"
+                                                        Command="{Binding $parent[UserControl].((modio:ModioFileViewModel)DataContext).DownloadFileCommand}"
+                                                        CommandParameter="{Binding}"
+                                                        IsVisible="{Binding !IsDownloaded}"
+                                                        IsEnabled="{Binding !IsDownloading}"
+                                                        ToolTip.Tip="{DynamicResource Download}">
+                                                    <icons:MaterialIcon Kind="Download" Width="14" Height="14"/>
+                                                </Button>
+                                                <Button Classes="secondary-action" FontSize="12" Padding="8,4"
+                                                        Command="{Binding $parent[UserControl].((modio:ModioFileViewModel)DataContext).OpenFileFolderCommand}"
+                                                        CommandParameter="{Binding}"
+                                                        IsVisible="{Binding IsDownloaded}"
+                                                        ToolTip.Tip="{DynamicResource OpenFolder}">
+                                                    <icons:MaterialIcon Kind="FolderOpenOutline" Width="14" Height="14"/>
+                                                </Button>
+                                                <Button Classes="secondary-action" FontSize="12" Padding="8,4"
+                                                        Command="{Binding $parent[UserControl].((modio:ModioFileViewModel)DataContext).MakeLiveCommand}"
+                                                        CommandParameter="{Binding}"
+                                                        IsVisible="{Binding !IsLive}"
+                                                        IsEnabled="{Binding !IsBusy}"
+                                                        Content="{DynamicResource ModioMakeLive}"/>
+                                                <Button Classes="secondary-action" FontSize="12" Padding="8,4"
+                                                        Command="{Binding $parent[UserControl].((modio:ModioFileViewModel)DataContext).StartEditCommand}"
+                                                        CommandParameter="{Binding}"
+                                                        IsVisible="{Binding !IsLive}"
+                                                        ToolTip.Tip="{DynamicResource ModioEditNotes}">
+                                                    <icons:MaterialIcon Kind="PencilOutline" Width="14" Height="14"/>
+                                                </Button>
+                                                <Button Classes="chip-remove" Padding="8,4"
+                                                        Command="{Binding $parent[UserControl].((modio:ModioFileViewModel)DataContext).RequestDeleteCommand}"
+                                                        CommandParameter="{Binding}"
+                                                        IsVisible="{Binding !IsLive}"
+                                                        ToolTip.Tip="{DynamicResource Delete}">
+                                                    <icons:MaterialIcon Kind="TrashCanOutline" Width="14" Height="14"/>
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <ProgressBar Height="3" Minimum="0" Maximum="1"
+                                                     Value="{Binding DownloadProgress}"
+                                                     IsVisible="{Binding IsDownloading}"
+                                                     Background="{DynamicResource SurfaceOverlayBrush}"
+                                                     Foreground="{DynamicResource AccentPrimaryBrush}"/>
+
+                                        <TextBlock Text="{Binding Changelog}" FontSize="12" TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}">
+                                            <TextBlock.IsVisible>
+                                                <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                                    <Binding Path="HasChangelog"/>
+                                                    <Binding Path="!IsEditing"/>
+                                                </MultiBinding>
+                                            </TextBlock.IsVisible>
+                                        </TextBlock>
+
+                                        <!-- Inline edit of version and changelog -->
+                                        <StackPanel Spacing="8">
+                                            <StackPanel.IsVisible>
+                                                <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                                    <Binding Path="IsEditing"/>
+                                                    <Binding Path="!IsLive"/>
+                                                </MultiBinding>
+                                            </StackPanel.IsVisible>
+                                            <TextBox Text="{Binding EditVersion}" PlaceholderText="1.0.0" MaxWidth="200" HorizontalAlignment="Left"/>
+                                            <TextBox Text="{Binding EditChangelog}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="60"/>
+                                            <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                                                <Button Classes="secondary-action" FontSize="12"
+                                                        Command="{Binding $parent[UserControl].((modio:ModioFileViewModel)DataContext).CancelEditCommand}"
+                                                        CommandParameter="{Binding}"
+                                                        Content="{DynamicResource Cancel}"/>
+                                                <Button Classes="secondary-action" FontSize="12"
+                                                        Command="{Binding $parent[UserControl].((modio:ModioFileViewModel)DataContext).SaveEditCommand}"
+                                                        CommandParameter="{Binding}"
+                                                        IsEnabled="{Binding !IsBusy}"
+                                                        Content="{DynamicResource SaveChanges}"/>
+                                            </StackPanel>
+                                        </StackPanel>
+
+                                        <!-- Delete confirmation -->
+                                        <Grid ColumnDefinitions="*,Auto,Auto" IsVisible="{Binding IsConfirmingDelete}">
+                                            <TextBlock Classes="field-error" VerticalAlignment="Center" Text="{DynamicResource ModioDeleteFileConfirm}"/>
+                                            <Button Grid.Column="1" Classes="secondary-action" FontSize="12" Margin="8,0,0,0"
+                                                    Command="{Binding $parent[UserControl].((modio:ModioFileViewModel)DataContext).CancelDeleteCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    Content="{DynamicResource Cancel}"/>
+                                            <Button Grid.Column="2" Classes="danger" FontSize="12" Margin="8,0,0,0"
+                                                    Command="{Binding $parent[UserControl].((modio:ModioFileViewModel)DataContext).ConfirmDeleteCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    IsEnabled="{Binding !IsBusy}"
+                                                    Content="{DynamicResource DeletePermanently}"/>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

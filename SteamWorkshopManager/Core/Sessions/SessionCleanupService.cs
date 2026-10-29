@@ -13,7 +13,7 @@ namespace SteamWorkshopManager.Core.Sessions;
 
 /// <summary>
 /// Removes everything tied to a session: the session JSON, its game's cache
-/// scope and, for Steam, the downloaded mod versions and the drafts authored
+/// scope, the downloaded mod versions and, for Steam, the drafts authored
 /// against that AppId. Game-keyed assets are only purged when no other session
 /// targets the same game - two sessions on the same game would otherwise lose
 /// shared cache for both.
@@ -40,9 +40,9 @@ public sealed class SessionCleanupService
     {
         var sharedGame = IsGameShared(session, allSessions);
 
-        // Downloaded versions and drafts only exist for Steam sessions.
+        // Drafts only exist for Steam sessions.
         var steam = session as SteamSession;
-        var (workshopSize, workshopVersionCount) = steam is null ? (0L, 0) : MeasureWorkshopFolder(steam.AppId);
+        var (workshopSize, workshopVersionCount) = MeasureWorkshopFolder(DownloadsFolder(session));
         var (draftsSize, draftsCount) = steam is null ? (0L, 0) : MeasureDrafts(steam.AppId);
 
         long cacheSize = 0;
@@ -80,10 +80,9 @@ public sealed class SessionCleanupService
                 var (platform, scope) = CacheKey.SessionScope(session);
                 _cache.RemoveScope(platform, scope);
 
+                TryDeleteDirectory(DownloadsFolder(session));
                 if (session is SteamSession steam)
                 {
-                    TryDeleteDirectory(AppPaths.WorkshopForApp(steam.AppId));
-
                     // Drafts are stored by tempId, not AppId, so we have to enumerate and filter.
                     foreach (var draft in _draftService.ListForApp(steam.AppId))
                         _draftService.Delete(draft.TempId);
@@ -97,9 +96,16 @@ public sealed class SessionCleanupService
     private static bool IsGameShared(WorkshopSession session, IReadOnlyList<WorkshopSession> allSessions) =>
         allSessions.Any(s => s.Id != session.Id && s.IsSameGame(session));
 
-    private static (long bytes, int versionCount) MeasureWorkshopFolder(uint appId)
+    /// <summary>Where a session's downloaded versions live.</summary>
+    private static string DownloadsFolder(WorkshopSession session) => session switch
     {
-        var folder = AppPaths.WorkshopForApp(appId);
+        SteamSession steam => AppPaths.WorkshopForApp(steam.AppId),
+        ModioSession modio => AppPaths.WorkshopForModioGame(modio.GameId),
+        _ => throw new ArgumentOutOfRangeException(nameof(session)),
+    };
+
+    private static (long bytes, int versionCount) MeasureWorkshopFolder(string folder)
+    {
         if (!Directory.Exists(folder)) return (0, 0);
 
         try

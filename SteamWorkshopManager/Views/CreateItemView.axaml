@@ -584,7 +584,7 @@
                                 <!-- Description (BBCode editor - kept as-is) -->
                                 <StackPanel>
                                     <TextBlock Classes="field-label" Text="{DynamicResource Description}"/>
-                                    <controls:BbCodeEditorControl Text="{Binding Description}"
+                                    <controls:MarkupEditorControl Text="{Binding Description}"
                                                                   EditorHeight="140"
                                                                   PlaceholderText="{DynamicResource DescriptionPlaceholder}"/>
                                 </StackPanel>
@@ -770,7 +770,7 @@
                         </Grid>
                         <Border Height="1" Background="{DynamicResource BorderSubtleBrush}"/>
                         <StackPanel Margin="16">
-                            <controls:BbCodeEditorControl Text="{Binding InitialChangelog}"
+                            <controls:MarkupEditorControl Text="{Binding InitialChangelog}"
                                                           EditorHeight="100"
                                                           PlaceholderText="{DynamicResource InitialVersionPlaceholder}"/>
                         </StackPanel>
@@ -1396,7 +1396,7 @@
                                     </StackPanel>
                                     <StackPanel>
                                         <TextBlock Classes="field-label" Text="{DynamicResource Description}"/>
-                                        <controls:BbCodeEditorControl Text="{Binding Translations.Selected.Description, FallbackValue=''}"
+                                        <controls:MarkupEditorControl Text="{Binding Translations.Selected.Description, FallbackValue=''}"
                                                                       EditorHeight="200"
                                                                       PlaceholderText="{DynamicResource DescriptionPlaceholder}"/>
                                     </StackPanel>

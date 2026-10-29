@@ -578,6 +578,59 @@
                             </Button>
                         </Grid>
                     </Border>
+
+                    <!-- mod.io account (the user's own token) -->
+                    <Border Classes="section">
+                        <Grid Classes="row" ColumnDefinitions="*,Auto">
+                            <StackPanel Grid.Column="0" Spacing="6">
+                                <TextBlock Classes="row-label" Text="{DynamicResource ModioAccountTitle}"/>
+                                <TextBlock Classes="row-desc" Text="{DynamicResource ModioAccountDescription}"/>
+                                <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsModioSignedIn}">
+                                    <icons:MaterialIcon Kind="AccountCircleOutline" Width="14" Height="14"
+                                                        Foreground="{DynamicResource FeedbackSuccessBrush}"
+                                                        VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding ModioUsername}"
+                                               FontSize="12"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <TextBlock Text="{DynamicResource SteamNotSignedIn}"
+                                           IsVisible="{Binding !IsModioSignedIn}"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextMutedBrush}"/>
+                                <Button Classes="link" Padding="0"
+                                        Background="Transparent" BorderThickness="0"
+                                        HorizontalAlignment="Left"
+                                        Command="{Binding OpenModioAccessCommand}">
+                                    <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                        <TextBlock Text="{DynamicResource ModioManageAccess}"
+                                                   FontSize="12"
+                                                   Foreground="{DynamicResource AccentPrimaryBrush}"/>
+                                        <icons:MaterialIcon Kind="OpenInNew" Width="11" Height="11"
+                                                            Foreground="{DynamicResource AccentPrimaryBrush}"
+                                                            VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                            <Button Grid.Column="1"
+                                    Command="{Binding SignOutOfModioCommand}"
+                                    IsVisible="{Binding IsModioSignedIn}"
+                                    Background="{DynamicResource SurfaceElevatedBrush}"
+                                    BorderBrush="{DynamicResource BorderStrongBrush}"
+                                    BorderThickness="1"
+                                    Foreground="{DynamicResource TextPrimaryBrush}"
+                                    CornerRadius="6"
+                                    Padding="12,8"
+                                    FontSize="13"
+                                    VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <icons:MaterialIcon Kind="Logout" Width="14" Height="14"/>
+                                    <TextBlock Text="{DynamicResource ModioSignOut}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                    </Border>
                 </StackPanel>
 
                 <!-- ── STORAGE ── -->
@@ -1045,7 +1098,7 @@
                                                        Foreground="{DynamicResource TextMutedBrush}"
                                                        VerticalAlignment="Center"/>
                                         </StackPanel>
-                                        <controls:BbCodePreviewControl Text="{Binding BbCode}"/>
+                                        <controls:MarkupPreviewControl Text="{Binding BbCode}"/>
                                     </StackPanel>
                                 </Border>
                             </DataTemplate>
@@ -1084,6 +1137,19 @@
                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                         <icons:MaterialIcon Kind="Github" Width="14" Height="14"/>
                                         <TextBlock Text="{DynamicResource OpenGitHub}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button Command="{Binding OpenDiscordCommand}"
+                                        Background="{DynamicResource SurfaceElevatedBrush}"
+                                        BorderBrush="{DynamicResource BorderSubtleBrush}"
+                                        BorderThickness="1"
+                                        Foreground="{DynamicResource TextPrimaryBrush}"
+                                        CornerRadius="6"
+                                        Padding="12,8"
+                                        FontSize="13">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <icons:MaterialIcon Kind="ForumOutline" Width="14" Height="14"/>
+                                        <TextBlock Text="{DynamicResource JoinDiscord}" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Button>
                                 <Button Command="{Binding OpenChangelogCommand}"

@@ -1,0 +1,164 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:modio="using:SteamWorkshopManager.ViewModels.Modio"
+             xmlns:behaviors="using:SteamWorkshopManager.Behaviors"
+             xmlns:icons="using:Material.Icons.Avalonia"
+             x:Class="SteamWorkshopManager.Views.Modio.ModioMediaView"
+             x:DataType="modio:ModioMediaViewModel">
+
+    <UserControl.Styles>
+        <StyleInclude Source="avares://SteamWorkshopManager/Themes/ModioEditorStyles.axaml"/>
+    </UserControl.Styles>
+
+    <StackPanel Spacing="14">
+
+        <StackPanel Margin="0,0,0,6">
+            <TextBlock Classes="panel-title" Text="{DynamicResource ModioMedia}"/>
+            <TextBlock Classes="panel-sub" Text="{DynamicResource ModioMediaSub}" Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <TextBlock Classes="field-error" Text="{Binding Error}"
+                   IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+
+        <!-- Gallery images -->
+        <Border Classes="section-card">
+            <StackPanel>
+                <Grid Margin="16,14,16,12" ColumnDefinitions="*,Auto">
+                    <TextBlock Classes="card-title" Text="{DynamicResource ModioGallery}" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="1" Classes="card-meta" Text="{DynamicResource ModioGalleryMeta}" VerticalAlignment="Center"/>
+                </Grid>
+                <Border Height="1" Background="{DynamicResource BorderSubtleBrush}"/>
+                <StackPanel Margin="16" Spacing="12">
+                    <ContentControl Classes="dropzone" Padding="24,18"
+                                    behaviors:DropZone.Accepts="Images"
+                                    behaviors:DropZone.Command="{Binding ImagesDroppedCommand}">
+                        <StackPanel HorizontalAlignment="Center" Spacing="8">
+                            <icons:MaterialIcon Kind="ImageMultipleOutline" Width="22" Height="22"
+                                                Foreground="{DynamicResource AccentPrimaryBrush}"/>
+                            <TextBlock Text="{DynamicResource ModioDropImages}"
+                                       FontSize="14" FontWeight="Medium"
+                                       HorizontalAlignment="Center"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <Button Classes="secondary-action" Command="{Binding AddImagesCommand}"
+                                    HorizontalAlignment="Center"
+                                    Content="{DynamicResource ModioAddImages}"/>
+                        </StackPanel>
+                    </ContentControl>
+                    <ItemsControl ItemsSource="{Binding Images}" IsVisible="{Binding HasImages}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="modio:ModioGalleryImage">
+                                <Border Width="160" Margin="0,0,10,10"
+                                        Background="{DynamicResource SurfaceElevatedBrush}"
+                                        BorderBrush="{DynamicResource BorderSubtleBrush}"
+                                        BorderThickness="1" CornerRadius="6" ClipToBounds="True">
+                                    <StackPanel>
+                                        <Panel Height="90">
+                                            <Image Source="{Binding Thumbnail}" Stretch="UniformToFill"/>
+                                            <icons:MaterialIcon Kind="ImageOutline" Width="20" Height="20" Opacity="0.3"
+                                                                Foreground="{DynamicResource TextMutedBrush}"
+                                                                IsVisible="{Binding Thumbnail, Converter={x:Static ObjectConverters.IsNull}}"/>
+                                            <Button Classes="chip-remove"
+                                                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="4"
+                                                    Background="#99000000"
+                                                    Command="{Binding $parent[UserControl].((modio:ModioMediaViewModel)DataContext).RemoveImageCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    ToolTip.Tip="{DynamicResource RemovePreview}">
+                                                <icons:MaterialIcon Kind="Close" Width="12" Height="12" Foreground="White"/>
+                                            </Button>
+                                        </Panel>
+                                        <StackPanel Margin="8,6" Spacing="2">
+                                            <TextBlock Text="{Binding Label}" FontSize="11"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                            <TextBlock Text="{DynamicResource PendingUpload}" FontSize="10"
+                                                       Foreground="{DynamicResource AccentPrimaryBrush}"
+                                                       IsVisible="{Binding IsNew}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- YouTube -->
+        <Border Classes="section-card">
+            <StackPanel>
+                <TextBlock Classes="card-title" Text="{DynamicResource ModioYoutube}" Margin="16,14,16,12"/>
+                <Border Height="1" Background="{DynamicResource BorderSubtleBrush}"/>
+                <StackPanel Margin="16" Spacing="10">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBox Text="{Binding NewYoutubeUrl}" PlaceholderText="https://www.youtube.com/watch?v=...">
+                            <TextBox.KeyBindings>
+                                <KeyBinding Gesture="Enter" Command="{Binding AddYoutubeCommand}"/>
+                            </TextBox.KeyBindings>
+                        </TextBox>
+                        <Button Grid.Column="1" Classes="secondary-action" Margin="8,0,0,0"
+                                Command="{Binding AddYoutubeCommand}" Content="{DynamicResource ModioAdd}"/>
+                    </Grid>
+                    <ItemsControl ItemsSource="{Binding YoutubeUrls}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="x:String">
+                                <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,2">
+                                    <icons:MaterialIcon Kind="Youtube" Width="16" Height="16" Foreground="#E62117" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding}" Margin="8,0" VerticalAlignment="Center"
+                                               TextTrimming="CharacterEllipsis" FontSize="12"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                    <Button Grid.Column="2" Classes="chip-remove"
+                                            Command="{Binding $parent[UserControl].((modio:ModioMediaViewModel)DataContext).RemoveYoutubeCommand}"
+                                            CommandParameter="{Binding}">
+                                        <icons:MaterialIcon Kind="Close" Width="12" Height="12"/>
+                                    </Button>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Sketchfab -->
+        <Border Classes="section-card">
+            <StackPanel>
+                <TextBlock Classes="card-title" Text="{DynamicResource ModioSketchfab}" Margin="16,14,16,12"/>
+                <Border Height="1" Background="{DynamicResource BorderSubtleBrush}"/>
+                <StackPanel Margin="16" Spacing="10">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBox Text="{Binding NewSketchfabUrl}" PlaceholderText="https://sketchfab.com/models/...">
+                            <TextBox.KeyBindings>
+                                <KeyBinding Gesture="Enter" Command="{Binding AddSketchfabCommand}"/>
+                            </TextBox.KeyBindings>
+                        </TextBox>
+                        <Button Grid.Column="1" Classes="secondary-action" Margin="8,0,0,0"
+                                Command="{Binding AddSketchfabCommand}" Content="{DynamicResource ModioAdd}"/>
+                    </Grid>
+                    <ItemsControl ItemsSource="{Binding SketchfabUrls}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="x:String">
+                                <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,2">
+                                    <icons:MaterialIcon Kind="CubeOutline" Width="16" Height="16"
+                                                        Foreground="{DynamicResource AccentPrimaryBrush}" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding}" Margin="8,0" VerticalAlignment="Center"
+                                               TextTrimming="CharacterEllipsis" FontSize="12"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                    <Button Grid.Column="2" Classes="chip-remove"
+                                            Command="{Binding $parent[UserControl].((modio:ModioMediaViewModel)DataContext).RemoveSketchfabCommand}"
+                                            CommandParameter="{Binding}">
+                                        <icons:MaterialIcon Kind="Close" Width="12" Height="12"/>
+                                    </Button>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Steamworks;
 using SteamWorkshopManager.Core.Sessions;
 using SteamWorkshopManager.Core.Workshop;
 using SteamWorkshopManager.Helpers;
@@ -17,7 +16,7 @@ using SteamWorkshopManager.Services.Cache;
 using SteamWorkshopManager.Services.Core;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Notifications;
-using SteamWorkshopManager.Services.Steam;
+using SteamWorkshopManager.Services.Platforms;
 using SteamWorkshopManager.Services.Telemetry;
 using SteamWorkshopManager.Services.Workshop;
 
@@ -26,7 +25,7 @@ namespace SteamWorkshopManager.ViewModels;
 public partial class ItemListViewModel : ViewModelBase
 {
     private static readonly Logger Log = LogService.GetLogger<ItemListViewModel>();
-    private readonly ISteamService _steamService;
+    private readonly ModPlatforms _platforms;
     private readonly INotificationService? _notifications;
     private readonly ITelemetryService _telemetry;
     private readonly ISessionContext _context;
@@ -86,18 +85,53 @@ public partial class ItemListViewModel : ViewModelBase
 
     public ObservableCollection<WorkshopItem> FilteredItems { get; } = [];
 
+    /// <summary>Inline sign-in, shown on a mod.io session while signed out (or after the token expired).</summary>
+    public ModioSignInViewModel ModioSignIn { get; }
+
+    public bool ShowModioSignIn => _context.Platform == WorkshopPlatform.ModIo && !ModioSignIn.IsSignedIn;
+
+    /// <summary>Friends-only and unlisted exist on Steam only; mod.io mods are public or hidden.</summary>
+    public bool HasSteamVisibilities => _context.Platform != WorkshopPlatform.ModIo;
+
+    private string PlatformName => Loc[_context.Platform == WorkshopPlatform.ModIo ? "PlatformModio" : "PlatformSteam"];
+
+    public string SubtitleText => string.Format(Loc["MyPublicationsSubtitle"], PlatformName);
+
+    public string RefreshingText => string.Format(Loc["ItemRefreshing"], PlatformName);
+
+    public string BulkDeleteWarningText => string.Format(Loc["BulkDeleteWarning"], PlatformName);
+
+    /// <summary>Platform-dependent texts and options, refreshed when the session changes.</summary>
+    public void OnSessionChanged()
+    {
+        OnPropertyChanged(nameof(ShowModioSignIn));
+        OnPropertyChanged(nameof(HasSteamVisibilities));
+        OnPlatformTextsChanged();
+    }
+
+    private void OnPlatformTextsChanged()
+    {
+        OnPropertyChanged(nameof(SubtitleText));
+        OnPropertyChanged(nameof(RefreshingText));
+        OnPropertyChanged(nameof(BulkDeleteWarningText));
+    }
+
     public event Action<WorkshopItem>? ItemSelected;
     public event Action? CreateRequested;
 
     public ItemListViewModel(
-        ISteamService steamService,
+        ModPlatforms platforms,
         ITelemetryService telemetry,
         ISessionContext context,
         ThumbnailCache thumbnails,
         PublishedItemsCache itemsCache,
+        ModioSignInViewModel modioSignIn,
         INotificationService? notifications = null)
     {
-        _steamService = steamService;
+        ModioSignIn = modioSignIn;
+        ModioSignIn.SignedInChanged += () => OnPropertyChanged(nameof(ShowModioSignIn));
+        LocalizationService.Instance.LanguageChanged += OnPlatformTextsChanged;
+        _platforms = platforms;
         _telemetry = telemetry;
         _context = context;
         _thumbnails = thumbnails;
@@ -106,34 +140,37 @@ public partial class ItemListViewModel : ViewModelBase
         Items.CollectionChanged += OnItemsChanged;
     }
 
-    /// <summary>Raised after a Steam refresh changed or removed items that were on screen.</summary>
+    /// <summary>Raised after a platform refresh changed or removed items that were on screen.</summary>
     public event Action<ItemsReconciliation>? ItemsReconciled;
 
     // A newer load (session switch, manual refresh) supersedes an older one still in flight.
     private int _loadGeneration;
 
     /// <summary>
-    /// Shows the cached list right away when nothing is on screen, then asks Steam and
+    /// Shows the cached list right away when nothing is on screen, then asks the platform and
     /// merges its answer: cards being checked spin, unchanged ones keep their instance.
     /// </summary>
     [RelayCommand]
     public async Task LoadItemsAsync()
     {
-        if (!_steamService.IsInitialized)
+        OnPropertyChanged(nameof(ShowModioSignIn));
+        OnPropertyChanged(nameof(HasSteamVisibilities));
+        OnPlatformTextsChanged();
+        if (_context.Current is not { } session || _platforms.Current is not { } platform) return;
+        if (!platform.IsReady)
         {
-            ErrorMessage = Loc["SteamNotInitialized"];
+            ErrorMessage = Loc[platform.NotReadyMessageKey];
             return;
         }
 
         var generation = ++_loadGeneration;
-        var appId = _context.AppId;
-        var steamId = _steamService.CurrentUserId?.m_SteamID ?? 0;
+        var accountId = platform.AccountId;
         ErrorMessage = null;
 
         if (Items.Count == 0)
         {
             IsLoading = true;
-            var cached = await _itemsCache.LoadAsync(appId, steamId);
+            var cached = await _itemsCache.LoadAsync(session, accountId);
             if (generation != _loadGeneration) return;
             if (cached is { Count: > 0 }) ShowItems(cached);
         }
@@ -144,12 +181,12 @@ public partial class ItemListViewModel : ViewModelBase
 
         try
         {
-            var fresh = await _steamService.GetPublishedItemsAsync();
+            var fresh = await platform.GetMyModsAsync();
             if (generation != _loadGeneration) return;
 
             var outcome = PublishedItemsReconciler.Reconcile(Items, fresh);
             ShowItems(outcome.Next, released: outcome.Removed.Concat(outcome.Replaced.Select(r => r.Old)));
-            _ = _itemsCache.SaveAsync(appId, steamId, Items);
+            _ = _itemsCache.SaveAsync(session, accountId, Items);
 
             if (outcome.Replaced.Count > 0 || outcome.Removed.Count > 0)
                 ItemsReconciled?.Invoke(outcome);
@@ -157,7 +194,7 @@ public partial class ItemListViewModel : ViewModelBase
         catch (Exception ex)
         {
             if (generation != _loadGeneration) return;
-            // Cached cards stay: Steam just could not confirm them.
+            // Cached cards stay: the platform just could not confirm them.
             if (Items.Count == 0) ErrorMessage = $"{Loc["LoadingError"]}: {ex.Message}";
             else _notifications?.ShowError($"{Loc["ItemsRefreshFailed"]}: {ex.Message}");
         }
@@ -210,23 +247,23 @@ public partial class ItemListViewModel : ViewModelBase
 
     /// <summary>
     /// Single-item refresh for post-Create / post-Update flows. Avoids the
-    /// full Steam UGC re-query <see cref="LoadItemsAsync"/> performs. Returns
+    /// full re-query <see cref="LoadItemsAsync"/> performs. Returns
     /// the live <see cref="WorkshopItem"/> instance now in <see cref="Items"/>,
-    /// or null if Steam couldn't resolve the id (caller decides whether to
+    /// or null if the platform couldn't resolve the id (caller decides whether to
     /// fall back to a full reload).
     /// </summary>
-    public async Task<WorkshopItem?> RefreshItemAsync(PublishedFileId_t fileId)
+    public async Task<WorkshopItem?> RefreshItemAsync(ulong id)
     {
-        if (!_steamService.IsInitialized) return null;
+        if (_context.Current is not { } session || _platforms.Current is not { IsReady: true } platform) return null;
 
         WorkshopItem? fetched;
         try
         {
-            fetched = await _steamService.GetPublishedItemAsync(fileId);
+            fetched = await platform.GetModAsync(id);
         }
         catch (Exception ex)
         {
-            Log.Warning($"RefreshItemAsync failed for {fileId}: {ex.Message}");
+            Log.Warning($"RefreshItemAsync failed for {id}: {ex.Message}");
             return null;
         }
         if (fetched is null) return null;
@@ -234,7 +271,7 @@ public partial class ItemListViewModel : ViewModelBase
         var existingIndex = -1;
         for (var i = 0; i < Items.Count; i++)
         {
-            if (Items[i].PublishedFileId == fileId) { existingIndex = i; break; }
+            if (Items[i].Id == id) { existingIndex = i; break; }
         }
 
         if (existingIndex >= 0)
@@ -248,13 +285,13 @@ public partial class ItemListViewModel : ViewModelBase
         }
         else
         {
-            // Newly created item: prepend (Steam orders by creation desc).
+            // Newly created item: prepend (lists are ordered by creation desc).
             Items.Insert(0, fetched);
         }
 
         HasNoItems = Items.Count == 0;
         RequestThumbnail(fetched);
-        _ = _itemsCache.SaveAsync(_context.AppId, _steamService.CurrentUserId?.m_SteamID ?? 0, Items);
+        _ = _itemsCache.SaveAsync(session, platform.AccountId, Items);
         return fetched;
     }
 
@@ -409,12 +446,19 @@ public partial class ItemListViewModel : ViewModelBase
         OnPropertyChanged(nameof(AllSelected));
     }
 
+    // No telemetry for mod.io for now.
+    private void TrackSteam(string eventType)
+    {
+        if (_context.Platform == WorkshopPlatform.Steam) _telemetry.Track(eventType, _context.AppId);
+    }
+
     // ─── Bulk visibility ──────────────────────────────────────────────────────
 
     [RelayCommand]
     private async Task SetSelectedVisibilityAsync(VisibilityType visibility)
     {
         if (IsBulkProcessing || !HasSelection) return;
+        if (_platforms.Current is not { } platform) return;
 
         var targets = Items.Where(i => i.IsSelected).ToList();
         IsBulkProcessing = true;
@@ -425,15 +469,10 @@ public partial class ItemListViewModel : ViewModelBase
             {
                 try
                 {
-                    var ok = await _steamService.UpdateItemAsync(
-                        item.PublishedFileId,
-                        title: null, description: null,
-                        contentFolderPath: null, previewImagePath: null,
-                        visibility: visibility,
-                        tags: null, changelog: null);
+                    var ok = await platform.SetVisibilityAsync(item.Id, visibility);
 
                     if (ok)
-                        _telemetry.Track(TelemetryEventTypes.ModUpdated, _context.AppId);
+                        TrackSteam(TelemetryEventTypes.ModUpdated);
                     else
                         failed.Add(item.Title);
                 }
@@ -485,6 +524,7 @@ public partial class ItemListViewModel : ViewModelBase
     private async Task ConfirmBulkDeleteAsync()
     {
         if (!IsBulkDeleteConfirmed || IsBulkProcessing) return;
+        if (_platforms.Current is not { } platform) return;
 
         var targets = Items.Where(i => i.IsSelected).ToList();
         if (targets.Count == 0)
@@ -501,10 +541,10 @@ public partial class ItemListViewModel : ViewModelBase
             {
                 try
                 {
-                    var ok = await _steamService.DeleteItemAsync(item.PublishedFileId);
+                    var ok = await platform.DeleteModAsync(item.Id);
                     if (ok)
                     {
-                        _telemetry.Track(TelemetryEventTypes.ModDeleted, _context.AppId);
+                        TrackSteam(TelemetryEventTypes.ModDeleted);
                     }
                     else
                     {

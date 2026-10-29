@@ -42,9 +42,11 @@ public partial class SetupWizardViewModel : ViewModelBase
     /// </summary>
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ValidateAppIdCommand))]
+    [NotifyPropertyChangedFor(nameof(CanCreate))]
     private bool _isPrivacyAccepted;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanCreate))]
     private bool _isValid;
 
     [ObservableProperty]
@@ -66,7 +68,7 @@ public partial class SetupWizardViewModel : ViewModelBase
     /// </summary>
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ValidateAppIdCommand))]
-    [NotifyPropertyChangedFor(nameof(RequiresLegalAcceptance))]
+    [NotifyPropertyChangedFor(nameof(RequiresLegalAcceptance), nameof(CanCreate))]
     private bool _isTelemetryEnabled;
 
     /// <summary>
@@ -95,10 +97,33 @@ public partial class SetupWizardViewModel : ViewModelBase
     /// </summary>
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ValidateAppIdCommand))]
-    [NotifyPropertyChangedFor(nameof(RequiresLegalAcceptance))]
+    [NotifyPropertyChangedFor(nameof(RequiresLegalAcceptance), nameof(CanCreate))]
     private bool _isDiscordPresenceEnabled;
 
     private uint _validatedAppId;
+
+    /// <summary>Platform the first session publishes to.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsSteam), nameof(IsModio), nameof(CanCreate))]
+    private WorkshopPlatform _platform = WorkshopPlatform.Steam;
+
+    public bool IsSteam => Platform == WorkshopPlatform.Steam;
+
+    public bool IsModio => Platform == WorkshopPlatform.ModIo;
+
+    public ModioSessionSetupViewModel Modio { get; }
+
+    /// <summary>The Steam path is already gated at validation; mod.io has no validation step.</summary>
+    public bool CanCreate => IsSteam ? IsValid : Modio.IsReady && (!RequiresLegalAcceptance || IsPrivacyAccepted);
+
+    [RelayCommand]
+    private void SelectPlatform(WorkshopPlatform platform) => Platform = platform;
+
+    partial void OnPlatformChanged(WorkshopPlatform value)
+    {
+        HasError = false;
+        ErrorMessage = null;
+    }
 
     public event Action? SessionCreated;
 
@@ -106,12 +131,15 @@ public partial class SetupWizardViewModel : ViewModelBase
         ISessionRepository sessionRepository,
         AppIdValidator validator,
         SessionManager sessionManager,
-        ISettingsService settingsService)
+        ISettingsService settingsService,
+        ModioSessionSetupViewModel modio)
     {
         _sessionRepository = sessionRepository;
         _validator = validator;
         _sessionManager = sessionManager;
         _settingsService = settingsService;
+        Modio = modio;
+        Modio.ReadinessChanged += () => OnPropertyChanged(nameof(CanCreate));
 
         // Mirror the existing stored preference so reopening the wizard
         // (via --force-setup-wizard) pre-fills the user's last choice.
@@ -195,17 +223,13 @@ public partial class SetupWizardViewModel : ViewModelBase
     [RelayCommand]
     private async Task CreateSessionAsync()
     {
-        if (!IsValid || _validatedAppId == 0 || string.IsNullOrEmpty(GameName))
-        {
-            return;
-        }
+        if (!CanCreate) return;
+        if (IsSteam && (_validatedAppId == 0 || string.IsNullOrEmpty(GameName))) return;
 
         IsCreating = true;
 
         try
         {
-            Log.Info($"Creating session for {GameName} (AppId: {_validatedAppId})");
-
             // Commit the user's telemetry choice BEFORE anything else so the
             // AppStart event that App.axaml.cs fires next honors consent.
             // The consent version is stamped here too so the upgrade modal in
@@ -227,14 +251,18 @@ public partial class SetupWizardViewModel : ViewModelBase
 
             _settingsService.Save();
 
-            // Create the session
-            var session = await _sessionManager.CreateSteamSessionAsync(_validatedAppId, GameName);
-
-            // Set it as active
-            await _sessionRepository.SetActiveSessionAsync(session.Id);
-
-            // Update steam_appid.txt
-            await SessionManager.UpdateSteamAppIdFileAsync(_validatedAppId);
+            if (IsModio)
+            {
+                var modio = await _sessionManager.CreateModioSessionAsync(Modio.SelectedGame!);
+                await _sessionRepository.SetActiveSessionAsync(modio.Id);
+            }
+            else
+            {
+                Log.Info($"Creating session for {GameName} (AppId: {_validatedAppId})");
+                var session = await _sessionManager.CreateSteamSessionAsync(_validatedAppId, GameName!);
+                await _sessionRepository.SetActiveSessionAsync(session.Id);
+                await SessionManager.UpdateSteamAppIdFileAsync(_validatedAppId);
+            }
 
             Log.Debug("Session created successfully");
 

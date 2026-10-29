@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
@@ -20,6 +21,7 @@ public partial class SessionListViewModel(
     ISessionRepository repository,
     SteamAppMetadataService appMetadata,
     SteamImageCache images,
+    ThumbnailCache thumbnails,
     ISessionContext context) : ViewModelBase
 {
     private static readonly Logger Log = LogService.GetLogger<SessionListViewModel>();
@@ -94,7 +96,12 @@ public partial class SessionListViewModel(
 
     private async Task LoadIconAsync(WorkshopSession session)
     {
-        // mod.io game logos arrive with the mod.io client.
+        if (session is ModioSession { IconUrl: { } iconUrl })
+        {
+            if (await thumbnails.GetAsync(iconUrl, CancellationToken.None) is { } modioIcon)
+                await ShowIconAsync(session, modioIcon);
+            return;
+        }
         if (session is not SteamSession steam) return;
 
         try

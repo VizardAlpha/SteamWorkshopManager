@@ -18,7 +18,9 @@ public class ViewLocator : IDataTemplate
             HomeViewModel => new HomeView(),
             ItemListViewModel => new ItemListView(),
             ItemEditorViewModel => new ItemEditorView(),
+            ModioItemEditorViewModel => new ModioItemEditorView(),
             CreateItemViewModel => new CreateItemView(),
+            CreateModioItemViewModel => new CreateModioItemView(),
             SettingsViewModel => new SettingsView(),
             _ => new TextBlock { Text = $"View not found for: {param.GetType().Name}" }
         };

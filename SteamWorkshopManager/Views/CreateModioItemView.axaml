@@ -1,0 +1,178 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:SteamWorkshopManager.ViewModels"
+             xmlns:icons="using:Material.Icons.Avalonia"
+             xmlns:modioViews="using:SteamWorkshopManager.Views.Modio"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="640"
+             x:Class="SteamWorkshopManager.Views.CreateModioItemView"
+             x:DataType="vm:CreateModioItemViewModel">
+
+    <UserControl.Styles>
+        <StyleInclude Source="avares://SteamWorkshopManager/Themes/ModioEditorStyles.axaml"/>
+        <Style Selector="Border.step-number">
+            <Setter Property="Width" Value="20"/>
+            <Setter Property="Height" Value="20"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceOverlayBrush}"/>
+        </Style>
+        <Style Selector="Border.step-number > TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="*,Auto">
+        <Grid Grid.Row="0" ColumnDefinitions="240,*" Margin="24,16">
+
+            <!-- LEFT: preview, title, steps -->
+            <Border Grid.Column="0"
+                    Background="{DynamicResource SurfaceCardBrush}"
+                    BorderBrush="{DynamicResource BorderSubtleBrush}"
+                    BorderThickness="1"
+                    CornerRadius="10"
+                    Padding="12"
+                    Margin="0,0,16,0"
+                    VerticalAlignment="Top">
+                <StackPanel Spacing="2">
+                    <Border CornerRadius="8" ClipToBounds="True" Height="120"
+                            Background="{DynamicResource SurfaceElevatedBrush}">
+                        <Panel>
+                            <Image Source="{Binding Details.Logo}" Stretch="UniformToFill"/>
+                            <icons:MaterialIcon Kind="ImageOutline" Width="28" Height="28" Opacity="0.4"
+                                                Foreground="{DynamicResource TextMutedBrush}"
+                                                IsVisible="{Binding Details.Logo, Converter={x:Static ObjectConverters.IsNull}}"/>
+                        </Panel>
+                    </Border>
+                    <TextBlock Text="{Binding Details.Title}"
+                               Margin="4,10,4,4"
+                               FontSize="15" FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimaryBrush}"
+                               TextWrapping="Wrap"/>
+                    <TextBlock Text="{DynamicResource ModioCreateTitle}"
+                               Margin="4,10,4,4"
+                               FontSize="15" FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextMutedBrush}"
+                               IsVisible="{Binding Details.Title, Converter={x:Static StringConverters.IsNullOrEmpty}}"/>
+                    <Button Classes="secondary-action" FontSize="12" Margin="0,4,0,0"
+                            Command="{Binding OpenOnModioCommand}"
+                            IsVisible="{Binding HasProfileUrl}"
+                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <icons:MaterialIcon Kind="OpenInNew" Width="12" Height="12"/>
+                            <TextBlock Text="{DynamicResource ModioOpenModPage}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Border Height="1" Background="{DynamicResource BorderSubtleBrush}" Margin="4,10,4,8"/>
+
+                    <Button Classes="nav-item" Classes.active="{Binding IsDetailsActive}" Command="{Binding NavigateToDetailsCommand}">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <Border Classes="step-number"><TextBlock Text="1"/></Border>
+                            <TextBlock Grid.Column="1" Margin="10,0,0,0" Text="{DynamicResource ModioDetails}" VerticalAlignment="Center"/>
+                            <icons:MaterialIcon Grid.Column="2" Kind="Check" Width="14" Height="14"
+                                                Foreground="{DynamicResource FeedbackSuccessBrush}"
+                                                IsVisible="{Binding IsModCreated}"/>
+                        </Grid>
+                    </Button>
+                    <Button Classes="nav-item" Classes.active="{Binding IsMediaActive}" Command="{Binding NavigateToMediaCommand}"
+                            IsEnabled="{Binding IsModCreated}">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <Border Classes="step-number"><TextBlock Text="2"/></Border>
+                            <TextBlock Grid.Column="1" Margin="10,0,0,0" Text="{DynamicResource ModioMedia}" VerticalAlignment="Center"/>
+                            <icons:MaterialIcon Grid.Column="2" Kind="Check" Width="14" Height="14"
+                                                Foreground="{DynamicResource FeedbackSuccessBrush}"
+                                                IsVisible="{Binding IsMediaDone}"/>
+                        </Grid>
+                    </Button>
+                    <Button Classes="nav-item" Classes.active="{Binding IsFileActive}" Command="{Binding NavigateToFileCommand}"
+                            IsEnabled="{Binding IsModCreated}">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <Border Classes="step-number"><TextBlock Text="3"/></Border>
+                            <TextBlock Grid.Column="1" Margin="10,0,0,0" Text="{DynamicResource ModioFile}" VerticalAlignment="Center"/>
+                        </Grid>
+                    </Button>
+
+                    <!-- The mod exists from step 1 on; without a file nobody can play it -->
+                    <Border Margin="0,10,0,0" Padding="10,8" CornerRadius="6"
+                            Background="{DynamicResource SurfaceElevatedBrush}"
+                            IsVisible="{Binding IsModCreated}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <icons:MaterialIcon Kind="InformationOutline" Width="14" Height="14"
+                                                Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Top"/>
+                            <TextBlock Text="{DynamicResource ModioCreatedNoFileYet}"
+                                       FontSize="11" TextWrapping="Wrap" MaxWidth="180"
+                                       Foreground="{DynamicResource TextMutedBrush}"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <!-- RIGHT: active step and its actions -->
+            <Grid Grid.Column="1" RowDefinitions="*,Auto">
+                <ScrollViewer IsVisible="{Binding IsDetailsActive}">
+                    <modioViews:ModioDetailsView DataContext="{Binding Details}" Margin="0,20"/>
+                </ScrollViewer>
+                <ScrollViewer IsVisible="{Binding IsMediaActive}">
+                    <modioViews:ModioMediaView DataContext="{Binding Media}" Margin="0,20"/>
+                </ScrollViewer>
+                <ScrollViewer IsVisible="{Binding IsFileActive}">
+                    <modioViews:ModioFileView DataContext="{Binding File}" Margin="0,20"/>
+                </ScrollViewer>
+
+                <Border Grid.Row="1" Padding="0,12,0,0"
+                        BorderBrush="{DynamicResource BorderSubtleBrush}" BorderThickness="0,1,0,0">
+                    <Panel>
+                        <!-- Step 1 -->
+                        <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right" IsVisible="{Binding IsDetailsActive}">
+                            <Button Classes="primary-action" Command="{Binding CreateModCommand}" MinWidth="180">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <icons:MaterialIcon Kind="Plus" Width="14" Height="14"/>
+                                    <TextBlock Text="{DynamicResource ModioCreateMod}" IsVisible="{Binding !IsModCreated}" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{DynamicResource ModioNextStep}" IsVisible="{Binding IsModCreated}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                        <!-- Step 2 -->
+                        <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right" IsVisible="{Binding IsMediaActive}">
+                            <Button Classes="secondary-action" Command="{Binding SkipMediaCommand}" Content="{DynamicResource ModioSkip}"/>
+                            <Button Classes="primary-action" Command="{Binding SaveMediaCommand}" MinWidth="180">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <icons:MaterialIcon Kind="ImageMultipleOutline" Width="14" Height="14"/>
+                                    <TextBlock Text="{DynamicResource ModioSaveMedia}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                        <!-- Step 3 -->
+                        <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right" IsVisible="{Binding IsFileActive}">
+                            <Button Classes="secondary-action" Command="{Binding FinishWithoutFileCommand}" Content="{DynamicResource ModioFinishWithoutFile}"/>
+                            <Button Classes="primary-action" Command="{Binding UploadFileCommand}" MinWidth="180">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <icons:MaterialIcon Kind="CloudUploadOutline" Width="14" Height="14"/>
+                                    <TextBlock Text="{DynamicResource ModioUploadAndFinish}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Panel>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <!-- Error message -->
+        <Border Grid.Row="1"
+                IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                Background="#1FC23B2E" Padding="16" Margin="24,0,24,16" CornerRadius="8"
+                BorderBrush="{DynamicResource FeedbackDangerBrush}" BorderThickness="1">
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <icons:MaterialIcon Kind="AlertCircleOutline" Width="18" Height="18"
+                                    Foreground="{DynamicResource FeedbackDangerBrush}"
+                                    VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding ErrorMessage}" TextWrapping="Wrap"
+                           Foreground="{DynamicResource FeedbackDangerTextBrush}"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

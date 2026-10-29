@@ -25,5 +25,7 @@ public sealed record WorkshopItemDto(
     long FileSize,
     ulong OwnerId,
     bool IsOwner,
-    List<WorkshopPreviewDto> AdditionalPreviews
+    List<WorkshopPreviewDto> AdditionalPreviews,
+    string? Summary = null,
+    string? ProfileUrl = null
 );

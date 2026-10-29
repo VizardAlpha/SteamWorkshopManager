@@ -1,0 +1,217 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:modio="using:SteamWorkshopManager.ViewModels.Modio"
+             xmlns:models="using:SteamWorkshopManager.Models"
+             xmlns:behaviors="using:SteamWorkshopManager.Behaviors"
+             xmlns:icons="using:Material.Icons.Avalonia"
+             xmlns:controls="using:SteamWorkshopManager.Views.Controls"
+             x:Class="SteamWorkshopManager.Views.Modio.ModioDetailsView"
+             x:DataType="modio:ModioDetailsViewModel">
+
+    <UserControl.Styles>
+        <StyleInclude Source="avares://SteamWorkshopManager/Themes/ModioEditorStyles.axaml"/>
+    </UserControl.Styles>
+
+    <StackPanel Spacing="14" IsEnabled="{Binding !IsLocked}">
+
+        <StackPanel Margin="0,0,0,6">
+            <TextBlock Classes="panel-title" Text="{DynamicResource ModioDetails}"/>
+            <TextBlock Classes="panel-sub" Text="{DynamicResource ModioDetailsSub}" Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <!-- Logo -->
+        <Border Classes="section-card">
+            <StackPanel>
+                <Grid Margin="16,14,16,12" ColumnDefinitions="*,Auto">
+                    <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                        <TextBlock Classes="card-title" Text="{DynamicResource ModioLogo}"/>
+                        <TextBlock Text="*" Foreground="{DynamicResource FeedbackDangerBrush}" IsVisible="{Binding IsCreating}"/>
+                    </StackPanel>
+                    <TextBlock Grid.Column="1" Classes="card-meta" Text="{DynamicResource ModioLogoMeta}" VerticalAlignment="Center"/>
+                </Grid>
+                <Border Height="1" Background="{DynamicResource BorderSubtleBrush}"/>
+                <ContentControl Classes="dropzone" Margin="16" Padding="12"
+                                behaviors:DropZone.Accepts="Images"
+                                behaviors:DropZone.Command="{Binding LogoDroppedCommand}">
+                    <Grid ColumnDefinitions="160,*">
+                        <Border Width="160" Height="90"
+                                Background="{DynamicResource SurfaceElevatedBrush}"
+                                BorderBrush="{DynamicResource BorderSubtleBrush}"
+                                BorderThickness="1"
+                                CornerRadius="6" ClipToBounds="True">
+                            <Panel>
+                                <Image Source="{Binding Logo}" Stretch="UniformToFill"
+                                       IsVisible="{Binding Logo, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                <icons:MaterialIcon Kind="ImageOutline" Width="22" Height="22"
+                                                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                    Opacity="0.3"
+                                                    Foreground="{DynamicResource TextMutedBrush}"
+                                                    IsVisible="{Binding Logo, Converter={x:Static ObjectConverters.IsNull}}"/>
+                            </Panel>
+                        </Border>
+                        <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center" Spacing="8">
+                            <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding HasLogoPath}">
+                                <TextBlock Text="{Binding LogoPath}"
+                                           TextTrimming="CharacterEllipsis" MaxWidth="360"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           FontSize="13"/>
+                                <TextBlock Text="{Binding LogoSize}"
+                                           FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource AccentPrimaryBrush}"/>
+                            </StackPanel>
+                            <TextBlock Text="{DynamicResource ModioLogoKeep}"
+                                       Foreground="{DynamicResource TextMutedBrush}" FontSize="13"
+                                       IsVisible="{Binding !HasLogoPath}"/>
+                            <TextBlock Classes="field-error" Text="{Binding LogoError}"
+                                       IsVisible="{Binding LogoError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                            <Button Classes="secondary-action" Command="{Binding BrowseLogoCommand}" HorizontalAlignment="Left">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <icons:MaterialIcon Kind="ImageOutline" Width="14" Height="14"/>
+                                    <TextBlock Text="{DynamicResource ChooseImage}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </ContentControl>
+            </StackPanel>
+        </Border>
+
+        <!-- Name, summary, description, homepage -->
+        <Border Classes="section-card">
+            <StackPanel>
+                <TextBlock Classes="card-title" Text="{DynamicResource ModioInformation}" Margin="16,14,16,12"/>
+                <Border Height="1" Background="{DynamicResource BorderSubtleBrush}"/>
+                <StackPanel Margin="16" Spacing="14">
+                    <StackPanel>
+                        <TextBlock Classes="field-label" Text="{DynamicResource Title}"/>
+                        <TextBox Text="{Binding Title}"/>
+                    </StackPanel>
+                    <StackPanel>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Classes="field-label" Text="{DynamicResource ModioSummary}"/>
+                            <TextBlock Grid.Column="1" Classes="card-meta"
+                                       Text="{Binding SummaryCounter}"
+                                       Classes.over="{Binding IsSummaryTooLong}"/>
+                        </Grid>
+                        <TextBox Text="{Binding Summary}" TextWrapping="Wrap" MinHeight="56"/>
+                    </StackPanel>
+                    <StackPanel>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Classes="field-label" Text="{DynamicResource Description}"/>
+                            <TextBlock Grid.Column="1" Classes="card-meta"
+                                       Text="{Binding DescriptionCounter}"
+                                       Classes.over="{Binding IsDescriptionTooLong}"/>
+                        </Grid>
+                        <controls:MarkupEditorControl Text="{Binding Description}"
+                                                      Markup="Html"
+                                                      EditorHeight="220"/>
+                        <TextBlock Classes="card-meta" Margin="0,6,0,0"
+                                   Text="{DynamicResource ModioDescriptionHint}"
+                                   TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <StackPanel>
+                        <TextBlock Classes="field-label" Text="{DynamicResource ModioHomepage}"/>
+                        <TextBox Text="{Binding HomepageUrl}" PlaceholderText="https://"/>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Visibility and community -->
+        <Border Classes="section-card">
+            <StackPanel>
+                <TextBlock Classes="card-title" Text="{DynamicResource ModioVisibilityCommunity}" Margin="16,14,16,12"/>
+                <Border Height="1" Background="{DynamicResource BorderSubtleBrush}"/>
+                <StackPanel Margin="16" Spacing="14">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Spacing="2">
+                            <TextBlock Classes="field-label" Margin="0" Text="{DynamicResource ModioPublic}"/>
+                            <TextBlock Classes="card-meta" Text="{DynamicResource ModioPublicHint}" TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding IsPublic}" OnContent="" OffContent="" VerticalAlignment="Center"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Classes="field-label" Margin="0" VerticalAlignment="Center" Text="{DynamicResource ModioAllowComments}"/>
+                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding AllowComments}" OnContent="" OffContent="" VerticalAlignment="Center"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Classes="field-label" Margin="0" VerticalAlignment="Center" Text="{DynamicResource ModioAllowCollections}"/>
+                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding AllowCollections}" OnContent="" OffContent="" VerticalAlignment="Center"/>
+                    </Grid>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Tags -->
+        <Border Classes="section-card">
+            <StackPanel>
+                <Grid Margin="16,14,16,12" ColumnDefinitions="*,Auto,Auto">
+                    <TextBlock Classes="card-title" Text="{DynamicResource Tags}" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="1" Classes="card-meta"
+                               Text="{Binding Tags.TagsLastUpdatedText}"
+                               VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <Button Grid.Column="2" Classes="secondary-action" FontSize="12"
+                            Command="{Binding Tags.RefreshTagsCommand}"
+                            IsEnabled="{Binding !Tags.IsRefreshingTags}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <icons:MaterialIcon Kind="Refresh" Width="12" Height="12"/>
+                            <TextBlock Text="{DynamicResource RefreshTags}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+                <Border Height="1" Background="{DynamicResource BorderSubtleBrush}"/>
+                <StackPanel Margin="16" Spacing="12">
+                    <TextBlock Text="{DynamicResource ModioNoTags}"
+                               IsVisible="{Binding !Tags.HasTags}"
+                               Foreground="{DynamicResource TextMutedBrush}"
+                               FontSize="12" FontStyle="Italic"/>
+                    <ItemsControl ItemsSource="{Binding Tags.TagCategories}" IsVisible="{Binding Tags.HasTags}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="models:TagCategory">
+                                <StackPanel Margin="0,0,0,12">
+                                    <TextBlock Classes="field-label" Text="{Binding Name}"/>
+                                    <Grid IsVisible="{Binding IsDropdown}"
+                                          ColumnDefinitions="*,Auto"
+                                          MaxWidth="320"
+                                          HorizontalAlignment="Left">
+                                        <ComboBox ItemsSource="{Binding Tags}"
+                                                  SelectedItem="{Binding SelectedTag}"
+                                                  PlaceholderText="-"
+                                                  HorizontalAlignment="Stretch">
+                                            <ComboBox.ItemTemplate>
+                                                <DataTemplate DataType="models:WorkshopTag">
+                                                    <TextBlock Text="{Binding Name}"/>
+                                                </DataTemplate>
+                                            </ComboBox.ItemTemplate>
+                                        </ComboBox>
+                                        <Button Grid.Column="1"
+                                                Command="{Binding ClearSelectedTagCommand}"
+                                                IsVisible="{Binding SelectedTag, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                                Classes="chip-remove"
+                                                Margin="4,0,0,0">
+                                            <icons:MaterialIcon Kind="Close" Width="12" Height="12"/>
+                                        </Button>
+                                    </Grid>
+                                    <ItemsControl ItemsSource="{Binding Tags}" IsVisible="{Binding !IsDropdown}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel Orientation="Horizontal"/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="models:WorkshopTag">
+                                                <ToggleButton Classes="tag-chip"
+                                                              IsChecked="{Binding IsSelected}"
+                                                              Content="{Binding Name}"/>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

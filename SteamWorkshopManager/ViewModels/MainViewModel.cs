@@ -13,6 +13,7 @@ using SteamWorkshopManager.Services.Cache;
 using SteamWorkshopManager.Services.Core;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Notifications;
+using SteamWorkshopManager.Services.Platforms.Modio;
 using SteamWorkshopManager.Services.Presence;
 using SteamWorkshopManager.Services.Session;
 using SteamWorkshopManager.Services.Steam;
@@ -35,6 +36,7 @@ public partial class MainViewModel : ViewModelBase
     private readonly ISessionContext _context;
     private readonly IViewModelFactory _viewModels;
     private readonly ICacheStore _cache;
+    private readonly ModioAccount _modioAccount;
 
     [ObservableProperty]
     private ViewModelBase? _currentView;
@@ -104,8 +106,10 @@ public partial class MainViewModel : ViewModelBase
         UpdateController updates,
         ISessionContext context,
         IViewModelFactory viewModels,
-        ICacheStore cache)
+        ICacheStore cache,
+        ModioAccount modioAccount)
     {
+        _modioAccount = modioAccount;
         Updates = updates;
         _context = context;
         _viewModels = viewModels;
@@ -146,6 +150,9 @@ public partial class MainViewModel : ViewModelBase
 
         _presence.Sync();
 
+        _modioAccount.Changed += OnModioAccountChanged;
+        _modioAccount.Expired += OnModioTokenExpired;
+
         _cache.LimitReached += OnCacheLimitReached;
         _cache.Changed += OnCacheChanged;
         LocalizationService.Instance.LanguageChanged += () => OnPropertyChanged(nameof(CacheFullBannerText));
@@ -165,6 +172,13 @@ public partial class MainViewModel : ViewModelBase
             var result = _sessionHost.LastInitResult;
             await Dispatcher.UIThread.InvokeAsync(async () =>
             {
+                if (_context.Platform == WorkshopPlatform.ModIo)
+                {
+                    Connection.ApplyModio(_modioAccount.IsSignedIn);
+                    if (_modioAccount.IsSignedIn) await ItemListViewModel.LoadItemsAsync();
+                    return;
+                }
+
                 Connection.Apply(result);
                 switch (result)
                 {
@@ -186,6 +200,29 @@ public partial class MainViewModel : ViewModelBase
             Log.Error("Initial Steam state could not be applied", ex);
         }
     }
+
+    /// <summary>Footer state for the active session: Steam's init result, or the mod.io sign-in.</summary>
+    private void ApplyConnection(SteamInitResult steamResult)
+    {
+        if (_context.Platform == WorkshopPlatform.ModIo) Connection.ApplyModio(_modioAccount.IsSignedIn);
+        else Connection.Apply(steamResult);
+    }
+
+    private bool IsPlatformReady(SteamInitResult steamResult) =>
+        _context.Platform == WorkshopPlatform.ModIo ? _modioAccount.IsSignedIn : steamResult == SteamInitResult.Success;
+
+    // Raised from whichever thread signed in or out (an expired token comes from a background call).
+    private void OnModioAccountChanged() => Dispatcher.UIThread.Post(() =>
+    {
+        if (_context.Platform != WorkshopPlatform.ModIo) return;
+        Connection.ApplyModio(_modioAccount.IsSignedIn);
+        HomeViewModel.OnSessionChanged();
+        if (!_modioAccount.IsSignedIn) ItemListViewModel.DisposeAndClearItems();
+        _ = ItemListViewModel.LoadItemsAsync();
+    });
+
+    private void OnModioTokenExpired() =>
+        Dispatcher.UIThread.Post(() => _notificationService.ShowError(Loc["ModioSessionExpired"]));
 
     // SessionHost raises both from the threadpool after Process.Exited.
     private void OnWorkerRecovered() => Dispatcher.UIThread.Post(() =>
@@ -220,8 +257,19 @@ public partial class MainViewModel : ViewModelBase
                 editor.ItemDeleted -= OnItemDeleted;
                 editor.Dispose();
                 break;
+            case ModioItemEditorViewModel modioEditor:
+                modioEditor.ItemUpdated -= OnModioItemUpdated;
+                modioEditor.ItemDeleted -= OnItemDeleted;
+                modioEditor.Dispose();
+                break;
             case CreateItemViewModel creator:
                 creator.ItemCreated -= OnItemCreated;
+                break;
+            case CreateModioItemViewModel modioCreator:
+                modioCreator.ItemCreated -= OnModioItemCreated;
+                // Created, then left before Finish: the list must still show it.
+                if (modioCreator.LeftUnfinished) _ = ItemListViewModel.LoadItemsAsync();
+                modioCreator.Dispose();
                 break;
             case SettingsViewModel settings:
                 settings.Detach();
@@ -238,6 +286,12 @@ public partial class MainViewModel : ViewModelBase
 
     private void OpenEditor(WorkshopItem item)
     {
+        if (_context.Platform == WorkshopPlatform.ModIo)
+        {
+            OpenModioEditor(item);
+            return;
+        }
+
         DetachCurrentView();
         SelectedItem = item;
         var editor = _viewModels.Create<ItemEditorViewModel>(item, Upload.Reporter);
@@ -247,19 +301,44 @@ public partial class MainViewModel : ViewModelBase
         ActiveTab = ShellTab.MyMods;
     }
 
+    private void OpenModioEditor(WorkshopItem item)
+    {
+        DetachCurrentView();
+        SelectedItem = item;
+        var editor = _viewModels.Create<ModioItemEditorViewModel>(item, Upload.Reporter);
+        editor.ItemUpdated += OnModioItemUpdated;
+        editor.ItemDeleted += OnItemDeleted;
+        CurrentView = editor;
+        ActiveTab = ShellTab.MyMods;
+    }
+
     private void OpenCreator()
     {
         DetachCurrentView();
+        if (_context.Platform == WorkshopPlatform.ModIo)
+        {
+            var modioCreator = _viewModels.Create<CreateModioItemViewModel>(Upload.Reporter);
+            modioCreator.ItemCreated += OnModioItemCreated;
+            CurrentView = modioCreator;
+            return;
+        }
+
         var creator = _viewModels.Create<CreateItemViewModel>(Upload.Reporter);
         creator.ItemCreated += OnItemCreated;
         CurrentView = creator;
     }
 
+    private void OnModioItemUpdated(ulong id) => FireAndForget(async () =>
+    {
+        if (await ItemListViewModel.RefreshItemAsync(id) is null)
+            await ItemListViewModel.LoadItemsAsync();
+    }, "Post-save refresh");
+
     /// <summary>Post-save: keep the editor mounted, refresh only the matching list row.</summary>
     private void OnItemUpdated(PublishedFileId_t fileId) => FireAndForget(async () =>
     {
         // Single-item fetch failed: best-effort full reload so the next list visit isn't stale.
-        if (await ItemListViewModel.RefreshItemAsync(fileId) is null)
+        if (await ItemListViewModel.RefreshItemAsync(fileId.m_PublishedFileId) is null)
             await ItemListViewModel.LoadItemsAsync();
     }, "Post-save refresh");
 
@@ -274,11 +353,15 @@ public partial class MainViewModel : ViewModelBase
     /// Post-publish: fetch only the new item and open it in the editor. If Steam can't
     /// resolve the fresh id yet (indexing latency), fall back to a full list reload.
     /// </summary>
-    private void OnItemCreated(PublishedFileId_t fileId) => FireAndForget(async () =>
+    private void OnItemCreated(PublishedFileId_t fileId) => OpenCreatedItem(fileId.m_PublishedFileId);
+
+    private void OnModioItemCreated(ulong id) => OpenCreatedItem(id);
+
+    private void OpenCreatedItem(ulong id) => FireAndForget(async () =>
     {
         DetachCurrentView();
 
-        var item = await ItemListViewModel.RefreshItemAsync(fileId);
+        var item = await ItemListViewModel.RefreshItemAsync(id);
         if (item is not null)
         {
             OpenEditor(item);
@@ -453,22 +536,22 @@ public partial class MainViewModel : ViewModelBase
             var initResult = await _sessionManager.SwitchSessionAsync(session);
 
             SessionList.MarkActive(session.Id);
-            Connection.Apply(initResult);
+            ApplyConnection(initResult);
             NotifySessionChanged();
 
             switch (CurrentView)
             {
-                case CreateItemViewModel creator:
+                case CreateItemViewModel creator when session is SteamSession:
                     creator.OnSessionChanged();
                     break;
-                // The mod on screen belongs to the previous session.
-                case ItemEditorViewModel:
+                // The mod on screen belongs to the previous session; a create form is for one platform.
+                case ItemEditorViewModel or ModioItemEditorViewModel or CreateItemViewModel or CreateModioItemViewModel:
                     Show(ItemListViewModel, ShellTab.MyMods);
                     break;
             }
 
             // Not awaited: the command keeps the flyout disabled while it runs.
-            if (initResult == SteamInitResult.Success)
+            if (IsPlatformReady(initResult))
                 _ = ItemListViewModel.LoadItemsAsync();
         }
         catch (Exception ex)
@@ -525,6 +608,7 @@ public partial class MainViewModel : ViewModelBase
         OnPropertyChanged(nameof(HasActiveSession));
         OnPropertyChanged(nameof(WindowTitle));
         HomeViewModel.OnSessionChanged();
+        ItemListViewModel.OnSessionChanged();
         RefreshPresence();
     }
 

@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -19,8 +18,8 @@ public sealed record SteamCredentials(string? RefreshToken, string? AccessToken,
 internal partial class SteamCredentialsJsonContext : JsonSerializerContext;
 
 /// <summary>
-/// Persists Steam login tokens outside settings.json: machine-local folder,
-/// DPAPI (current user) on Windows, owner-only file permissions elsewhere.
+/// Persists Steam login tokens outside settings.json, in the machine-local folder
+/// through <see cref="ProtectedFile"/>.
 /// </summary>
 public static class SteamCredentialStore
 {
@@ -36,7 +35,7 @@ public static class SteamCredentialStore
         try
         {
             if (!File.Exists(FilePath)) return null;
-            var json = Unprotect(File.ReadAllBytes(FilePath));
+            var json = ProtectedFile.Read(FilePath, Entropy);
             return JsonSerializer.Deserialize(json, SteamCredentialsJsonContext.Default.SteamCredentials);
         }
         catch (Exception ex)
@@ -57,15 +56,8 @@ public static class SteamCredentialStore
 
         try
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(FilePath)!);
             var json = JsonSerializer.SerializeToUtf8Bytes(credentials, SteamCredentialsJsonContext.Default.SteamCredentials);
-            var tmp = FilePath + ".tmp";
-            using (var fs = new FileStream(tmp, CreateOptions()))
-            {
-                fs.Write(Protect(json));
-                fs.Flush(flushToDisk: true);
-            }
-            File.Move(tmp, FilePath, overwrite: true);
+            ProtectedFile.Write(FilePath, json, Entropy);
         }
         catch (Exception ex)
         {
@@ -84,22 +76,4 @@ public static class SteamCredentialStore
             Log.Warning($"Failed to delete Steam credentials: {ex.Message}");
         }
     }
-
-    private static FileStreamOptions CreateOptions()
-    {
-        var options = new FileStreamOptions { Mode = FileMode.Create, Access = FileAccess.Write, Share = FileShare.None };
-        if (!OperatingSystem.IsWindows())
-            options.UnixCreateMode = UnixFileMode.UserRead | UnixFileMode.UserWrite;
-        return options;
-    }
-
-    private static byte[] Protect(byte[] data) =>
-        OperatingSystem.IsWindows()
-            ? ProtectedData.Protect(data, Entropy, DataProtectionScope.CurrentUser)
-            : data;
-
-    private static byte[] Unprotect(byte[] data) =>
-        OperatingSystem.IsWindows()
-            ? ProtectedData.Unprotect(data, Entropy, DataProtectionScope.CurrentUser)
-            : data;
 }

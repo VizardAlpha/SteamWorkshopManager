@@ -6,6 +6,7 @@ using SteamWorkshopManager.Services.Cache;
 using SteamWorkshopManager.Services.Core;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Notifications;
+using SteamWorkshopManager.Services.Platforms;
 using SteamWorkshopManager.Services.Presence;
 using SteamWorkshopManager.Services.Session;
 using SteamWorkshopManager.Services.Steam;
@@ -54,6 +55,14 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<SessionHost>();
         services.AddSingleton<ISteamService, WorkerSteamService>();
         services.AddSingleton<VersioningService>();
+
+        // Platforms behind the shared screens; the active session picks one.
+        services.AddSingleton<IModPlatform, SteamModPlatform>();
+        services.AddSingleton<IModPlatform, Platforms.Modio.ModioModPlatform>();
+        services.AddSingleton<ModPlatforms>();
+        services.AddSingleton<Platforms.Modio.ModioApiClient>();
+        services.AddSingleton<Platforms.Modio.ModioAccount>();
+        services.AddSingleton<Platforms.Modio.ModioPublisher>();
         services.AddSingleton<SteamAppMetadataService>();
 
         // UI-facing services
@@ -95,6 +104,12 @@ public static class ServiceCollectionExtensions
         services.AddTransient<ViewModels.Editor.PreviewGalleryViewModel>();
         services.AddTransient<ViewModels.Editor.ChangelogHistoryViewModel>();
         services.AddTransient<ViewModels.Editor.TranslationEditorViewModel>();
+        services.AddTransient<ViewModels.ModioSignInViewModel>();
+        services.AddTransient<ViewModels.ModioSessionSetupViewModel>();
+        services.AddTransient<ViewModels.Modio.ModioDetailsViewModel>();
+        services.AddTransient<ViewModels.Modio.ModioMediaViewModel>();
+        services.AddTransient<ViewModels.Modio.ModioFileViewModel>();
+        services.AddTransient<ViewModels.Modio.ModioDependenciesViewModel>();
 
         return services;
     }

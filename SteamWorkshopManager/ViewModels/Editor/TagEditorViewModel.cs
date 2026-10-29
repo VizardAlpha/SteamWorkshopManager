@@ -80,13 +80,14 @@ public partial class TagEditorViewModel(
     [RelayCommand]
     private async Task RefreshTagsAsync()
     {
-        if (context.Current is not SteamSession session) return;
+        if (context.Current is not { } session) return;
 
         IsRefreshingTags = true;
         try
         {
             var selected = SelectedNames.ToHashSet(StringComparer.OrdinalIgnoreCase);
-            await sessionManager.RefreshTagsAsync(session);
+            if (session is ModioSession modio) await sessionManager.RefreshModioTagsAsync(modio);
+            else if (session is SteamSession steam) await sessionManager.RefreshTagsAsync(steam);
 
             BuildCategories(session.TagsByCategory, session.DropdownCategories,
                 (_, tag) => selected.Contains(tag));

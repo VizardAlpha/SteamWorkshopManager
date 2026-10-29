@@ -7,6 +7,7 @@
              xmlns:helpers="using:SteamWorkshopManager.Helpers"
              xmlns:icons="using:Material.Icons.Avalonia"
              xmlns:enums="using:SteamWorkshopManager.Models"
+             xmlns:views="using:SteamWorkshopManager.Views"
              mc:Ignorable="d" d:DesignWidth="960" d:DesignHeight="640"
              x:Class="SteamWorkshopManager.Views.ItemListView"
              x:DataType="vm:ItemListViewModel">
@@ -179,7 +180,7 @@
                            FontSize="20"
                            FontWeight="Medium"
                            Foreground="{DynamicResource TextPrimaryBrush}"/>
-                <TextBlock Text="{DynamicResource MyPublicationsSubtitle}"
+                <TextBlock Text="{Binding SubtitleText}"
                            FontSize="13"
                            Foreground="{DynamicResource TextMutedBrush}"/>
             </StackPanel>
@@ -269,6 +270,7 @@
                                     </MenuItem.CommandParameter>
                                 </MenuItem>
                                 <MenuItem Header="{DynamicResource FriendsOnly}"
+                                          IsVisible="{Binding HasSteamVisibilities}"
                                           Command="{Binding SetSelectedVisibilityCommand}">
                                     <MenuItem.CommandParameter>
                                         <enums:VisibilityType>FriendsOnly</enums:VisibilityType>
@@ -281,6 +283,7 @@
                                     </MenuItem.CommandParameter>
                                 </MenuItem>
                                 <MenuItem Header="{DynamicResource Unlisted}"
+                                          IsVisible="{Binding HasSteamVisibilities}"
                                           Command="{Binding SetSelectedVisibilityCommand}">
                                     <MenuItem.CommandParameter>
                                         <enums:VisibilityType>Unlisted</enums:VisibilityType>
@@ -341,12 +344,21 @@
                 </StackPanel>
             </Border>
 
+            <!-- mod.io session while signed out -->
+            <Panel IsVisible="{Binding ShowModioSignIn}"
+                   MaxWidth="520"
+                   Margin="0,72,0,0"
+                   VerticalAlignment="Top">
+                <views:ModioSignInView DataContext="{Binding ModioSignIn}"/>
+            </Panel>
+
             <!-- Empty -->
             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="12">
                 <StackPanel.IsVisible>
                     <MultiBinding Converter="{x:Static BoolConverters.And}">
                         <Binding Path="!IsLoading"/>
                         <Binding Path="HasNoItems"/>
+                        <Binding Path="!ShowModioSignIn"/>
                     </MultiBinding>
                 </StackPanel.IsVisible>
                 <icons:MaterialIcon Kind="PackageVariantClosed"
@@ -392,7 +404,7 @@
                                             <Border Classes="refresh-badge"
                                                     Classes.active="{Binding IsRefreshing}"
                                                     IsVisible="{Binding IsRefreshing}"
-                                                    ToolTip.Tip="{DynamicResource ItemRefreshing}">
+                                                    ToolTip.Tip="{Binding $parent[UserControl].((vm:ItemListViewModel)DataContext).RefreshingText}">
                                                 <icons:MaterialIcon Kind="Sync"/>
                                             </Border>
 
@@ -505,7 +517,7 @@
                         <TextBlock Text="{Binding SelectedCount, StringFormat={}Delete {0} mods?}"
                                    FontSize="20" FontWeight="SemiBold"
                                    Foreground="{DynamicResource TextPrimaryBrush}"/>
-                        <TextBlock Text="{DynamicResource BulkDeleteWarning}"
+                        <TextBlock Text="{Binding BulkDeleteWarningText}"
                                    TextWrapping="Wrap"
                                    Foreground="{DynamicResource TextMutedBrush}"
                                    FontSize="13"/>

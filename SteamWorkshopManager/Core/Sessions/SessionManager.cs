@@ -6,6 +6,7 @@ using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Models;
 using SteamWorkshopManager.Services.Core;
 using SteamWorkshopManager.Services.Log;
+using SteamWorkshopManager.Services.Platforms.Modio;
 using SteamWorkshopManager.Services.Session;
 using SteamWorkshopManager.Services.Steam;
 using SteamWorkshopManager.Services.Workshop;
@@ -24,19 +25,25 @@ public class SessionManager
     private readonly AppIdValidator _appIdValidator;
     private readonly SessionHost _sessionHost;
     private readonly ISessionContext _context;
+    private readonly ModioApiClient _modio;
+    private readonly ModioAccount _modioAccount;
 
     public SessionManager(
         ISessionRepository sessionRepository,
         WorkshopTagsService tagsService,
         AppIdValidator appIdValidator,
         SessionHost sessionHost,
-        ISessionContext context)
+        ISessionContext context,
+        ModioApiClient modio,
+        ModioAccount modioAccount)
     {
         _sessionRepository = sessionRepository;
         _tagsService = tagsService;
         _appIdValidator = appIdValidator;
         _sessionHost = sessionHost;
         _context = context;
+        _modio = modio;
+        _modioAccount = modioAccount;
     }
 
     /// <summary>
@@ -73,6 +80,42 @@ public class SessionManager
         await _sessionRepository.SaveSessionAsync(session);
         Log.Info($"Session created: {session.Name} ({session.Id})");
 
+        return session;
+    }
+
+    /// <summary>Creates a mod.io session for a game picked by the signed-in user.</summary>
+    public async Task<ModioSession> CreateModioSessionAsync(ModioGame game)
+    {
+        var session = new ModioSession
+        {
+            Id = Guid.NewGuid().ToString(),
+            Name = game.Name,
+            GameName = game.Name,
+            GameId = (uint)game.Id,
+            GameNameId = game.NameId,
+            IconUrl = game.Icon?.Thumb128X128 ?? game.Icon?.Original,
+            LogoUrl = game.Logo?.Thumb640X360 ?? game.Logo?.Original,
+            CreatedAt = DateTime.UtcNow,
+            LastUsedAt = DateTime.UtcNow
+        };
+
+        if (_modioAccount.Credentials is { } auth)
+        {
+            try
+            {
+                var catalog = ModioTagCatalog.From(await _modio.GetTagOptionsAsync(auth, game.Id));
+                session.TagsByCategory = catalog.TagsByCategory;
+                session.DropdownCategories = catalog.DropdownCategories;
+                session.TagsLastUpdated = DateTime.UtcNow;
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"Failed to fetch mod.io tags for session: {ex.Message}");
+            }
+        }
+
+        await _sessionRepository.SaveSessionAsync(session);
+        Log.Info($"Session created: {session}");
         return session;
     }
 
@@ -145,6 +188,19 @@ public class SessionManager
         if (_context.Current?.Id == session.Id) _context.Update(session);
 
         Log.Debug($"Tags refreshed: {tagsResult.TagsByCategory.Count} categories");
+    }
+
+    /// <summary>Refreshes the mod.io tag groups of a session.</summary>
+    public async Task RefreshModioTagsAsync(ModioSession session)
+    {
+        var options = await _modioAccount.RunAsync(auth => _modio.GetTagOptionsAsync(auth, session.GameId));
+        var catalog = ModioTagCatalog.From(options);
+        session.TagsByCategory = catalog.TagsByCategory;
+        session.DropdownCategories = catalog.DropdownCategories;
+        session.TagsLastUpdated = DateTime.UtcNow;
+
+        await _sessionRepository.SaveSessionAsync(session);
+        if (_context.Current?.Id == session.Id) _context.Update(session);
     }
 
     /// <summary>

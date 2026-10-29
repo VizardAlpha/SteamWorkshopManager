@@ -5,7 +5,7 @@ namespace SteamWorkshopManager.Helpers;
 
 public static class BbCodeTags
 {
-    public static IReadOnlyList<BbCodeTag> Formatting { get; } =
+    public static IReadOnlyList<MarkupTag> Formatting { get; } =
     [
         new("B", "[b]", "[/b]", Tooltip: "Bold text"),
         new("I", "[i]", "[/i]", Tooltip: "Italic text"),
@@ -15,7 +15,7 @@ public static class BbCodeTags
         new("NoP", "[noparse]", "[/noparse]", Tooltip: "Doesn't parse [b]tags[/b]"),
     ];
 
-    public static IReadOnlyList<BbCodeTag> Structure { get; } =
+    public static IReadOnlyList<MarkupTag> Structure { get; } =
     [
         new("H1", "[h1]", "[/h1]", "Heading", "Heading 1"),
         new("H2", "[h2]", "[/h2]", "Heading", "Heading 2"),
@@ -25,7 +25,7 @@ public static class BbCodeTags
         new("OList", "[olist]\n[*]", "\n[/olist]", "Item", "Ordered list"),
     ];
 
-    public static IReadOnlyList<BbCodeTag> Content { get; } =
+    public static IReadOnlyList<MarkupTag> Content { get; } =
     [
         new("URL", "[url=https://]", "[/url]", "link", "Website link"),
         new("Img", "[img]", "[/img]", "https://", "Image"),

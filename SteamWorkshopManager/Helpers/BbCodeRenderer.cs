@@ -481,7 +481,7 @@ public static class BbCodeRenderer
         }
     }
 
-    private static void OpenUrl(string url)
+    internal static void OpenUrl(string url)
     {
         if (!IsWebUrl(url)) return;
 
@@ -489,11 +489,11 @@ public static class BbCodeRenderer
         catch (Exception ex) { Log.Debug($"BbCodeRenderer: failed to open URL {url}: {ex.Message}"); }
     }
 
-    private static bool IsWebUrl(string url) =>
+    internal static bool IsWebUrl(string url) =>
         Uri.TryCreate(url, UriKind.Absolute, out var uri) &&
         (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
 
-    private static async Task LoadImageAsync(Image target, string url)
+    internal static async Task LoadImageAsync(Image target, string url)
     {
         if (!IsWebUrl(url)) return;
 

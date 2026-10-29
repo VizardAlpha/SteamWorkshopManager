@@ -12,47 +12,52 @@ using SteamWorkshopManager.Services.Steam.Worker.Contracts.Dtos;
 namespace SteamWorkshopManager.Services.Workshop;
 
 /// <summary>
-/// Last known "My mods" list per game and Steam account, shown instantly while
-/// Steam is queried. Steam's answer always replaces it.
+/// Last known "My mods" list per game and account, shown instantly while the
+/// platform is queried. The platform's answer always replaces it.
 /// </summary>
 public sealed class PublishedItemsCache(ICacheStore cache)
 {
     private static readonly Logger Log = LogService.GetLogger<PublishedItemsCache>();
 
-    // Per account: another Steam login on the same machine has other mods.
-    private static CacheKey Key(uint appId, ulong steamId) => CacheKey.SteamApp(appId, $"items-{steamId}.json");
-
-    public async Task<List<WorkshopItem>?> LoadAsync(uint appId, ulong steamId)
+    // Per account: another login on the same machine has other mods.
+    private static CacheKey Key(WorkshopSession session, ulong accountId)
     {
-        if (appId == 0 || steamId == 0) return null;
+        var (platform, scope) = CacheKey.SessionScope(session);
+        return new CacheKey(platform, scope, $"items-{accountId}.json");
+    }
+
+    public async Task<List<WorkshopItem>?> LoadAsync(WorkshopSession session, ulong accountId)
+    {
+        if (accountId == 0) return null;
 
         try
         {
-            var entry = await Task.Run(() => cache.GetAsync(Key(appId, steamId), PublishedItemsJsonContext.Default.ListWorkshopItemDto));
+            var entry = await Task.Run(() => cache.GetAsync(Key(session, accountId), PublishedItemsJsonContext.Default.ListWorkshopItemDto));
             return entry?.Value.Select(WorkshopItemMapper.ToModel).ToList();
         }
         catch (Exception ex)
         {
-            Log.Debug($"Cached items unreadable for AppId {appId}: {ex.Message}");
+            Log.Debug($"Cached items unreadable for {session}: {ex.Message}");
             return null;
         }
     }
 
     /// <summary>Snapshots <paramref name="items"/> on the calling thread, writes in the background.</summary>
-    public Task SaveAsync(uint appId, ulong steamId, IEnumerable<WorkshopItem> items)
+    public Task SaveAsync(WorkshopSession session, ulong accountId, IEnumerable<WorkshopItem> items)
     {
-        if (appId == 0 || steamId == 0) return Task.CompletedTask;
+        if (accountId == 0) return Task.CompletedTask;
 
+        var key = Key(session, accountId);
         var snapshot = items.Select(WorkshopItemMapper.ToDto).ToList();
         return Task.Run(async () =>
         {
             try
             {
-                await cache.SetAsync(Key(appId, steamId), snapshot, PublishedItemsJsonContext.Default.ListWorkshopItemDto);
+                await cache.SetAsync(key, snapshot, PublishedItemsJsonContext.Default.ListWorkshopItemDto);
             }
             catch (Exception ex)
             {
-                Log.Debug($"Items cache write failed for AppId {appId}: {ex.Message}");
+                Log.Debug($"Items cache write failed for {session}: {ex.Message}");
             }
         });
     }

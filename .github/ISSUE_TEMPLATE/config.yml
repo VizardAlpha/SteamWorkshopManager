@@ -3,3 +3,6 @@ contact_links:
   - name: Question or discussion
     url: https://github.com/VizardAlpha/SteamWorkshopManager/discussions
     about: Ask questions or discuss ideas here instead of opening an issue.
+  - name: Official Discord
+    url: https://discord.gg/DCnfnMpbhf
+    about: Get help and chat with other users and the developer.

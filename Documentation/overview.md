@@ -1,10 +1,10 @@
 # Overview
 
-Steam Workshop Manager lets mod authors create, update and manage their Steam Workshop items without each game's own upload tool.
+Steam Workshop Manager lets mod authors create, update and manage their Steam Workshop items, and their mod.io mods, without each game's own upload tool.
 
 ## Who it is for
 
-Modders who publish on the Steam Workshop, often for several games. One app covers every game that has a Workshop: each game is a *session*, and switching sessions switches the game.
+Modders who publish on the Steam Workshop or on mod.io, often for several games. One app covers every game that has a Workshop, and any mod.io game: each game is a *session*, bound to one platform, and switching sessions switches the game.
 
 ## What it solves
 
@@ -16,6 +16,7 @@ Modders who publish on the Steam Workshop, often for several games. One app cove
 
 - Windows, macOS (x64) or Linux, with the .NET 10 runtime (builds are framework-dependent).
 - The Steam client running and signed in, with the game owned on that account. Steam in offline mode is detected and reported.
+- For mod.io sessions: a mod.io account and your own OAuth access token (created on mod.io/me/access); Steam is not needed for them.
 - An install folder you can write to, if you want in-app updates.
 
 ## Languages

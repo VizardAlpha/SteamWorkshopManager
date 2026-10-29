@@ -11,6 +11,12 @@ public sealed class ModioSession : WorkshopSession
     /// <summary>Game slug used in mod.io URLs (<c>mod.io/g/{slug}</c>).</summary>
     public string? GameNameId { get; set; }
 
+    /// <summary>Square game icon for the session list.</summary>
+    public string? IconUrl { get; set; }
+
+    /// <summary>Wide game logo for the home header.</summary>
+    public string? LogoUrl { get; set; }
+
     [JsonIgnore]
     public override WorkshopPlatform Platform => WorkshopPlatform.ModIo;
 

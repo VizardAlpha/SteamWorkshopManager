@@ -2,14 +2,34 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:SteamWorkshopManager.ViewModels"
         xmlns:icons="using:Material.Icons.Avalonia"
+        xmlns:models="using:SteamWorkshopManager.Models"
+        xmlns:views="using:SteamWorkshopManager.Views"
         x:Class="SteamWorkshopManager.Views.AddSessionWindow"
         x:DataType="vm:AddSessionViewModel"
         Title="{DynamicResource AddSession}"
         Width="560"
-        Height="600"
+        Height="640"
         WindowStartupLocation="CenterOwner"
         CanResize="False"
         Background="{DynamicResource WindowBackgroundBrush}">
+
+    <Window.Styles>
+        <Style Selector="Button.platform">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="14,8"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Button.platform.selected">
+            <Setter Property="Background" Value="{DynamicResource SurfaceOverlayBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentPrimaryBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+        </Style>
+    </Window.Styles>
 
     <Panel>
         <Grid RowDefinitions="Auto,*,Auto" Margin="32,28,32,24">
@@ -29,112 +49,131 @@
             <!-- Content -->
             <StackPanel Grid.Row="1" Spacing="16" Margin="0,24,0,0">
 
-                <!-- AppId / URL input -->
-                <StackPanel Spacing="8">
-                    <TextBlock Text="{DynamicResource AppIdOrUrlLabel}"
-                               FontSize="12"
-                               FontWeight="Medium"
-                               Foreground="{DynamicResource TextMutedBrush}"/>
-                    <Grid ColumnDefinitions="*,Auto">
-                        <TextBox Grid.Column="0"
-                                 Text="{Binding AppIdInput, Mode=TwoWay}"
-                                 PlaceholderText="{DynamicResource AppIdOrUrlPlaceholder}"
-                                 IsEnabled="{Binding !IsValidating}"
-                                 Padding="12,10"
-                                 Margin="0,0,8,0"
-                                 FontSize="13"/>
-                        <Button Grid.Column="1"
-                                Command="{Binding ValidateAppIdCommand}"
-                                IsEnabled="{Binding !IsValidating}"
-                                MinWidth="100"
-                                Padding="14,10"
-                                Background="{DynamicResource SurfaceOverlayBrush}"
-                                BorderBrush="{DynamicResource BorderStrongBrush}"
-                                Foreground="{DynamicResource TextPrimaryBrush}"
-                                CornerRadius="6"
-                                Content="{DynamicResource ValidateButton}"/>
-                    </Grid>
-                </StackPanel>
+                <!-- Platform -->
+                <Grid ColumnDefinitions="*,8,*">
+                    <Button Grid.Column="0" Classes="platform" Classes.selected="{Binding IsSteam}"
+                            Command="{Binding SelectPlatformCommand}"
+                            CommandParameter="{x:Static models:WorkshopPlatform.Steam}"
+                            Content="{DynamicResource PlatformSteam}"/>
+                    <Button Grid.Column="2" Classes="platform" Classes.selected="{Binding IsModio}"
+                            Command="{Binding SelectPlatformCommand}"
+                            CommandParameter="{x:Static models:WorkshopPlatform.ModIo}"
+                            Content="{DynamicResource PlatformModio}"/>
+                </Grid>
 
-                <!-- Validating -->
-                <Border IsVisible="{Binding IsValidating}"
-                        Padding="16"
-                        Background="{DynamicResource SurfaceCardBrush}"
-                        BorderBrush="{DynamicResource BorderSubtleBrush}"
-                        BorderThickness="1"
-                        CornerRadius="10">
-                    <StackPanel Spacing="10">
-                        <ProgressBar IsIndeterminate="True"
-                                     Height="3"
-                                     Background="{DynamicResource SurfaceOverlayBrush}"
-                                     Foreground="{DynamicResource AccentPrimaryBrush}"/>
-                        <TextBlock Text="{DynamicResource Validating}"
-                                   HorizontalAlignment="Center"
-                                   FontSize="13"
+                <Panel IsVisible="{Binding IsModio}">
+                    <views:ModioSessionSetupView DataContext="{Binding Modio}"/>
+                </Panel>
+
+                <StackPanel Spacing="16" IsVisible="{Binding IsSteam}">
+
+                    <!-- AppId / URL input -->
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="{DynamicResource AppIdOrUrlLabel}"
+                                   FontSize="12"
+                                   FontWeight="Medium"
                                    Foreground="{DynamicResource TextMutedBrush}"/>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBox Grid.Column="0"
+                                     Text="{Binding AppIdInput, Mode=TwoWay}"
+                                     PlaceholderText="{DynamicResource AppIdOrUrlPlaceholder}"
+                                     IsEnabled="{Binding !IsValidating}"
+                                     Padding="12,10"
+                                     Margin="0,0,8,0"
+                                     FontSize="13"/>
+                            <Button Grid.Column="1"
+                                    Command="{Binding ValidateAppIdCommand}"
+                                    IsEnabled="{Binding !IsValidating}"
+                                    MinWidth="100"
+                                    Padding="14,10"
+                                    Background="{DynamicResource SurfaceOverlayBrush}"
+                                    BorderBrush="{DynamicResource BorderStrongBrush}"
+                                    Foreground="{DynamicResource TextPrimaryBrush}"
+                                    CornerRadius="6"
+                                    Content="{DynamicResource ValidateButton}"/>
+                        </Grid>
                     </StackPanel>
-                </Border>
 
-                <!-- Success preview -->
-                <Border IsVisible="{Binding IsValid}"
-                        Background="{DynamicResource SurfaceCardBrush}"
-                        BorderBrush="{DynamicResource FeedbackSuccessBrush}"
-                        BorderThickness="1"
-                        CornerRadius="10"
-                        Padding="12"
-                        ClipToBounds="True">
-                    <Grid ColumnDefinitions="Auto,*,Auto">
+                    <!-- Validating -->
+                    <Border IsVisible="{Binding IsValidating}"
+                            Padding="16"
+                            Background="{DynamicResource SurfaceCardBrush}"
+                            BorderBrush="{DynamicResource BorderSubtleBrush}"
+                            BorderThickness="1"
+                            CornerRadius="10">
+                        <StackPanel Spacing="10">
+                            <ProgressBar IsIndeterminate="True"
+                                         Height="3"
+                                         Background="{DynamicResource SurfaceOverlayBrush}"
+                                         Foreground="{DynamicResource AccentPrimaryBrush}"/>
+                            <TextBlock Text="{DynamicResource Validating}"
+                                       HorizontalAlignment="Center"
+                                       FontSize="13"
+                                       Foreground="{DynamicResource TextMutedBrush}"/>
+                        </StackPanel>
+                    </Border>
 
-                        <!-- Header image thumbnail -->
-                        <Border Grid.Column="0"
-                                Width="140" Height="66"
-                                CornerRadius="6"
-                                ClipToBounds="True"
-                                Background="{DynamicResource SurfaceOverlayBrush}">
-                            <Panel>
-                                <Image Source="{Binding GameHeaderImage}" Stretch="UniformToFill"/>
-                                <icons:MaterialIcon Kind="ImageOutline"
-                                                    Width="24" Height="24"
-                                                    Foreground="{DynamicResource TextDisabledBrush}"
-                                                    HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    IsVisible="{Binding GameHeaderImage, Converter={x:Static ObjectConverters.IsNull}}"/>
-                            </Panel>
-                        </Border>
+                    <!-- Success preview -->
+                    <Border IsVisible="{Binding IsValid}"
+                            Background="{DynamicResource SurfaceCardBrush}"
+                            BorderBrush="{DynamicResource FeedbackSuccessBrush}"
+                            BorderThickness="1"
+                            CornerRadius="10"
+                            Padding="12"
+                            ClipToBounds="True">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
 
-                        <!-- Game info -->
-                        <StackPanel Grid.Column="1"
-                                    Margin="16,0,0,0"
-                                    Spacing="4"
-                                    VerticalAlignment="Center">
-                            <TextBlock Text="{Binding GameName}"
-                                       FontSize="15"
-                                       FontWeight="SemiBold"
-                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                       TextTrimming="CharacterEllipsis"/>
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <TextBlock FontSize="12"
-                                           Foreground="{DynamicResource TextMutedBrush}">
-                                    <Run Text="AppID "/>
-                                    <Run Text="{Binding ValidatedAppId}"/>
-                                </TextBlock>
-                                <TextBlock Text="·"
-                                           FontSize="12"
-                                           Foreground="{DynamicResource TextDisabledBrush}"/>
-                                <StackPanel Orientation="Horizontal" Spacing="4">
-                                    <icons:MaterialIcon Kind="CheckCircle"
-                                                        Width="12" Height="12"
-                                                        Foreground="{DynamicResource FeedbackSuccessBrush}"
-                                                        VerticalAlignment="Center"/>
-                                    <TextBlock Text="{DynamicResource WorkshopAvailable}"
+                            <!-- Header image thumbnail -->
+                            <Border Grid.Column="0"
+                                    Width="140" Height="66"
+                                    CornerRadius="6"
+                                    ClipToBounds="True"
+                                    Background="{DynamicResource SurfaceOverlayBrush}">
+                                <Panel>
+                                    <Image Source="{Binding GameHeaderImage}" Stretch="UniformToFill"/>
+                                    <icons:MaterialIcon Kind="ImageOutline"
+                                                        Width="24" Height="24"
+                                                        Foreground="{DynamicResource TextDisabledBrush}"
+                                                        HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center"
+                                                        IsVisible="{Binding GameHeaderImage, Converter={x:Static ObjectConverters.IsNull}}"/>
+                                </Panel>
+                            </Border>
+
+                            <!-- Game info -->
+                            <StackPanel Grid.Column="1"
+                                        Margin="16,0,0,0"
+                                        Spacing="4"
+                                        VerticalAlignment="Center">
+                                <TextBlock Text="{Binding GameName}"
+                                           FontSize="15"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           TextTrimming="CharacterEllipsis"/>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock FontSize="12"
+                                               Foreground="{DynamicResource TextMutedBrush}">
+                                        <Run Text="AppID "/>
+                                        <Run Text="{Binding ValidatedAppId}"/>
+                                    </TextBlock>
+                                    <TextBlock Text="·"
                                                FontSize="12"
-                                               Foreground="{DynamicResource FeedbackSuccessBrush}"/>
+                                               Foreground="{DynamicResource TextDisabledBrush}"/>
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <icons:MaterialIcon Kind="CheckCircle"
+                                                            Width="12" Height="12"
+                                                            Foreground="{DynamicResource FeedbackSuccessBrush}"
+                                                            VerticalAlignment="Center"/>
+                                        <TextBlock Text="{DynamicResource WorkshopAvailable}"
+                                                   FontSize="12"
+                                                   Foreground="{DynamicResource FeedbackSuccessBrush}"/>
+                                    </StackPanel>
                                 </StackPanel>
                             </StackPanel>
-                        </StackPanel>
 
-                    </Grid>
-                </Border>
+                        </Grid>
+                    </Border>
+                </StackPanel>
 
                 <!-- Error -->
                 <Border IsVisible="{Binding HasError}"
@@ -174,7 +213,7 @@
                         Content="{DynamicResource Cancel}"/>
                 <Button Grid.Column="2"
                         Command="{Binding CreateSessionCommand}"
-                        IsEnabled="{Binding IsValid}"
+                        IsEnabled="{Binding CanCreate}"
                         MinWidth="150"
                         Padding="14,10"
                         Background="{DynamicResource AccentPrimaryGradientBrush}"

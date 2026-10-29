@@ -1,0 +1,140 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:modio="using:SteamWorkshopManager.ViewModels.Modio"
+             xmlns:icons="using:Material.Icons.Avalonia"
+             x:Class="SteamWorkshopManager.Views.Modio.ModioDependenciesView"
+             x:DataType="modio:ModioDependenciesViewModel">
+
+    <UserControl.Styles>
+        <StyleInclude Source="avares://SteamWorkshopManager/Themes/ModioEditorStyles.axaml"/>
+    </UserControl.Styles>
+
+    <UserControl.Resources>
+        <!-- Thumbnail + name, shared by the list and the search results -->
+        <DataTemplate x:Key="ModHeader" x:DataType="modio:ModioDependencyEntry">
+            <Grid ColumnDefinitions="Auto,*">
+                <Border Width="64" Height="36" CornerRadius="4" ClipToBounds="True"
+                        Background="{DynamicResource SurfaceCardBrush}">
+                    <Panel>
+                        <Image Source="{Binding Thumbnail}" Stretch="UniformToFill"/>
+                        <icons:MaterialIcon Kind="PuzzleOutline" Width="16" Height="16" Opacity="0.4"
+                                            Foreground="{DynamicResource TextMutedBrush}"
+                                            IsVisible="{Binding Thumbnail, Converter={x:Static ObjectConverters.IsNull}}"/>
+                    </Panel>
+                </Border>
+                <StackPanel Grid.Column="1" Margin="10,0" VerticalAlignment="Center" Spacing="2">
+                    <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold"
+                               TextTrimming="CharacterEllipsis"
+                               Foreground="{DynamicResource TextPrimaryBrush}"/>
+                    <TextBlock Text="{Binding ModId, StringFormat='ID {0}'}" FontSize="11"
+                               Foreground="{DynamicResource TextMutedBrush}"/>
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <StackPanel Spacing="14">
+
+        <StackPanel Margin="0,0,0,6">
+            <TextBlock Classes="panel-title" Text="{DynamicResource ModioDependencies}"/>
+            <TextBlock Classes="panel-sub" Text="{DynamicResource ModioDependenciesSub}" Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <ProgressBar IsIndeterminate="True" Height="3" IsVisible="{Binding IsLoading}"
+                     Background="{DynamicResource SurfaceOverlayBrush}"
+                     Foreground="{DynamicResource AccentPrimaryBrush}"/>
+        <TextBlock Classes="field-error" Text="{Binding Error}"
+                   IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+
+        <!-- Required mods -->
+        <Border Classes="section-card">
+            <StackPanel>
+                <TextBlock Classes="card-title" Text="{DynamicResource ModioRequiredMods}" Margin="16,14,16,12"/>
+                <Border Height="1" Background="{DynamicResource BorderSubtleBrush}"/>
+                <StackPanel Margin="16" Spacing="8">
+                    <TextBlock Classes="card-meta" Text="{DynamicResource ModioNoDependencies}" IsVisible="{Binding !HasDependencies}"/>
+                    <ItemsControl ItemsSource="{Binding Dependencies}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="modio:ModioDependencyEntry">
+                                <Border Margin="0,0,0,6" Padding="8" CornerRadius="6"
+                                        Background="{DynamicResource SurfaceElevatedBrush}">
+                                    <Grid ColumnDefinitions="*,Auto,Auto">
+                                        <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ModHeader}"/>
+                                        <Button Grid.Column="1" Classes="chip-remove" Padding="8,4"
+                                                Command="{Binding $parent[UserControl].((modio:ModioDependenciesViewModel)DataContext).OpenModPageCommand}"
+                                                CommandParameter="{Binding}"
+                                                ToolTip.Tip="{DynamicResource ModioOpenModPage}">
+                                            <icons:MaterialIcon Kind="OpenInNew" Width="14" Height="14"/>
+                                        </Button>
+                                        <Button Grid.Column="2" Classes="chip-remove" Padding="8,4"
+                                                Command="{Binding $parent[UserControl].((modio:ModioDependenciesViewModel)DataContext).RemoveCommand}"
+                                                CommandParameter="{Binding}"
+                                                IsEnabled="{Binding !IsBusy}"
+                                                ToolTip.Tip="{DynamicResource ModioRemoveDependency}">
+                                            <icons:MaterialIcon Kind="Close" Width="14" Height="14"/>
+                                        </Button>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Add a required mod -->
+        <Border Classes="section-card">
+            <StackPanel>
+                <TextBlock Classes="card-title" Text="{DynamicResource ModioAddDependency}" Margin="16,14,16,12"/>
+                <Border Height="1" Background="{DynamicResource BorderSubtleBrush}"/>
+                <StackPanel Margin="16" Spacing="10">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBox Text="{Binding SearchQuery}" PlaceholderText="{DynamicResource ModioSearchModsPlaceholder}">
+                            <TextBox.KeyBindings>
+                                <KeyBinding Gesture="Enter" Command="{Binding SearchCommand}"/>
+                            </TextBox.KeyBindings>
+                        </TextBox>
+                        <Button Grid.Column="1" Classes="secondary-action" Margin="8,0,0,0"
+                                Command="{Binding SearchCommand}" Content="{DynamicResource ModioSearch}"/>
+                    </Grid>
+                    <ProgressBar IsIndeterminate="True" Height="3" IsVisible="{Binding IsSearching}"
+                                 Background="{DynamicResource SurfaceOverlayBrush}"
+                                 Foreground="{DynamicResource AccentPrimaryBrush}"/>
+                    <TextBlock Classes="card-meta" Text="{DynamicResource ModioNoModFound}" IsVisible="{Binding HasNoResults}"/>
+                    <ItemsControl ItemsSource="{Binding SearchResults}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="modio:ModioDependencyEntry">
+                                <Border Margin="0,0,0,6" Padding="8" CornerRadius="6"
+                                        Background="{DynamicResource SurfaceElevatedBrush}">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ModHeader}"/>
+                                        <Button Grid.Column="1" Classes="secondary-action" FontSize="12"
+                                                Command="{Binding $parent[UserControl].((modio:ModioDependenciesViewModel)DataContext).AddCommand}"
+                                                CommandParameter="{Binding}"
+                                                IsEnabled="{Binding !IsBusy}">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <icons:MaterialIcon Kind="Plus" Width="12" Height="12"/>
+                                                <TextBlock Text="{DynamicResource ModioAdd}" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Opt-in / opt-out games: may other mods depend on this one? -->
+        <Border Classes="section-card" IsVisible="{Binding ShowDependentsToggle}">
+            <Grid Margin="16" ColumnDefinitions="*,Auto">
+                <StackPanel Spacing="2">
+                    <TextBlock Classes="field-label" Margin="0" Text="{DynamicResource ModioAllowDependents}"/>
+                    <TextBlock Classes="card-meta" TextWrapping="Wrap" Text="{DynamicResource ModioAllowDependentsHint}"/>
+                </StackPanel>
+                <ToggleSwitch Grid.Column="1" IsChecked="{Binding AllowDependents}" OnContent="" OffContent="" VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+    </StackPanel>
+</UserControl>

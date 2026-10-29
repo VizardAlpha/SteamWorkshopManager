@@ -445,7 +445,7 @@ internal sealed class SteamWorkerImpl(uint appId) : ISteamWorker
         Task.FromResult(_steam.GetCurrentBranchName());
 
     private static WorkshopItemDto ToDto(Models.WorkshopItem item) => new(
-        PublishedFileId: item.PublishedFileId.m_PublishedFileId,
+        PublishedFileId: item.Id,
         Title: item.Title,
         Description: item.Description,
         PreviewImagePath: item.PreviewImagePath,
@@ -456,7 +456,7 @@ internal sealed class SteamWorkerImpl(uint appId) : ISteamWorker
         UpdatedAt: item.UpdatedAt,
         SubscriberCount: item.SubscriberCount,
         FileSize: item.FileSize,
-        OwnerId: item.OwnerId.m_SteamID,
+        OwnerId: item.OwnerId,
         IsOwner: item.IsOwner,
         AdditionalPreviews: item.AdditionalPreviews.Select(p => new WorkshopPreviewDto(
             (int)p.PreviewType, p.OriginalIndex, p.RemoteUrl, p.OriginalFilename)).ToList()

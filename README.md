@@ -2,11 +2,14 @@
 
 Built with .NET 10 and Avalonia UI, it works on Windows, macOS, and Linux.
 
+Join the community on the official [Discord](https://discord.gg/DCnfnMpbhf) for help, feedback and news.
+
 
 Features:
 - Home dashboard: KPI cards plus a list of your recent mods, all on the new top-bar shell
 - Smart updates: Change title, description, tags, or visibility without re-uploading your mod content or preview image. The app tracks file path, size, and modification date: only uploads when something actually changed!
 - Multi-game support: Manage mods for multiple Steam games (switch between workshops easily)
+- mod.io support (beta): manage your mod.io mods too, signed in with your own mod.io access token: list, edit, upload new files, create and delete
 - Worker-process Steam: Steam runs in a separate process, so switching between sessions does not freeze the UI
 - Visual editor: Edit title, description, tags, and preview image, with Info / Changelog / Versions tabs in a card-based layout
 - Drag & drop: Simply drop your mod folder to create a new item
@@ -23,7 +26,8 @@ Features:
 
 # Requirements
 
-- Steam must be running
+- Steam must be running (for Steam Workshop sessions)
+- For mod.io sessions: a mod.io account and an OAuth access token created on mod.io/me/access
 - [.NET 10 Runtime (framework-dependent builds)](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)
 
 # Releases

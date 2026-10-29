@@ -2,6 +2,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:SteamWorkshopManager.ViewModels"
         xmlns:icons="using:Material.Icons.Avalonia"
+        xmlns:models="using:SteamWorkshopManager.Models"
+        xmlns:views="using:SteamWorkshopManager.Views"
         x:Class="SteamWorkshopManager.Views.SetupWizardWindow"
         x:DataType="vm:SetupWizardViewModel"
         Title="{Binding Loc[SetupWizardTitle]}"
@@ -10,6 +12,24 @@
         WindowStartupLocation="CenterScreen"
         CanResize="False"
         Background="{DynamicResource WindowBackgroundBrush}">
+
+    <Window.Styles>
+        <Style Selector="Button.platform">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="14,8"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Button.platform.selected">
+            <Setter Property="Background" Value="{DynamicResource SurfaceOverlayBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentPrimaryBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+        </Style>
+    </Window.Styles>
 
     <Panel>
         <Grid RowDefinitions="Auto,*,Auto" Margin="32,28,32,24">
@@ -37,212 +57,233 @@
             </StackPanel>
 
             <!-- Content -->
-            <StackPanel Grid.Row="1" Spacing="16" Margin="0,24,0,0">
+            <ScrollViewer Grid.Row="1" Margin="0,24,0,0" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Spacing="16" Margin="0,0,12,0">
 
-                <TextBlock Text="{Binding Loc[SetupWizardInstructions]}"
-                           FontSize="13"
-                           Foreground="{DynamicResource TextSecondaryBrush}"
-                           TextWrapping="Wrap"/>
-
-                <!-- AppId / URL input -->
-                <StackPanel Spacing="8">
-                    <TextBlock Text="{Binding Loc[AppIdLabel]}"
-                               FontSize="12"
-                               FontWeight="Medium"
-                               Foreground="{DynamicResource TextMutedBrush}"/>
-                    <Grid ColumnDefinitions="*,Auto">
-                        <TextBox Grid.Column="0"
-                                 Text="{Binding AppIdInput, Mode=TwoWay}"
-                                 PlaceholderText="{DynamicResource AppIdOrUrlPlaceholder}"
-                                 IsEnabled="{Binding !IsValidating}"
-                                 Padding="12,10"
-                                 Margin="0,0,8,0"
-                                 FontSize="13"/>
-                        <Button Grid.Column="1"
-                                Command="{Binding ValidateAppIdCommand}"
-                                MinWidth="100"
-                                Padding="14,10"
-                                Background="{DynamicResource SurfaceOverlayBrush}"
-                                BorderBrush="{DynamicResource BorderStrongBrush}"
-                                Foreground="{DynamicResource TextPrimaryBrush}"
-                                CornerRadius="6"
-                                Content="{Binding Loc[ValidateButton]}"/>
+                    <!-- Platform -->
+                    <Grid ColumnDefinitions="*,8,*">
+                        <Button Grid.Column="0" Classes="platform" Classes.selected="{Binding IsSteam}"
+                                Command="{Binding SelectPlatformCommand}"
+                                CommandParameter="{x:Static models:WorkshopPlatform.Steam}"
+                                Content="{Binding Loc[PlatformSteam]}"/>
+                        <Button Grid.Column="2" Classes="platform" Classes.selected="{Binding IsModio}"
+                                Command="{Binding SelectPlatformCommand}"
+                                CommandParameter="{x:Static models:WorkshopPlatform.ModIo}"
+                                Content="{Binding Loc[PlatformModio]}"/>
                     </Grid>
-                </StackPanel>
 
-                <!-- Validating -->
-                <Border IsVisible="{Binding IsValidating}"
-                        Padding="16"
-                        Background="{DynamicResource SurfaceCardBrush}"
-                        BorderBrush="{DynamicResource BorderSubtleBrush}"
-                        BorderThickness="1"
-                        CornerRadius="10">
-                    <StackPanel Spacing="10">
-                        <ProgressBar IsIndeterminate="True"
-                                     Height="3"
-                                     Background="{DynamicResource SurfaceOverlayBrush}"
-                                     Foreground="{DynamicResource AccentPrimaryBrush}"/>
-                        <TextBlock Text="{Binding Loc[Validating]}"
-                                   HorizontalAlignment="Center"
+                    <Panel IsVisible="{Binding IsModio}">
+                        <views:ModioSessionSetupView DataContext="{Binding Modio}"/>
+                    </Panel>
+
+                    <StackPanel Spacing="16" IsVisible="{Binding IsSteam}">
+                        <TextBlock Text="{Binding Loc[SetupWizardInstructions]}"
                                    FontSize="13"
-                                   Foreground="{DynamicResource TextMutedBrush}"/>
-                    </StackPanel>
-                </Border>
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   TextWrapping="Wrap"/>
 
-                <!-- Success preview -->
-                <Border IsVisible="{Binding IsValid}"
-                        Background="#1F5EC384"
-                        BorderBrush="{DynamicResource FeedbackSuccessBrush}"
-                        BorderThickness="1"
-                        CornerRadius="10"
-                        Padding="14">
-                    <Grid ColumnDefinitions="Auto,*">
-                        <icons:MaterialIcon Grid.Column="0"
-                                            Kind="CheckCircleOutline" Width="22" Height="22"
-                                            Foreground="{DynamicResource FeedbackSuccessBrush}"
-                                            VerticalAlignment="Center"
-                                            Margin="0,0,12,0"/>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                            <TextBlock Text="{Binding GameName}"
-                                       FontSize="14"
-                                       FontWeight="SemiBold"
-                                       Foreground="{DynamicResource TextPrimaryBrush}"/>
-                            <TextBlock Text="{Binding Loc[WorkshopFound]}"
+                        <!-- AppId / URL input -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="{Binding Loc[AppIdLabel]}"
                                        FontSize="12"
-                                       Foreground="{DynamicResource FeedbackSuccessTextBrush}"/>
+                                       FontWeight="Medium"
+                                       Foreground="{DynamicResource TextMutedBrush}"/>
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBox Grid.Column="0"
+                                         Text="{Binding AppIdInput, Mode=TwoWay}"
+                                         PlaceholderText="{DynamicResource AppIdOrUrlPlaceholder}"
+                                         IsEnabled="{Binding !IsValidating}"
+                                         Padding="12,10"
+                                         Margin="0,0,8,0"
+                                         FontSize="13"/>
+                                <Button Grid.Column="1"
+                                        Command="{Binding ValidateAppIdCommand}"
+                                        MinWidth="100"
+                                        Padding="14,10"
+                                        Background="{DynamicResource SurfaceOverlayBrush}"
+                                        BorderBrush="{DynamicResource BorderStrongBrush}"
+                                        Foreground="{DynamicResource TextPrimaryBrush}"
+                                        CornerRadius="6"
+                                        Content="{Binding Loc[ValidateButton]}"/>
+                            </Grid>
                         </StackPanel>
-                    </Grid>
-                </Border>
 
-                <!-- Error -->
-                <Border IsVisible="{Binding HasError}"
-                        Background="#1FC23B2E"
-                        BorderBrush="{DynamicResource FeedbackDangerBrush}"
-                        BorderThickness="1"
-                        CornerRadius="10"
-                        Padding="14">
-                    <Grid ColumnDefinitions="Auto,*">
-                        <icons:MaterialIcon Grid.Column="0"
-                                            Kind="AlertCircleOutline" Width="22" Height="22"
-                                            Foreground="{DynamicResource FeedbackDangerBrush}"
-                                            VerticalAlignment="Center"
-                                            Margin="0,0,12,0"/>
-                        <TextBlock Grid.Column="1"
-                                   Text="{Binding ErrorMessage}"
-                                   FontSize="13"
-                                   Foreground="{DynamicResource FeedbackDangerTextBrush}"
-                                   TextWrapping="Wrap"
-                                   VerticalAlignment="Center"/>
-                    </Grid>
-                </Border>
+                        <!-- Validating -->
+                        <Border IsVisible="{Binding IsValidating}"
+                                Padding="16"
+                                Background="{DynamicResource SurfaceCardBrush}"
+                                BorderBrush="{DynamicResource BorderSubtleBrush}"
+                                BorderThickness="1"
+                                CornerRadius="10">
+                            <StackPanel Spacing="10">
+                                <ProgressBar IsIndeterminate="True"
+                                             Height="3"
+                                             Background="{DynamicResource SurfaceOverlayBrush}"
+                                             Foreground="{DynamicResource AccentPrimaryBrush}"/>
+                                <TextBlock Text="{Binding Loc[Validating]}"
+                                           HorizontalAlignment="Center"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource TextMutedBrush}"/>
+                            </StackPanel>
+                        </Border>
 
-                <!-- Telemetry consent - nothing is sent before Create Session.
-                     The Terms/Privacy acknowledgement only appears (and only
-                     gates Validate) when the toggle is on, since opt-out
-                     means no data ever leaves the machine. -->
-                <Border Background="{DynamicResource SurfaceCardBrush}"
-                        BorderBrush="{DynamicResource BorderSubtleBrush}"
-                        BorderThickness="1"
-                        CornerRadius="10"
-                        Padding="14,12">
-                    <StackPanel Spacing="10">
+                        <!-- Success preview -->
+                        <Border IsVisible="{Binding IsValid}"
+                                Background="#1F5EC384"
+                                BorderBrush="{DynamicResource FeedbackSuccessBrush}"
+                                BorderThickness="1"
+                                CornerRadius="10"
+                                Padding="14">
+                            <Grid ColumnDefinitions="Auto,*">
+                                <icons:MaterialIcon Grid.Column="0"
+                                                    Kind="CheckCircleOutline" Width="22" Height="22"
+                                                    Foreground="{DynamicResource FeedbackSuccessBrush}"
+                                                    VerticalAlignment="Center"
+                                                    Margin="0,0,12,0"/>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                    <TextBlock Text="{Binding GameName}"
+                                               FontSize="14"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                    <TextBlock Text="{Binding Loc[WorkshopFound]}"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource FeedbackSuccessTextBrush}"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Error -->
+                    <Border IsVisible="{Binding HasError}"
+                            Background="#1FC23B2E"
+                            BorderBrush="{DynamicResource FeedbackDangerBrush}"
+                            BorderThickness="1"
+                            CornerRadius="10"
+                            Padding="14">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <icons:MaterialIcon Grid.Column="0"
+                                                Kind="AlertCircleOutline" Width="22" Height="22"
+                                                Foreground="{DynamicResource FeedbackDangerBrush}"
+                                                VerticalAlignment="Center"
+                                                Margin="0,0,12,0"/>
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding ErrorMessage}"
+                                       FontSize="13"
+                                       Foreground="{DynamicResource FeedbackDangerTextBrush}"
+                                       TextWrapping="Wrap"
+                                       VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Telemetry consent - nothing is sent before Create Session.
+                         The Terms/Privacy acknowledgement only appears (and only
+                         gates Validate) when the toggle is on, since opt-out
+                         means no data ever leaves the machine. -->
+                    <Border Background="{DynamicResource SurfaceCardBrush}"
+                            BorderBrush="{DynamicResource BorderSubtleBrush}"
+                            BorderThickness="1"
+                            CornerRadius="10"
+                            Padding="14,12">
+                        <StackPanel Spacing="10">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock Text="{Binding Loc[EnableTelemetry]}"
+                                               FontSize="13"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                    <TextBlock Text="{Binding Loc[TelemetryDescription]}"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextMutedBrush}"
+                                               TextWrapping="Wrap"/>
+                                    <Button Background="Transparent" BorderThickness="0" Padding="0"
+                                            Margin="0,2,0,0"
+                                            Command="{Binding OpenStatsSiteCommand}">
+                                        <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Loc[ViewLiveStats]}"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource AccentPrimaryBrush}"/>
+                                            <icons:MaterialIcon Kind="ChartBar" Width="11" Height="11"
+                                                                Foreground="{DynamicResource AccentPrimaryBrush}"
+                                                                VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                                <ToggleSwitch Grid.Column="1"
+                                              IsChecked="{Binding IsTelemetryEnabled}"
+                                              OnContent="" OffContent=""
+                                              VerticalAlignment="Center"
+                                              Margin="12,0,0,0"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Discord Rich Presence, off unless the user opts in here.
+                         Enabling picks the least revealing level; Settings >
+                         Customization can widen it afterwards. -->
+                    <Border Background="{DynamicResource SurfaceCardBrush}"
+                            BorderBrush="{DynamicResource BorderSubtleBrush}"
+                            BorderThickness="1"
+                            CornerRadius="10"
+                            Padding="14,12">
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel Grid.Column="0" Spacing="6">
-                                <TextBlock Text="{Binding Loc[EnableTelemetry]}"
+                                <TextBlock Text="{Binding Loc[EnableDiscordPresence]}"
                                            FontSize="13"
                                            FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                <TextBlock Text="{Binding Loc[TelemetryDescription]}"
+                                <TextBlock Text="{Binding Loc[DiscordPresenceWizardDescription]}"
                                            FontSize="12"
                                            Foreground="{DynamicResource TextMutedBrush}"
                                            TextWrapping="Wrap"/>
-                                <Button Background="Transparent" BorderThickness="0" Padding="0"
-                                        Margin="0,2,0,0"
-                                        Command="{Binding OpenStatsSiteCommand}">
-                                    <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding Loc[ViewLiveStats]}"
-                                                   FontSize="12"
-                                                   Foreground="{DynamicResource AccentPrimaryBrush}"/>
-                                        <icons:MaterialIcon Kind="ChartBar" Width="11" Height="11"
-                                                            Foreground="{DynamicResource AccentPrimaryBrush}"
-                                                            VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Button>
                             </StackPanel>
                             <ToggleSwitch Grid.Column="1"
-                                          IsChecked="{Binding IsTelemetryEnabled}"
+                                          IsChecked="{Binding IsDiscordPresenceEnabled}"
                                           OnContent="" OffContent=""
                                           VerticalAlignment="Center"
                                           Margin="12,0,0,0"/>
                         </Grid>
-                    </StackPanel>
-                </Border>
+                    </Border>
 
-                <!-- Discord Rich Presence, off unless the user opts in here.
-                     Enabling picks the least revealing level; Settings >
-                     Customization can widen it afterwards. -->
-                <Border Background="{DynamicResource SurfaceCardBrush}"
-                        BorderBrush="{DynamicResource BorderSubtleBrush}"
-                        BorderThickness="1"
-                        CornerRadius="10"
-                        Padding="14,12">
-                    <Grid ColumnDefinitions="*,Auto">
-                        <StackPanel Grid.Column="0" Spacing="6">
-                            <TextBlock Text="{Binding Loc[EnableDiscordPresence]}"
-                                       FontSize="13"
-                                       FontWeight="SemiBold"
-                                       Foreground="{DynamicResource TextPrimaryBrush}"/>
-                            <TextBlock Text="{Binding Loc[DiscordPresenceWizardDescription]}"
-                                       FontSize="12"
-                                       Foreground="{DynamicResource TextMutedBrush}"
-                                       TextWrapping="Wrap"/>
+                    <!-- One acknowledgement for both channels: the Terms and the
+                         privacy policy cover statistics and Discord alike. -->
+                    <StackPanel IsVisible="{Binding RequiresLegalAcceptance}" Spacing="8">
+                        <CheckBox IsChecked="{Binding IsPrivacyAccepted}"
+                                  Content="{Binding Loc[IHaveReadLegal]}"
+                                  FontSize="12"
+                                  Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <StackPanel Orientation="Horizontal" Spacing="16" Margin="26,0,0,0">
+                            <Button Background="Transparent" BorderThickness="0" Padding="0"
+                                    Command="{Binding OpenTermsOfUseCommand}">
+                                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Loc[TermsOfUse]}"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource AccentPrimaryBrush}"/>
+                                    <icons:MaterialIcon Kind="OpenInNew" Width="11" Height="11"
+                                                        Foreground="{DynamicResource AccentPrimaryBrush}"
+                                                        VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Background="Transparent" BorderThickness="0" Padding="0"
+                                    Command="{Binding OpenPrivacyPolicyCommand}">
+                                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Loc[PrivacyPolicy]}"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource AccentPrimaryBrush}"/>
+                                    <icons:MaterialIcon Kind="OpenInNew" Width="11" Height="11"
+                                                        Foreground="{DynamicResource AccentPrimaryBrush}"
+                                                        VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
-                        <ToggleSwitch Grid.Column="1"
-                                      IsChecked="{Binding IsDiscordPresenceEnabled}"
-                                      OnContent="" OffContent=""
-                                      VerticalAlignment="Center"
-                                      Margin="12,0,0,0"/>
-                    </Grid>
-                </Border>
-
-                <!-- One acknowledgement for both channels: the Terms and the
-                     privacy policy cover statistics and Discord alike. -->
-                <StackPanel IsVisible="{Binding RequiresLegalAcceptance}" Spacing="8">
-                    <CheckBox IsChecked="{Binding IsPrivacyAccepted}"
-                              Content="{Binding Loc[IHaveReadLegal]}"
-                              FontSize="12"
-                              Foreground="{DynamicResource TextPrimaryBrush}"/>
-                    <StackPanel Orientation="Horizontal" Spacing="16" Margin="26,0,0,0">
-                        <Button Background="Transparent" BorderThickness="0" Padding="0"
-                                Command="{Binding OpenTermsOfUseCommand}">
-                            <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding Loc[TermsOfUse]}"
-                                           FontSize="12"
-                                           Foreground="{DynamicResource AccentPrimaryBrush}"/>
-                                <icons:MaterialIcon Kind="OpenInNew" Width="11" Height="11"
-                                                    Foreground="{DynamicResource AccentPrimaryBrush}"
-                                                    VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Button>
-                        <Button Background="Transparent" BorderThickness="0" Padding="0"
-                                Command="{Binding OpenPrivacyPolicyCommand}">
-                            <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding Loc[PrivacyPolicy]}"
-                                           FontSize="12"
-                                           Foreground="{DynamicResource AccentPrimaryBrush}"/>
-                                <icons:MaterialIcon Kind="OpenInNew" Width="11" Height="11"
-                                                    Foreground="{DynamicResource AccentPrimaryBrush}"
-                                                    VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Button>
                     </StackPanel>
                 </StackPanel>
-            </StackPanel>
+            </ScrollViewer>
 
             <!-- Footer -->
             <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="0,20,0,0">
                 <TextBlock Grid.Column="0"
                            Text="{Binding Loc[SetupWizardHint]}"
+                           IsVisible="{Binding IsSteam}"
                            FontSize="11"
                            Foreground="{DynamicResource TextMutedBrush}"
                            TextWrapping="Wrap"
@@ -250,7 +291,7 @@
                            Margin="0,0,12,0"/>
                 <Button Grid.Column="1"
                         Command="{Binding CreateSessionCommand}"
-                        IsEnabled="{Binding IsValid}"
+                        IsEnabled="{Binding CanCreate}"
                         Background="{DynamicResource AccentPrimaryGradientBrush}"
                         Foreground="White"
                         FontWeight="SemiBold"

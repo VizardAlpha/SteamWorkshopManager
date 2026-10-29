@@ -10,7 +10,7 @@ internal static class WorkshopItemMapper
 {
     public static WorkshopItem ToModel(WorkshopItemDto dto) => new()
     {
-        PublishedFileId = new PublishedFileId_t(dto.PublishedFileId),
+        Id = dto.PublishedFileId,
         Title = dto.Title,
         Description = dto.Description,
         PreviewImagePath = dto.PreviewImagePath,
@@ -21,13 +21,15 @@ internal static class WorkshopItemMapper
         UpdatedAt = dto.UpdatedAt,
         SubscriberCount = dto.SubscriberCount,
         FileSize = dto.FileSize,
-        OwnerId = new CSteamID(dto.OwnerId),
+        OwnerId = dto.OwnerId,
         IsOwner = dto.IsOwner,
         AdditionalPreviews = dto.AdditionalPreviews.Select(ToModel).ToList(),
+        Summary = dto.Summary,
+        ProfileUrl = dto.ProfileUrl,
     };
 
     public static WorkshopItemDto ToDto(WorkshopItem item) => new(
-        (ulong)item.PublishedFileId,
+        item.Id,
         item.Title,
         item.Description,
         item.PreviewImagePath,
@@ -38,10 +40,12 @@ internal static class WorkshopItemMapper
         item.UpdatedAt,
         item.SubscriberCount,
         item.FileSize,
-        (ulong)item.OwnerId,
+        item.OwnerId,
         item.IsOwner,
         item.AdditionalPreviews.Select(p => new WorkshopPreviewDto(
-            (int)p.PreviewType, p.OriginalIndex, p.RemoteUrl, p.OriginalFilename)).ToList());
+            (int)p.PreviewType, p.OriginalIndex, p.RemoteUrl, p.OriginalFilename)).ToList(),
+        item.Summary,
+        item.ProfileUrl);
 
     private static WorkshopPreview ToModel(WorkshopPreviewDto dto) => new()
     {

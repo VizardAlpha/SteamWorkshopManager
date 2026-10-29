@@ -22,14 +22,14 @@ public static class PublishedItemsReconciler
     public static ItemsReconciliation Reconcile(IReadOnlyList<WorkshopItem> current, IReadOnlyList<WorkshopItem> fresh)
     {
         var byId = new Dictionary<ulong, WorkshopItem>();
-        foreach (var item in current) byId.TryAdd((ulong)item.PublishedFileId, item);
+        foreach (var item in current) byId.TryAdd(item.Id, item);
 
         var next = new List<WorkshopItem>(fresh.Count);
         var replaced = new List<(WorkshopItem, WorkshopItem)>();
 
         foreach (var item in fresh)
         {
-            if (!byId.Remove((ulong)item.PublishedFileId, out var existing))
+            if (!byId.Remove(item.Id, out var existing))
             {
                 next.Add(item);
             }
@@ -52,6 +52,7 @@ public static class PublishedItemsReconciler
     public static bool SameContent(WorkshopItem a, WorkshopItem b) =>
         a.Title == b.Title
         && a.Description == b.Description
+        && a.Summary == b.Summary
         && a.Visibility == b.Visibility
         && a.UpdatedAt == b.UpdatedAt
         && a.PreviewImageUrl == b.PreviewImageUrl

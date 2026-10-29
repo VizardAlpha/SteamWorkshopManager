@@ -8,11 +8,20 @@
 - Tokens from older versions, which lived in plaintext in `settings.json`, are migrated on startup and removed from it.
 - Settings > Privacy shows the signed-in account and a sign-out button. To revoke the session on Steam's side as well, remove "SteamWorkshopManager" from Steam's Authorized Devices page.
 
+## mod.io access
+
+- Each user brings their own mod.io access: an OAuth token and the API path, both created on mod.io/me/access. No key ships with the app.
+- The token is checked against mod.io (`/me`) before being kept, then stored encrypted like the Steam tokens, in `modio-credentials.bin`. Settings > Privacy shows the account and signs out; revoking the token itself is done on mod.io/me/access.
+- The token, the API host (it contains your mod.io user id) and your mod.io name are masked in the logs.
+- The token is only ever sent to HTTPS mod.io hosts (`*.modapi.io`, `*.test.mod.io`); any other API path is refused. It never appears in logs or error messages.
+- After a "too many requests" answer the client sends nothing until mod.io's retry delay has passed, since credentials that keep sending can be revoked.
+
 ## Telemetry
 
 - Opt-in only, shown on first launch and toggled in Settings > Privacy. Pseudonymous, not anonymous: events carry a random instance id you can see and quote in a data request.
 - Sent to `https://swm-stats.com`: instance id, OS family and version, app version, language, event type (app start, item created / updated / deleted, session added), the game's AppId, timestamp. The server adds a two-letter country code resolved at the Cloudflare edge; the IP address itself is not stored.
 - Never sent: SteamID, account name, item titles or descriptions, file paths.
+- The instance id is masked in the logs, so a log shared in a bug report can't be matched to telemetry events.
 - Full policy and deletion requests: [swm-stats.com/Privacy](https://swm-stats.com/Privacy).
 - The endpoint is baked in at build time and can be overridden with the `SWM_TELEMETRY_URL` environment variable.
 
@@ -29,7 +38,7 @@ Off by default. When enabled, you choose how much is shown: Minimal (the app onl
 
 - Only `http` and `https` links are opened from descriptions; the host is shown next to off-site links.
 - Release pages and update downloads are only accepted from this repository's GitHub URLs.
-- BBCode previews are rendered as native controls, not HTML.
+- BBCode and HTML previews are rendered as native controls by our own parsers, never by a browser engine: scripts, styles and embedded frames in a mod.io description are dropped.
 
 ## Updates and builds
 

@@ -6,7 +6,7 @@ using SteamWorkshopManager.Services.Steam;
 
 namespace SteamWorkshopManager.ViewModels.Shell;
 
-/// <summary>Steam connection dot and status line of the footer.</summary>
+/// <summary>Connection dot and status line of the footer, for the active session's platform.</summary>
 public partial class ConnectionStatusViewModel : ViewModelBase
 {
     private string _statusKey = "ConnectingToSteam";
@@ -45,6 +45,11 @@ public partial class ConnectionStatusViewModel : ViewModelBase
             SteamInitResult.SteamOffline => "SteamOffline",
             _ => "SteamNotAvailable",
         });
+
+    /// <summary>mod.io has no live connection: the session is usable once signed in.</summary>
+    public void ApplyModio(bool signedIn) => Set(
+        signedIn ? SteamConnectionState.Connected : SteamConnectionState.Disconnected,
+        signedIn ? "ConnectedToModio" : "ModioNotSignedIn");
 
     partial void OnStateChanged(SteamConnectionState value) => StateChanged?.Invoke(value);
 

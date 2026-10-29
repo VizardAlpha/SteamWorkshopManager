@@ -19,6 +19,7 @@ public partial class AddSessionWindow : Window
             Close();
         };
         viewModel.CancelRequested += () => Close();
+        Closed += (_, _) => viewModel.Modio.Dispose();
         DataContext = viewModel;
     }
 }

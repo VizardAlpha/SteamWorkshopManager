@@ -5,12 +5,12 @@
              xmlns:icons="using:Material.Icons.Avalonia"
              xmlns:controls="using:SteamWorkshopManager.Views.Controls"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="300"
-             x:Class="SteamWorkshopManager.Views.Controls.BbCodeEditorControl">
+             x:Class="SteamWorkshopManager.Views.Controls.MarkupEditorControl">
 
     <StackPanel Spacing="8">
         <!-- Toggle + Toolbar + Preview + Expand -->
         <Grid ColumnDefinitions="Auto,*,Auto,Auto">
-            <ToggleButton x:Name="BbCodeToggle"
+            <ToggleButton x:Name="MarkupToggle"
                           IsChecked="False"
                           Padding="8,4"
                           CornerRadius="4"
@@ -63,7 +63,7 @@
                      TextWrapping="Wrap"
                      Height="150"/>
 
-            <controls:BbCodePreviewControl x:Name="PreviewPanel"
+            <controls:MarkupPreviewControl x:Name="PreviewPanel"
                                            IsVisible="False"
                                            Height="150"/>
         </Panel>

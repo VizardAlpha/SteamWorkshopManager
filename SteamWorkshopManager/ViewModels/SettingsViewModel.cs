@@ -19,6 +19,7 @@ using SteamWorkshopManager.Services.Cache;
 using SteamWorkshopManager.Services.Core;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Notifications;
+using SteamWorkshopManager.Services.Platforms.Modio;
 using SteamWorkshopManager.Services.Presence;
 using SteamWorkshopManager.Services.Session;
 using SteamWorkshopManager.Services.Steam;
@@ -31,6 +32,7 @@ public partial class SettingsViewModel : ViewModelBase
     private static readonly Logger Log = LogService.GetLogger<SettingsViewModel>();
 
     private const string GitHubRepoUrl = "https://github.com/VizardAlpha/SteamWorkshopManager";
+    private const string DiscordUrl = "https://discord.gg/DCnfnMpbhf";
     private const string PrivacyPolicyUrl = "https://swm-stats.com/Privacy";
     private const string StatsSiteUrl = "https://swm-stats.com";
     private const string ThirdPartyNoticesUrl = $"{GitHubRepoUrl}/blob/master/THIRD-PARTY-NOTICES.md";
@@ -192,6 +194,13 @@ public partial class SettingsViewModel : ViewModelBase
 
     public bool IsSteamSignedIn => SteamAccountName is not null;
 
+    private readonly ModioAccount _modioAccount;
+
+    /// <summary>mod.io user behind the stored token, null when signed out.</summary>
+    public string? ModioUsername => _modioAccount.IsSignedIn ? _modioAccount.Username ?? string.Empty : null;
+
+    public bool IsModioSignedIn => _modioAccount.IsSignedIn;
+
     public string AppVersion => AppInfo.Version;
 
     public SettingsViewModel(
@@ -202,8 +211,10 @@ public partial class SettingsViewModel : ViewModelBase
         IDiscordPresenceService presence,
         UpdateController updates,
         SessionHost sessionHost,
-        ICacheStore cache)
+        ICacheStore cache,
+        ModioAccount modioAccount)
     {
+        _modioAccount = modioAccount;
         Updates = updates;
         _sessionHost = sessionHost;
         _cache = cache;
@@ -232,6 +243,7 @@ public partial class SettingsViewModel : ViewModelBase
         _logFilePath = _logService.GetLogFilePath();
         _logFolderSizeDisplay = Formatters.Bytes(_logService.GetLogFolderSize());
         SteamAuthService.AuthStateChanged += OnAuthStateChanged;
+        _modioAccount.Changed += OnModioAccountChanged;
 
         _isCacheEnabled = _settingsService.Settings.CacheEnabled;
         _isCacheUnlimited = _settingsService.Settings.CacheLimitMb <= 0;
@@ -249,6 +261,7 @@ public partial class SettingsViewModel : ViewModelBase
     {
         _presence.ConnectionStateChanged -= OnPresenceConnectionChanged;
         SteamAuthService.AuthStateChanged -= OnAuthStateChanged;
+        _modioAccount.Changed -= OnModioAccountChanged;
         _cache.Changed -= OnCacheChanged;
         LocalizationService.Instance.LanguageChanged -= RefreshCacheInfo;
     }
@@ -317,6 +330,22 @@ public partial class SettingsViewModel : ViewModelBase
 
     [RelayCommand]
     private void OpenSteamAuthorizedDevices() => OpenUrl(SteamAuthorizedDevicesUrl);
+
+    private void OnModioAccountChanged() => Dispatcher.UIThread.Post(() =>
+    {
+        OnPropertyChanged(nameof(ModioUsername));
+        OnPropertyChanged(nameof(IsModioSignedIn));
+    });
+
+    [RelayCommand]
+    private void SignOutOfModio()
+    {
+        _modioAccount.SignOut();
+        _notificationService.ShowSuccess(Loc["ModioSignedOut"]);
+    }
+
+    [RelayCommand]
+    private void OpenModioAccess() => OpenUrl(ModioAccount.AccessPageUrl);
 
     partial void OnActiveCategoryChanged(SettingsCategory value)
     {
@@ -474,6 +503,9 @@ public partial class SettingsViewModel : ViewModelBase
 
     [RelayCommand]
     private void OpenGitHub() => OpenUrl(GitHubRepoUrl);
+
+    [RelayCommand]
+    private void OpenDiscord() => OpenUrl(DiscordUrl);
 
     [RelayCommand]
     private void OpenChangelog() => OpenUrl($"{GitHubRepoUrl}/releases");

@@ -11,7 +11,7 @@
         mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="700"
         x:Class="SteamWorkshopManager.Views.MainWindow"
         x:DataType="vm:MainViewModel"
-        Icon="/Assets/avalonia-logo.ico"
+        Icon="/Assets/workshop-manager.ico"
         Title="{Binding WindowTitle}"
         MinWidth="900" MinHeight="600"
         Width="1100" Height="750"
@@ -432,7 +432,7 @@
                                    VerticalAlignment="Center"/>
                     </StackPanel>
 
-                    <controls:BbCodePreviewControl Grid.Row="1"
+                    <controls:MarkupPreviewControl Grid.Row="1"
                                                    MaxHeight="420"
                                                    Text="{Binding Updates.WhatsNewBbCode}"/>
 

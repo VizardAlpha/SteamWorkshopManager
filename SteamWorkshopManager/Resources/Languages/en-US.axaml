@@ -27,7 +27,7 @@
 
     <!-- Item List -->
     <x:String x:Key="MyPublicationsTitle">My mods</x:String>
-    <x:String x:Key="MyPublicationsSubtitle">Manage your mods published on the Workshop</x:String>
+    <x:String x:Key="MyPublicationsSubtitle">Manage your mods published on {0}</x:String>
     <x:String x:Key="SearchMods">Search mods...</x:String>
     <x:String x:Key="ClearSearch">Clear search</x:String>
 
@@ -59,6 +59,7 @@
 
     <!-- Settings: About -->
     <x:String x:Key="OpenGitHub">View on GitHub</x:String>
+    <x:String x:Key="JoinDiscord">Join the Discord</x:String>
     <x:String x:Key="OpenChangelog">Changelog</x:String>
     <x:String x:Key="OpenThirdPartyNotices">Third-party licences</x:String>
     <x:String x:Key="SettingsSubtitle">Customize your Workshop Manager experience</x:String>
@@ -171,6 +172,119 @@
     <x:String x:Key="SteamAuthorizedDevices">Manage authorized devices on Steam</x:String>
     <x:String x:Key="SteamSignOut">Sign out</x:String>
     <x:String x:Key="SteamSignedOut">Signed out of Steam</x:String>
+    <x:String x:Key="ModioAccountTitle">mod.io account</x:String>
+    <x:String x:Key="ModioAccountDescription">Your own mod.io access token, used to manage your mods on mod.io. It is stored encrypted on this computer only.</x:String>
+    <x:String x:Key="ModioManageAccess">Manage or revoke tokens on mod.io</x:String>
+    <x:String x:Key="ModioSignedOut">Signed out of mod.io</x:String>
+    <x:String x:Key="PlatformSteam">Steam Workshop</x:String>
+    <x:String x:Key="PlatformModio">mod.io</x:String>
+    <x:String x:Key="ModioSignInTitle">Sign in to mod.io</x:String>
+    <x:String x:Key="ModioSignInDescription">On mod.io, open your API access page, create an OAuth token with read and write access, then paste it here with your API path (shown on the same page).</x:String>
+    <x:String x:Key="ModioOpenAccessPage">Open mod.io API access</x:String>
+    <x:String x:Key="ModioApiPathPlaceholder">API path, e.g. https://u-12345.modapi.io/v1</x:String>
+    <x:String x:Key="ModioTokenPlaceholder">OAuth access token</x:String>
+    <x:String x:Key="ModioSignIn">Sign in</x:String>
+    <x:String x:Key="ModioSignedInAs">Signed in as</x:String>
+    <x:String x:Key="ModioSignOut">Sign out</x:String>
+    <x:String x:Key="ModioGameLabel">Game</x:String>
+    <x:String x:Key="ModioGameSearchPlaceholder">Search a game on mod.io</x:String>
+    <x:String x:Key="ModioSearch">Search</x:String>
+    <x:String x:Key="ModioNoGameFound">No game found on mod.io.</x:String>
+    <x:String x:Key="ModioSearchFailed">Search failed</x:String>
+    <x:String x:Key="ModioApiPathInvalid">This API path is not a mod.io one. Copy it from your mod.io API access page (https://u-….modapi.io/v1).</x:String>
+    <x:String x:Key="ModioTokenRequired">Paste your OAuth access token.</x:String>
+    <x:String x:Key="ModioTokenRejected">mod.io refused this token: it is wrong, expired or revoked. Create a new one on your API access page.</x:String>
+    <x:String x:Key="ModioTermsRequired">mod.io updated its terms. Sign in on mod.io to accept them, then try again.</x:String>
+    <x:String x:Key="ModioRateLimited">Too many requests to mod.io. Wait a minute, then try again.</x:String>
+    <x:String x:Key="ModioUnreachable">mod.io can't be reached right now. Check your connection and the API path.</x:String>
+    <x:String x:Key="ConnectedToModio">Signed in to mod.io</x:String>
+    <x:String x:Key="ModioSignedOutShort">Not signed in to mod.io</x:String>
+    <x:String x:Key="SteamNotAvailableShort">Steam not available</x:String>
+    <x:String x:Key="ModioNotSignedIn">Sign in to mod.io to see and manage your mods.</x:String>
+    <x:String x:Key="ModioSessionExpired">mod.io no longer accepts your token (expired or revoked). Sign in again from My mods.</x:String>
+    <x:String x:Key="ModioOpenModPage">Open on mod.io</x:String>
+    <x:String x:Key="SaveWaitsForModio">Checking mod.io for a newer version before saving.</x:String>
+    <x:String x:Key="ModioDetails">Details</x:String>
+    <x:String x:Key="ModioSummary">Summary</x:String>
+    <x:String x:Key="ModioDescriptionHint">mod.io descriptions are HTML. Tags count toward the limit, as on mod.io: the counter shows exactly what is sent.</x:String>
+    <x:String x:Key="ModioPublic">Public</x:String>
+    <x:String x:Key="ModioPublicHint">Off: the mod is hidden, only you and its team see it.</x:String>
+    <x:String x:Key="ModioLogo">Logo</x:String>
+    <x:String x:Key="ModioSelectLogo">Select a logo</x:String>
+    <x:String x:Key="ModioNoTags">This game has no tags mod authors can pick.</x:String>
+    <x:String x:Key="ModioFileVersion">Version</x:String>
+    <x:String x:Key="ModioChangelog">Changelog</x:String>
+    <x:String x:Key="ModioSummaryRequired">A summary is required on mod.io.</x:String>
+    <x:String x:Key="ModioSummaryTooLong">The summary is limited to 250 characters on mod.io.</x:String>
+    <x:String x:Key="ModioCreateTitle">New mod.io mod</x:String>
+    <x:String x:Key="ModioLogoRequired">mod.io requires a logo.</x:String>
+    <x:String x:Key="ModioFile">File</x:String>
+    <x:String x:Key="ModioCreateFailed">Failed to create the mod</x:String>
+    <x:String x:Key="ModioDetailsSub">What mod.io shows on the mod page. Fields marked * are required.</x:String>
+    <x:String x:Key="ModioLogoMeta">JPG or PNG, 8 MB max, 512 x 288 min, 16:9</x:String>
+    <x:String x:Key="ModioLogoKeep">No new logo picked</x:String>
+    <x:String x:Key="ModioInformation">Information</x:String>
+    <x:String x:Key="ModioHomepage">Homepage (optional)</x:String>
+    <x:String x:Key="ModioVisibilityCommunity">Visibility and community</x:String>
+    <x:String x:Key="ModioAllowComments">Allow comments</x:String>
+    <x:String x:Key="ModioAllowCollections">Allow the mod in collections</x:String>
+    <x:String x:Key="ModioMedia">Media</x:String>
+    <x:String x:Key="ModioMediaSub">Gallery images, YouTube videos and Sketchfab models shown on the mod page.</x:String>
+    <x:String x:Key="ModioGallery">Gallery</x:String>
+    <x:String x:Key="ModioGalleryMeta">JPG or PNG, 8 MB max each</x:String>
+    <x:String x:Key="ModioDropImages">Drag and drop images</x:String>
+    <x:String x:Key="ModioAddImages">Add images</x:String>
+    <x:String x:Key="ModioYoutube">YouTube videos</x:String>
+    <x:String x:Key="ModioSketchfab">Sketchfab models</x:String>
+    <x:String x:Key="ModioAdd">Add</x:String>
+    <x:String x:Key="ModioFileSub">The folder is zipped (without system files) and becomes the live version players download.</x:String>
+    <x:String x:Key="ModioCurrentFile">Live file</x:String>
+    <x:String x:Key="ModioZipHint">Files above 100 MB are sent in parts; up to 500 MB per upload in one go.</x:String>
+    <x:String x:Key="ModioRelease">Release</x:String>
+    <x:String x:Key="ModioCreatedNoFileYet">The mod exists on mod.io. Nobody can play it until it has a file.</x:String>
+    <x:String x:Key="ModioCreateMod">Create the mod</x:String>
+    <x:String x:Key="ModioNextStep">Next step</x:String>
+    <x:String x:Key="ModioSkip">Skip</x:String>
+    <x:String x:Key="ModioSaveMedia">Add the media</x:String>
+    <x:String x:Key="ModioFinishWithoutFile">Finish without a file</x:String>
+    <x:String x:Key="ModioUploadAndFinish">Upload and finish</x:String>
+    <x:String x:Key="ModioModCreated">Mod created on mod.io</x:String>
+    <x:String x:Key="ModioMediaFailed">Failed to add the media</x:String>
+    <x:String x:Key="ModioFileFailed">Failed to upload the file</x:String>
+    <x:String x:Key="ModioLoadFailed">Could not read the mod from mod.io</x:String>
+    <x:String x:Key="ModioDescriptionTooLong">The description is limited to 50,000 characters on mod.io.</x:String>
+    <x:String x:Key="ModioHomepageInvalid">The homepage must be a web link (https://...).</x:String>
+    <x:String x:Key="ModioImageFormat">must be a JPG or PNG image</x:String>
+    <x:String x:Key="ModioImageTooLarge">is missing or larger than 8 MB</x:String>
+    <x:String x:Key="ModioLogoTooSmall">The logo must be at least 512 x 288 pixels.</x:String>
+    <x:String x:Key="ModioLogoInvalid">The logo can't be used, see the Logo card.</x:String>
+    <x:String x:Key="ModioYoutubeInvalid">Paste a full YouTube link (https://www.youtube.com/...).</x:String>
+    <x:String x:Key="ModioSketchfabInvalid">Paste a full Sketchfab link (https://sketchfab.com/...).</x:String>
+    <x:String x:Key="ModioFileHistory">Published files</x:String>
+    <x:String x:Key="ModioRefresh">Refresh</x:String>
+    <x:String x:Key="ModioNoFiles">No file published yet.</x:String>
+    <x:String x:Key="ModioLive">LIVE</x:String>
+    <x:String x:Key="ModioFlagged">Flagged by the virus scan</x:String>
+    <x:String x:Key="ModioScanning">Virus scan pending</x:String>
+    <x:String x:Key="ModioMakeLive">Make live</x:String>
+    <x:String x:Key="ModioEditNotes">Edit version and changelog</x:String>
+    <x:String x:Key="ModioDeleteFileConfirm">Delete this file from mod.io?</x:String>
+    <x:String x:Key="ModioFileNowLive">{0} is now the live file</x:String>
+    <x:String x:Key="ModioHistoryFailed">Could not load the published files</x:String>
+    <x:String x:Key="ModioFileActionFailed">mod.io refused the change</x:String>
+    <x:String x:Key="ModioDependencies">Dependencies</x:String>
+    <x:String x:Key="ModioDependenciesSub">Mods players need for this one to work. mod.io subscribes them automatically. Changes apply at once.</x:String>
+    <x:String x:Key="ModioRequiredMods">Required mods</x:String>
+    <x:String x:Key="ModioNoDependencies">This mod needs no other mod.</x:String>
+    <x:String x:Key="ModioAddDependency">Add a required mod</x:String>
+    <x:String x:Key="ModioSearchModsPlaceholder">Search this game's mods on mod.io</x:String>
+    <x:String x:Key="ModioNoModFound">No mod found (mods that opted out of dependencies can't be added).</x:String>
+    <x:String x:Key="ModioRemoveDependency">Remove this dependency</x:String>
+    <x:String x:Key="ModioAllowDependents">Let other mods depend on this one</x:String>
+    <x:String x:Key="ModioAllowDependentsHint">Saved with the other changes. A mod other mods depend on can no longer be deleted or monetized.</x:String>
+    <x:String x:Key="ModioDependencyAdded">{0} added as a dependency</x:String>
+    <x:String x:Key="ModioDependenciesFailed">Could not load the dependencies</x:String>
+    <x:String x:Key="ModioDependencyFailed">mod.io refused the dependency change</x:String>
     <x:String x:Key="DeleteSessionTooltip">Delete this session</x:String>
 
     <!-- Bulk actions -->
@@ -181,7 +295,7 @@
     <x:String x:Key="ChangeVisibility">Change visibility</x:String>
     <x:String x:Key="DeleteSelected">Delete selected</x:String>
     <x:String x:Key="ConfirmBulkDelete">Delete {0} mods?</x:String>
-    <x:String x:Key="BulkDeleteWarning">This will permanently delete the selected mods from Steam Workshop. This action is irreversible.</x:String>
+    <x:String x:Key="BulkDeleteWarning">This will permanently delete the selected mods from {0}. This action is irreversible.</x:String>
     <x:String x:Key="BulkVisibilityUpdated">{0} mods updated</x:String>
     <x:String x:Key="BulkVisibilityPartialFail">Updated {0}/{1}, some failed</x:String>
     <x:String x:Key="BulkDeleteSuccess">{0} mods deleted</x:String>
@@ -267,7 +381,7 @@
     <x:String x:Key="AppIdRequired">Please enter an AppId or a Steam link</x:String>
     <x:String x:Key="AppIdInvalid">Couldn't read an AppId from that input. Paste a number or a Steam URL</x:String>
     <x:String x:Key="AddSessionHeroTitle">Add a Steam game</x:String>
-    <x:String x:Key="AddSessionHeroSubtitle">Paste a Steam store link or enter an AppID. We'll fetch the game info and make its Workshop available in the app.</x:String>
+    <x:String x:Key="AddSessionHeroSubtitle">Pick where the game's mods are published, then the game itself.</x:String>
     <x:String x:Key="AppIdOrUrlLabel">Steam AppID or URL</x:String>
     <x:String x:Key="AppIdOrUrlPlaceholder">480490 or https://store.steampowered.com/app/480490/…</x:String>
     <x:String x:Key="WorkshopAvailable">Workshop available</x:String>
@@ -453,6 +567,7 @@
     <x:String x:Key="Expand">Expand</x:String>
     <x:String x:Key="Preview">Preview</x:String>
     <x:String x:Key="BbCodePreviewEmpty">Nothing to preview yet. Type some BBCode to see how Steam will render it.</x:String>
+    <x:String x:Key="HtmlPreviewEmpty">Nothing to preview yet. Type some HTML to see how mod.io will render it.</x:String>
     <x:String x:Key="BbCodeQuoteAuthor">Originally posted by {0}:</x:String>
     <x:String x:Key="BbCodeSpoilerHint">Hover to reveal the spoiler</x:String>
 
@@ -562,7 +677,7 @@
     <x:String x:Key="CacheOpenSettings">Open settings</x:String>
 
     <!-- Cached mod list -->
-    <x:String x:Key="ItemRefreshing">Checking for changes on Steam</x:String>
+    <x:String x:Key="ItemRefreshing">Checking for changes on {0}</x:String>
     <x:String x:Key="ItemsRefreshFailed">Steam could not be reached, the list shown may be out of date</x:String>
     <x:String x:Key="ItemUpdatedFromSteam">This mod changed on Steam: the editor now shows the latest version</x:String>
     <x:String x:Key="ItemChangedOnSteam">This mod changed on Steam since it was opened. Saving will overwrite those changes</x:String>

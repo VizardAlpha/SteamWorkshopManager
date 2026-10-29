@@ -47,6 +47,8 @@ public static class AppPaths
     /// <summary>Steam login tokens. Machine-local (never roamed), DPAPI-encrypted on Windows, 0600 elsewhere.</summary>
     public static string CredentialsFile { get; } = Path.Combine(LocalRoot, "credentials.bin");
 
+    public static string ModioCredentialsFile { get; } = Path.Combine(LocalRoot, "modio-credentials.bin");
+
     /// <summary>Downloaded and extracted update packages.</summary>
     public static string Updates { get; } = Path.Combine(LocalRoot, "updates");
 
@@ -57,12 +59,20 @@ public static class AppPaths
 
     public static string SessionFile(string sessionId) => Path.Combine(Sessions, $"{sessionId}.json");
     public static string WorkshopForApp(uint appId) => Path.Combine(Workshop, appId.ToString());
+    /// <summary>Downloaded mod.io files of one game, apart from the Steam AppId folders.</summary>
+    public static string WorkshopForModioGame(uint gameId) => Path.Combine(Workshop, $"modio-{gameId}");
+    public static string ModioFileFolder(uint gameId, string sanitizedModName, long fileId) =>
+        Path.Combine(WorkshopForModioGame(gameId), $"{sanitizedModName}_{fileId}");
+
     public static string WorkshopVersionFolder(uint appId, string sanitizedModName, long timestamp) =>
         Path.Combine(WorkshopForApp(appId), $"{sanitizedModName}_{timestamp}");
 
     /// <summary>Scratch directory for the rebuild path of preview ops, alive for one
     /// Steam UGC update. Per-user on purpose: a shared /tmp parent could be pre-created by another user.</summary>
     public static string TempPreviewDir() => Path.Combine(LocalRoot, "tmp", "previews", Guid.NewGuid().ToString("N"));
+
+    /// <summary>Fresh folder for a mod.io upload zip, deleted once the file is sent.</summary>
+    public static string TempUploadDir() => Path.Combine(LocalRoot, "tmp", "uploads", Guid.NewGuid().ToString("N"));
 
     private static string ResolveCacheRoot()
     {

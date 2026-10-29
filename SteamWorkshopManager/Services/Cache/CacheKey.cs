@@ -42,6 +42,11 @@ public readonly partial record struct CacheKey
 
     public static string GameScope(uint gameId) => $"game-{gameId}";
 
+    public static CacheKey ModIoGame(uint gameId, string name) => new(ModIo, GameScope(gameId), name);
+
+    /// <summary>Data about one mod.io mod, dropped with its game's scope.</summary>
+    public static CacheKey ModIoMod(uint gameId, ulong modId, string name) => ModIoGame(gameId, $"mod-{modId}/{name}");
+
     /// <summary>The scope holding everything cached for a session's game.</summary>
     public static (string Platform, string Scope) SessionScope(WorkshopSession session) => session switch
     {

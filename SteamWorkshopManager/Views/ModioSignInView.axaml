@@ -1,0 +1,72 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:SteamWorkshopManager.ViewModels"
+             xmlns:icons="using:Material.Icons.Avalonia"
+             x:Class="SteamWorkshopManager.Views.ModioSignInView"
+             x:DataType="vm:ModioSignInViewModel">
+
+    <Border IsVisible="{Binding !IsSignedIn}"
+            Background="{DynamicResource SurfaceCardBrush}"
+            BorderBrush="{DynamicResource BorderSubtleBrush}"
+            BorderThickness="1"
+            CornerRadius="10"
+            Padding="14">
+        <StackPanel Spacing="10">
+            <TextBlock Text="{DynamicResource ModioSignInTitle}"
+                       FontSize="13"
+                       FontWeight="SemiBold"
+                       Foreground="{DynamicResource TextPrimaryBrush}"/>
+            <TextBlock Text="{DynamicResource ModioSignInDescription}"
+                       FontSize="12"
+                       Foreground="{DynamicResource TextMutedBrush}"
+                       TextWrapping="Wrap"/>
+            <Button Background="Transparent" BorderThickness="0" Padding="0"
+                    HorizontalAlignment="Left"
+                    Command="{Binding OpenAccessPageCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                    <TextBlock Text="{DynamicResource ModioOpenAccessPage}"
+                               FontSize="12"
+                               Foreground="{DynamicResource AccentPrimaryBrush}"/>
+                    <icons:MaterialIcon Kind="OpenInNew" Width="11" Height="11"
+                                        Foreground="{DynamicResource AccentPrimaryBrush}"
+                                        VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+            <TextBox Text="{Binding ApiPathInput, Mode=TwoWay}"
+                     PlaceholderText="{DynamicResource ModioApiPathPlaceholder}"
+                     IsEnabled="{Binding !IsSigningIn}"
+                     Padding="12,8"
+                     FontSize="13"/>
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBox Grid.Column="0"
+                         Text="{Binding TokenInput, Mode=TwoWay}"
+                         PlaceholderText="{DynamicResource ModioTokenPlaceholder}"
+                         PasswordChar="•"
+                         IsEnabled="{Binding !IsSigningIn}"
+                         Padding="12,8"
+                         Margin="0,0,8,0"
+                         FontSize="13"/>
+                <Button Grid.Column="1"
+                        Command="{Binding SignInCommand}"
+                        MinWidth="100"
+                        Padding="14,8"
+                        Background="{DynamicResource SurfaceOverlayBrush}"
+                        BorderBrush="{DynamicResource BorderStrongBrush}"
+                        Foreground="{DynamicResource TextPrimaryBrush}"
+                        CornerRadius="6"
+                        Content="{DynamicResource ModioSignIn}"/>
+            </Grid>
+            <ProgressBar IsVisible="{Binding IsSigningIn}"
+                         IsIndeterminate="True"
+                         Height="3"
+                         Background="{DynamicResource SurfaceOverlayBrush}"
+                         Foreground="{DynamicResource AccentPrimaryBrush}"/>
+            <TextBlock Text="{Binding SignInError}"
+                       IsVisible="{Binding SignInError, Converter={x:Static ObjectConverters.IsNotNull}}"
+                       FontSize="12"
+                       Foreground="{DynamicResource FeedbackDangerTextBrush}"
+                       TextWrapping="Wrap"/>
+        </StackPanel>
+    </Border>
+
+</UserControl>

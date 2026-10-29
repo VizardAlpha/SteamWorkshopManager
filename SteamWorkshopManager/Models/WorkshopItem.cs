@@ -15,9 +15,20 @@ public class WorkshopItem : INotifyPropertyChanged
     private bool _isSelected;
     private bool _isRefreshing;
 
-    public required PublishedFileId_t PublishedFileId { get; init; }
+    /// <summary>Platform id of the mod (Steam PublishedFileId, mod.io mod id).</summary>
+    public required ulong Id { get; init; }
+
+    /// <summary>Steam view of <see cref="Id"/>, for Steam-only code.</summary>
+    public PublishedFileId_t PublishedFileId => new(Id);
+
     public required string Title { get; set; }
     public string Description { get; set; } = string.Empty;
+
+    /// <summary>Short plain-text summary (mod.io only, 250 characters at most).</summary>
+    public string? Summary { get; set; }
+
+    /// <summary>Mod page on the platform's website, when the platform gives one.</summary>
+    public string? ProfileUrl { get; set; }
     public string? PreviewImagePath { get; set; }
     public string? PreviewImageUrl { get; set; }
     public VisibilityType Visibility { get; set; } = VisibilityType.Private;
@@ -43,7 +54,7 @@ public class WorkshopItem : INotifyPropertyChanged
     public long FileSize { get; set; }
 
     // Owner information
-    public CSteamID OwnerId { get; init; }
+    public ulong OwnerId { get; init; }
     public bool IsOwner { get; init; }
 
     /// <summary>

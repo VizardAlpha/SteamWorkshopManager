@@ -6,11 +6,17 @@
 - Consent screen for pseudonymous telemetry and Discord Rich Presence (both off unless you opt in).
 - "What's new" window showing the notes of the installed version, once per version.
 
-## Sessions (one per game)
+## Sessions (one per game and platform)
 
 - Session pill in the top bar to switch game; the Steam connection is restarted for the new game.
-- Add a session at any time; delete one with a preview of what will be removed (cache, downloaded versions, drafts).
+- Add a session at any time, for a Steam Workshop game or a mod.io game (sign in to mod.io with your own token first); delete one with a preview of what will be removed (cache, downloaded versions, drafts).
 - Each session keeps its tag catalog, custom tags and the local folders you used for each item.
+- On a mod.io session, "My mods" lists your mods for that game (public or hidden) with bulk visibility and delete; if mod.io stops accepting your token, the list asks you to sign in again.
+- Create a mod.io mod in three steps, like on mod.io: Details (logo, name, summary, description, homepage, visibility, comments and collections, tags) creates the mod, then Media (gallery images, YouTube, Sketchfab) and File (a folder dropped or picked, zipped, with version and changelog) can each be skipped.
+- When the game allows dependencies, a Dependencies section lists the mods this one needs, finds and adds others from the game, removes them, and (on opt-in or opt-out games) lets other mods depend on this one.
+- The File section of a mod.io mod lists every published file: download it (checked against mod.io's checksum), make an older one live again without re-uploading, edit its version and changelog, or delete it.
+- mod.io descriptions are written in HTML with the same editor as Steam's BBCode (toolbar, expand, preview), switched to HTML tags and a mod.io-styled preview; the counter counts the HTML sent, tags included.
+- A mod.io mod opens in its own editor with the same sections (Details, File, Media), the logo preview and a link to its mod.io page; one save sends what changed. Logo, gallery images and the folder can be dragged in. Saving is blocked while the cached mod is being checked on mod.io.
 - The tag catalog is the developer's tag list, read from the game's Workshop page. When the developer set none, Steam lists every tag any upload ever set instead; the app then shows no catalog and tags are added as custom tags.
 
 ## Home
@@ -68,7 +74,7 @@ Other editor actions: copy the item id, delete the item (confirmed by typing `DE
 | Privacy | Telemetry toggle, your pseudonymous instance id (for data requests), Discord on/off, Steam account and sign-out |
 | Debug | Debug logging, open the log and data folders, log folder size, clear logs |
 | Updates | Current version, check for updates, beta channel toggle, install the update, notes of the latest version |
-| About | Version, GitHub, changelog, third-party notices |
+| About | Version, GitHub, official Discord, changelog, third-party notices |
 
 ## Updates
 

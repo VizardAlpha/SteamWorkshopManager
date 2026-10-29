@@ -1,0 +1,225 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:SteamWorkshopManager.ViewModels"
+             xmlns:helpers="using:SteamWorkshopManager.Helpers"
+             xmlns:icons="using:Material.Icons.Avalonia"
+             xmlns:modioViews="using:SteamWorkshopManager.Views.Modio"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="640"
+             x:Class="SteamWorkshopManager.Views.ModioItemEditorView"
+             x:DataType="vm:ModioItemEditorViewModel">
+
+    <UserControl.Styles>
+        <StyleInclude Source="avares://SteamWorkshopManager/Themes/ModioEditorStyles.axaml"/>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="*,Auto">
+        <Grid Grid.Row="0" ColumnDefinitions="240,*" Margin="24,16">
+
+            <!-- LEFT: preview, title, sections, actions -->
+            <Border Grid.Column="0"
+                    Background="{DynamicResource SurfaceCardBrush}"
+                    BorderBrush="{DynamicResource BorderSubtleBrush}"
+                    BorderThickness="1"
+                    CornerRadius="10"
+                    Padding="12"
+                    Margin="0,0,16,0"
+                    VerticalAlignment="Top">
+                <StackPanel Spacing="2">
+                    <Border CornerRadius="8" ClipToBounds="True" Height="120"
+                            Background="{DynamicResource SurfaceElevatedBrush}">
+                        <Panel>
+                            <Image Source="{Binding Details.Logo}" Stretch="UniformToFill"/>
+                            <icons:MaterialIcon Kind="ImageOutline" Width="28" Height="28" Opacity="0.4"
+                                                Foreground="{DynamicResource TextMutedBrush}"
+                                                IsVisible="{Binding Details.Logo, Converter={x:Static ObjectConverters.IsNull}}"/>
+                        </Panel>
+                    </Border>
+                    <TextBlock Text="{Binding Details.Title}"
+                               Margin="4,10,4,4"
+                               FontSize="15" FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimaryBrush}"
+                               TextWrapping="Wrap"/>
+                    <Button Classes="secondary-action" FontSize="12" Margin="0,4,0,0"
+                            Command="{Binding OpenOnModioCommand}"
+                            IsVisible="{Binding HasProfileUrl}"
+                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <icons:MaterialIcon Kind="OpenInNew" Width="12" Height="12"/>
+                            <TextBlock Text="{DynamicResource ModioOpenModPage}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Border Height="1" Background="{DynamicResource BorderSubtleBrush}" Margin="4,10,4,8"/>
+
+                    <Button Classes="nav-item" Classes.active="{Binding IsDetailsActive}" Command="{Binding NavigateToDetailsCommand}">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <icons:MaterialIcon Kind="InformationOutline" Width="16" Height="16"/>
+                            <TextBlock Grid.Column="1" Margin="10,0,0,0" Text="{DynamicResource ModioDetails}" VerticalAlignment="Center"/>
+                            <icons:MaterialIcon Grid.Column="2" Kind="Check" Width="14" Height="14"
+                                                Foreground="{DynamicResource FeedbackSuccessBrush}"
+                                                IsVisible="{Binding Details.IsComplete}"/>
+                        </Grid>
+                    </Button>
+                    <Button Classes="nav-item" Classes.active="{Binding IsFileActive}" Command="{Binding NavigateToFileCommand}">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <icons:MaterialIcon Kind="PackageVariantClosed" Width="16" Height="16"/>
+                            <TextBlock Grid.Column="1" Margin="10,0,0,0" Text="{DynamicResource ModioFile}" VerticalAlignment="Center"/>
+                            <icons:MaterialIcon Grid.Column="2" Kind="CloudUploadOutline" Width="14" Height="14"
+                                                Foreground="{DynamicResource AccentPrimaryBrush}"
+                                                IsVisible="{Binding File.HasContentFolder}"/>
+                        </Grid>
+                    </Button>
+                    <Button Classes="nav-item" Classes.active="{Binding IsMediaActive}" Command="{Binding NavigateToMediaCommand}">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <icons:MaterialIcon Kind="ImageMultipleOutline" Width="16" Height="16"/>
+                            <TextBlock Grid.Column="1" Margin="10,0,0,0" Text="{DynamicResource ModioMedia}" VerticalAlignment="Center"/>
+                        </Grid>
+                    </Button>
+                    <Button Classes="nav-item" Classes.active="{Binding IsDependenciesActive}" Command="{Binding NavigateToDependenciesCommand}"
+                            IsVisible="{Binding Dependencies.IsAllowedByGame}">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <icons:MaterialIcon Kind="PuzzleOutline" Width="16" Height="16"/>
+                            <TextBlock Grid.Column="1" Margin="10,0,0,0" Text="{DynamicResource ModioDependencies}" VerticalAlignment="Center"/>
+                        </Grid>
+                    </Button>
+
+                    <Border Height="1" Background="{DynamicResource BorderSubtleBrush}" Margin="4,10,4,8"/>
+
+                    <Button Classes="primary-action" Command="{Binding SaveCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                            <icons:MaterialIcon Kind="ContentSaveOutline" Width="14" Height="14"/>
+                            <TextBlock Text="{DynamicResource Saving}" IsVisible="{Binding IsSaving}" VerticalAlignment="Center"/>
+                            <TextBlock Text="{DynamicResource SaveChanges}" IsVisible="{Binding !IsSaving}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Save waits for mod.io: the cached copy is being checked, or the full mod is loading -->
+                    <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center" Margin="0,6,0,0">
+                        <StackPanel.IsVisible>
+                            <MultiBinding Converter="{x:Static BoolConverters.Or}">
+                                <Binding Path="IsCheckingPlatform"/>
+                                <Binding Path="IsLoadingMod"/>
+                            </MultiBinding>
+                        </StackPanel.IsVisible>
+                        <Border Classes="refresh-badge active"
+                                Width="16" Height="16" Margin="0"
+                                Background="Transparent"
+                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <icons:MaterialIcon Kind="Sync" Width="12" Height="12"
+                                                Foreground="{DynamicResource TextMutedBrush}"/>
+                        </Border>
+                        <TextBlock Text="{DynamicResource SaveWaitsForModio}"
+                                   FontSize="11" TextWrapping="Wrap" MaxWidth="180"
+                                   Foreground="{DynamicResource TextMutedBrush}"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <Button Command="{Binding ShowDeleteDialogCommand}"
+                            IsEnabled="{Binding !IsDeleting}"
+                            Background="Transparent"
+                            BorderBrush="{DynamicResource BorderSubtleBrush}"
+                            BorderThickness="1"
+                            Foreground="{DynamicResource FeedbackDangerTextBrush}"
+                            CornerRadius="8"
+                            Padding="12,8"
+                            Margin="0,6,0,0"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                            <icons:MaterialIcon Kind="TrashCanOutline" Width="14" Height="14"/>
+                            <TextBlock Text="{DynamicResource Delete}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Border>
+
+            <!-- RIGHT: active section -->
+            <Grid Grid.Column="1">
+                <ScrollViewer IsVisible="{Binding IsDetailsActive}">
+                    <modioViews:ModioDetailsView DataContext="{Binding Details}" Margin="0,20"/>
+                </ScrollViewer>
+                <ScrollViewer IsVisible="{Binding IsFileActive}">
+                    <modioViews:ModioFileView DataContext="{Binding File}" Margin="0,20"/>
+                </ScrollViewer>
+                <ScrollViewer IsVisible="{Binding IsMediaActive}">
+                    <modioViews:ModioMediaView DataContext="{Binding Media}" Margin="0,20"/>
+                </ScrollViewer>
+                <ScrollViewer IsVisible="{Binding IsDependenciesActive}">
+                    <modioViews:ModioDependenciesView DataContext="{Binding Dependencies}" Margin="0,20"/>
+                </ScrollViewer>
+            </Grid>
+        </Grid>
+
+        <!-- Error message -->
+        <Border Grid.Row="1"
+                IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                Background="#1FC23B2E" Padding="16" Margin="24,0,24,16" CornerRadius="8"
+                BorderBrush="{DynamicResource FeedbackDangerBrush}" BorderThickness="1">
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <icons:MaterialIcon Kind="AlertCircleOutline" Width="18" Height="18"
+                                    Foreground="{DynamicResource FeedbackDangerBrush}"
+                                    VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding ErrorMessage}" TextWrapping="Wrap"
+                           Foreground="{DynamicResource FeedbackDangerTextBrush}"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Delete confirmation overlay -->
+        <Border Grid.RowSpan="2"
+                IsVisible="{Binding ShowDeleteConfirmation}"
+                Background="#CC000000">
+            <Border Background="{DynamicResource SurfaceOverlayBrush}"
+                    Padding="28" CornerRadius="12"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    MinWidth="400"
+                    BoxShadow="{StaticResource ToastShadow}">
+                <StackPanel Spacing="20">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="{DynamicResource ConfirmDelete}"
+                                   FontSize="20" FontWeight="SemiBold" Foreground="White"/>
+                        <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextMutedBrush}" FontSize="14">
+                            <Run Text="{DynamicResource DeleteConfirmMessage}"/>
+                            <Run Text="{Binding Details.Title}" FontWeight="SemiBold" Foreground="White"/>
+                            <Run Text="?"/>
+                        </TextBlock>
+                    </StackPanel>
+                    <Border Background="#1FC23B2E" Padding="12" CornerRadius="6"
+                            BorderBrush="{DynamicResource FeedbackDangerBrush}" BorderThickness="1">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <icons:MaterialIcon Kind="AlertCircleOutline" Width="14" Height="14"
+                                                Foreground="{DynamicResource FeedbackDangerTextBrush}"
+                                                VerticalAlignment="Center"/>
+                            <TextBlock Text="{DynamicResource DeleteWarning}"
+                                       Foreground="{DynamicResource FeedbackDangerTextBrush}" FontSize="12"/>
+                        </StackPanel>
+                    </Border>
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="{DynamicResource DeleteTypeToConfirm}"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   FontSize="13"/>
+                        <TextBox Text="{Binding DeleteTypedConfirmation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 PlaceholderText="{x:Static helpers:DangerousActions.ConfirmationPassphrase}"
+                                 FontFamily="Consolas, Menlo, monospace"
+                                 IsEnabled="{Binding !IsDeleting}"/>
+                        <TextBlock Text="{DynamicResource DeleteTypeToConfirmHint}"
+                                   Foreground="{DynamicResource TextDisabledBrush}"
+                                   FontSize="11"
+                                   IsVisible="{Binding !IsDeleteConfirmed}"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Right">
+                        <Button Command="{Binding CancelDeleteCommand}"
+                                Classes="secondary"
+                                Content="{DynamicResource Cancel}"
+                                IsEnabled="{Binding !IsDeleting}"/>
+                        <Button Command="{Binding ConfirmDeleteCommand}"
+                                Classes="danger"
+                                Content="{DynamicResource DeletePermanently}"
+                                IsEnabled="{Binding IsDeleteConfirmed}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Border>
+    </Grid>
+</UserControl>

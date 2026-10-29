@@ -1,0 +1,100 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:SteamWorkshopManager.ViewModels"
+             xmlns:modio="using:SteamWorkshopManager.Services.Platforms.Modio"
+             xmlns:icons="using:Material.Icons.Avalonia"
+             xmlns:views="using:SteamWorkshopManager.Views"
+             x:Class="SteamWorkshopManager.Views.ModioSessionSetupView"
+             x:DataType="vm:ModioSessionSetupViewModel">
+
+    <StackPanel Spacing="14">
+
+        <!-- Sign in with the user's own token -->
+        <views:ModioSignInView DataContext="{Binding SignIn}"/>
+
+        <!-- Signed in: pick the game -->
+        <StackPanel IsVisible="{Binding SignIn.IsSignedIn}" Spacing="10">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <icons:MaterialIcon Grid.Column="0"
+                                    Kind="AccountCircleOutline" Width="16" Height="16"
+                                    Foreground="{DynamicResource FeedbackSuccessBrush}"
+                                    VerticalAlignment="Center"
+                                    Margin="0,0,6,0"/>
+                <TextBlock Grid.Column="1"
+                           FontSize="12"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           VerticalAlignment="Center">
+                    <Run Text="{DynamicResource ModioSignedInAs}"/>
+                    <Run Text="{Binding SignIn.Username}" FontWeight="SemiBold"/>
+                </TextBlock>
+                <Button Grid.Column="2"
+                        Background="Transparent" BorderThickness="0" Padding="0"
+                        Command="{Binding SignIn.SignOutCommand}">
+                    <TextBlock Text="{DynamicResource ModioSignOut}"
+                               FontSize="12"
+                               Foreground="{DynamicResource AccentPrimaryBrush}"/>
+                </Button>
+            </Grid>
+
+            <TextBlock Text="{DynamicResource ModioGameLabel}"
+                       FontSize="12"
+                       FontWeight="Medium"
+                       Foreground="{DynamicResource TextMutedBrush}"/>
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBox Grid.Column="0"
+                         Text="{Binding SearchQuery, Mode=TwoWay}"
+                         PlaceholderText="{DynamicResource ModioGameSearchPlaceholder}"
+                         Padding="12,8"
+                         Margin="0,0,8,0"
+                         FontSize="13">
+                    <TextBox.KeyBindings>
+                        <KeyBinding Gesture="Enter" Command="{Binding SearchCommand}"/>
+                    </TextBox.KeyBindings>
+                </TextBox>
+                <Button Grid.Column="1"
+                        Command="{Binding SearchCommand}"
+                        MinWidth="100"
+                        Padding="14,8"
+                        Background="{DynamicResource SurfaceOverlayBrush}"
+                        BorderBrush="{DynamicResource BorderStrongBrush}"
+                        Foreground="{DynamicResource TextPrimaryBrush}"
+                        CornerRadius="6"
+                        Content="{DynamicResource ModioSearch}"/>
+            </Grid>
+            <ProgressBar IsVisible="{Binding IsSearching}"
+                         IsIndeterminate="True"
+                         Height="3"
+                         Background="{DynamicResource SurfaceOverlayBrush}"
+                         Foreground="{DynamicResource AccentPrimaryBrush}"/>
+            <TextBlock Text="{Binding SearchError}"
+                       IsVisible="{Binding SearchError, Converter={x:Static ObjectConverters.IsNotNull}}"
+                       FontSize="12"
+                       Foreground="{DynamicResource FeedbackDangerTextBrush}"
+                       TextWrapping="Wrap"/>
+            <TextBlock Text="{DynamicResource ModioNoGameFound}"
+                       IsVisible="{Binding HasNoResults}"
+                       FontSize="12"
+                       Foreground="{DynamicResource TextMutedBrush}"/>
+            <ListBox ItemsSource="{Binding Games}"
+                     SelectedItem="{Binding SelectedGame, Mode=TwoWay}"
+                     IsVisible="{Binding HasGames}"
+                     MaxHeight="180"
+                     Background="{DynamicResource SurfaceCardBrush}"
+                     CornerRadius="8">
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="modio:ModioGame">
+                        <StackPanel Spacing="2" Margin="2,4">
+                            <TextBlock Text="{Binding Name}"
+                                       FontSize="13"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <TextBlock Text="{Binding NameId, StringFormat='mod.io/g/{0}'}"
+                                       FontSize="11"
+                                       Foreground="{DynamicResource TextMutedBrush}"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </StackPanel>
+    </StackPanel>
+</UserControl>

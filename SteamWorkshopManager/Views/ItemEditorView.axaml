@@ -533,7 +533,7 @@
                                     <!-- Description (BBCode editor kept as-is) -->
                                     <StackPanel>
                                         <TextBlock Classes="field-label" Text="{DynamicResource Description}"/>
-                                        <controls:BbCodeEditorControl Text="{Binding Description}"
+                                        <controls:MarkupEditorControl Text="{Binding Description}"
                                                                       EditorHeight="150"
                                                                       PlaceholderText="{DynamicResource DescriptionPlaceholder}"/>
                                     </StackPanel>
@@ -759,7 +759,7 @@
                                 </Grid>
                                 <Border Height="1" Background="{DynamicResource BorderSubtleBrush}"/>
                                 <StackPanel Margin="16">
-                                    <controls:BbCodeEditorControl Text="{Binding NewChangelog}"
+                                    <controls:MarkupEditorControl Text="{Binding NewChangelog}"
                                                                   EditorHeight="200"
                                                                   PlaceholderText="{DynamicResource ChangelogPlaceholder}"/>
                                 </StackPanel>
@@ -1779,7 +1779,7 @@
                                                 </StackPanel>
                                                 <StackPanel>
                                                     <TextBlock Classes="field-label" Text="{DynamicResource Description}"/>
-                                                    <controls:BbCodeEditorControl Text="{Binding Translations.Selected.Description, FallbackValue=''}"
+                                                    <controls:MarkupEditorControl Text="{Binding Translations.Selected.Description, FallbackValue=''}"
                                                                                   EditorHeight="200"
                                                                                   PlaceholderText="{DynamicResource DescriptionPlaceholder}"/>
                                                 </StackPanel>

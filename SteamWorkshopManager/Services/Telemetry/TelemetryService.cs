@@ -89,7 +89,9 @@ public class TelemetryService : ITelemetryService, IDisposable
         _settingsService = settingsService;
         _endpoint = ResolveEndpoint();
         _state = LoadOrCreateState();
-        Log.Debug($"Telemetry initialized: endpoint={(string.IsNullOrEmpty(_endpoint) ? "(none)" : "<redacted>")}, enabled={settingsService.Settings.TelemetryEnabled}, instanceId={_state.InstanceId}, queueCount={_state.Queue.Count}");
+        // Logs are shared in bug reports: the id would link them to the telemetry events.
+        LogService.Instance.RegisterSensitiveValue(_state.InstanceId.ToString(), "instanceId");
+        Log.Debug($"Telemetry initialized: endpoint={(string.IsNullOrEmpty(_endpoint) ? "(none)" : "<redacted>")}, enabled={settingsService.Settings.TelemetryEnabled}, queueCount={_state.Queue.Count}");
         _flushLoop = Task.Run(FlushLoopAsync);
     }
 

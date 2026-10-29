@@ -15,6 +15,7 @@ public partial class SetupWizardWindow : Window
     {
         // App.axaml.cs shows the MainWindow once the session is ready.
         viewModel.SessionCreated += () => SessionCreatedAndReady?.Invoke();
+        Closed += (_, _) => viewModel.Modio.Dispose();
         DataContext = viewModel;
     }
 }

@@ -18,7 +18,7 @@ public class PublishedItemsTests
 
     private static WorkshopItem Item(ulong id, string title = "Mod", ulong subs = 10) => new()
     {
-        PublishedFileId = new PublishedFileId_t(id),
+        Id = id,
         Title = title,
         Description = "desc",
         PreviewImageUrl = $"https://cdn/{id}.jpg",
@@ -38,7 +38,7 @@ public class PublishedItemsTests
         UpdatedAt = Updated,
         SubscriberCount = subs,
         FileSize = 2048,
-        OwnerId = new CSteamID(76561198000000000),
+        OwnerId = 76561198000000000,
         IsOwner = true,
     };
 
@@ -82,7 +82,7 @@ public class PublishedItemsTests
         var gone = Item(2);
         var outcome = PublishedItemsReconciler.Reconcile([first, gone], [Item(3), Item(1)]);
 
-        CollectionAssert.AreEqual(new ulong[] { 3, 1 }, outcome.Next.Select(i => (ulong)i.PublishedFileId).ToArray());
+        CollectionAssert.AreEqual(new ulong[] { 3, 1 }, outcome.Next.Select(i => i.Id).ToArray());
         Assert.AreSame(first, outcome.Next[1]);
         Assert.AreSame(gone, outcome.Removed.Single());
         Assert.AreEqual(0, outcome.Replaced.Count);
@@ -98,14 +98,16 @@ public class PublishedItemsTests
             await store.Initialization;
             var cache = new PublishedItemsCache(store);
 
-            await cache.SaveAsync(294100, 7, [Item(1), Item(2, title: "Second")]);
-            var loaded = await cache.LoadAsync(294100, 7);
+            var steam = new SteamSession { AppId = 294100 };
+            await cache.SaveAsync(steam, 7, [Item(1), Item(2, title: "Second")]);
+            var loaded = await cache.LoadAsync(steam, 7);
 
             Assert.IsNotNull(loaded);
             Assert.AreEqual(2, loaded.Count);
             Assert.IsTrue(PublishedItemsReconciler.SameContent(Item(1), loaded[0]));
             Assert.AreEqual("Second", loaded[1].Title);
-            Assert.IsNull(await cache.LoadAsync(294100, 8));
+            Assert.IsNull(await cache.LoadAsync(steam, 8));
+            Assert.IsNull(await cache.LoadAsync(new ModioSession { GameId = 294100 }, 7));
         }
         finally
         {
