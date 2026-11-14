@@ -46,6 +46,9 @@ internal sealed class StandbyWorker(SessionHost host) : ISteamWorker
     public Task<UpdateItemResultDto> UpdateItemAsync(UpdateItemRequestDto request, IProgress<UploadProgressDto>? progress) =>
         Run(w => w.UpdateItemAsync(request, progress));
 
+    public Task<DownloadItemResultDto> DownloadItemAsync(ulong publishedFileId, IProgress<UploadProgressDto>? progress) =>
+        Run(w => w.DownloadItemAsync(publishedFileId, progress));
+
     public Task<ItemTextDto?> GetItemTextAsync(ulong publishedFileId, string language, bool fullDescription) =>
         Run(w => w.GetItemTextAsync(publishedFileId, language, fullDescription));
 

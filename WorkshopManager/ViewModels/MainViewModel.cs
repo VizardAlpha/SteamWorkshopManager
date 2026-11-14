@@ -135,7 +135,9 @@ public partial class MainViewModel : ViewModelBase, IEditorShell
         SessionDeletion = _viewModels.Create<SessionDeletionViewModel>(SessionList, (Func<WorkshopSession, Task>)LeaveSessionAsync);
 
         ItemListViewModel = _viewModels.Create<ItemListViewModel>(
-            _notificationService, _viewModels.Create<BulkUpdateViewModel>(Upload));
+            _notificationService,
+            _viewModels.Create<BulkUpdateViewModel>(Upload),
+            _viewModels.Create<BulkDownloadViewModel>(Upload));
         ItemListViewModel.ItemSelected += OpenEditor;
         ItemListViewModel.ItemsReconciled += OnItemsReconciled;
 
@@ -582,6 +584,7 @@ public partial class MainViewModel : ViewModelBase, IEditorShell
         OnPropertyChanged(nameof(WindowTitle));
         HomeViewModel.OnSessionChanged();
         ItemListViewModel.OnSessionChanged();
+        (CurrentView as SettingsViewModel)?.OnSessionChanged();
         RefreshPresence();
     }
 

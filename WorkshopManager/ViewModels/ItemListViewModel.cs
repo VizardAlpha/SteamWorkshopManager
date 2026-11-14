@@ -86,7 +86,10 @@ public partial class ItemListViewModel : ViewModelBase
     /// <summary>Dialog and background run of "Update selected" (Steam sessions).</summary>
     public BulkUpdateViewModel BulkUpdate { get; }
 
-    /// <summary>Sending content again from a remembered folder only exists for Steam.</summary>
+    /// <summary>Dialog and background run of "Download selected" (Steam sessions).</summary>
+    public BulkDownloadViewModel BulkDownload { get; }
+
+    /// <summary>Bulk update and bulk download go through the Steam client: Steam sessions only.</summary>
     public bool CanBulkUpdate => _context.Platform != WorkshopPlatform.ModIo;
 
     public ObservableCollection<WorkshopItem> Items { get; } = [];
@@ -115,6 +118,9 @@ public partial class ItemListViewModel : ViewModelBase
         OnPropertyChanged(nameof(ShowModioSignIn));
         OnPropertyChanged(nameof(HasSteamVisibilities));
         OnPropertyChanged(nameof(CanBulkUpdate));
+        // Its plan and folder pattern belong to the previous session.
+        BulkUpdate.CancelCommand.Execute(null);
+        BulkDownload.CancelCommand.Execute(null);
         OnPlatformTextsChanged();
     }
 
@@ -135,8 +141,11 @@ public partial class ItemListViewModel : ViewModelBase
         PublishedItemsCache itemsCache,
         ModioSignInViewModel modioSignIn,
         BulkUpdateViewModel bulkUpdate,
+        BulkDownloadViewModel bulkDownload,
         INotificationService? notifications = null)
     {
+        BulkDownload = bulkDownload;
+        BulkDownload.Started += ExitSelectionMode;
         BulkUpdate = bulkUpdate;
         BulkUpdate.Started += ExitSelectionMode;
         BulkUpdate.Finished += () => _ = LoadItemsAsync();
@@ -515,6 +524,15 @@ public partial class ItemListViewModel : ViewModelBase
     {
         if (!HasSelection || IsBulkProcessing || !CanBulkUpdate) return;
         await BulkUpdate.OpenAsync(Items.Where(i => i.IsSelected).ToList());
+    }
+
+    // ─── Bulk download ────────────────────────────────────────────────────────
+
+    [RelayCommand]
+    private async Task RequestBulkDownloadAsync()
+    {
+        if (!HasSelection || IsBulkProcessing || !CanBulkUpdate) return;
+        await BulkDownload.OpenAsync(Items.Where(i => i.IsSelected).ToList());
     }
 
     // ─── Bulk delete ──────────────────────────────────────────────────────────

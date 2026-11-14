@@ -28,13 +28,24 @@
 ## My mods
 
 - Grid of your published items with thumbnails and search by title. The grid is virtualized: only visible cards are created and fetch their thumbnail, so large accounts stay fast.
-- Selection mode for bulk actions: change visibility, update, or delete (confirmed by typing `DELETE`).
+- Selection mode for bulk actions: change visibility, update, download, or delete (confirmed by typing `DELETE`).
+
+### Download selected (Steam)
+
+Backs up the latest version of the selected mods, as a copy of your own work.
+
+- The Steam client downloads each mod (the same way a subscription would, at normal priority so your other Steam downloads keep going), then the app stores it as one zip per mod under `workshop/<appId>/backups/` in its data folder. Content that already is a single zip is copied as it is.
+- A mod whose latest version is already in that folder is skipped. When a mod is downloaded again after an update, its older zip is replaced: the folder holds one zip per mod.
+- Before starting, the dialog shows how many mods will be downloaded, their total size and the backup folder. If the disk does not have that much room, nothing starts: free some space, then use "Check again".
+- The download runs in the background through the progress toast, with the same Cancel button as a bulk update (it stops before the next mod). A mod that fails is reported and the others still download.
+- Steam keeps its own copy of what it downloaded in its library folder for a while; that copy is not managed by the app.
 
 ### Update selected (Steam)
 
 Sends the selected mods again, each from the content folder used at its last upload in the app.
 
-- Before starting, a dialog shows how many mods will be sent and their total size. Mods whose folder has the same size and dates as at the last upload are skipped, and so are mods without a usable content folder (they are listed).
+- Before starting, a dialog shows how many mods will be sent and their total size. Mods whose folder has the same size and dates as at the last upload are skipped.
+- Mods the app has no folder for (never uploaded from this app, or on another machine) can be found through a folder pattern, typed once per session in the dialog: `C:\Mods\{name}`, where `{name}` is the mod's title and `{id}` its id; a fixed sub-folder can follow, as in `C:\Mods\{name}\Pak`. Folder names are compared without case, spaces or punctuation, on every OS, and either path separator is accepted. The same pattern can be set in Settings > Steam. The dialog lists each folder found and each mod with no match, to check before anything is sent; a mod matched by two folders is left out. The batch cannot start while a selected mod has no folder: fix the pattern or take the mod out of the selection. Once sent, the folder is remembered like any other.
 - Change notes: one text for every mod, or a `.txt` / `.md` file. In a file, a line `# Mod title` (or `# id`) starts the notes of one mod; mods without a section get the typed text, or the text before the first heading. Markdown in a `.md` file is converted to the BBCode Steam renders. The file must be text, under 1 MB, and each note under 8000 characters; headings that match no mod are reported.
 - The mods are sent one by one in the background. The upload toast shows the current mod, its rank, the bytes sent and left for the whole batch, and a Cancel button that stops before the next mod (a Steam upload in flight cannot be interrupted).
 - Steam documents no rate limit for updates, so the pace adapts: 2 s between mods. When Steam asks to slow down, the whole queue freezes on the current mod and retries it after 1, 3, 5 then every 10 minutes, for up to 2 hours; a brief Steam outage is retried after 15 s, 30 s and 1 min. A mod that is finally given up on is reported with Steam's reason and the queue moves on to the next one: it never assumes the others would fail too. A reason such as "preview image over 1 MB, or Steam Cloud full" is not retried, since waiting cannot fix it.
@@ -84,7 +95,7 @@ Other editor actions: copy the item id, delete the item (confirmed by typing `DE
 | General | Language |
 | Customization | Toast position, Discord Rich Presence detail level (Minimal, Game, Detailed) |
 | Privacy | Telemetry toggle, your pseudonymous instance id (for data requests), Discord on/off, mod.io account and sign-out |
-| Steam | Steam account and sign-out; when to release Steam (stay connected, after each action, or after a delay you choose) |
+| Steam | Steam account and sign-out; default mod folder pattern of the active session for bulk updates; when to release Steam (stay connected, after each action, or after a delay you choose) |
 | Debug | Debug logging, open the log and data folders, log folder size, clear logs |
 | Updates | Current version, check for updates, beta channel toggle, install the update, notes of the latest version |
 | About | Version, GitHub, official Discord, changelog, third-party notices |

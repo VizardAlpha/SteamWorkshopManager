@@ -66,6 +66,12 @@ public partial interface ISteamWorker
     Task<UpdateItemResultDto> UpdateItemAsync(UpdateItemRequestDto request, IProgress<UploadProgressDto>? progress);
 
     /// <summary>
+    /// Has the Steam client download the item's current content and returns its install path.
+    /// Progress carries the bytes received.
+    /// </summary>
+    Task<DownloadItemResultDto> DownloadItemAsync(ulong publishedFileId, IProgress<UploadProgressDto>? progress);
+
+    /// <summary>
     /// Title and description in one Steam API language. Steam returns the base
     /// text when that language has no translation. Without
     /// <paramref name="fullDescription"/> the description is truncated by Steam.

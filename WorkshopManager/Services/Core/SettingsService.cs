@@ -114,6 +114,17 @@ public class SettingsService : ISettingsService
         SaveSession(session);
     }
 
+    public string? GetContentFolderPattern() => _context.Current?.ContentFolderPattern;
+
+    public void SetContentFolderPattern(string? pattern)
+    {
+        var session = _context.Current;
+        if (session == null) return;
+
+        session.ContentFolderPattern = string.IsNullOrWhiteSpace(pattern) ? null : pattern.Trim();
+        SaveSession(session);
+    }
+
     public ItemFileInfo? GetPreviewImageInfo(ulong publishedFileId)
     {
         var key = publishedFileId.ToString();

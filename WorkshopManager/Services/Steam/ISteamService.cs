@@ -57,6 +57,15 @@ public record UpdateItemOutcome(bool Success, bool NeedsLegalAgreement = false, 
     public static implicit operator UpdateItemOutcome(bool success) => new(success);
 }
 
+/// <summary>
+/// Result of asking Steam to download an item. <see cref="Path"/> is the folder Steam installed it in,
+/// or a single file for items published through the old upload API.
+/// </summary>
+public record DownloadItemOutcome(bool Success, string? Path = null, long SizeBytes = 0)
+{
+    public static DownloadItemOutcome Failed { get; } = new(false);
+}
+
 public interface ISteamService
 {
     bool IsInitialized { get; }
@@ -80,6 +89,9 @@ public interface ISteamService
         string? branchMin = null, string? branchMax = null,
         IReadOnlyList<PreviewOp>? previewOps = null);
     Task<bool> DeleteItemAsync(PublishedFileId_t fileId);
+
+    /// <summary>Has the Steam client download the item's current content; progress carries the bytes received.</summary>
+    Task<DownloadItemOutcome> DownloadItemAsync(PublishedFileId_t fileId, IProgress<UploadProgress>? progress = null);
 
     /// <summary>
     /// Gets the list of game branches (betas) available for the current AppId.

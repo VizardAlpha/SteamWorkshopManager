@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -66,7 +67,22 @@ public partial class BulkUpdateViewModel : ViewModelBase
     private string? _unchangedText;
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(StartCommand))]
     private string? _noFolderText;
+
+    /// <summary>Folder pattern of the session, e.g. <c>C:\Mods\{name}</c>.</summary>
+    [ObservableProperty]
+    private string _folderPattern = string.Empty;
+
+    [ObservableProperty]
+    private string? _patternError;
+
+    /// <summary>Some selected mods have no remembered folder: the pattern is worth showing.</summary>
+    [ObservableProperty]
+    private bool _showPattern;
+
+    /// <summary>What the pattern found and what it did not, for the user to check before sending.</summary>
+    public ObservableCollection<BulkPatternRow> PatternRows { get; } = [];
 
     /// <summary>Notes for every mod, or for the mods the file has no section for.</summary>
     [ObservableProperty]
@@ -125,15 +141,55 @@ public partial class BulkUpdateViewModel : ViewModelBase
         ReadyText = string.Empty;
         UnchangedText = null;
         NoFolderText = null;
+        PatternError = null;
+        ShowPattern = false;
+        PatternRows.Clear();
+        FolderPattern = _settings.GetContentFolderPattern() ?? string.Empty;
         Title = string.Format(Loc["BulkUpdateTitle"], selected.Count);
-        IsPreparing = true;
         IsOpen = true;
+
+        await BuildPlanAsync();
+    }
+
+    /// <summary>Searches again with the pattern as typed, and keeps it for the session.</summary>
+    [RelayCommand]
+    private async Task ApplyPatternAsync()
+    {
+        var pattern = FolderPattern.Trim();
+        if (pattern.Length > 0 && !ContentFolderPattern.IsValid(pattern))
+        {
+            PatternError = Loc["BulkPatternInvalid"];
+            return;
+        }
+
+        PatternError = null;
+        _settings.SetContentFolderPattern(pattern);
+        await BuildPlanAsync();
+    }
+
+    /// <summary>Takes a mod out of this update, here and in the list's selection.</summary>
+    [RelayCommand]
+    private async Task ExcludeAsync(BulkPatternRow? row)
+    {
+        if (row is null) return;
+
+        _selected = _selected.Where(i => i.Id != row.Item.Id).ToList();
+        row.Item.IsSelected = false;
+        Title = string.Format(Loc["BulkUpdateTitle"], _selected.Count);
+        await BuildPlanAsync();
+    }
+
+    private async Task BuildPlanAsync()
+    {
+        var selected = _selected;
+        var pattern = FolderPattern.Trim();
+        IsPreparing = true;
 
         try
         {
-            // Folder sizes are read from disk: off the UI thread.
+            // Folder listings and sizes are read from disk: off the UI thread.
             var stored = selected.ToDictionary(i => i.Id, i => _settings.GetContentFolderInfo(i.Id));
-            var plan = await Task.Run(() => selected.Select(i => BulkUpdatePlanner.Classify(i, stored[i.Id])).ToList());
+            var plan = await Task.Run(() => BulkUpdatePlanner.Plan(selected, stored, pattern));
             if (!ReferenceEquals(_selected, selected)) return;
 
             _ready = plan.Where(e => e.State == BulkUpdateState.Ready).ToList();
@@ -146,9 +202,17 @@ public partial class BulkUpdateViewModel : ViewModelBase
             UnchangedText = unchanged == 0 ? null : string.Format(Loc["BulkUpdateUnchanged"], unchanged);
 
             var noFolder = plan.Where(e => e.State is BulkUpdateState.NoFolder or BulkUpdateState.FolderMissing).ToList();
-            NoFolderText = noFolder.Count == 0
-                ? null
-                : string.Format(Loc["BulkUpdateNoFolder"], noFolder.Count, Names(noFolder.Select(e => e.Item.Title)));
+            NoFolderText = noFolder.Count == 0 ? null : string.Format(Loc["BulkUpdateNoFolder"], noFolder.Count);
+
+            var fromPattern = plan.Where(e => e.FromPattern).ToList();
+            ShowPattern = noFolder.Count > 0 || fromPattern.Count > 0;
+            PatternRows.Clear();
+            foreach (var entry in fromPattern)
+                PatternRows.Add(new BulkPatternRow(entry.Item, entry.Folder!, true));
+            foreach (var entry in noFolder)
+                PatternRows.Add(new BulkPatternRow(entry.Item, Loc["BulkPatternNotFound"], false));
+
+            RefreshChangelogStatus(null);
         }
         catch (Exception ex)
         {
@@ -223,7 +287,10 @@ public partial class BulkUpdateViewModel : ViewModelBase
             : string.Format(Loc["BulkChangelogTooLong"], BulkChangelog.MaxNoteLength, Names(tooLong.Select(i => i.Title)));
     }
 
-    private bool CanStart() => ReadyCount > 0 && ChangelogError is null && !_upload.IsInProgress;
+    // A mod left without a folder blocks the start: the user fixes the pattern or deselects it,
+    // rather than finding out afterwards that it was skipped.
+    private bool CanStart() =>
+        ReadyCount > 0 && NoFolderText is null && ChangelogError is null && !_upload.IsInProgress;
 
     [RelayCommand(CanExecute = nameof(CanStart))]
     private void Start()
@@ -304,10 +371,28 @@ public partial class BulkUpdateViewModel : ViewModelBase
         var result => $"{failure.Title} ({SteamErrorMapper.GetErrorMessage(result.Value)})",
     };
 
+    [RelayCommand]
+    private async Task BrowsePatternRootAsync()
+    {
+        var folder = await _fileDialog.OpenFolderAsync(Loc["BulkPatternBrowse"]);
+        if (folder is null) return;
+
+        // The usual layout: one folder per mod under the chosen root.
+        FolderPattern = Path.Combine(folder, ContentFolderPattern.Name);
+        await ApplyPatternAsync();
+    }
+
     private static string Names(IEnumerable<string> names)
     {
         var all = names.ToList();
         var shown = string.Join(", ", all.Take(MaxNamesListed));
         return all.Count > MaxNamesListed ? $"{shown}, +{all.Count - MaxNamesListed}" : shown;
     }
+}
+
+/// <summary>A mod without a remembered folder: the folder the pattern found for it, or that none matched.</summary>
+public sealed record BulkPatternRow(WorkshopItem Item, string Detail, bool Found)
+{
+    public string Title => Item.Title;
+    public bool NotFound => !Found;
 }

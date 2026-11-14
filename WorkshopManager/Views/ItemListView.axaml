@@ -302,6 +302,15 @@
                         </StackPanel>
                     </Button>
                     <Button Classes="action"
+                            Command="{Binding RequestBulkDownloadCommand}"
+                            IsEnabled="{Binding HasSelection}"
+                            IsVisible="{Binding CanBulkUpdate}">
+                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                            <icons:MaterialIcon Kind="CloudDownloadOutline" Width="14" Height="14"/>
+                            <TextBlock Text="{DynamicResource DownloadSelected}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="action"
                             Command="{Binding RequestBulkDeleteCommand}"
                             IsEnabled="{Binding HasSelection}"
                             Foreground="{DynamicResource FeedbackDangerTextBrush}"
@@ -512,6 +521,87 @@
 
         </Grid>
 
+        <!-- Bulk download: what will be backed up, where, and whether the disk has room -->
+        <Border Grid.RowSpan="2"
+                IsVisible="{Binding BulkDownload.IsOpen}"
+                Background="#CC000000">
+            <Border Background="{DynamicResource SurfaceOverlayBrush}"
+                    Padding="28" CornerRadius="12"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Width="560">
+                <StackPanel Spacing="18" DataContext="{Binding BulkDownload}">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="{Binding Title}"
+                                   FontSize="20" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Text="{DynamicResource BulkDownloadIntro}"
+                                   TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextMutedBrush}"
+                                   FontSize="13"/>
+                    </StackPanel>
+
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="{Binding DownloadText}"
+                                   TextWrapping="Wrap"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   FontSize="13"/>
+                        <TextBlock Text="{Binding SkippedText}"
+                                   IsVisible="{Binding SkippedText, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                   TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   FontSize="12"/>
+                    </StackPanel>
+
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="{DynamicResource BulkDownloadFolderLabel}"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   FontSize="13"/>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0" Text="{Binding FolderText}"
+                                       ToolTip.Tip="{Binding FolderText}"
+                                       TextTrimming="PathSegmentEllipsis"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                       VerticalAlignment="Center"/>
+                            <Button Grid.Column="1" Classes="action" Margin="8,0,0,0"
+                                    Command="{Binding OpenFolderCommand}"
+                                    ToolTip.Tip="{DynamicResource BulkDownloadOpenFolder}">
+                                <icons:MaterialIcon Kind="FolderOpenOutline" Width="14" Height="14"/>
+                            </Button>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- Not enough room: free some, then check again -->
+                    <Border IsVisible="{Binding SpaceError, Converter={x:Static ObjectConverters.IsNotNull}}"
+                            Background="#1FC23B2E" Padding="12" CornerRadius="6"
+                            BorderBrush="{DynamicResource FeedbackDangerBrush}" BorderThickness="1">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0" Text="{Binding SpaceError}"
+                                       TextWrapping="Wrap"
+                                       Foreground="{DynamicResource FeedbackDangerTextBrush}"
+                                       FontSize="12"
+                                       VerticalAlignment="Center"/>
+                            <Button Grid.Column="1" Classes="action" Margin="12,0,0,0"
+                                    Command="{Binding RefreshCommand}"
+                                    Content="{DynamicResource BulkDownloadRetry}"/>
+                        </Grid>
+                    </Border>
+
+                    <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Right">
+                        <Button Command="{Binding CancelCommand}"
+                                Classes="action"
+                                Content="{DynamicResource Cancel}"/>
+                        <Button Command="{Binding StartCommand}"
+                                Classes="action"
+                                Background="{DynamicResource AccentPrimaryGradientBrush}"
+                                Foreground="White"
+                                Content="{DynamicResource BulkUpdateStart}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Border>
+
         <!-- Bulk update: what will be sent, and the change notes -->
         <Border Grid.RowSpan="2"
                 IsVisible="{Binding BulkUpdate.IsOpen}"
@@ -552,6 +642,81 @@
                                    TextWrapping="Wrap"
                                    Foreground="{DynamicResource FeedbackDangerTextBrush}"
                                    FontSize="12"/>
+                    </StackPanel>
+
+                    <!-- Mods the app has no folder for: where to look, and what was found -->
+                    <StackPanel Spacing="6" IsVisible="{Binding ShowPattern}">
+                        <TextBlock Text="{DynamicResource BulkPatternLabel}"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   FontSize="13"/>
+                        <Grid ColumnDefinitions="*,Auto,Auto">
+                            <TextBox Grid.Column="0"
+                                     Text="{Binding FolderPattern, Mode=TwoWay}"
+                                     PlaceholderText="{DynamicResource BulkPatternPlaceholder}"
+                                     FontSize="12"/>
+                            <Button Grid.Column="1" Classes="action" Margin="8,0,0,0"
+                                    Command="{Binding BrowsePatternRootCommand}"
+                                    ToolTip.Tip="{DynamicResource BulkPatternBrowse}">
+                                <icons:MaterialIcon Kind="FolderOpenOutline" Width="14" Height="14"/>
+                            </Button>
+                            <Button Grid.Column="2" Classes="action" Margin="8,0,0,0"
+                                    Command="{Binding ApplyPatternCommand}"
+                                    Content="{DynamicResource BulkPatternSearch}"/>
+                        </Grid>
+                        <TextBlock Text="{DynamicResource BulkPatternHint}"
+                                   TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextDisabledBrush}"
+                                   FontSize="11"/>
+                        <TextBlock Text="{Binding PatternError}"
+                                   IsVisible="{Binding PatternError, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                   TextWrapping="Wrap"
+                                   Foreground="{DynamicResource FeedbackDangerTextBrush}"
+                                   FontSize="12"/>
+                        <ScrollViewer MaxHeight="130" HorizontalScrollBarVisibility="Disabled">
+                            <ItemsControl ItemsSource="{Binding PatternRows}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:BulkPatternRow">
+                                        <Grid ColumnDefinitions="Auto,Auto,*,Auto" Margin="0,2">
+                                            <icons:MaterialIcon Grid.Column="0" Kind="CheckCircleOutline"
+                                                                Width="13" Height="13"
+                                                                IsVisible="{Binding Found}"
+                                                                Foreground="{DynamicResource FeedbackSuccessBrush}"
+                                                                VerticalAlignment="Center"/>
+                                            <icons:MaterialIcon Grid.Column="0" Kind="AlertCircleOutline"
+                                                                Width="13" Height="13"
+                                                                IsVisible="{Binding NotFound}"
+                                                                Foreground="{DynamicResource FeedbackDangerTextBrush}"
+                                                                VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding Title}"
+                                                       Margin="6,0,10,0"
+                                                       MaxWidth="180"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       FontSize="12" FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                                       VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding Detail}"
+                                                       ToolTip.Tip="{Binding Detail}"
+                                                       TextTrimming="PathSegmentEllipsis"
+                                                       FontSize="11"
+                                                       Foreground="{DynamicResource TextMutedBrush}"
+                                                       VerticalAlignment="Center"/>
+                                            <Button Grid.Column="3"
+                                                    Command="{Binding $parent[ItemsControl].((vm:BulkUpdateViewModel)DataContext).ExcludeCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    ToolTip.Tip="{DynamicResource BulkUpdateExclude}"
+                                                    Background="Transparent"
+                                                    BorderThickness="0"
+                                                    Padding="4"
+                                                    Margin="6,0,0,0"
+                                                    Foreground="{DynamicResource TextMutedBrush}"
+                                                    VerticalAlignment="Center">
+                                                <icons:MaterialIcon Kind="Close" Width="12" Height="12"/>
+                                            </Button>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
                     </StackPanel>
 
                     <StackPanel Spacing="6">

@@ -12,6 +12,7 @@
 | `bundle/` | Language files extracted from the executable (rewritten only when they change) |
 | `tempo/<guid>/draft.json` | Create-form drafts; ids are validated as GUIDs before any file operation |
 | `workshop/<appId>/` | Past versions downloaded from the item history |
+| `workshop/<appId>/backups/` | "Download selected": the latest version of your own mods, one zip per mod |
 | `workshop/modio-<gameId>/` | Files downloaded from a mod.io mod's published files (checked against mod.io's MD5) |
 
 On macOS and Linux both folders are the platform equivalents returned by .NET for `ApplicationData` and `LocalApplicationData`.

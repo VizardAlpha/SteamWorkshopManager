@@ -60,6 +60,9 @@ public static class AppPaths
 
     public static string SessionFile(string sessionId) => Path.Combine(Sessions, $"{sessionId}.json");
     public static string WorkshopForApp(uint appId) => Path.Combine(Workshop, appId.ToString());
+    /// <summary>Backups of the user's own mods for one Steam game: one zip per mod, latest version.</summary>
+    public static string WorkshopBackups(uint appId) => Path.Combine(WorkshopForApp(appId), BackupsFolderName);
+    public const string BackupsFolderName = "backups";
     /// <summary>Downloaded mod.io files of one game, apart from the Steam AppId folders.</summary>
     public static string WorkshopForModioGame(uint gameId) => Path.Combine(Workshop, $"modio-{gameId}");
     public static string ModioFileFolder(uint gameId, string sanitizedModName, long fileId) =>

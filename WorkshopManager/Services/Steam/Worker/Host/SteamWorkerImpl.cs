@@ -23,6 +23,7 @@ internal sealed class SteamWorkerImpl : ISteamWorker
     private readonly SteamService _steam;
     private readonly SteamUgcQueries _queries;
     private readonly SteamUgcPublisher _publisher;
+    private readonly SteamUgcDownloader _downloader;
     private CancellationTokenSource? _logSinkCts;
 
     public SteamWorkerImpl(uint appId)
@@ -30,6 +31,7 @@ internal sealed class SteamWorkerImpl : ISteamWorker
         _steam = new SteamService(appId);
         _queries = new SteamUgcQueries(_steam, appId);
         _publisher = new SteamUgcPublisher(_steam, appId);
+        _downloader = new SteamUgcDownloader(_steam);
     }
 
     public async Task SetLogSinkAsync(IProgress<LogEntryDto>? sink, bool debugEnabled)
@@ -141,6 +143,12 @@ internal sealed class SteamWorkerImpl : ISteamWorker
             request.BranchMax,
             request.PreviewOps?.Select(FromDto).ToList());
         return new UpdateItemResultDto(outcome.Success, outcome.NeedsLegalAgreement, (int)(outcome.Result ?? 0));
+    }
+
+    public async Task<DownloadItemResultDto> DownloadItemAsync(ulong publishedFileId, IProgress<UploadProgressDto>? progress)
+    {
+        var outcome = await _downloader.DownloadAsync(new PublishedFileId_t(publishedFileId), BridgeProgress(progress));
+        return new DownloadItemResultDto(outcome.Success, outcome.Path, outcome.SizeBytes);
     }
 
     public async Task<ItemTextDto?> GetItemTextAsync(ulong publishedFileId, string language, bool fullDescription)

@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using WorkshopManager.Models;
 
 namespace WorkshopManager.Core.Workshop;
@@ -15,11 +17,34 @@ public enum BulkUpdateState
     FolderMissing,
 }
 
-/// <summary>One selected mod and what a bulk update would do with it.</summary>
-public sealed record BulkUpdateEntry(WorkshopItem Item, string? Folder, BulkUpdateState State, long SizeBytes);
+/// <summary>
+/// One selected mod and what a bulk update would do with it.
+/// <see cref="FromPattern"/>: the folder was found through the session's folder pattern, not remembered.
+/// </summary>
+public sealed record BulkUpdateEntry(
+    WorkshopItem Item, string? Folder, BulkUpdateState State, long SizeBytes, bool FromPattern = false);
 
 public static class BulkUpdatePlanner
 {
+    /// <summary>
+    /// Classifies every mod; those without a usable remembered folder are then looked for
+    /// through <paramref name="pattern"/>, when there is one.
+    /// </summary>
+    public static IReadOnlyList<BulkUpdateEntry> Plan(
+        IReadOnlyList<WorkshopItem> items, IReadOnlyDictionary<ulong, ItemFileInfo?> stored, string? pattern)
+    {
+        var plan = items.Select(i => Classify(i, stored.GetValueOrDefault(i.Id))).ToList();
+        if (!ContentFolderPattern.IsValid(pattern)) return plan;
+
+        var orphans = plan.Where(e => e.State is BulkUpdateState.NoFolder or BulkUpdateState.FolderMissing)
+            .Select(e => e.Item).ToList();
+        var found = ContentFolderPattern.Resolve(pattern!, orphans);
+
+        return plan.Select(e => found.TryGetValue(e.Item.Id, out var folder)
+            ? new BulkUpdateEntry(e.Item, folder, BulkUpdateState.Ready, ModFileInfoBuilder.InspectFolder(folder).Size, FromPattern: true)
+            : e).ToList();
+    }
+
     /// <summary><paramref name="stored"/> is what the app recorded at the mod's last upload.</summary>
     public static BulkUpdateEntry Classify(WorkshopItem item, ItemFileInfo? stored)
     {

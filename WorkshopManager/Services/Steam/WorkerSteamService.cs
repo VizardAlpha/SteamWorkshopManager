@@ -83,6 +83,22 @@ public sealed class WorkerSteamService(SessionHost host) : ISteamService
         }
     }
 
+    public async Task<DownloadItemOutcome> DownloadItemAsync(PublishedFileId_t fileId, IProgress<UploadProgress>? progress = null)
+    {
+        if (host.Worker is null) return DownloadItemOutcome.Failed;
+
+        try
+        {
+            var result = await host.Worker.DownloadItemAsync(fileId.m_PublishedFileId, BridgeProgress(progress));
+            return new DownloadItemOutcome(result.Success, result.Path, result.SizeBytes);
+        }
+        catch (Exception ex)
+        {
+            LogRpcFailure(nameof(DownloadItemAsync), ex);
+            return DownloadItemOutcome.Failed;
+        }
+    }
+
     public async Task<List<GameBranch>?> GetGameBranchesAsync()
     {
         if (host.Worker is null) return null;

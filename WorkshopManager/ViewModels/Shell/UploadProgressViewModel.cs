@@ -51,13 +51,16 @@ public partial class UploadProgressViewModel : ViewModelBase
 
     partial void OnIsInProgressChanged(bool value) => InProgressChanged?.Invoke(value);
 
-    /// <summary>A bulk update owns the toast until <see cref="EndBatch"/>: one mod finishing must not close it.</summary>
-    public void ApplyBatch(BulkUpdateProgress p)
+    /// <summary>
+    /// A bulk update or download owns the toast until <see cref="EndBatch"/>: one mod finishing must not
+    /// close it. <paramref name="statusKey"/> formats "rank / total: title".
+    /// </summary>
+    public void ApplyBatch(BulkUpdateProgress p, string statusKey = "BulkUpdateStatus")
     {
         IsInProgress = true;
         StatusMessage = p.RetryIn is { } wait
             ? string.Format(Loc["BulkUpdateWaiting"], $"{(int)wait.TotalMinutes}:{wait.Seconds:00}")
-            : string.Format(Loc["BulkUpdateStatus"], p.Index, p.Total, p.Title);
+            : string.Format(Loc[statusKey], p.Index, p.Total, p.Title);
         Progress = p.BytesTotal > 0 ? p.BytesDone * 100.0 / p.BytesTotal : (p.Index - 1) * 100.0 / p.Total;
         var left = string.Format(Loc["BulkUpdateLeft"], Formatters.Bytes(Math.Max(0, p.BytesTotal - p.BytesDone)));
         ProgressText = $"{Formatters.Bytes(p.BytesDone)} / {Formatters.Bytes(p.BytesTotal)} ({Progress:F0}%) · {left}";

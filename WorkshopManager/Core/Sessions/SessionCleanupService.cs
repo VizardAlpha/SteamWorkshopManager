@@ -119,7 +119,11 @@ public sealed class SessionCleanupService
                     try { total += new FileInfo(f).Length; } catch { /* race with delete */ }
                 }
             }
-            return (total, dirs.Length);
+            // The backups folder holds one zip per mod; every other folder is one downloaded version.
+            var count = dirs.Sum(d => Path.GetFileName(d) == AppPaths.BackupsFolderName
+                ? Directory.GetFiles(d, "*.zip").Length
+                : 1);
+            return (total, count);
         }
         catch
         {

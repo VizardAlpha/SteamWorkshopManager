@@ -121,6 +121,12 @@ public abstract class WorkshopSession : INotifyPropertyChanged
     public Dictionary<string, ItemFileInfo> ContentFolderInfos { get; set; } = new();
 
     /// <summary>
+    /// Where the content folder of a mod with no remembered folder is looked for,
+    /// e.g. <c>C:\Mods\{name}</c> (see <c>ContentFolderPattern</c>).
+    /// </summary>
+    public string? ContentFolderPattern { get; set; }
+
+    /// <summary>
     /// Remembered preview image info for each published item.
     /// Key = PublishedFileId as string.
     /// </summary>

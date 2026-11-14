@@ -653,6 +653,46 @@
                         </Grid>
                     </Border>
 
+                    <!-- Folder pattern of the active Steam session, used by "Update selected" -->
+                    <Border Classes="section" IsVisible="{Binding HasSteamSession}">
+                        <StackPanel Margin="16,14" Spacing="8">
+                            <TextBlock Classes="row-label" Text="{DynamicResource BulkPatternSettingTitle}"/>
+                            <TextBlock Classes="row-desc" Text="{DynamicResource BulkPatternSettingDescription}"/>
+                            <Grid ColumnDefinitions="*,Auto,Auto">
+                                <TextBox Grid.Column="0"
+                                         Text="{Binding ContentFolderPattern, Mode=TwoWay}"
+                                         PlaceholderText="{DynamicResource BulkPatternPlaceholder}"
+                                         FontSize="13"/>
+                                <Button Grid.Column="1" Margin="8,0,0,0"
+                                        Command="{Binding BrowseContentFolderPatternCommand}"
+                                        ToolTip.Tip="{DynamicResource BulkPatternBrowse}"
+                                        Background="{DynamicResource SurfaceElevatedBrush}"
+                                        BorderBrush="{DynamicResource BorderStrongBrush}"
+                                        BorderThickness="1"
+                                        Foreground="{DynamicResource TextPrimaryBrush}"
+                                        CornerRadius="6"
+                                        Padding="12,8">
+                                    <icons:MaterialIcon Kind="FolderOpenOutline" Width="14" Height="14"/>
+                                </Button>
+                                <Button Grid.Column="2" Margin="8,0,0,0"
+                                        Command="{Binding SaveContentFolderPatternCommand}"
+                                        Content="{DynamicResource Save}"
+                                        Background="{DynamicResource SurfaceElevatedBrush}"
+                                        BorderBrush="{DynamicResource BorderStrongBrush}"
+                                        BorderThickness="1"
+                                        Foreground="{DynamicResource TextPrimaryBrush}"
+                                        CornerRadius="6"
+                                        Padding="12,8"
+                                        FontSize="13"/>
+                            </Grid>
+                            <TextBlock Text="{Binding ContentFolderPatternError}"
+                                       IsVisible="{Binding ContentFolderPatternError, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                       TextWrapping="Wrap"
+                                       Foreground="{DynamicResource FeedbackDangerTextBrush}"
+                                       FontSize="12"/>
+                        </StackPanel>
+                    </Border>
+
                     <!-- Standby: when the worker lets go of Steam -->
                     <Border Classes="section">
                         <StackPanel Spacing="0">

@@ -12,6 +12,10 @@ public interface ISettingsService
     void SetContentFolderPath(ulong publishedFileId, string? path);
     void SetContentFolderInfo(ulong publishedFileId, ItemFileInfo? info);
 
+    /// <summary>Folder pattern of the active session, used by the bulk update for mods with no remembered folder.</summary>
+    string? GetContentFolderPattern();
+    void SetContentFolderPattern(string? pattern);
+
     ItemFileInfo? GetPreviewImageInfo(ulong publishedFileId);
     void SetPreviewImagePath(ulong publishedFileId, string? path);
     void SetPreviewImageInfo(ulong publishedFileId, ItemFileInfo? info);

@@ -13,6 +13,7 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using WorkshopManager.Services.UI;
+using WorkshopManager.Core.Sessions;
 using WorkshopManager.Helpers;
 using WorkshopManager.Models;
 using WorkshopManager.Services.Cache;
@@ -214,8 +215,12 @@ public partial class SettingsViewModel : ViewModelBase
         UpdateController updates,
         SessionHost sessionHost,
         ICacheStore cache,
-        ModioAccount modioAccount)
+        ModioAccount modioAccount,
+        ISessionContext context,
+        IFileDialogService fileDialog)
     {
+        _context = context;
+        _fileDialog = fileDialog;
         _modioAccount = modioAccount;
         Updates = updates;
         _sessionHost = sessionHost;
@@ -249,6 +254,7 @@ public partial class SettingsViewModel : ViewModelBase
 
         _isCacheEnabled = _settingsService.Settings.CacheEnabled;
         _selectedSteamIdleMode = _settingsService.Settings.SteamIdleMode;
+        _contentFolderPattern = _settingsService.GetContentFolderPattern() ?? string.Empty;
         _steamIdleSeconds = _settingsService.Settings.SteamIdleSeconds;
         _isCacheUnlimited = _settingsService.Settings.CacheLimitMb <= 0;
         _cacheLimitMb = _isCacheUnlimited ? DefaultCacheLimitMb : _settingsService.Settings.CacheLimitMb;
@@ -366,6 +372,53 @@ public partial class SettingsViewModel : ViewModelBase
         settings.SteamIdleSeconds = seconds;
         _settingsService.Save();
         _sessionHost.RefreshIdlePolicy();
+    }
+
+    private readonly ISessionContext _context;
+    private readonly IFileDialogService _fileDialog;
+
+    /// <summary>The folder pattern belongs to a Steam session: nothing to set without one.</summary>
+    public bool HasSteamSession => _context.Current is SteamSession;
+
+    /// <summary>Where the bulk update looks for mods with no remembered folder, for the active session.</summary>
+    [ObservableProperty]
+    private string _contentFolderPattern = string.Empty;
+
+    [ObservableProperty]
+    private string? _contentFolderPatternError;
+
+    /// <summary>The active session changed while Settings was open: everything per session is read again.</summary>
+    public void OnSessionChanged()
+    {
+        ContentFolderPattern = _settingsService.GetContentFolderPattern() ?? string.Empty;
+        ContentFolderPatternError = null;
+        OnPropertyChanged(nameof(HasSteamSession));
+    }
+
+    [RelayCommand]
+    private void SaveContentFolderPattern()
+    {
+        var pattern = ContentFolderPattern.Trim();
+        if (pattern.Length > 0 && !Core.Workshop.ContentFolderPattern.IsValid(pattern))
+        {
+            ContentFolderPatternError = Loc["BulkPatternInvalid"];
+            return;
+        }
+
+        ContentFolderPatternError = null;
+        _settingsService.SetContentFolderPattern(pattern);
+        _notificationService.ShowSuccess(Loc["BulkPatternSaved"]);
+    }
+
+    [RelayCommand]
+    private async Task BrowseContentFolderPatternAsync()
+    {
+        var folder = await _fileDialog.OpenFolderAsync(Loc["BulkPatternBrowse"]);
+        if (folder is null) return;
+
+        // The usual layout: one folder per mod under the chosen root.
+        ContentFolderPattern = Path.Combine(folder, Core.Workshop.ContentFolderPattern.Name);
+        SaveContentFolderPattern();
     }
 
     private void OnAuthStateChanged() =>

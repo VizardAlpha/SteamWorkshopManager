@@ -10,3 +10,6 @@ public record CreateItemResultDto(ulong FileId, int ErrorCode, bool NeedsLegalAg
 
 /// <summary>Result of <c>ISteamWorker.UpdateItemAsync</c>.</summary>
 public record UpdateItemResultDto(bool Success, bool NeedsLegalAgreement, int ErrorCode = 0);
+
+/// <summary>Where Steam installed a downloaded item, on the machine both processes run on.</summary>
+public record DownloadItemResultDto(bool Success, string? Path, long SizeBytes);
