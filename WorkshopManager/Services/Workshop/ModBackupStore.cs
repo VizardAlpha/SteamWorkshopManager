@@ -27,6 +27,45 @@ public static class ModBackupStore
     public static string? FindCurrent(string folder, WorkshopItem item) =>
         BackupsOf(folder, item).FirstOrDefault(p => IsCurrent(p, item));
 
+    /// <summary>How many backups the folder holds and their total size.</summary>
+    public static (int Count, long Bytes) Measure(string folder)
+    {
+        try
+        {
+            if (!Directory.Exists(folder)) return (0, 0);
+            var files = Directory.EnumerateFiles(folder, "*" + Extension).Select(p => new FileInfo(p)).ToList();
+            return (files.Count, files.Sum(f => f.Length));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return (0, 0);
+        }
+    }
+
+    /// <summary>Deletes every backup of the folder (and half-written ones). Returns how many zips went.</summary>
+    public static int Clear(string folder)
+    {
+        if (!Directory.Exists(folder)) return 0;
+
+        var deleted = 0;
+        foreach (var file in Directory.EnumerateFiles(folder).ToList())
+        {
+            var isBackup = file.EndsWith(Extension, StringComparison.OrdinalIgnoreCase);
+            if (!isBackup && !file.EndsWith(".part", StringComparison.OrdinalIgnoreCase)) continue;
+            try
+            {
+                File.Delete(file);
+                if (isBackup) deleted++;
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                // In use: left for the next clear.
+            }
+        }
+
+        return deleted;
+    }
+
     /// <summary>Free bytes on the volume holding <paramref name="folder"/>, null when it can't be read.</summary>
     public static long? FreeSpace(string folder)
     {

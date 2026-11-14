@@ -25,6 +25,7 @@ using WorkshopManager.Services.Presence;
 using WorkshopManager.Services.Session;
 using WorkshopManager.Services.Steam;
 using WorkshopManager.Services.Telemetry;
+using WorkshopManager.Services.Workshop;
 
 namespace WorkshopManager.ViewModels;
 
@@ -255,6 +256,7 @@ public partial class SettingsViewModel : ViewModelBase
         _isCacheEnabled = _settingsService.Settings.CacheEnabled;
         _selectedSteamIdleMode = _settingsService.Settings.SteamIdleMode;
         _contentFolderPattern = _settingsService.GetContentFolderPattern() ?? string.Empty;
+        RefreshBackupInfo();
         _steamIdleSeconds = _settingsService.Settings.SteamIdleSeconds;
         _isCacheUnlimited = _settingsService.Settings.CacheLimitMb <= 0;
         _cacheLimitMb = _isCacheUnlimited ? DefaultCacheLimitMb : _settingsService.Settings.CacheLimitMb;
@@ -262,6 +264,7 @@ public partial class SettingsViewModel : ViewModelBase
         _cache.Changed += OnCacheChanged;
         LocalizationService.Instance.LanguageChanged += RefreshCacheInfo;
         LocalizationService.Instance.LanguageChanged += RefreshSteamIdleOptions;
+        LocalizationService.Instance.LanguageChanged += RefreshBackupInfo;
 
         _ = Updates.CheckAsync();
     }
@@ -276,6 +279,7 @@ public partial class SettingsViewModel : ViewModelBase
         _cache.Changed -= OnCacheChanged;
         LocalizationService.Instance.LanguageChanged -= RefreshCacheInfo;
         LocalizationService.Instance.LanguageChanged -= RefreshSteamIdleOptions;
+        LocalizationService.Instance.LanguageChanged -= RefreshBackupInfo;
     }
 
     // Raised on every cache write, from any thread.
@@ -387,9 +391,64 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     private string? _contentFolderPatternError;
 
+    /// <summary>"3 mods, 12.4 MB" for the active session's backup folder.</summary>
+    [ObservableProperty]
+    private string _backupInfo = string.Empty;
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ClearBackupsCommand))]
+    private bool _hasBackups;
+
+    private string BackupFolder => AppPaths.WorkshopBackups(_context.AppId);
+
+    private void RefreshBackupInfo()
+    {
+        if (!HasSteamSession)
+        {
+            HasBackups = false;
+            BackupInfo = string.Empty;
+            return;
+        }
+
+        var (count, bytes) = ModBackupStore.Measure(BackupFolder);
+        HasBackups = count > 0;
+        BackupInfo = count == 0
+            ? Loc["BackupsNone"]
+            : string.Format(Loc["BackupsInfo"], count, Formatters.Bytes(bytes));
+    }
+
+    [RelayCommand]
+    private void OpenBackupFolder()
+    {
+        Directory.CreateDirectory(BackupFolder);
+        ShellLauncher.Current.OpenFolder(BackupFolder);
+    }
+
+    /// <summary>The delete button was clicked: the card asks to confirm before anything is removed.</summary>
+    [ObservableProperty]
+    private bool _isConfirmingBackupClear;
+
+    [RelayCommand(CanExecute = nameof(HasBackups))]
+    private void ClearBackups() => IsConfirmingBackupClear = true;
+
+    [RelayCommand]
+    private void CancelClearBackups() => IsConfirmingBackupClear = false;
+
+    [RelayCommand]
+    private void ConfirmClearBackups()
+    {
+        IsConfirmingBackupClear = false;
+        var deleted = ModBackupStore.Clear(BackupFolder);
+        RefreshBackupInfo();
+        _notificationService.ShowSuccess(string.Format(Loc["BackupsCleared"], deleted));
+    }
+
     /// <summary>The active session changed while Settings was open: everything per session is read again.</summary>
     public void OnSessionChanged()
     {
+        // A pending confirmation was about the previous session's backups.
+        IsConfirmingBackupClear = false;
+        RefreshBackupInfo();
         ContentFolderPattern = _settingsService.GetContentFolderPattern() ?? string.Empty;
         ContentFolderPatternError = null;
         OnPropertyChanged(nameof(HasSteamSession));

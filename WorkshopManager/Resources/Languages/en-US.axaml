@@ -291,6 +291,14 @@
     <x:String x:Key="BulkUpdateNothing">Nothing to send: no selected mod has changed.</x:String>
     <x:String x:Key="BulkUpdateUnchanged">{0} unchanged since the last upload, skipped.</x:String>
     <x:String x:Key="BulkUpdateNoFolder">{0} without a usable content folder. Give them one through the pattern below, or leave them out with the cross, to be able to start.</x:String>
+    <x:String x:Key="BackupsTitle">Mod backups</x:String>
+    <x:String x:Key="BackupsDescription">Zips made by "Download selected" for the active session: the latest version of your own mods.</x:String>
+    <x:String x:Key="BackupsInfo">{0} mod(s), {1}</x:String>
+    <x:String x:Key="BackupsNone">No backup yet</x:String>
+    <x:String x:Key="BackupsOpenFolder">Open folder</x:String>
+    <x:String x:Key="BackupsClear">Delete backups</x:String>
+    <x:String x:Key="BackupsClearConfirm">Delete every backup of this session? A mod removed from the Workshop since then could not be downloaded again.</x:String>
+    <x:String x:Key="BackupsCleared">{0} backup(s) deleted</x:String>
     <x:String x:Key="BulkPatternSettingTitle">Default mod folder for bulk updates</x:String>
     <x:String x:Key="BulkPatternSettingDescription">Where "Update selected" looks for a mod it has no folder for, in the active session. {name} stands for the mod's title, {id} for its id.</x:String>
     <x:String x:Key="BulkPatternSaved">Folder pattern saved</x:String>

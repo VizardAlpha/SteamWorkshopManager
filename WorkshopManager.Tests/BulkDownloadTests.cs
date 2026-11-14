@@ -111,6 +111,34 @@ public class BulkDownloadTests
     }
 
     [TestMethod]
+    public async Task MeasureAndClear_CountOnlyBackups_AndLeaveOtherFilesAlone()
+    {
+        var root = NewFolder();
+        try
+        {
+            var content = Directory.CreateDirectory(Path.Combine(root, "content")).FullName;
+            File.WriteAllText(Path.Combine(content, "a.pak"), "data");
+            var backups = Path.Combine(root, "backups");
+            await ModBackupStore.StoreAsync(content, backups, Mod(1, "A"), CancellationToken.None);
+            await ModBackupStore.StoreAsync(content, backups, Mod(2, "B"), CancellationToken.None);
+            var notes = Path.Combine(backups, "notes.txt");
+            File.WriteAllText(notes, "mine");
+            File.WriteAllText(Path.Combine(backups, "half.zip.part"), "x");
+
+            var (count, bytes) = ModBackupStore.Measure(backups);
+            Assert.AreEqual(2, count);
+            Assert.IsTrue(bytes > 0);
+
+            Assert.AreEqual(2, ModBackupStore.Clear(backups));
+            Assert.AreEqual((0, 0L), ModBackupStore.Measure(backups));
+            Assert.IsTrue(File.Exists(notes));
+            Assert.AreEqual(0, Directory.GetFiles(backups, "*.part").Length);
+            Assert.AreEqual(0, ModBackupStore.Clear(Path.Combine(root, "missing")));
+        }
+        finally { Directory.Delete(root, recursive: true); }
+    }
+
+    [TestMethod]
     public void FreeSpace_IsReadEvenWhenTheFolderDoesNotExistYet()
     {
         var root = NewFolder();

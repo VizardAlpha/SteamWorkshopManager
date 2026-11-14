@@ -291,6 +291,14 @@
     <x:String x:Key="BulkUpdateNothing">Rien à envoyer : aucun mod sélectionné n'a changé.</x:String>
     <x:String x:Key="BulkUpdateUnchanged">{0} inchangé(s) depuis le dernier envoi, ignoré(s).</x:String>
     <x:String x:Key="BulkUpdateNoFolder">{0} sans dossier de contenu utilisable. Donnez-leur en un par le modèle ci-dessous, ou écartez-les avec la croix, pour pouvoir lancer.</x:String>
+    <x:String x:Key="BackupsTitle">Sauvegardes des mods</x:String>
+    <x:String x:Key="BackupsDescription">Zips créés par « Télécharger la sélection » pour la session active : la dernière version de vos propres mods.</x:String>
+    <x:String x:Key="BackupsInfo">{0} mod(s), {1}</x:String>
+    <x:String x:Key="BackupsNone">Aucune sauvegarde pour l'instant</x:String>
+    <x:String x:Key="BackupsOpenFolder">Ouvrir le dossier</x:String>
+    <x:String x:Key="BackupsClear">Supprimer les sauvegardes</x:String>
+    <x:String x:Key="BackupsClearConfirm">Supprimer toutes les sauvegardes de cette session ? Un mod retiré du Workshop entre-temps ne pourrait plus être re-téléchargé.</x:String>
+    <x:String x:Key="BackupsCleared">{0} sauvegarde(s) supprimée(s)</x:String>
     <x:String x:Key="BulkPatternSettingTitle">Dossier par défaut des mods pour l'envoi groupé</x:String>
     <x:String x:Key="BulkPatternSettingDescription">Où « Mettre à jour la sélection » cherche un mod dont le dossier n'est pas connu, pour la session active. {name} représente le titre du mod, {id} son identifiant.</x:String>
     <x:String x:Key="BulkPatternSaved">Modèle de dossier enregistré</x:String>

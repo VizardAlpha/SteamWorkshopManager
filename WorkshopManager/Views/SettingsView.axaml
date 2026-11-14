@@ -693,6 +693,88 @@
                         </StackPanel>
                     </Border>
 
+                    <!-- Backups made by "Download selected" for the active Steam session -->
+                    <Border Classes="section" IsVisible="{Binding HasSteamSession}">
+                        <StackPanel Spacing="0">
+                        <Grid Classes="row" ColumnDefinitions="*,Auto,Auto">
+                            <StackPanel Grid.Column="0" Spacing="6">
+                                <TextBlock Classes="row-label" Text="{DynamicResource BackupsTitle}"/>
+                                <TextBlock Classes="row-desc" Text="{DynamicResource BackupsDescription}"/>
+                                <TextBlock Text="{Binding BackupInfo}"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"/>
+                            </StackPanel>
+                            <Button Grid.Column="1" Margin="12,0,0,0"
+                                    Command="{Binding OpenBackupFolderCommand}"
+                                    Background="{DynamicResource SurfaceElevatedBrush}"
+                                    BorderBrush="{DynamicResource BorderStrongBrush}"
+                                    BorderThickness="1"
+                                    Foreground="{DynamicResource TextPrimaryBrush}"
+                                    CornerRadius="6"
+                                    Padding="12,8"
+                                    FontSize="13"
+                                    VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <icons:MaterialIcon Kind="FolderOpenOutline" Width="14" Height="14"/>
+                                    <TextBlock Text="{DynamicResource BackupsOpenFolder}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Grid.Column="2" Margin="8,0,0,0"
+                                    Command="{Binding ClearBackupsCommand}"
+                                    Background="Transparent"
+                                    BorderBrush="{DynamicResource FeedbackDangerBrush}"
+                                    BorderThickness="1"
+                                    Foreground="{DynamicResource FeedbackDangerTextBrush}"
+                                    CornerRadius="6"
+                                    Padding="12,8"
+                                    FontSize="13"
+                                    VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <icons:MaterialIcon Kind="DeleteOutline" Width="14" Height="14"/>
+                                    <TextBlock Text="{DynamicResource BackupsClear}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+
+                        <!-- Asked before anything is deleted -->
+                        <Border IsVisible="{Binding IsConfirmingBackupClear}"
+                                Background="#1FC23B2E"
+                                BorderBrush="{DynamicResource FeedbackDangerBrush}"
+                                BorderThickness="1"
+                                CornerRadius="6"
+                                Padding="12"
+                                Margin="16,0,16,14">
+                            <Grid ColumnDefinitions="*,Auto,Auto">
+                                <TextBlock Grid.Column="0"
+                                           Text="{DynamicResource BackupsClearConfirm}"
+                                           TextWrapping="Wrap"
+                                           Foreground="{DynamicResource FeedbackDangerTextBrush}"
+                                           FontSize="12"
+                                           VerticalAlignment="Center"/>
+                                <Button Grid.Column="1" Margin="12,0,0,0"
+                                        Command="{Binding CancelClearBackupsCommand}"
+                                        Content="{DynamicResource Cancel}"
+                                        Background="{DynamicResource SurfaceElevatedBrush}"
+                                        BorderBrush="{DynamicResource BorderStrongBrush}"
+                                        BorderThickness="1"
+                                        Foreground="{DynamicResource TextPrimaryBrush}"
+                                        CornerRadius="6"
+                                        Padding="12,6"
+                                        FontSize="12"/>
+                                <Button Grid.Column="2" Margin="8,0,0,0"
+                                        Command="{Binding ConfirmClearBackupsCommand}"
+                                        Content="{DynamicResource DeletePermanently}"
+                                        Background="{DynamicResource FeedbackDangerBrush}"
+                                        Foreground="White"
+                                        BorderThickness="0"
+                                        CornerRadius="6"
+                                        Padding="12,6"
+                                        FontSize="12"/>
+                            </Grid>
+                        </Border>
+                        </StackPanel>
+                    </Border>
+
                     <!-- Standby: when the worker lets go of Steam -->
                     <Border Classes="section">
                         <StackPanel Spacing="0">
