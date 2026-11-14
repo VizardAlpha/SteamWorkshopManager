@@ -1,6 +1,5 @@
 using System;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -8,6 +7,7 @@ using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using QRCoder;
+using WorkshopManager.Services.UI;
 using WorkshopManager.Core.Sessions;
 using WorkshopManager.Models;
 using WorkshopManager.Services.Log;
@@ -139,8 +139,7 @@ public partial class ChangelogHistoryViewModel(
     {
         if (_item is not { } item) return;
         var url = $"https://steamcommunity.com/sharedfiles/filedetails/changelog/{(ulong)item.PublishedFileId}";
-        try { Process.Start(new ProcessStartInfo { FileName = url, UseShellExecute = true }); }
-        catch (Exception ex) { Log.Debug($"Failed to open the changelog page: {ex.Message}"); }
+        ShellLauncher.Current.OpenUrl(url);
     }
 
     [RelayCommand]

@@ -18,7 +18,7 @@ namespace WorkshopManager.Services.Core;
 internal partial class DraftJsonContext : JsonSerializerContext;
 
 /// <summary>
-/// Persists in-progress mod drafts under <c>%AppData%/SteamWorkshopManager/tempo</c>.
+/// Persists in-progress mod drafts under <c>%AppData%/WorkshopManager/tempo</c>.
 /// Layout: one sub-folder per draft, named with a compact Guid; each folder
 /// holds a <c>draft.json</c> mirroring <see cref="CreateDraft"/>. Retrieval is
 /// just "enumerate the sub-folders"; deletion is "recursively delete the

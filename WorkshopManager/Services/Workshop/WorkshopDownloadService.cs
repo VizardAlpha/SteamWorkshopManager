@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using WorkshopManager.Services.UI;
 using WorkshopManager.Services.Core;
 using WorkshopManager.Helpers;
 using WorkshopManager.Models;
@@ -164,14 +165,7 @@ public class WorkshopDownloadService
     {
         var versionFolder = AppPaths.WorkshopVersionFolder(appId, SanitizeModName(modName), timestamp);
 
-        if (!Directory.Exists(versionFolder))
-            return;
-
-        Process.Start(new ProcessStartInfo
-        {
-            FileName = versionFolder,
-            UseShellExecute = true
-        });
+        ShellLauncher.Current.OpenFolder(versionFolder);
     }
 
     public static string SanitizeModName(string name)

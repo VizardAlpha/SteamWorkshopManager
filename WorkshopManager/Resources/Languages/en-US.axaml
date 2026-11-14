@@ -601,6 +601,7 @@
     <x:String x:Key="TimeAgoDays">{0}d ago</x:String>
     <x:String x:Key="TimeAgoWeeks">{0}w ago</x:String>
     <x:String x:Key="TimeAgoMonths">{0}mo ago</x:String>
+    <x:String x:Key="TimeAgoYear">{0}y ago</x:String>
     <x:String x:Key="TimeAgoYears">{0}y ago</x:String>
     <x:String x:Key="AlreadyDownloaded">Already downloaded</x:String>
     <x:String x:Key="NoChangelogs">No changelogs found</x:String>

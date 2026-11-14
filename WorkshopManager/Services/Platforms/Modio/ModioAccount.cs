@@ -29,7 +29,9 @@ public sealed class ModioSignInException(string messageKey, Exception? inner = n
 public sealed class ModioAccount
 {
     private static readonly Logger Log = LogService.GetLogger<ModioAccount>();
-    private static readonly byte[] Entropy = Encoding.UTF8.GetBytes("SteamWorkshopManager.ModioCredentials.v1");
+    private static readonly byte[] Entropy = Encoding.UTF8.GetBytes("WorkshopManager.ModioCredentials.v1");
+    // Files written before the rename to Workshop Manager.
+    private static readonly byte[] LegacyEntropy = Encoding.UTF8.GetBytes("SteamWorkshopManager.ModioCredentials.v1");
 
     public const string AccessPageUrl = "https://mod.io/me/access";
 
@@ -158,7 +160,7 @@ public sealed class ModioAccount
         try
         {
             if (!File.Exists(_filePath)) return;
-            var stored = JsonSerializer.Deserialize(ProtectedFile.Read(_filePath, Entropy), ModioAccountJsonContext.Default.StoredModioAccount);
+            var stored = JsonSerializer.Deserialize(ProtectedFile.Read(_filePath, Entropy, LegacyEntropy), ModioAccountJsonContext.Default.StoredModioAccount);
             if (stored is null || !ModioCredentials.TryParseBaseUrl(stored.BaseUrl, out var baseUrl)) return;
             Apply(new ModioCredentials(baseUrl, stored.Token), stored.UserId, stored.Username);
         }

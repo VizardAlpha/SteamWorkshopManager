@@ -5,7 +5,7 @@ namespace WorkshopManager.Models;
 
 /// <summary>
 /// Persisted state for an in-progress mod creation. Each draft lives on disk
-/// under <c>%AppData%/SteamWorkshopManager/tempo/&lt;TempId&gt;/draft.json</c>.
+/// under <c>%AppData%/WorkshopManager/tempo/&lt;TempId&gt;/draft.json</c>.
 /// The <see cref="TempId"/> is a compact Guid that doubles as the folder name,
 /// so re-loading a draft is just "open this folder". On publish the entire
 /// folder is removed.

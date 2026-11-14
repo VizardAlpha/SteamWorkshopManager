@@ -131,13 +131,17 @@ internal sealed class SteamUgcPublisher(SteamService steam, uint appId)
         }
     }
 
-    /// <summary>Removes the empty item left behind by a failed create so a retry doesn't pile up duplicates.</summary>
+    // Dev affordance: SWM_FAKE_LEGAL_AGREEMENT=1 reports the agreement as pending to preview its toast and banner.
+    private static readonly bool FakeLegalAgreement =
+        Environment.GetEnvironmentVariable("SWM_FAKE_LEGAL_AGREEMENT") == "1";
+
     private static bool NeedsLegalAgreement(bool flag)
     {
         if (flag) Log.Warning("Steam keeps the item hidden until the Workshop legal agreement is accepted");
-        return flag;
+        return flag || FakeLegalAgreement;
     }
 
+    /// <summary>Removes the empty item left behind by a failed create so a retry doesn't pile up duplicates.</summary>
     private async Task DeleteOrphanAsync(PublishedFileId_t fileId)
     {
         Log.Warning($"Create failed after Steam allocated FileId {fileId}, deleting the empty item");

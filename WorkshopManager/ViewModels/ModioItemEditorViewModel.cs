@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -24,8 +23,22 @@ public enum ModioEditorSection { Details, File, Media, Dependencies }
 /// Editor of a mod.io mod, in the sections of mod.io's own pages. One save sends what changed
 /// in any section; tags the game's admins set (outside the catalog) are never removed.
 /// </summary>
-public partial class ModioItemEditorViewModel : ViewModelBase, IDisposable
+public partial class ModioItemEditorViewModel : ViewModelBase, IEditorHost, IDisposable
 {
+    #region IEditorHost
+
+    IRelayCommand? IEditorHost.PrimaryCommand => SaveCommand;
+
+    bool IEditorHost.TryFollowSession(WorkshopSession session) => false;
+
+    bool IEditorHost.Close()
+    {
+        Dispose();
+        return false;
+    }
+
+    #endregion
+
     private static readonly Logger Log = LogService.GetLogger<ModioItemEditorViewModel>();
 
     private readonly WorkshopItem _item;
@@ -186,8 +199,7 @@ public partial class ModioItemEditorViewModel : ViewModelBase, IDisposable
     private void OpenOnModio()
     {
         if (!HasProfileUrl) return;
-        try { Process.Start(new ProcessStartInfo(_profileUrl!) { UseShellExecute = true }); }
-        catch (Exception ex) { Log.Debug($"Failed to open the mod page: {ex.Message}"); }
+        ShellLauncher.Current.OpenUrl(_profileUrl);
     }
 
     private bool CanSave() => !IsSaving && !IsLoadingMod && !IsCheckingPlatform;

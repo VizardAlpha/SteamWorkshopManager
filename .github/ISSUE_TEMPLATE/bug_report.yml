@@ -76,7 +76,7 @@ body:
       label: Logs
       description: >-
         Paste any relevant log output. Logs live under
-        %LocalAppData%\SteamWorkshopManager\ on Windows
+        %LocalAppData%\WorkshopManager\ on Windows
         (Settings → Debug → Open log folder).
       render: shell
     validations:

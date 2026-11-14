@@ -25,8 +25,24 @@ namespace WorkshopManager.ViewModels;
 /// Create form. Owns the new item's own fields and drafts; tags, branches,
 /// dependencies, gallery and translations come from child view-models shared with the editor.
 /// </summary>
-public partial class CreateItemViewModel : ViewModelBase
+public partial class CreateItemViewModel : ViewModelBase, IEditorHost
 {
+    #region IEditorHost
+
+    IRelayCommand? IEditorHost.PrimaryCommand => CreateCommand;
+
+    // The form is not tied to a mod yet: it can follow to another Steam game.
+    bool IEditorHost.TryFollowSession(WorkshopSession session)
+    {
+        if (session is not SteamSession) return false;
+        OnSessionChanged();
+        return true;
+    }
+
+    bool IEditorHost.Close() => false;
+
+    #endregion
+
     private readonly IFileDialogService _fileDialogService;
     private readonly INotificationService _notificationService;
     private readonly DraftService _draftService;

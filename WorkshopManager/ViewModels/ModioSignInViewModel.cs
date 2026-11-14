@@ -1,9 +1,9 @@
 using System;
-using System.Diagnostics;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using WorkshopManager.Services.UI;
 using WorkshopManager.Services.Log;
 using WorkshopManager.Services.Platforms.Modio;
 
@@ -53,8 +53,7 @@ public partial class ModioSignInViewModel : ViewModelBase, IDisposable
     [RelayCommand]
     private static void OpenAccessPage()
     {
-        try { Process.Start(new ProcessStartInfo(ModioAccount.AccessPageUrl) { UseShellExecute = true }); }
-        catch (Exception ex) { Log.Debug($"Failed to open mod.io access page: {ex.Message}"); }
+        ShellLauncher.Current.OpenUrl(ModioAccount.AccessPageUrl);
     }
 
     private bool CanSignIn => !IsSigningIn;

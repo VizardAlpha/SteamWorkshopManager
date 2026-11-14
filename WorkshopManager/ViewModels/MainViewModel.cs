@@ -244,28 +244,18 @@ public partial class MainViewModel : ViewModelBase
 
     #region Navigation
 
+    /// <summary>Removes the shell's handlers from the screen being left, so a late event cannot navigate.</summary>
+    private Action? _unhookCurrentView;
+
     private void DetachCurrentView()
     {
+        _unhookCurrentView?.Invoke();
+        _unhookCurrentView = null;
+
         switch (CurrentView)
         {
-            case ItemEditorViewModel editor:
-                editor.ItemUpdated -= OnItemUpdated;
-                editor.ItemDeleted -= OnItemDeleted;
-                editor.Dispose();
-                break;
-            case ModioItemEditorViewModel modioEditor:
-                modioEditor.ItemUpdated -= OnModioItemUpdated;
-                modioEditor.ItemDeleted -= OnItemDeleted;
-                modioEditor.Dispose();
-                break;
-            case CreateItemViewModel creator:
-                creator.ItemCreated -= OnItemCreated;
-                break;
-            case CreateModioItemViewModel modioCreator:
-                modioCreator.ItemCreated -= OnModioItemCreated;
-                // Created, then left before Finish: the list must still show it.
-                if (modioCreator.LeftUnfinished) _ = ItemListViewModel.LoadItemsAsync();
-                modioCreator.Dispose();
+            case IEditorHost host:
+                if (host.Close()) _ = ItemListViewModel.LoadItemsAsync();
                 break;
             case SettingsViewModel settings:
                 settings.Detach();
@@ -292,6 +282,11 @@ public partial class MainViewModel : ViewModelBase
         var editor = _viewModels.Create<ItemEditorViewModel>(item, Upload.Reporter);
         editor.ItemUpdated += OnItemUpdated;
         editor.ItemDeleted += OnItemDeleted;
+        _unhookCurrentView = () =>
+        {
+            editor.ItemUpdated -= OnItemUpdated;
+            editor.ItemDeleted -= OnItemDeleted;
+        };
         CurrentView = editor;
         ActiveTab = ShellTab.MyMods;
     }
@@ -302,6 +297,11 @@ public partial class MainViewModel : ViewModelBase
         var editor = _viewModels.Create<ModioItemEditorViewModel>(item, Upload.Reporter);
         editor.ItemUpdated += OnModioItemUpdated;
         editor.ItemDeleted += OnItemDeleted;
+        _unhookCurrentView = () =>
+        {
+            editor.ItemUpdated -= OnModioItemUpdated;
+            editor.ItemDeleted -= OnItemDeleted;
+        };
         CurrentView = editor;
         ActiveTab = ShellTab.MyMods;
     }
@@ -313,12 +313,14 @@ public partial class MainViewModel : ViewModelBase
         {
             var modioCreator = _viewModels.Create<CreateModioItemViewModel>(Upload.Reporter);
             modioCreator.ItemCreated += OnModioItemCreated;
+            _unhookCurrentView = () => modioCreator.ItemCreated -= OnModioItemCreated;
             CurrentView = modioCreator;
             return;
         }
 
         var creator = _viewModels.Create<CreateItemViewModel>(Upload.Reporter);
         creator.ItemCreated += OnItemCreated;
+        _unhookCurrentView = () => creator.ItemCreated -= OnItemCreated;
         CurrentView = creator;
     }
 
@@ -405,18 +407,8 @@ public partial class MainViewModel : ViewModelBase
     [RelayCommand]
     private void SaveCurrent()
     {
-        switch (CurrentView)
-        {
-            case ItemEditorViewModel editor when editor.SaveCommand.CanExecute(null):
-                editor.SaveCommand.Execute(null);
-                break;
-            case ModioItemEditorViewModel modioEditor when modioEditor.SaveCommand.CanExecute(null):
-                modioEditor.SaveCommand.Execute(null);
-                break;
-            case CreateItemViewModel creator when creator.CreateCommand.CanExecute(null):
-                creator.CreateCommand.Execute(null);
-                break;
-        }
+        if (CurrentView is IEditorHost { PrimaryCommand: { } command } && command.CanExecute(null))
+            command.Execute(null);
     }
 
     #endregion
@@ -539,16 +531,9 @@ public partial class MainViewModel : ViewModelBase
             ApplyConnection(initResult);
             NotifySessionChanged();
 
-            switch (CurrentView)
-            {
-                case CreateItemViewModel creator when session is SteamSession:
-                    creator.OnSessionChanged();
-                    break;
-                // The mod on screen belongs to the previous session; a create form is for one platform.
-                case ItemEditorViewModel or ModioItemEditorViewModel or CreateItemViewModel or CreateModioItemViewModel:
-                    Show(ItemListViewModel, ShellTab.MyMods);
-                    break;
-            }
+            // The mod on screen belongs to the previous session; a create form is for one platform.
+            if (CurrentView is IEditorHost host && !host.TryFollowSession(session))
+                Show(ItemListViewModel, ShellTab.MyMods);
 
             // Not awaited: the command keeps the flyout disabled while it runs.
             if (IsPlatformReady(initResult))
@@ -588,7 +573,7 @@ public partial class MainViewModel : ViewModelBase
         Connection.SetDisconnected();
         NotifySessionChanged();
 
-        if (CurrentView is ItemEditorViewModel or ModioItemEditorViewModel or CreateItemViewModel or CreateModioItemViewModel)
+        if (CurrentView is IEditorHost)
             Show(HomeViewModel, ShellTab.Home);
     }
 

@@ -1,8 +1,8 @@
 using System;
-using System.Diagnostics;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using WorkshopManager.Services.UI;
 using WorkshopManager.Core.Sessions;
 using WorkshopManager.Core.Steam;
 using WorkshopManager.Models;
@@ -158,8 +158,7 @@ public partial class SetupWizardViewModel : ViewModelBase
 
     private static void OpenUrl(string url)
     {
-        try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); }
-        catch (Exception ex) { Log.Debug($"Failed to open URL {url}: {ex.Message}"); }
+        ShellLauncher.Current.OpenUrl(url);
     }
 
     private bool CanValidate => !IsValidating && (!RequiresLegalAcceptance || IsPrivacyAccepted);

@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
@@ -8,6 +7,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using WorkshopManager.Services.UI;
 using WorkshopManager.Helpers;
 using WorkshopManager.Models;
 using WorkshopManager.Services.Core;
@@ -219,15 +219,5 @@ public partial class UpdateController : ViewModelBase
     [RelayCommand]
     private void CloseWhatsNew() => ShowWhatsNew = false;
 
-    private static void OpenUrl(string url)
-    {
-        try
-        {
-            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
-        }
-        catch (Exception ex)
-        {
-            Log.Debug($"Failed to open URL {url}: {ex.Message}");
-        }
-    }
+    private static void OpenUrl(string url) => ShellLauncher.Current.OpenUrl(url);
 }

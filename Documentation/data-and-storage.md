@@ -2,7 +2,7 @@
 
 `Helpers/AppPaths` is the single source of truth for every location the app writes to. Add a property there instead of building paths inline.
 
-## Roaming data: `%AppData%/SteamWorkshopManager/`
+## Roaming data: `%AppData%/WorkshopManager/`
 
 | Path | Content |
 | --- | --- |
@@ -16,7 +16,7 @@
 
 On macOS and Linux both folders are the platform equivalents returned by .NET for `ApplicationData` and `LocalApplicationData`.
 
-## Machine-local data: `%LocalAppData%/SteamWorkshopManager/`
+## Machine-local data: `%LocalAppData%/WorkshopManager/`
 
 | Path | Content |
 | --- | --- |
@@ -32,9 +32,9 @@ Data fetched from a platform lives in one cache shared by every platform (`Servi
 
 | OS | Folder |
 | --- | --- |
-| Windows | `%LocalAppData%/SteamWorkshopManager/cache/` |
-| macOS | `~/Library/Caches/SteamWorkshopManager/` |
-| Linux | `$XDG_CACHE_HOME/SteamWorkshopManager/`, or `~/.cache/SteamWorkshopManager/` |
+| Windows | `%LocalAppData%/WorkshopManager/cache/` |
+| macOS | `~/Library/Caches/WorkshopManager/` |
+| Linux | `$XDG_CACHE_HOME/WorkshopManager/`, or `~/.cache/WorkshopManager/` |
 
 One file per entry at `<platform>/<scope>/<name>` (`CacheKey`), for example `steam/app-294100/tags.json`. JSON entries carry an envelope with the fetch date and an optional version stamp; images are stored as-is.
 

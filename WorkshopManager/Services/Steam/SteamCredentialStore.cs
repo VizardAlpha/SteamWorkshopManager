@@ -26,7 +26,9 @@ public static class SteamCredentialStore
     private static readonly Logger Log = new(nameof(SteamCredentialStore), LogService.Instance);
 
     // Binds the DPAPI blob to this app so another app's Unprotect call with no entropy can't read it.
-    private static readonly byte[] Entropy = Encoding.UTF8.GetBytes("SteamWorkshopManager.SteamCredentials.v1");
+    private static readonly byte[] Entropy = Encoding.UTF8.GetBytes("WorkshopManager.SteamCredentials.v1");
+    // Files written before the rename to Workshop Manager.
+    private static readonly byte[] LegacyEntropy = Encoding.UTF8.GetBytes("SteamWorkshopManager.SteamCredentials.v1");
 
     public static string FilePath { get; set; } = AppPaths.CredentialsFile;
 
@@ -35,7 +37,7 @@ public static class SteamCredentialStore
         try
         {
             if (!File.Exists(FilePath)) return null;
-            var json = ProtectedFile.Read(FilePath, Entropy);
+            var json = ProtectedFile.Read(FilePath, Entropy, LegacyEntropy);
             return JsonSerializer.Deserialize(json, SteamCredentialsJsonContext.Default.SteamCredentials);
         }
         catch (Exception ex)

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -12,6 +11,7 @@ using Avalonia.Input.Platform;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using WorkshopManager.Services.UI;
 using WorkshopManager.Helpers;
 using WorkshopManager.Models;
 using WorkshopManager.Services.Cache;
@@ -314,7 +314,7 @@ public partial class SettingsViewModel : ViewModelBase
     [RelayCommand]
     private void OpenCacheFolder()
     {
-        if (Directory.Exists(CacheFolderPath)) RevealFolder(CacheFolderPath);
+        ShellLauncher.Current.OpenFolder(CacheFolderPath);
     }
 
     private void OnAuthStateChanged() =>
@@ -474,25 +474,7 @@ public partial class SettingsViewModel : ViewModelBase
         finally { IsInstanceIdCopied = false; }
     }
 
-    private static async Task CopyToClipboardAsync(string text)
-    {
-        try
-        {
-            if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
-                && desktop.MainWindow?.Clipboard is { } clipboard)
-            {
-                // Avalonia 12 - `SetTextAsync` is an extension method on
-                // IClipboard from Avalonia.Input.Platform.ClipboardExtensions,
-                // and routes natively on Windows (Win32 clipboard), macOS
-                // (NSPasteboard), and Linux (X11 / Wayland).
-                await clipboard.SetTextAsync(text);
-            }
-        }
-        catch (Exception ex)
-        {
-            Log.Debug($"Clipboard copy failed: {ex.Message}");
-        }
-    }
+    private static Task CopyToClipboardAsync(string text) => ShellLauncher.Current.CopyTextAsync(text);
 
     [RelayCommand]
     private void OpenPrivacyPolicy() => OpenUrl(PrivacyPolicyUrl);
@@ -513,87 +495,13 @@ public partial class SettingsViewModel : ViewModelBase
     private void OpenThirdPartyNotices() => OpenUrl(ThirdPartyNoticesUrl);
 
     [RelayCommand]
-    private void OpenLogFolder() => RevealInExplorer(LogFilePath);
+    private void OpenLogFolder() => ShellLauncher.Current.RevealFile(LogFilePath);
 
     [RelayCommand]
     private void OpenDataFolder()
     {
-        if (Directory.Exists(DataFolderPath)) RevealFolder(DataFolderPath);
+        ShellLauncher.Current.OpenFolder(DataFolderPath);
     }
 
-    /// <summary>
-    /// Opens the OS file explorer with the given file highlighted. Falls back
-    /// to opening the containing folder when the selection syntax isn't
-    /// available (Linux).
-    /// </summary>
-    private static void RevealInExplorer(string filePath)
-    {
-        var folder = Path.GetDirectoryName(filePath);
-        if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder)) return;
-
-        try
-        {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = "explorer.exe",
-                    Arguments = $"/select,\"{filePath}\"",
-                    UseShellExecute = true,
-                });
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            {
-                Process.Start("open", $"-R \"{filePath}\"");
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                Process.Start("xdg-open", folder);
-            }
-        }
-        catch (Exception ex)
-        {
-            Log.Debug($"Failed to reveal {filePath}: {ex.Message}");
-        }
-    }
-
-    private static void RevealFolder(string folder)
-    {
-        try
-        {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = "explorer.exe",
-                    Arguments = $"\"{folder}\"",
-                    UseShellExecute = true,
-                });
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            {
-                Process.Start("open", $"\"{folder}\"");
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                Process.Start("xdg-open", folder);
-            }
-        }
-        catch (Exception ex)
-        {
-            Log.Debug($"Failed to open folder {folder}: {ex.Message}");
-        }
-    }
-
-    private static void OpenUrl(string url)
-    {
-        try
-        {
-            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
-        }
-        catch (Exception ex)
-        {
-            Log.Debug($"Failed to open URL {url}: {ex.Message}");
-        }
-    }
+    private static void OpenUrl(string url) => ShellLauncher.Current.OpenUrl(url);
 }

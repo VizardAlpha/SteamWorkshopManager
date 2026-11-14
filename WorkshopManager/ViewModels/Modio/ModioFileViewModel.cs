@@ -1,6 +1,5 @@
 using System;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -286,8 +285,7 @@ public partial class ModioFileViewModel : ViewModelBase, IDisposable
     {
         var folder = _publisher.FileFolder(_modName, entry.Id);
         if (!Directory.Exists(folder)) return;
-        try { Process.Start(new ProcessStartInfo(folder) { UseShellExecute = true }); }
-        catch (Exception ex) { Log.Debug($"Failed to open {folder}: {ex.Message}"); }
+        ShellLauncher.Current.OpenFolder(folder);
     }
 
     [RelayCommand]

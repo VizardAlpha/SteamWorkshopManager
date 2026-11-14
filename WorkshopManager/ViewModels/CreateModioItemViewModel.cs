@@ -1,8 +1,8 @@
 using System;
-using System.Diagnostics;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using WorkshopManager.Models;
 using WorkshopManager.Services.UI;
 using WorkshopManager.Services.Log;
 using WorkshopManager.Services.Notifications;
@@ -18,8 +18,24 @@ public enum ModioCreateStep { Details, Media, File }
 /// Creates a mod.io mod the way mod.io's site does: details create the mod, then media and
 /// the first file are added, each step skippable. The mod exists from the end of step 1.
 /// </summary>
-public partial class CreateModioItemViewModel : ViewModelBase, IDisposable
+public partial class CreateModioItemViewModel : ViewModelBase, IEditorHost, IDisposable
 {
+    #region IEditorHost
+
+    IRelayCommand? IEditorHost.PrimaryCommand => null;
+
+    bool IEditorHost.TryFollowSession(WorkshopSession session) => false;
+
+    bool IEditorHost.Close()
+    {
+        // Created, then left before Finish: the list must still show it.
+        var unfinished = LeftUnfinished;
+        Dispose();
+        return unfinished;
+    }
+
+    #endregion
+
     private static readonly Logger Log = LogService.GetLogger<CreateModioItemViewModel>();
 
     private readonly ModioPublisher _publisher;
@@ -175,8 +191,7 @@ public partial class CreateModioItemViewModel : ViewModelBase, IDisposable
     private void OpenOnModio()
     {
         if (!HasProfileUrl) return;
-        try { Process.Start(new ProcessStartInfo(_profileUrl!) { UseShellExecute = true }); }
-        catch (Exception ex) { Log.Debug($"Failed to open the mod page: {ex.Message}"); }
+        ShellLauncher.Current.OpenUrl(_profileUrl);
     }
 
     private void Finish()

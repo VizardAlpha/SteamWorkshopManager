@@ -69,6 +69,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<INotificationService, NotificationService>();
         services.AddSingleton<IFileDialogService, FileDialogService>();
         services.AddSingleton<UploadCancellation>();
+        services.AddSingleton<IShellLauncher>(_ => ShellLauncher.Current);
         services.AddSingleton<IDiscordPresenceService, DiscordPresenceService>();
         services.AddSingleton<ViewModels.UpdateController>();
 

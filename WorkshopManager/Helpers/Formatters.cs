@@ -42,6 +42,7 @@ public static class Formatters
         if (diff.TotalDays < 7) return Ago("TimeAgoDays", diff.TotalDays);
         if (diff.TotalDays < 30) return Ago("TimeAgoWeeks", diff.TotalDays / 7);
         if (diff.TotalDays < 365) return Ago("TimeAgoMonths", diff.TotalDays / 30);
-        return Ago("TimeAgoYears", diff.TotalDays / 365);
+        var years = diff.TotalDays / 365;
+        return Ago(years < 2 ? "TimeAgoYear" : "TimeAgoYears", years);
     }
 }

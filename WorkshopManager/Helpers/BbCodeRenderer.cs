@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -16,6 +15,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using WorkshopManager.Services.UI;
 using WorkshopManager.Models;
 using WorkshopManager.Services.Core;
 using WorkshopManager.Services.Log;
@@ -483,15 +483,10 @@ public static class BbCodeRenderer
 
     internal static void OpenUrl(string url)
     {
-        if (!IsWebUrl(url)) return;
-
-        try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); }
-        catch (Exception ex) { Log.Debug($"BbCodeRenderer: failed to open URL {url}: {ex.Message}"); }
+        ShellLauncher.Current.OpenUrl(url);
     }
 
-    internal static bool IsWebUrl(string url) =>
-        Uri.TryCreate(url, UriKind.Absolute, out var uri) &&
-        (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+    internal static bool IsWebUrl(string url) => ShellLauncher.IsWebUrl(url);
 
     internal static async Task LoadImageAsync(Image target, string url)
     {

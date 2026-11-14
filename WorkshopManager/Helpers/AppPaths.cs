@@ -16,15 +16,16 @@ namespace WorkshopManager.Helpers;
 /// </summary>
 public static class AppPaths
 {
-    public const string AppName = "SteamWorkshopManager";
+    public const string AppName = "WorkshopManager";
 
-    public static string Root { get; } = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        AppName);
+    /// <summary>Folder name before 1.9.0; such folders are renamed on first access.</summary>
+    public const string LegacyAppName = "SteamWorkshopManager";
 
-    public static string LocalRoot { get; } = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        AppName);
+    public static string Root { get; } = ResolveAppFolder(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData));
+
+    public static string LocalRoot { get; } = ResolveAppFolder(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
 
     public static string Sessions { get; } = Path.Combine(Root, "sessions");
     public static string Bundle { get; } = Path.Combine(Root, "bundle");
@@ -84,11 +85,33 @@ public static class AppPaths
 
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         if (OperatingSystem.IsMacOS())
-            return Path.Combine(home, "Library", "Caches", AppName);
+            return ResolveAppFolder(Path.Combine(home, "Library", "Caches"));
 
         // XDG spec: a relative value must be ignored.
         var xdg = Environment.GetEnvironmentVariable("XDG_CACHE_HOME");
         var baseDir = !string.IsNullOrEmpty(xdg) && Path.IsPathRooted(xdg) ? xdg : Path.Combine(home, ".cache");
-        return Path.Combine(baseDir, AppName);
+        return ResolveAppFolder(baseDir);
+    }
+
+    /// <summary>
+    /// The app's folder under <paramref name="parent"/>. A folder left by a version before the
+    /// rename is moved to the new name; if it can't be (still in use), the app keeps working from it.
+    /// </summary>
+    internal static string ResolveAppFolder(string parent)
+    {
+        var current = Path.Combine(parent, AppName);
+        var legacy = Path.Combine(parent, LegacyAppName);
+        if (Directory.Exists(current) || !Directory.Exists(legacy)) return current;
+
+        try
+        {
+            Directory.Move(legacy, current);
+            return current;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Another instance may have just moved it.
+            return Directory.Exists(current) ? current : legacy;
+        }
     }
 }

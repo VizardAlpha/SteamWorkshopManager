@@ -1,10 +1,10 @@
 using System;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using WorkshopManager.Services.UI;
 using WorkshopManager.Core.Sessions;
 using WorkshopManager.Services.Steam;
 using WorkshopManager.Core.Workshop;
@@ -371,7 +371,6 @@ public partial class DependencyEditorViewModel(
 
     private static void OpenUrl(string url)
     {
-        try { Process.Start(new ProcessStartInfo { FileName = url, UseShellExecute = true }); }
-        catch (Exception ex) { LogService.GetLogger<DependencyEditorViewModel>().Debug($"Failed to open {url}: {ex.Message}"); }
+        ShellLauncher.Current.OpenUrl(url);
     }
 }

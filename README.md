@@ -53,7 +53,7 @@ dotnet publish WorkshopManager/WorkshopManager.csproj -c Release -r win-x64 --se
 
 # Localization
 
-Languages are stored as `.axaml` resource files in `%AppData%/SteamWorkshopManager/bundle/`. Built-in languages are automatically extracted on first launch. New languages can be added by dropping a file into the bundle folder, no rebuild required.
+Languages are stored as `.axaml` resource files in `%AppData%/WorkshopManager/bundle/`. Built-in languages are automatically extracted on first launch. New languages can be added by dropping a file into the bundle folder, no rebuild required.
 
 Want to contribute a translation? See [TRANSLATING.md](TRANSLATING.md) for instructions.
 

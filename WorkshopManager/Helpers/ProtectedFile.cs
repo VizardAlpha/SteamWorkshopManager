@@ -12,6 +12,22 @@ public static class ProtectedFile
 {
     public static byte[] Read(string path, byte[] entropy) => Unprotect(File.ReadAllBytes(path), entropy);
 
+    /// <summary>Reads a file that may still be protected with <paramref name="legacyEntropy"/>, and rewrites it with the current one.</summary>
+    public static byte[] Read(string path, byte[] entropy, byte[] legacyEntropy)
+    {
+        var blob = File.ReadAllBytes(path);
+        try
+        {
+            return Unprotect(blob, entropy);
+        }
+        catch (CryptographicException)
+        {
+            var data = Unprotect(blob, legacyEntropy);
+            Write(path, data, entropy);
+            return data;
+        }
+    }
+
     /// <summary>Written to a temp file then renamed, so a crash never leaves half a secret.</summary>
     public static void Write(string path, byte[] data, byte[] entropy)
     {

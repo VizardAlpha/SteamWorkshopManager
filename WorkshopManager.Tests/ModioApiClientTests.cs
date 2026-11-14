@@ -24,7 +24,10 @@ public class ModioApiClientTests
         public override DateTimeOffset GetUtcNow() => Now;
     }
 
-    private sealed record Sent(HttpMethod Method, Uri Uri, string? Authorization, string? ContentRange, long BodyLength, string Body);
+    private sealed record Sent(HttpMethod Method, Uri Uri, string? Authorization, string? ContentRange, long BodyLength, string Body)
+    {
+        public string? ContentType { get; init; }
+    }
 
     /// <summary>Answers each request with the next queued response and records what was sent.</summary>
     private sealed class FakeHandler : HttpMessageHandler
@@ -36,7 +39,10 @@ public class ModioApiClientTests
         {
             var body = request.Content is null ? [] : await request.Content.ReadAsByteArrayAsync(ct);
             Requests.Add(new Sent(request.Method, request.RequestUri!, request.Headers.Authorization?.ToString(),
-                request.Content?.Headers.ContentRange?.ToString(), body.Length, Encoding.UTF8.GetString(body)));
+                request.Content?.Headers.ContentRange?.ToString(), body.Length, Encoding.UTF8.GetString(body))
+            {
+                ContentType = request.Content?.Headers.ContentType?.MediaType,
+            });
             return Responses.Dequeue()();
         }
     }
@@ -63,6 +69,18 @@ public class ModioApiClientTests
         Assert.AreEqual("Viz", me.Username);
         Assert.AreEqual("https://u-1.modapi.io/v1/me", handler.Requests[0].Uri.ToString());
         Assert.AreEqual("Bearer secret-token", handler.Requests[0].Authorization);
+    }
+
+    [TestMethod]
+    public async Task DeleteMod_SendsTheFormContentType()
+    {
+        var (client, handler, _) = Create();
+        handler.Responses.Enqueue(() => new HttpResponseMessage(HttpStatusCode.NoContent));
+
+        await client.DeleteModAsync(Auth, 5, 42);
+
+        Assert.AreEqual(HttpMethod.Delete, handler.Requests[0].Method);
+        Assert.AreEqual("application/x-www-form-urlencoded", handler.Requests[0].ContentType);
     }
 
     [TestMethod]

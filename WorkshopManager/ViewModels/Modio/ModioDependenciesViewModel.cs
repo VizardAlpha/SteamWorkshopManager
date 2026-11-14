@@ -1,12 +1,12 @@
 using System;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using WorkshopManager.Services.UI;
 using WorkshopManager.Services.Cache;
 using WorkshopManager.Services.Log;
 using WorkshopManager.Services.Notifications;
@@ -193,8 +193,7 @@ public partial class ModioDependenciesViewModel : ViewModelBase, IDisposable
     private static void OpenModPage(ModioDependencyEntry entry)
     {
         if (string.IsNullOrEmpty(entry.ProfileUrl)) return;
-        try { Process.Start(new ProcessStartInfo(entry.ProfileUrl) { UseShellExecute = true }); }
-        catch (Exception ex) { Log.Debug($"Failed to open the mod page: {ex.Message}"); }
+        ShellLauncher.Current.OpenUrl(entry.ProfileUrl);
     }
 
     private async Task RunAsync(ModioDependencyEntry entry, Func<Task> action)

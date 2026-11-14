@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -30,8 +29,22 @@ namespace WorkshopManager.ViewModels;
 /// content, preview, visibility, changelog) and delegates tags, branches,
 /// dependencies, gallery and history to child view-models shared with the create view.
 /// </summary>
-public partial class ItemEditorViewModel : ViewModelBase, IDisposable
+public partial class ItemEditorViewModel : ViewModelBase, IEditorHost, IDisposable
 {
+    #region IEditorHost
+
+    IRelayCommand? IEditorHost.PrimaryCommand => SaveCommand;
+
+    bool IEditorHost.TryFollowSession(WorkshopSession session) => false;
+
+    bool IEditorHost.Close()
+    {
+        Dispose();
+        return false;
+    }
+
+    #endregion
+
     private static readonly Logger Log = LogService.GetLogger<ItemEditorViewModel>();
     private static readonly HttpClient Http = AppHttpClientFactory.Create(timeout: TimeSpan.FromSeconds(30));
 
@@ -342,25 +355,13 @@ public partial class ItemEditorViewModel : ViewModelBase, IDisposable
     [RelayCommand]
     private static void OpenLegalAgreement()
     {
-        try { Process.Start(new ProcessStartInfo(SteamUrls.WorkshopLegalAgreement) { UseShellExecute = true }); }
-        catch (Exception ex) { Log.Debug($"Failed to open the legal agreement page: {ex.Message}"); }
+        ShellLauncher.Current.OpenUrl(SteamUrls.WorkshopLegalAgreement);
     }
 
     [RelayCommand]
     private async Task CopyModIdAsync()
     {
-        try
-        {
-            if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
-                && desktop.MainWindow?.Clipboard is { } clipboard)
-            {
-                await clipboard.SetTextAsync(ModId);
-            }
-        }
-        catch
-        {
-            // Clipboard failures are not actionable for the user
-        }
+        await ShellLauncher.Current.CopyTextAsync(ModId);
 
         IsModIdCopied = true;
         try { await Task.Delay(TimeSpan.FromSeconds(2)); }

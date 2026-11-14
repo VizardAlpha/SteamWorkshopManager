@@ -517,6 +517,8 @@ public sealed class ModioApiClient
     {
         ThrowIfRateLimited();
         req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", auth.Token);
+        // mod.io answers 415 to a DELETE without the form content type, even with no field to send.
+        if (req.Method == HttpMethod.Delete) req.Content ??= new FormUrlEncodedContent([]);
 
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
         if (!transfer) timeout.CancelAfter(ApiTimeout);

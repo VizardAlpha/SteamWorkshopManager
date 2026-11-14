@@ -57,7 +57,7 @@ The create and edit screens share child view-models under `ViewModels/Editor/`:
 
 ## Shell view-models
 
-`MainViewModel` only handles navigation, session switching and worker recovery. The shell widgets live in child view-models under `ViewModels/Shell/`, built through the factory:
+`MainViewModel` only handles navigation, session switching and worker recovery. It talks to the create and edit screens through `IEditorHost` (Ctrl+S, session change, leaving the screen), so a new platform implements that interface on its own view-models instead of adding cases to the shell. The shell widgets live in child view-models under `ViewModels/Shell/`, built through the factory:
 
 | Child | Responsibility |
 | --- | --- |

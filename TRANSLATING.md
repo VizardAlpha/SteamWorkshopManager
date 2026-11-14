@@ -8,9 +8,9 @@ Language files are `.axaml` XML files stored in the **bundle folder**:
 
 | OS | Path |
 |---|---|
-| Windows | `%AppData%\SteamWorkshopManager\bundle\` |
-| macOS | `~/.config/SteamWorkshopManager/bundle/` |
-| Linux | `~/.config/SteamWorkshopManager/bundle/` |
+| Windows | `%AppData%\WorkshopManager\bundle\` |
+| macOS | `~/.config/WorkshopManager/bundle/` |
+| Linux | `~/.config/WorkshopManager/bundle/` |
 
 On first launch, the app extracts the built-in languages (`en-US.axaml`, `fr-FR.axaml`) into this folder. Any `.axaml` file placed here is automatically discovered and available in Settings.
 
