@@ -6,6 +6,7 @@
              xmlns:models="using:WorkshopManager.Models"
              xmlns:icons="using:Material.Icons.Avalonia"
              xmlns:controls="using:WorkshopManager.Views.Controls"
+             xmlns:converters="using:WorkshopManager.Converters"
              mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="640"
              x:Class="WorkshopManager.Views.SettingsView"
              x:DataType="vm:SettingsViewModel">
@@ -661,12 +662,15 @@
                                     <TextBlock Classes="row-desc" Text="{DynamicResource SteamIdleDescription}"/>
                                 </StackPanel>
                                 <ComboBox Grid.Column="1"
-                                          SelectedIndex="{Binding SteamIdleModeIndex}"
+                                          ItemsSource="{Binding SteamIdleModeOptions}"
+                                          SelectedItem="{Binding SelectedSteamIdleMode}"
                                           MinWidth="220"
                                           VerticalAlignment="Center">
-                                    <ComboBoxItem Content="{DynamicResource SteamIdleStayConnected}"/>
-                                    <ComboBoxItem Content="{DynamicResource SteamIdleAfterAction}"/>
-                                    <ComboBoxItem Content="{DynamicResource SteamIdleAfterInactivity}"/>
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate x:DataType="models:SteamIdleMode">
+                                            <TextBlock Text="{Binding Converter={x:Static converters:SteamIdleModeConverter.Instance}}"/>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
                                 </ComboBox>
                             </Grid>
 

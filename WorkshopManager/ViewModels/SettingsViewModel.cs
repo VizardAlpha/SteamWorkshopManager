@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.IO;
@@ -247,13 +248,14 @@ public partial class SettingsViewModel : ViewModelBase
         _modioAccount.Changed += OnModioAccountChanged;
 
         _isCacheEnabled = _settingsService.Settings.CacheEnabled;
-        _steamIdleModeIndex = (int)_settingsService.Settings.SteamIdleMode;
+        _selectedSteamIdleMode = _settingsService.Settings.SteamIdleMode;
         _steamIdleSeconds = _settingsService.Settings.SteamIdleSeconds;
         _isCacheUnlimited = _settingsService.Settings.CacheLimitMb <= 0;
         _cacheLimitMb = _isCacheUnlimited ? DefaultCacheLimitMb : _settingsService.Settings.CacheLimitMb;
         RefreshCacheInfo();
         _cache.Changed += OnCacheChanged;
         LocalizationService.Instance.LanguageChanged += RefreshCacheInfo;
+        LocalizationService.Instance.LanguageChanged += RefreshSteamIdleOptions;
 
         _ = Updates.CheckAsync();
     }
@@ -267,6 +269,7 @@ public partial class SettingsViewModel : ViewModelBase
         _modioAccount.Changed -= OnModioAccountChanged;
         _cache.Changed -= OnCacheChanged;
         LocalizationService.Instance.LanguageChanged -= RefreshCacheInfo;
+        LocalizationService.Instance.LanguageChanged -= RefreshSteamIdleOptions;
     }
 
     // Raised on every cache write, from any thread.
@@ -321,25 +324,38 @@ public partial class SettingsViewModel : ViewModelBase
         ShellLauncher.Current.OpenFolder(CacheFolderPath);
     }
 
-    /// <summary>Index into <see cref="SteamIdleMode"/>, bound to the combo box.</summary>
+    /// <summary>Null while the combo box rebuilds its items.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsSteamIdleDelayUsed))]
-    private int _steamIdleModeIndex;
+    private SteamIdleMode? _selectedSteamIdleMode;
 
     [ObservableProperty]
     private decimal? _steamIdleSeconds;
 
-    public bool IsSteamIdleDelayUsed => SteamIdleModeIndex == (int)SteamIdleMode.AfterInactivity;
+    public bool IsSteamIdleDelayUsed => SelectedSteamIdleMode == SteamIdleMode.AfterInactivity;
 
-    partial void OnSteamIdleModeIndexChanged(int value) => ApplySteamIdleSettings();
+    /// <summary>Labelled by <c>SteamIdleModeConverter</c>.</summary>
+    public IReadOnlyList<SteamIdleMode> SteamIdleModeOptions => Enum.GetValues<SteamIdleMode>();
+
+    // A new list makes the combo box read the labels again in the new language;
+    // it drops its selection meanwhile, so the saved mode is put back.
+    private void RefreshSteamIdleOptions()
+    {
+        OnPropertyChanged(nameof(SteamIdleModeOptions));
+        SelectedSteamIdleMode = _settingsService.Settings.SteamIdleMode;
+        OnPropertyChanged(nameof(SelectedSteamIdleMode));
+    }
+
+    partial void OnSelectedSteamIdleModeChanged(SteamIdleMode? value)
+    {
+        if (value is not null) ApplySteamIdleSettings();
+    }
 
     partial void OnSteamIdleSecondsChanged(decimal? value) => ApplySteamIdleSettings();
 
     private void ApplySteamIdleSettings()
     {
-        var mode = Enum.IsDefined(typeof(SteamIdleMode), SteamIdleModeIndex)
-            ? (SteamIdleMode)SteamIdleModeIndex
-            : SteamIdleMode.StayConnected;
+        var mode = SelectedSteamIdleMode ?? _settingsService.Settings.SteamIdleMode;
         var seconds = (int)Math.Clamp(SteamIdleSeconds ?? WorkerIdlePolicy.DefaultSeconds,
             WorkerIdlePolicy.MinSeconds, WorkerIdlePolicy.MaxSeconds);
 
