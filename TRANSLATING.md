@@ -18,7 +18,7 @@ On first launch, the app extracts the built-in languages (`en-US.axaml`, `fr-FR.
 
 ### 1. Copy the English template
 
-Copy `en-US.axaml` from the bundle folder (or from `SteamWorkshopManager/Resources/Languages/en-US.axaml` in the source) and rename it using the [BCP 47 language tag](https://en.wikipedia.org/wiki/IETF_language_tag) format:
+Copy `en-US.axaml` from the bundle folder (or from `WorkshopManager/Resources/Languages/en-US.axaml` in the source) and rename it using the [BCP 47 language tag](https://en.wikipedia.org/wiki/IETF_language_tag) format:
 
 ```
 <language>-<REGION>.axaml
@@ -89,7 +89,7 @@ The file must be a valid Avalonia `ResourceDictionary`:
 To contribute your translation to the project:
 
 1. Fork the repository
-2. Add your `.axaml` file to `SteamWorkshopManager/Resources/Languages/`
+2. Add your `.axaml` file to `WorkshopManager/Resources/Languages/`
 3. Open a pull request
 
 We will add it to the built-in languages so all users can benefit from it.

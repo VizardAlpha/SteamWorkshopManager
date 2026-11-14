@@ -1,4 +1,4 @@
-﻿$Project = "./SteamWorkshopManager/SteamWorkshopManager.csproj"
+﻿$Project = "./WorkshopManager/WorkshopManager.csproj"
 $Config  = "Release"
 
 Write-Host "🔄 Restore..." -ForegroundColor Cyan

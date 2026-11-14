@@ -1,8 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SteamWorkshopManager", "SteamWorkshopManager\SteamWorkshopManager.csproj", "{309F5000-B5DC-499E-B333-2597280CC0A7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkshopManager", "WorkshopManager\WorkshopManager.csproj", "{309F5000-B5DC-499E-B333-2597280CC0A7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SteamWorkshopManager.Tests", "SteamWorkshopManager.Tests\SteamWorkshopManager.Tests.csproj", "{AD140350-3382-4230-9E8E-6655407A1AC8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkshopManager.Tests", "WorkshopManager.Tests\WorkshopManager.Tests.csproj", "{AD140350-3382-4230-9E8E-6655407A1AC8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

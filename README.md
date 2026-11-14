@@ -45,10 +45,10 @@ git clone https://github.com/VizardAlpha/WorkshopManager.git
 cd WorkshopManager
 
 # Run
-dotnet run --project SteamWorkshopManager
+dotnet run --project WorkshopManager
 
 # Publish (example for Windows)
-dotnet publish SteamWorkshopManager/SteamWorkshopManager.csproj -c Release -r win-x64 --self-contained false -o .dist/windows
+dotnet publish WorkshopManager/WorkshopManager.csproj -c Release -r win-x64 --self-contained false -o .dist/windows
 ```
 
 # Localization

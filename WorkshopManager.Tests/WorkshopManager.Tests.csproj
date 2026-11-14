@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SteamWorkshopManager\SteamWorkshopManager.csproj" />
+    <ProjectReference Include="..\WorkshopManager\WorkshopManager.csproj" />
   </ItemGroup>
 
   <ItemGroup>

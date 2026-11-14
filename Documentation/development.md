@@ -2,14 +2,14 @@
 
 ## Build and run
 
-- .NET 10 SDK. Open `SteamWorkshopManager.sln` in Rider or Visual Studio, or use the CLI.
+- .NET 10 SDK. Open `WorkshopManager.sln` in Rider or Visual Studio, or use the CLI.
 - The Steam client must be running to test anything that talks to Steam.
 - `dotnet build -o build_test` builds into a separate folder, which avoids DLL locks from a debug session that is still running.
 - Useful flag: `--force-setup-wizard` shows the first-run wizard even when a session exists.
 
 ## Tests
 
-- MSTest, in `SteamWorkshopManager.Tests/`: `dotnet test SteamWorkshopManager.Tests -o build_test`.
+- MSTest, in `WorkshopManager.Tests/`: `dotnet test WorkshopManager.Tests -o build_test`.
 - Tests never hit the network: HTTP calls go through stub handlers and parsers are tested on inline fixtures.
 - Covered today: AppId parsing and validation, SemVer and release channels, updater checksums, atomic writes, credential storage, BBCode and Markdown conversion, HTML parsing, Workshop tag and changelog parsing, preview ordering, tag selection, session context, Steam error mapping, translation planning.
 
@@ -21,7 +21,7 @@ Steamworks.NET is not on nuget.org in recent versions, so the app restores it fr
 2. Copy the Windows DLL to `nuget-local/lib`, `ref` and `runtimes/win-x64`, the OSX-Linux DLL to `runtimes/linux-x64` and `runtimes/osx-x64`.
 3. Bump the version in `nuget-local/Steamworks.NET.nuspec`, pack it into `nuget-local/` and remove the old `.nupkg`.
 4. Replace the native libraries next to the csproj (`steam_api64.dll`, `libsteam_api.so`, `libsteam_api.dylib`) with the ones from the clone's `com.rlabrecque.steamworks.net/Plugins/`. They must match the managed build.
-5. Update the version in `SteamWorkshopManager.csproj` and `THIRD-PARTY-NOTICES.md`.
+5. Update the version in `WorkshopManager.csproj` and `THIRD-PARTY-NOTICES.md`.
 
 ## Conventions
 
@@ -36,7 +36,7 @@ Steamworks.NET is not on nuget.org in recent versions, so the app restores it fr
 ## Project layout
 
 ```
-SteamWorkshopManager/
+WorkshopManager/
   Program.cs, App.axaml(.cs)      entry point, composition root, worker and installer modes
   Core/                           domain logic: Sessions, Steam (error mapping), Workshop
   Services/                       adapters: Cache (shared on-disk cache), Core (settings, drafts, localization), Log, Notifications
@@ -49,7 +49,7 @@ SteamWorkshopManager/
   Helpers/                        paths, atomic files, SemVer, BBCode and HTML
   Models/                         data types
   Resources/Languages/            en-US, fr-FR
-SteamWorkshopManager.Tests/       MSTest suite
+WorkshopManager.Tests/            MSTest suite
 Documentation/                    this documentation
 ```
 

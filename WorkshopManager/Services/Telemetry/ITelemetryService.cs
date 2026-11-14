@@ -16,7 +16,7 @@ public interface ITelemetryService
     Task FlushAsync();
 }
 
-// Mirror of EventTypes in the SteamWorkshopManager-Stats repo. A type missing
+// Mirror of EventTypes in the WorkshopManager-Stats repo. A type missing
 // there is dropped server-side while the client still gets its 202, so ship the
 // site first when adding one.
 public static class TelemetryEventTypes
