@@ -7,6 +7,7 @@
              xmlns:icons="using:Material.Icons.Avalonia"
              xmlns:controls="using:WorkshopManager.Views.Controls"
              xmlns:converters="using:WorkshopManager.Converters"
+             xmlns:helpers="using:WorkshopManager.Helpers"
              mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="640"
              x:Class="WorkshopManager.Views.SettingsView"
              x:DataType="vm:SettingsViewModel">
@@ -736,7 +737,7 @@
                             </Button>
                         </Grid>
 
-                        <!-- Asked before anything is deleted -->
+                        <!-- Same type-DELETE gate as deleting a mod or a session -->
                         <Border IsVisible="{Binding IsConfirmingBackupClear}"
                                 Background="#1FC23B2E"
                                 BorderBrush="{DynamicResource FeedbackDangerBrush}"
@@ -744,33 +745,43 @@
                                 CornerRadius="6"
                                 Padding="12"
                                 Margin="16,0,16,14">
-                            <Grid ColumnDefinitions="*,Auto,Auto">
-                                <TextBlock Grid.Column="0"
-                                           Text="{DynamicResource BackupsClearConfirm}"
+                            <StackPanel Spacing="10">
+                                <TextBlock Text="{DynamicResource BackupsClearConfirm}"
                                            TextWrapping="Wrap"
                                            Foreground="{DynamicResource FeedbackDangerTextBrush}"
-                                           FontSize="12"
-                                           VerticalAlignment="Center"/>
-                                <Button Grid.Column="1" Margin="12,0,0,0"
-                                        Command="{Binding CancelClearBackupsCommand}"
-                                        Content="{DynamicResource Cancel}"
-                                        Background="{DynamicResource SurfaceElevatedBrush}"
-                                        BorderBrush="{DynamicResource BorderStrongBrush}"
-                                        BorderThickness="1"
-                                        Foreground="{DynamicResource TextPrimaryBrush}"
-                                        CornerRadius="6"
-                                        Padding="12,6"
-                                        FontSize="12"/>
-                                <Button Grid.Column="2" Margin="8,0,0,0"
-                                        Command="{Binding ConfirmClearBackupsCommand}"
-                                        Content="{DynamicResource DeletePermanently}"
-                                        Background="{DynamicResource FeedbackDangerBrush}"
-                                        Foreground="White"
-                                        BorderThickness="0"
-                                        CornerRadius="6"
-                                        Padding="12,6"
-                                        FontSize="12"/>
-                            </Grid>
+                                           FontSize="12"/>
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="{DynamicResource DeleteTypeToConfirm}"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               FontSize="12"/>
+                                    <TextBox Text="{Binding BackupClearTypedConfirmation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                             PlaceholderText="{x:Static helpers:DangerousActions.ConfirmationPassphrase}"
+                                             FontFamily="Consolas, Menlo, monospace"/>
+                                    <TextBlock Text="{DynamicResource DeleteTypeToConfirmHint}"
+                                               Foreground="{DynamicResource TextDisabledBrush}"
+                                               FontSize="11"
+                                               IsVisible="{Binding !IsBackupClearConfirmed}"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                                    <Button Command="{Binding CancelClearBackupsCommand}"
+                                            Content="{DynamicResource Cancel}"
+                                            Background="{DynamicResource SurfaceElevatedBrush}"
+                                            BorderBrush="{DynamicResource BorderStrongBrush}"
+                                            BorderThickness="1"
+                                            Foreground="{DynamicResource TextPrimaryBrush}"
+                                            CornerRadius="6"
+                                            Padding="12,6"
+                                            FontSize="12"/>
+                                    <Button Command="{Binding ConfirmClearBackupsCommand}"
+                                            Content="{DynamicResource DeletePermanently}"
+                                            Background="{DynamicResource FeedbackDangerBrush}"
+                                            Foreground="White"
+                                            BorderThickness="0"
+                                            CornerRadius="6"
+                                            Padding="12,6"
+                                            FontSize="12"/>
+                                </StackPanel>
+                            </StackPanel>
                         </Border>
                         </StackPanel>
                     </Border>

@@ -428,16 +428,34 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isConfirmingBackupClear;
 
+    /// <summary>The user types <see cref="DangerousActions.ConfirmationPassphrase"/>, as for deleting a mod.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsBackupClearConfirmed))]
+    [NotifyCanExecuteChangedFor(nameof(ConfirmClearBackupsCommand))]
+    private string _backupClearTypedConfirmation = string.Empty;
+
+    public bool IsBackupClearConfirmed =>
+        string.Equals(BackupClearTypedConfirmation, DangerousActions.ConfirmationPassphrase, StringComparison.Ordinal);
+
     [RelayCommand(CanExecute = nameof(HasBackups))]
-    private void ClearBackups() => IsConfirmingBackupClear = true;
+    private void ClearBackups()
+    {
+        BackupClearTypedConfirmation = string.Empty;
+        IsConfirmingBackupClear = true;
+    }
 
     [RelayCommand]
-    private void CancelClearBackups() => IsConfirmingBackupClear = false;
+    private void CancelClearBackups()
+    {
+        IsConfirmingBackupClear = false;
+        BackupClearTypedConfirmation = string.Empty;
+    }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(IsBackupClearConfirmed))]
     private void ConfirmClearBackups()
     {
         IsConfirmingBackupClear = false;
+        BackupClearTypedConfirmation = string.Empty;
         var deleted = ModBackupStore.Clear(BackupFolder);
         RefreshBackupInfo();
         _notificationService.ShowSuccess(string.Format(Loc["BackupsCleared"], deleted));
@@ -448,6 +466,7 @@ public partial class SettingsViewModel : ViewModelBase
     {
         // A pending confirmation was about the previous session's backups.
         IsConfirmingBackupClear = false;
+        BackupClearTypedConfirmation = string.Empty;
         RefreshBackupInfo();
         ContentFolderPattern = _settingsService.GetContentFolderPattern() ?? string.Empty;
         ContentFolderPatternError = null;
