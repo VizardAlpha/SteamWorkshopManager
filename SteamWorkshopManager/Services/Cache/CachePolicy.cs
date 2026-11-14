@@ -1,6 +1,6 @@
 using System;
 
-namespace SteamWorkshopManager.Services.Cache;
+namespace WorkshopManager.Services.Cache;
 
 /// <summary>A cached value with when it was fetched and the source's version stamp, if any.</summary>
 public sealed record CacheEntry<T>(T Value, DateTime FetchedAtUtc, string? Version);

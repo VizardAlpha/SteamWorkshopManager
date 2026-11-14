@@ -2,17 +2,17 @@ using System;
 using System.Net;
 using System.Net.Http;
 
-namespace SteamWorkshopManager.Services.Steam;
+namespace WorkshopManager.Services.Core;
 
 /// <summary>
-/// Creates HttpClient instances pre-configured for Steam requests.
+/// Creates HttpClient instances pre-configured for every outbound request.
 /// Centralizes the User-Agent so every outbound request advertises a real
 /// identity (Cloudflare blocks empty UA), and offers opt-in extras like the
 /// age-gate cookies needed to scrape mature-tagged Workshop pages.
 /// </summary>
-public static class SteamHttpClientFactory
+public static class AppHttpClientFactory
 {
-    public static readonly string UserAgent = $"SteamWorkshopManager/{AppInfo.Version}";
+    public static readonly string UserAgent = $"WorkshopManager/{AppInfo.Version}";
 
     public static HttpClient Create(bool withAgeGateCookies = false, TimeSpan? timeout = null)
     {

@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SteamWorkshopManager.Services.Cache;
+using WorkshopManager.Services.Cache;
 
-namespace SteamWorkshopManager.Tests;
+namespace WorkshopManager.Tests;
 
 public sealed record CachedThing(string Name);
 

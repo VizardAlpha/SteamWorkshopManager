@@ -1,4 +1,4 @@
-namespace SteamWorkshopManager.Models;
+namespace WorkshopManager.Models;
 
 /// <summary>
 /// Represents a Steam game branch (beta) for version compatibility.

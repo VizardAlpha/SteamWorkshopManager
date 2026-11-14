@@ -5,15 +5,16 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using SteamWorkshopManager.Core.Sessions;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Cache;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.Services.Session;
-using SteamWorkshopManager.Services.Steam;
+using WorkshopManager.Services.Core;
+using WorkshopManager.Core.Sessions;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Cache;
+using WorkshopManager.Services.Log;
+using WorkshopManager.Services.Session;
+using WorkshopManager.Services.Steam;
 using Steamworks;
 
-namespace SteamWorkshopManager.Services.Workshop;
+namespace WorkshopManager.Services.Workshop;
 
 /// <summary>
 /// Shell-side facade over the worker's app-dependency RPC. SteamUGC work runs
@@ -23,7 +24,7 @@ namespace SteamWorkshopManager.Services.Workshop;
 public sealed class AppDependencyService(SessionHost host, ICacheStore cache, ISessionContext context)
 {
     private static readonly Logger Log = LogService.GetLogger<AppDependencyService>();
-    private static readonly HttpClient HttpClient = SteamHttpClientFactory.Create(timeout: TimeSpan.FromSeconds(10));
+    private static readonly HttpClient HttpClient = AppHttpClientFactory.Create(timeout: TimeSpan.FromSeconds(10));
     private static readonly CachePolicy NamePolicy = new(TimeSpan.FromDays(30));
 
     private CacheKey Key(PublishedFileId_t modId) =>

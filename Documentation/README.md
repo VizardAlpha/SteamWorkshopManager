@@ -1,6 +1,6 @@
-# Steam Workshop Manager documentation
+# Workshop Manager documentation
 
-Steam Workshop Manager is a free, open source desktop app to publish and maintain Steam Workshop items for any Steam game, on Windows, macOS and Linux.
+Workshop Manager is a free, open source desktop app to publish and maintain Steam Workshop items for any Steam game, on Windows, macOS and Linux.
 
 | Document | What it covers |
 | --- | --- |

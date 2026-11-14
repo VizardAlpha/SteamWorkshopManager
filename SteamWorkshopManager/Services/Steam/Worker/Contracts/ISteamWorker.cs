@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using PolyType;
 using StreamJsonRpc;
-using SteamWorkshopManager.Services.Steam.Worker.Contracts.Dtos;
+using WorkshopManager.Services.Steam.Worker.Contracts.Dtos;
 
-namespace SteamWorkshopManager.Services.Steam.Worker.Contracts;
+namespace WorkshopManager.Services.Steam.Worker.Contracts;
 
 /// <summary>
 /// RPC contract exposed by the Steam worker process.

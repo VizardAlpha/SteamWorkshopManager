@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Steam;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Steam;
 using Steamworks;
 
-namespace SteamWorkshopManager.Services.Platforms;
+namespace WorkshopManager.Services.Platforms;
 
 /// <summary>Steam Workshop through the worker.</summary>
 public sealed class SteamModPlatform(ISteamService steam) : IModPlatform

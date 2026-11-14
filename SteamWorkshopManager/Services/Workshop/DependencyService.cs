@@ -3,15 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using SteamWorkshopManager.Core.Sessions;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Cache;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.Services.Session;
-using SteamWorkshopManager.Services.Steam.Worker.Contracts.Dtos;
+using WorkshopManager.Core.Sessions;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Cache;
+using WorkshopManager.Services.Log;
+using WorkshopManager.Services.Session;
+using WorkshopManager.Services.Steam.Worker.Contracts.Dtos;
 using Steamworks;
 
-namespace SteamWorkshopManager.Services.Workshop;
+namespace WorkshopManager.Services.Workshop;
 
 /// <summary>
 /// Shell-side facade over the worker's mod-dependency RPC. The raw SteamUGC

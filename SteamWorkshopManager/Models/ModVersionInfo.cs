@@ -1,6 +1,6 @@
-using static SteamWorkshopManager.Services.Core.LocalizationService;
+using static WorkshopManager.Services.Core.LocalizationService;
 
-namespace SteamWorkshopManager.Models;
+namespace WorkshopManager.Models;
 
 public class ModVersionInfo
 {

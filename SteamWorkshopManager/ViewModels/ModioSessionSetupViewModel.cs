@@ -4,10 +4,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.Services.Platforms.Modio;
+using WorkshopManager.Services.Log;
+using WorkshopManager.Services.Platforms.Modio;
 
-namespace SteamWorkshopManager.ViewModels;
+namespace WorkshopManager.ViewModels;
 
 /// <summary>
 /// mod.io half of the "add a session" flows: sign in with the user's own token, then pick a game.

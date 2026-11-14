@@ -9,7 +9,7 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 
-namespace SteamWorkshopManager.Views.Controls;
+namespace WorkshopManager.Views.Controls;
 
 /// <summary>
 /// Lays its child out on one line at its natural width and, when that does not fit,

@@ -1,4 +1,4 @@
-namespace SteamWorkshopManager.Services.Steam.Worker.Contracts.Dtos;
+namespace WorkshopManager.Services.Steam.Worker.Contracts.Dtos;
 
 /// <summary>Discriminator for <see cref="PreviewOpDto"/>. Flat int instead
 /// of an abstract-record union so System.Text.Json doesn't need polymorphic

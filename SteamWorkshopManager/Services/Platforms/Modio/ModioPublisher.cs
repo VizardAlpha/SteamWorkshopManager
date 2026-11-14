@@ -6,15 +6,15 @@ using System.Runtime.ExceptionServices;
 using System.Text.Json.Serialization.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
-using SteamWorkshopManager.Core.Sessions;
-using SteamWorkshopManager.Helpers;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Cache;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.Services.Steam;
-using SteamWorkshopManager.Services.Workshop;
+using WorkshopManager.Core.Sessions;
+using WorkshopManager.Helpers;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Cache;
+using WorkshopManager.Services.Log;
+using WorkshopManager.Services.Steam;
+using WorkshopManager.Services.Workshop;
 
-namespace SteamWorkshopManager.Services.Platforms.Modio;
+namespace WorkshopManager.Services.Platforms.Modio;
 
 /// <summary>Changes to send for an existing mod; null or empty leaves a part as it is.</summary>
 public sealed record ModioModUpdate(

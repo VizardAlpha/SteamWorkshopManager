@@ -3,10 +3,11 @@ using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.Services.Steam;
+using WorkshopManager.Services.Core;
+using WorkshopManager.Services.Log;
+using WorkshopManager.Services.Steam;
 
-namespace SteamWorkshopManager.Services.Cache;
+namespace WorkshopManager.Services.Cache;
 
 /// <summary>
 /// Game artwork: the wide Store header (dashboard hero, add-session preview) and the square
@@ -15,7 +16,7 @@ namespace SteamWorkshopManager.Services.Cache;
 public sealed class SteamImageCache(ICacheStore cache)
 {
     private static readonly Logger Log = LogService.GetLogger<SteamImageCache>();
-    private static readonly HttpClient Http = SteamHttpClientFactory.Create(timeout: TimeSpan.FromSeconds(10));
+    private static readonly HttpClient Http = AppHttpClientFactory.Create(timeout: TimeSpan.FromSeconds(10));
 
     private static CacheKey HeaderKey(uint appId) => CacheKey.SteamApp(appId, "header.jpg");
     private static CacheKey IconKey(uint appId) => CacheKey.SteamApp(appId, "icon.jpg");

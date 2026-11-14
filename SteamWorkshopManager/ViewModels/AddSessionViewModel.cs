@@ -4,17 +4,17 @@ using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using SteamWorkshopManager.Helpers;
-using SteamWorkshopManager.Core.Sessions;
-using SteamWorkshopManager.Core.Steam;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Cache;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.Services.Session;
-using SteamWorkshopManager.Services.Steam;
-using SteamWorkshopManager.Services.Telemetry;
+using WorkshopManager.Helpers;
+using WorkshopManager.Core.Sessions;
+using WorkshopManager.Core.Steam;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Cache;
+using WorkshopManager.Services.Log;
+using WorkshopManager.Services.Session;
+using WorkshopManager.Services.Steam;
+using WorkshopManager.Services.Telemetry;
 
-namespace SteamWorkshopManager.ViewModels;
+namespace WorkshopManager.ViewModels;
 
 public partial class AddSessionViewModel : ViewModelBase
 {

@@ -1,9 +1,9 @@
 using System;
 using System.Threading;
-using SteamWorkshopManager.Services.Log;
+using WorkshopManager.Services.Log;
 using Steamworks;
 
-namespace SteamWorkshopManager.Services.Steam.Worker.Host;
+namespace WorkshopManager.Services.Steam.Worker.Host;
 
 /// <summary>
 /// The single <c>SteamAPI.RunCallbacks</c> loop of the worker. Steamworks expects one

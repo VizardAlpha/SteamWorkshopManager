@@ -1,4 +1,4 @@
-namespace SteamWorkshopManager.Services.Presence;
+namespace WorkshopManager.Services.Presence;
 
 /// <summary>
 /// Live state of the IPC link to the Discord client. Distinct from

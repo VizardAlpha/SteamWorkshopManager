@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
-using SteamWorkshopManager.Models;
+using WorkshopManager.Models;
 
-namespace SteamWorkshopManager.Core.Workshop;
+namespace WorkshopManager.Core.Workshop;
 
 /// <summary>Outcome of merging Steam's list into the one on screen.</summary>
 /// <param name="Next">Steam's order; unchanged items keep their on-screen instance.</param>

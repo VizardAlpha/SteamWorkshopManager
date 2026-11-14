@@ -3,14 +3,14 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using SteamWorkshopManager.Services.UI;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.Services.Notifications;
-using SteamWorkshopManager.Services.Platforms.Modio;
-using SteamWorkshopManager.Services.Steam;
-using SteamWorkshopManager.ViewModels.Modio;
+using WorkshopManager.Services.UI;
+using WorkshopManager.Services.Log;
+using WorkshopManager.Services.Notifications;
+using WorkshopManager.Services.Platforms.Modio;
+using WorkshopManager.Services.Steam;
+using WorkshopManager.ViewModels.Modio;
 
-namespace SteamWorkshopManager.ViewModels;
+namespace WorkshopManager.ViewModels;
 
 public enum ModioCreateStep { Details, Media, File }
 

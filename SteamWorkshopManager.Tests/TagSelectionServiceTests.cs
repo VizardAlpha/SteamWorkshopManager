@@ -1,9 +1,9 @@
 using System.Collections.ObjectModel;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SteamWorkshopManager.Core.Workshop;
-using SteamWorkshopManager.Models;
+using WorkshopManager.Core.Workshop;
+using WorkshopManager.Models;
 
-namespace SteamWorkshopManager.Tests;
+namespace WorkshopManager.Tests;
 
 [TestClass]
 public class TagSelectionServiceTests

@@ -1,4 +1,4 @@
-namespace SteamWorkshopManager.Services.Steam.Worker.Contracts.Dtos;
+namespace WorkshopManager.Services.Steam.Worker.Contracts.Dtos;
 
 /// <summary>
 /// JSON-friendly mirror of an additional preview entry (image or YouTube

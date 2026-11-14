@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace SteamWorkshopManager.Helpers;
+namespace WorkshopManager.Helpers;
 
 /// <summary>
 /// Converts the small Markdown subset used in GitHub release notes (headings,

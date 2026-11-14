@@ -2,11 +2,11 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:vm="using:SteamWorkshopManager.ViewModels"
-             xmlns:models="using:SteamWorkshopManager.Models"
+             xmlns:vm="using:WorkshopManager.ViewModels"
+             xmlns:models="using:WorkshopManager.Models"
              xmlns:icons="using:Material.Icons.Avalonia"
              mc:Ignorable="d" d:DesignWidth="960" d:DesignHeight="720"
-             x:Class="SteamWorkshopManager.Views.HomeView"
+             x:Class="WorkshopManager.Views.HomeView"
              x:DataType="vm:HomeViewModel">
 
     <UserControl.Styles>

@@ -2,10 +2,10 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SteamWorkshopManager.Core.Steam;
-using SteamWorkshopManager.Services.Steam;
+using WorkshopManager.Core.Steam;
+using WorkshopManager.Services.Steam;
 
-namespace SteamWorkshopManager.Tests;
+namespace WorkshopManager.Tests;
 
 [TestClass]
 public class AppIdValidatorTests

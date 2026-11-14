@@ -1,12 +1,12 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:modio="using:SteamWorkshopManager.ViewModels.Modio"
+             xmlns:modio="using:WorkshopManager.ViewModels.Modio"
              xmlns:icons="using:Material.Icons.Avalonia"
-             x:Class="SteamWorkshopManager.Views.Modio.ModioDependenciesView"
+             x:Class="WorkshopManager.Views.Modio.ModioDependenciesView"
              x:DataType="modio:ModioDependenciesViewModel">
 
     <UserControl.Styles>
-        <StyleInclude Source="avares://SteamWorkshopManager/Themes/EditorStyles.axaml"/>
+        <StyleInclude Source="avares://WorkshopManager/Themes/EditorStyles.axaml"/>
     </UserControl.Styles>
 
     <UserControl.Resources>

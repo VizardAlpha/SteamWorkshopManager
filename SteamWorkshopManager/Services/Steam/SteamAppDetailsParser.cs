@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace SteamWorkshopManager.Services.Steam;
+namespace WorkshopManager.Services.Steam;
 
 /// <summary>
 /// Extracts the <c>data</c> node from a Store <c>appdetails</c> response.

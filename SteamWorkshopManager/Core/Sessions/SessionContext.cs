@@ -1,7 +1,7 @@
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Log;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Log;
 
-namespace SteamWorkshopManager.Core.Sessions;
+namespace WorkshopManager.Core.Sessions;
 
 /// <summary>The session the shell is currently working on. Injected wherever the active game matters.</summary>
 public interface ISessionContext

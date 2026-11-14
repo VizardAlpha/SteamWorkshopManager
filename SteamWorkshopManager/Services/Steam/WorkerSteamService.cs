@@ -4,13 +4,13 @@ using System.Linq;
 using System.Threading.Tasks;
 using Steamworks;
 using StreamJsonRpc;
-using SteamWorkshopManager.Helpers;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.Services.Session;
-using SteamWorkshopManager.Services.Steam.Worker.Contracts.Dtos;
+using WorkshopManager.Helpers;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Log;
+using WorkshopManager.Services.Session;
+using WorkshopManager.Services.Steam.Worker.Contracts.Dtos;
 
-namespace SteamWorkshopManager.Services.Steam;
+namespace WorkshopManager.Services.Steam;
 
 /// <summary>
 /// Shell-side <see cref="ISteamService"/> that delegates every Steam call to

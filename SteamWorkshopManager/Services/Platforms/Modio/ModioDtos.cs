@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace SteamWorkshopManager.Services.Platforms.Modio;
+namespace WorkshopManager.Services.Platforms.Modio;
 
 // Wire DTOs for the mod.io REST API (snake_case, see ModioJsonContext).
 // Read leniently: mod.io may add fields we don't model.

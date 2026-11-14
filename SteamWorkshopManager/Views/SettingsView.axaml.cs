@@ -1,6 +1,6 @@
 using Avalonia.Controls;
 
-namespace SteamWorkshopManager.Views;
+namespace WorkshopManager.Views;
 
 public partial class SettingsView : UserControl
 {

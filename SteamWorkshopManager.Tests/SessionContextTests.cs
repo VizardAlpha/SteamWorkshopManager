@@ -1,8 +1,8 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SteamWorkshopManager.Core.Sessions;
-using SteamWorkshopManager.Models;
+using WorkshopManager.Core.Sessions;
+using WorkshopManager.Models;
 
-namespace SteamWorkshopManager.Tests;
+namespace WorkshopManager.Tests;
 
 [TestClass]
 public class SessionContextTests

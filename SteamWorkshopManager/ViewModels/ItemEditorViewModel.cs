@@ -12,18 +12,18 @@ using Avalonia.Input.Platform;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using SteamWorkshopManager.Core.Workshop;
-using SteamWorkshopManager.Helpers;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Core;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.Services.Notifications;
-using SteamWorkshopManager.Services.Steam;
-using SteamWorkshopManager.Services.UI;
-using SteamWorkshopManager.ViewModels.Editor;
+using WorkshopManager.Core.Workshop;
+using WorkshopManager.Helpers;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Core;
+using WorkshopManager.Services.Log;
+using WorkshopManager.Services.Notifications;
+using WorkshopManager.Services.Steam;
+using WorkshopManager.Services.UI;
+using WorkshopManager.ViewModels.Editor;
 using Steamworks;
 
-namespace SteamWorkshopManager.ViewModels;
+namespace WorkshopManager.ViewModels;
 
 /// <summary>
 /// Editor for a published item. Owns the item's own fields (title, description,
@@ -33,7 +33,7 @@ namespace SteamWorkshopManager.ViewModels;
 public partial class ItemEditorViewModel : ViewModelBase, IDisposable
 {
     private static readonly Logger Log = LogService.GetLogger<ItemEditorViewModel>();
-    private static readonly HttpClient Http = SteamHttpClientFactory.Create(timeout: TimeSpan.FromSeconds(30));
+    private static readonly HttpClient Http = AppHttpClientFactory.Create(timeout: TimeSpan.FromSeconds(30));
 
     private readonly WorkshopItem _originalItem;
     private readonly IFileDialogService _fileDialogService;

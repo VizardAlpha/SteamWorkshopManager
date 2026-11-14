@@ -3,7 +3,7 @@ using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Steamworks;
 
-namespace SteamWorkshopManager.Models;
+namespace WorkshopManager.Models;
 
 /// <summary>
 /// Origin of a preview entry in the editor list. Drives both the save-time

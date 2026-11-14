@@ -1,11 +1,11 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Steamworks;
-using SteamWorkshopManager.Core.Workshop;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Steam;
-using SteamWorkshopManager.ViewModels.Editor;
+using WorkshopManager.Core.Workshop;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Steam;
+using WorkshopManager.ViewModels.Editor;
 
-namespace SteamWorkshopManager.Tests;
+namespace WorkshopManager.Tests;
 
 [TestClass]
 public class PreviewOpBuilderTests

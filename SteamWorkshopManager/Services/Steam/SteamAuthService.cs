@@ -8,11 +8,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using SteamKit2;
 using SteamKit2.Authentication;
-using SteamWorkshopManager.Helpers;
-using SteamWorkshopManager.Services.Core;
-using SteamWorkshopManager.Services.Log;
+using WorkshopManager.Helpers;
+using WorkshopManager.Services.Core;
+using WorkshopManager.Services.Log;
 
-namespace SteamWorkshopManager.Services.Steam;
+namespace WorkshopManager.Services.Steam;
 
 /// <summary>
 /// Handles SteamKit2 QR-based authentication to get web tokens
@@ -335,7 +335,7 @@ public static class SteamAuthService
 
         var handler = new HttpClientHandler { CookieContainer = cookieContainer };
         var httpClient = new HttpClient(handler);
-        httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(SteamHttpClientFactory.UserAgent);
+        httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(AppHttpClientFactory.UserAgent);
         return httpClient;
     }
 

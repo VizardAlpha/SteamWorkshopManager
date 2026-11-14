@@ -1,4 +1,4 @@
-namespace SteamWorkshopManager.Models;
+namespace WorkshopManager.Models;
 
 /// <summary>Markup of a description: Steam's BBCode or mod.io's HTML.</summary>
 public enum MarkupLanguage

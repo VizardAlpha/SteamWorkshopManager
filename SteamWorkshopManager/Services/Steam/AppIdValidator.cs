@@ -3,10 +3,11 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.Services.Steam;
+using WorkshopManager.Services.Core;
+using WorkshopManager.Services.Log;
+using WorkshopManager.Services.Steam;
 
-namespace SteamWorkshopManager.Services.Steam;
+namespace WorkshopManager.Services.Steam;
 
 /// <summary>
 /// Validates Steam AppIds and retrieves game metadata.
@@ -27,7 +28,7 @@ public partial class AppIdValidator
 
     public AppIdValidator(HttpClient? httpClient = null)
     {
-        _httpClient = httpClient ?? SteamHttpClientFactory.Create(withAgeGateCookies: true);
+        _httpClient = httpClient ?? AppHttpClientFactory.Create(withAgeGateCookies: true);
     }
 
     private static readonly Regex StoreUrlAppIdRegex = new(

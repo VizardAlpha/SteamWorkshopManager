@@ -5,11 +5,11 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using DiscordRPC;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Core;
-using SteamWorkshopManager.Services.Log;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Core;
+using WorkshopManager.Services.Log;
 
-namespace SteamWorkshopManager.Services.Presence;
+namespace WorkshopManager.Services.Presence;
 
 /// <summary>
 /// Publishes what the user is doing to Discord. The connection only exists
@@ -27,7 +27,7 @@ namespace SteamWorkshopManager.Services.Presence;
 public sealed class DiscordPresenceService : IDiscordPresenceService, IDisposable
 {
     private const string LogoAssetKey = "app_logo";
-    private const string AppName = "Steam Workshop Manager";
+    private const string AppName = "Workshop Manager";
 
     // Discord rejects activity fields longer than 128 bytes.
     private const int MaxFieldLength = 128;

@@ -1,20 +1,20 @@
 using Microsoft.Extensions.DependencyInjection;
-using SteamWorkshopManager.Core.Sessions;
-using SteamWorkshopManager.Core.Steam;
-using SteamWorkshopManager.Core.Workshop;
-using SteamWorkshopManager.Services.Cache;
-using SteamWorkshopManager.Services.Core;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.Services.Notifications;
-using SteamWorkshopManager.Services.Platforms;
-using SteamWorkshopManager.Services.Presence;
-using SteamWorkshopManager.Services.Session;
-using SteamWorkshopManager.Services.Steam;
-using SteamWorkshopManager.Services.Telemetry;
-using SteamWorkshopManager.Services.UI;
-using SteamWorkshopManager.Services.Workshop;
+using WorkshopManager.Core.Sessions;
+using WorkshopManager.Core.Steam;
+using WorkshopManager.Core.Workshop;
+using WorkshopManager.Services.Cache;
+using WorkshopManager.Services.Core;
+using WorkshopManager.Services.Log;
+using WorkshopManager.Services.Notifications;
+using WorkshopManager.Services.Platforms;
+using WorkshopManager.Services.Presence;
+using WorkshopManager.Services.Session;
+using WorkshopManager.Services.Steam;
+using WorkshopManager.Services.Telemetry;
+using WorkshopManager.Services.UI;
+using WorkshopManager.Services.Workshop;
 
-namespace SteamWorkshopManager.Services;
+namespace WorkshopManager.Services;
 
 /// <summary>
 /// Central registration point for the application's services.
@@ -22,7 +22,7 @@ namespace SteamWorkshopManager.Services;
 /// view-models built per view are transient.
 /// Static classes (<see cref="BundleService"/>, <see cref="SteamAuthService"/>,
 /// <see cref="SteamWebClient"/>, <see cref="SteamErrorMapper"/>,
-/// <see cref="SteamHttpClientFactory"/>, <see cref="UpdateCheckerService"/>)
+/// <see cref="AppHttpClientFactory"/>, <see cref="UpdateCheckerService"/>)
 /// are not registered here - they are consumed directly by callers.
 /// </summary>
 public static class ServiceCollectionExtensions

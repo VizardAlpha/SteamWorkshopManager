@@ -4,12 +4,12 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Steamworks;
-using SteamWorkshopManager.Helpers;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.Services.Steam.Worker.Contracts;
-using SteamWorkshopManager.Services.Steam.Worker.Contracts.Dtos;
+using WorkshopManager.Helpers;
+using WorkshopManager.Services.Log;
+using WorkshopManager.Services.Steam.Worker.Contracts;
+using WorkshopManager.Services.Steam.Worker.Contracts.Dtos;
 
-namespace SteamWorkshopManager.Services.Steam.Worker.Host;
+namespace WorkshopManager.Services.Steam.Worker.Host;
 
 /// <summary>
 /// <see cref="ISteamWorker"/> running inside the worker process, the only one that calls

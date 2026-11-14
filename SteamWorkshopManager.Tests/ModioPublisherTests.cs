@@ -8,13 +8,13 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SteamWorkshopManager.Core.Sessions;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Cache;
-using SteamWorkshopManager.Services.Platforms.Modio;
-using SteamWorkshopManager.Services.Steam;
+using WorkshopManager.Core.Sessions;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Cache;
+using WorkshopManager.Services.Platforms.Modio;
+using WorkshopManager.Services.Steam;
 
-namespace SteamWorkshopManager.Tests;
+namespace WorkshopManager.Tests;
 
 [TestClass]
 public class ModioPublisherTests

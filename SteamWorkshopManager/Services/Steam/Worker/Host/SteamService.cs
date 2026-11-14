@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using SteamWorkshopManager.Models;
+using WorkshopManager.Models;
 using Steamworks;
-using SteamWorkshopManager.Services.Log;
+using WorkshopManager.Services.Log;
 
-namespace SteamWorkshopManager.Services.Steam.Worker.Host;
+namespace WorkshopManager.Services.Steam.Worker.Host;
 
 /// <summary>
 /// Steam lifecycle for one game (init, logon, shutdown, branches). Lives in the worker process only;

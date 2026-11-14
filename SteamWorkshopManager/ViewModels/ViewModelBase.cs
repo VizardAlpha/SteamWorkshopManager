@@ -1,7 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using SteamWorkshopManager.Services.Core;
+using WorkshopManager.Services.Core;
 
-namespace SteamWorkshopManager.ViewModels;
+namespace WorkshopManager.ViewModels;
 
 public abstract class ViewModelBase : ObservableObject
 {

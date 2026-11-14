@@ -9,13 +9,13 @@ using System.Threading.Tasks;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using SteamWorkshopManager.Core.Workshop;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.Services.Workshop;
+using WorkshopManager.Core.Workshop;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Log;
+using WorkshopManager.Services.Workshop;
 using Steamworks;
 
-namespace SteamWorkshopManager.ViewModels.Editor;
+namespace WorkshopManager.ViewModels.Editor;
 
 /// <summary>
 /// Per-language titles and descriptions. The base (english) text stays on the Info

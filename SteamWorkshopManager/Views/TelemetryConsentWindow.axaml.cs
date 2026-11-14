@@ -1,7 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 
-namespace SteamWorkshopManager.Views;
+namespace WorkshopManager.Views;
 
 public partial class TelemetryConsentWindow : Window
 {

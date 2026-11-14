@@ -1,6 +1,6 @@
-using SteamWorkshopManager.Models;
+using WorkshopManager.Models;
 
-namespace SteamWorkshopManager.Services.Presence;
+namespace WorkshopManager.Services.Presence;
 
 /// <summary>Snapshot of what the user is doing, mapped to a Discord activity.</summary>
 public sealed record PresenceState(

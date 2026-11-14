@@ -1,5 +1,5 @@
 name: Bug report
-description: Report a problem with Steam Workshop Manager
+description: Report a problem with Workshop Manager
 title: "[Bug]: "
 labels: ["bug", "needs triage"]
 body:
@@ -17,7 +17,7 @@ body:
       options:
         - label: I have searched existing issues and this has not been reported yet.
           required: true
-        - label: I am running the latest version of Steam Workshop Manager.
+        - label: I am running the latest version of Workshop Manager.
           required: true
         - label: Steam was installed and running while reproducing the problem.
           required: true

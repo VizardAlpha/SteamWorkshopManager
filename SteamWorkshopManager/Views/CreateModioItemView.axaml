@@ -2,15 +2,15 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:vm="using:SteamWorkshopManager.ViewModels"
+             xmlns:vm="using:WorkshopManager.ViewModels"
              xmlns:icons="using:Material.Icons.Avalonia"
-             xmlns:modioViews="using:SteamWorkshopManager.Views.Modio"
+             xmlns:modioViews="using:WorkshopManager.Views.Modio"
              mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="640"
-             x:Class="SteamWorkshopManager.Views.CreateModioItemView"
+             x:Class="WorkshopManager.Views.CreateModioItemView"
              x:DataType="vm:CreateModioItemViewModel">
 
     <UserControl.Styles>
-        <StyleInclude Source="avares://SteamWorkshopManager/Themes/EditorStyles.axaml"/>
+        <StyleInclude Source="avares://WorkshopManager/Themes/EditorStyles.axaml"/>
         <Style Selector="Border.step-number">
             <Setter Property="Width" Value="20"/>
             <Setter Property="Height" Value="20"/>

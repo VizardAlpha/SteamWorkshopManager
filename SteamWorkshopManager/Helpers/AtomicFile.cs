@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SteamWorkshopManager.Helpers;
+namespace WorkshopManager.Helpers;
 
 /// <summary>
 /// Crash-safe writes: content goes to a sibling temp file which then replaces

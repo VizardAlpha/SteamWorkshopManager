@@ -1,10 +1,10 @@
 using System;
 using System.Globalization;
 using Avalonia.Data.Converters;
-using SteamWorkshopManager.Models;
-using static SteamWorkshopManager.Services.Core.LocalizationService;
+using WorkshopManager.Models;
+using static WorkshopManager.Services.Core.LocalizationService;
 
-namespace SteamWorkshopManager.Converters;
+namespace WorkshopManager.Converters;
 
 public class VisibilityTypeConverter : IValueConverter
 {

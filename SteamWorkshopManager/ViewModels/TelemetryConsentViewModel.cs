@@ -2,12 +2,12 @@ using System;
 using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Core;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.Services.Telemetry;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Core;
+using WorkshopManager.Services.Log;
+using WorkshopManager.Services.Telemetry;
 
-namespace SteamWorkshopManager.ViewModels;
+namespace WorkshopManager.ViewModels;
 
 /// <summary>
 /// Backs the consent modal shown to users upgrading from a version that

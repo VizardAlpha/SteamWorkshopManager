@@ -4,12 +4,12 @@ using System.IO.Pipes;
 using System.Threading;
 using System.Threading.Tasks;
 using StreamJsonRpc;
-using SteamWorkshopManager.Helpers;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.Services.Steam.Worker.Contracts;
-using SteamWorkshopManager.Services.Steam.Worker.Contracts.Dtos;
+using WorkshopManager.Helpers;
+using WorkshopManager.Services.Log;
+using WorkshopManager.Services.Steam.Worker.Contracts;
+using WorkshopManager.Services.Steam.Worker.Contracts.Dtos;
 
-namespace SteamWorkshopManager.Services.Steam.Worker.Client;
+namespace WorkshopManager.Services.Steam.Worker.Client;
 
 /// <summary>
 /// Shell-side handle to a <see cref="SteamWorkerHost"/> child process.

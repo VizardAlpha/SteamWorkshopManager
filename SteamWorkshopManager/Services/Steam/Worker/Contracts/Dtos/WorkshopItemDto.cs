@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
-using SteamWorkshopManager.Models;
+using WorkshopManager.Models;
 
-namespace SteamWorkshopManager.Services.Steam.Worker.Contracts.Dtos;
+namespace WorkshopManager.Services.Steam.Worker.Contracts.Dtos;
 
 /// <summary>
 /// JSON-friendly mirror of <see cref="WorkshopItem"/> for the worker RPC.

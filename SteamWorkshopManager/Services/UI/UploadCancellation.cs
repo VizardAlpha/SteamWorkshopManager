@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 
-namespace SteamWorkshopManager.Services.UI;
+namespace WorkshopManager.Services.UI;
 
 /// <summary>
 /// Links the upload toast's Cancel button to the upload that is running. Only uploads

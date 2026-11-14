@@ -8,13 +8,13 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using SteamWorkshopManager.Helpers;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Core;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.Services.Notifications;
+using WorkshopManager.Helpers;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Core;
+using WorkshopManager.Services.Log;
+using WorkshopManager.Services.Notifications;
 
-namespace SteamWorkshopManager.ViewModels;
+namespace WorkshopManager.ViewModels;
 
 public record ReleaseNotesItem(string Version, string DateText, string BbCode, bool IsPrerelease);
 

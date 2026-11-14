@@ -1,7 +1,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SteamWorkshopManager.Services.Log;
+using WorkshopManager.Services.Log;
 
-namespace SteamWorkshopManager.Tests;
+namespace WorkshopManager.Tests;
 
 [TestClass]
 public static class TestAssemblySetup

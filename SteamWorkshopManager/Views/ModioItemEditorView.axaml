@@ -2,16 +2,16 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:vm="using:SteamWorkshopManager.ViewModels"
-             xmlns:helpers="using:SteamWorkshopManager.Helpers"
+             xmlns:vm="using:WorkshopManager.ViewModels"
+             xmlns:helpers="using:WorkshopManager.Helpers"
              xmlns:icons="using:Material.Icons.Avalonia"
-             xmlns:modioViews="using:SteamWorkshopManager.Views.Modio"
+             xmlns:modioViews="using:WorkshopManager.Views.Modio"
              mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="640"
-             x:Class="SteamWorkshopManager.Views.ModioItemEditorView"
+             x:Class="WorkshopManager.Views.ModioItemEditorView"
              x:DataType="vm:ModioItemEditorViewModel">
 
     <UserControl.Styles>
-        <StyleInclude Source="avares://SteamWorkshopManager/Themes/EditorStyles.axaml"/>
+        <StyleInclude Source="avares://WorkshopManager/Themes/EditorStyles.axaml"/>
     </UserControl.Styles>
 
     <Grid RowDefinitions="*,Auto">

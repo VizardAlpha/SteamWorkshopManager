@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using SteamWorkshopManager.Models;
+using WorkshopManager.Models;
 
-namespace SteamWorkshopManager.Services.Platforms;
+namespace WorkshopManager.Services.Platforms;
 
 /// <summary>
 /// What the shared screens (home, "My mods") need from a platform. Editors and

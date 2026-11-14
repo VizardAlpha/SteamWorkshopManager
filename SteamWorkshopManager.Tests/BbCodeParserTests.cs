@@ -1,8 +1,8 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SteamWorkshopManager.Helpers;
-using SteamWorkshopManager.Models;
+using WorkshopManager.Helpers;
+using WorkshopManager.Models;
 
-namespace SteamWorkshopManager.Tests;
+namespace WorkshopManager.Tests;
 
 [TestClass]
 public class BbCodeParserTests

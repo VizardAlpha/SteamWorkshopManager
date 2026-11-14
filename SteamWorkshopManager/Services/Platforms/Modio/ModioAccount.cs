@@ -5,10 +5,10 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using SteamWorkshopManager.Helpers;
-using SteamWorkshopManager.Services.Log;
+using WorkshopManager.Helpers;
+using WorkshopManager.Services.Log;
 
-namespace SteamWorkshopManager.Services.Platforms.Modio;
+namespace WorkshopManager.Services.Platforms.Modio;
 
 internal sealed record StoredModioAccount(string BaseUrl, string Token, long UserId, string? Username);
 

@@ -1,15 +1,15 @@
 <!-- Branch range card shared by the Steam create and edit views. -->
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:editor="using:SteamWorkshopManager.ViewModels.Editor"
-             xmlns:sections="using:SteamWorkshopManager.Views.Editor"
-             xmlns:models="using:SteamWorkshopManager.Models"
+             xmlns:editor="using:WorkshopManager.ViewModels.Editor"
+             xmlns:sections="using:WorkshopManager.Views.Editor"
+             xmlns:models="using:WorkshopManager.Models"
              xmlns:icons="using:Material.Icons.Avalonia"
-             x:Class="SteamWorkshopManager.Views.Editor.VersionCompatibilityView"
+             x:Class="WorkshopManager.Views.Editor.VersionCompatibilityView"
              x:DataType="editor:VersionRangeViewModel">
 
     <UserControl.Styles>
-        <StyleInclude Source="avares://SteamWorkshopManager/Themes/EditorStyles.axaml"/>
+        <StyleInclude Source="avares://WorkshopManager/Themes/EditorStyles.axaml"/>
     </UserControl.Styles>
 
     <Border Classes="section-card">

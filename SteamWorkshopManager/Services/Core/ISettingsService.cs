@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
-using SteamWorkshopManager.Models;
+using WorkshopManager.Models;
 
-namespace SteamWorkshopManager.Services.Core;
+namespace WorkshopManager.Services.Core;
 
 public interface ISettingsService
 {

@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using SteamWorkshopManager.Models;
+using WorkshopManager.Models;
 using Steamworks;
 
-namespace SteamWorkshopManager.Services.Steam;
+namespace WorkshopManager.Services.Steam;
 
 public enum SteamInitResult
 {

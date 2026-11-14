@@ -1,4 +1,4 @@
-namespace SteamWorkshopManager.Models;
+namespace WorkshopManager.Models;
 
 /// <summary>
 /// Left-nav sections for <c>ItemEditorView</c>. Mirrors the side-panel

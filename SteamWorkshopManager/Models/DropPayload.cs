@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace SteamWorkshopManager.Models;
+namespace WorkshopManager.Models;
 
 /// <summary>What a drop zone accepts. Flags so one zone can take several kinds.</summary>
 [Flags]

@@ -1,6 +1,6 @@
 using Avalonia.Controls;
 
-namespace SteamWorkshopManager.Views.Editor;
+namespace WorkshopManager.Views.Editor;
 
 public partial class TagsCardView : UserControl
 {

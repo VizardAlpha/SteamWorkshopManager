@@ -1,4 +1,4 @@
-namespace SteamWorkshopManager.Helpers;
+namespace WorkshopManager.Helpers;
 
 /// <summary>
 /// Shared constants for type-to-confirm destructive flows: deleting a mod,

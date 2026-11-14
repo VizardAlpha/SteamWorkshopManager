@@ -1,4 +1,4 @@
-namespace SteamWorkshopManager.Models;
+namespace WorkshopManager.Models;
 
 public record LanguageInfo(string Code, string NativeName, string DisplayName, string FilePath)
 {

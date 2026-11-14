@@ -7,15 +7,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using SteamWorkshopManager.Core.Workshop;
-using SteamWorkshopManager.Helpers;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.Services.Notifications;
-using SteamWorkshopManager.Services.Platforms.Modio;
-using SteamWorkshopManager.Services.UI;
+using WorkshopManager.Core.Workshop;
+using WorkshopManager.Helpers;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Log;
+using WorkshopManager.Services.Notifications;
+using WorkshopManager.Services.Platforms.Modio;
+using WorkshopManager.Services.UI;
 
-namespace SteamWorkshopManager.ViewModels.Modio;
+namespace WorkshopManager.ViewModels.Modio;
 
 /// <summary>One published file in the history, with its inline edit and delete states.</summary>
 public partial class ModioFileEntry(ModioModfile file) : ObservableObject

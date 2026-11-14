@@ -1,6 +1,6 @@
-# Translating Steam Workshop Manager
+# Translating Workshop Manager
 
-Thank you for helping translate Steam Workshop Manager! This guide explains how to add a new language.
+Thank you for helping translate Workshop Manager! This guide explains how to add a new language.
 
 ## How localization works
 

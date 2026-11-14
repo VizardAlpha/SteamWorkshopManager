@@ -3,13 +3,13 @@ using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using SteamWorkshopManager.Core.Sessions;
-using SteamWorkshopManager.Helpers;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.Services.Notifications;
+using WorkshopManager.Core.Sessions;
+using WorkshopManager.Helpers;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Log;
+using WorkshopManager.Services.Notifications;
 
-namespace SteamWorkshopManager.ViewModels.Shell;
+namespace WorkshopManager.ViewModels.Shell;
 
 /// <summary>
 /// Type-to-confirm session deletion, same pattern as the per-mod delete.

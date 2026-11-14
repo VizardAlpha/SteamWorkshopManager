@@ -8,11 +8,11 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Material.Icons;
 using Material.Icons.Avalonia;
-using SteamWorkshopManager.Helpers;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Core;
+using WorkshopManager.Helpers;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Core;
 
-namespace SteamWorkshopManager.Views.Controls;
+namespace WorkshopManager.Views.Controls;
 
 public partial class MarkupEditorControl : UserControl
 {

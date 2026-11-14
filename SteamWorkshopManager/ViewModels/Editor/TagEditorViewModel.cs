@@ -5,13 +5,13 @@ using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using SteamWorkshopManager.Core.Sessions;
-using SteamWorkshopManager.Core.Workshop;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Core;
-using SteamWorkshopManager.Services.Log;
+using WorkshopManager.Core.Sessions;
+using WorkshopManager.Core.Workshop;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Core;
+using WorkshopManager.Services.Log;
 
-namespace SteamWorkshopManager.ViewModels.Editor;
+namespace WorkshopManager.ViewModels.Editor;
 
 /// <summary>Tag picker shared by the create and edit views: session catalog, custom tags, refresh.</summary>
 public partial class TagEditorViewModel(

@@ -12,11 +12,12 @@ using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
-using SteamWorkshopManager.Helpers;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.Services.Steam;
+using WorkshopManager.Services.Core;
+using WorkshopManager.Helpers;
+using WorkshopManager.Services.Log;
+using WorkshopManager.Services.Steam;
 
-namespace SteamWorkshopManager.Services.Platforms.Modio;
+namespace WorkshopManager.Services.Platforms.Modio;
 
 /// <summary>Fields of a new mod. mod.io requires a logo.</summary>
 public sealed record ModioNewMod(
@@ -101,7 +102,7 @@ public sealed class ModioApiClient
         long multipartThreshold = MultipartThreshold, int partSize = PartSize)
     {
         _http = new HttpClient(handler) { Timeout = TimeSpan.FromMinutes(30) };
-        _http.DefaultRequestHeaders.UserAgent.ParseAdd(SteamHttpClientFactory.UserAgent);
+        _http.DefaultRequestHeaders.UserAgent.ParseAdd(AppHttpClientFactory.UserAgent);
         _http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         _time = time;
         _multipartThreshold = multipartThreshold;

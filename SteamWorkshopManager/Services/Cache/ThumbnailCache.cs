@@ -4,10 +4,11 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.Services.Steam;
+using WorkshopManager.Services.Core;
+using WorkshopManager.Services.Log;
+using WorkshopManager.Services.Steam;
 
-namespace SteamWorkshopManager.Services.Cache;
+namespace WorkshopManager.Services.Cache;
 
 /// <summary>
 /// Item card and gallery thumbnails: at most 4 downloads at once, cached by URL,
@@ -19,7 +20,7 @@ public sealed class ThumbnailCache(ICacheStore cache)
 
     private const int DecodeWidth = 320;
 
-    private static readonly HttpClient Http = SteamHttpClientFactory.Create(timeout: TimeSpan.FromSeconds(20));
+    private static readonly HttpClient Http = AppHttpClientFactory.Create(timeout: TimeSpan.FromSeconds(20));
     private static readonly SemaphoreSlim DownloadGate = new(4);
 
     public async Task<Bitmap?> GetAsync(string url, CancellationToken ct)

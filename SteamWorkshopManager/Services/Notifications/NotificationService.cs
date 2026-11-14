@@ -1,7 +1,7 @@
 using System;
-using SteamWorkshopManager.Services.Log;
+using WorkshopManager.Services.Log;
 
-namespace SteamWorkshopManager.Services.Notifications;
+namespace WorkshopManager.Services.Notifications;
 
 public class NotificationService : INotificationService
 {

@@ -3,16 +3,16 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using SteamWorkshopManager.Core.Sessions;
-using SteamWorkshopManager.Core.Steam;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Core;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.Services.Session;
-using SteamWorkshopManager.Services.Steam;
-using SteamWorkshopManager.Services.Telemetry;
+using WorkshopManager.Core.Sessions;
+using WorkshopManager.Core.Steam;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Core;
+using WorkshopManager.Services.Log;
+using WorkshopManager.Services.Session;
+using WorkshopManager.Services.Steam;
+using WorkshopManager.Services.Telemetry;
 
-namespace SteamWorkshopManager.ViewModels;
+namespace WorkshopManager.ViewModels;
 
 public partial class SetupWizardViewModel : ViewModelBase
 {

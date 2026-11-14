@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using SteamWorkshopManager.Models;
+using WorkshopManager.Models;
 
-namespace SteamWorkshopManager.Helpers;
+namespace WorkshopManager.Helpers;
 
 /// <summary>Toolbar of the HTML editor (mod.io descriptions), grouped like <see cref="BbCodeTags"/>.</summary>
 public static class HtmlTags

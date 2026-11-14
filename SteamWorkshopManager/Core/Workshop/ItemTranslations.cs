@@ -1,6 +1,6 @@
-using SteamWorkshopManager.Models;
+using WorkshopManager.Models;
 
-namespace SteamWorkshopManager.Core.Workshop;
+namespace WorkshopManager.Core.Workshop;
 
 /// <summary>Rules for Workshop item translations, kept free of Steam and UI code.</summary>
 public static class ItemTranslations

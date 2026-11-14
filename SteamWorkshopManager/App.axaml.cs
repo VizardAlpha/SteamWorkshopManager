@@ -4,17 +4,17 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
 using Microsoft.Extensions.DependencyInjection;
-using SteamWorkshopManager.Core.Sessions;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.Views;
+using WorkshopManager.Core.Sessions;
+using WorkshopManager.Services.Log;
+using WorkshopManager.Views;
 using System.Threading.Tasks;
-using SteamWorkshopManager.Services.Core;
-using SteamWorkshopManager.Services.Presence;
-using SteamWorkshopManager.Services.Session;
-using SteamWorkshopManager.Services.Telemetry;
-using SteamWorkshopManager.ViewModels;
+using WorkshopManager.Services.Core;
+using WorkshopManager.Services.Presence;
+using WorkshopManager.Services.Session;
+using WorkshopManager.Services.Telemetry;
+using WorkshopManager.ViewModels;
 
-namespace SteamWorkshopManager;
+namespace WorkshopManager;
 
 public partial class App : Application
 {

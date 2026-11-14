@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace SteamWorkshopManager.Models;
+namespace WorkshopManager.Models;
 
 /// <summary>Session publishing to one game on mod.io.</summary>
 public sealed class ModioSession : WorkshopSession

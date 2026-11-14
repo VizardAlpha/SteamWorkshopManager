@@ -2,22 +2,22 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:vm="using:SteamWorkshopManager.ViewModels"
-             xmlns:editor="using:SteamWorkshopManager.ViewModels.Editor"
-             xmlns:workshop="using:SteamWorkshopManager.Core.Workshop"
-             xmlns:models="using:SteamWorkshopManager.Models"
-             xmlns:helpers="using:SteamWorkshopManager.Helpers"
-             xmlns:converters="using:SteamWorkshopManager.Converters"
-             xmlns:controls="using:SteamWorkshopManager.Views.Controls"
-             xmlns:sections="using:SteamWorkshopManager.Views.Editor"
-             xmlns:behaviors="using:SteamWorkshopManager.Behaviors"
+             xmlns:vm="using:WorkshopManager.ViewModels"
+             xmlns:editor="using:WorkshopManager.ViewModels.Editor"
+             xmlns:workshop="using:WorkshopManager.Core.Workshop"
+             xmlns:models="using:WorkshopManager.Models"
+             xmlns:helpers="using:WorkshopManager.Helpers"
+             xmlns:converters="using:WorkshopManager.Converters"
+             xmlns:controls="using:WorkshopManager.Views.Controls"
+             xmlns:sections="using:WorkshopManager.Views.Editor"
+             xmlns:behaviors="using:WorkshopManager.Behaviors"
              xmlns:icons="using:Material.Icons.Avalonia"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
-             x:Class="SteamWorkshopManager.Views.ItemEditorView"
+             x:Class="WorkshopManager.Views.ItemEditorView"
              x:DataType="vm:ItemEditorViewModel">
 
     <UserControl.Styles>
-        <StyleInclude Source="avares://SteamWorkshopManager/Themes/EditorStyles.axaml"/>
+        <StyleInclude Source="avares://WorkshopManager/Themes/EditorStyles.axaml"/>
     </UserControl.Styles>
 
     <Grid RowDefinitions="*,Auto">

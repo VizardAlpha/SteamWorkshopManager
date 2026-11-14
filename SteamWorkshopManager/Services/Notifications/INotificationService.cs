@@ -1,6 +1,6 @@
 using System;
 
-namespace SteamWorkshopManager.Services.Notifications;
+namespace WorkshopManager.Services.Notifications;
 
 public interface INotificationService
 {

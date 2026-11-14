@@ -5,11 +5,11 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
-using SteamWorkshopManager.Helpers;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Core;
+using WorkshopManager.Helpers;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Core;
 
-namespace SteamWorkshopManager.Views.Controls;
+namespace WorkshopManager.Views.Controls;
 
 /// <summary>Render of the description being edited, styled like the platform's own page.</summary>
 public class MarkupPreviewControl : UserControl

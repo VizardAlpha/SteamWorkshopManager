@@ -9,9 +9,9 @@ using Avalonia.Controls.Documents;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
-using SteamWorkshopManager.Models;
+using WorkshopManager.Models;
 
-namespace SteamWorkshopManager.Helpers;
+namespace WorkshopManager.Helpers;
 
 /// <summary>
 /// Renders a mod.io description (HTML) as Avalonia controls, close to mod.io's dark mod page.

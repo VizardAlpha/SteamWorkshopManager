@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace SteamWorkshopManager;
+namespace WorkshopManager;
 
 public static class AppInfo
 {

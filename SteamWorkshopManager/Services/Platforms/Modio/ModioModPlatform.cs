@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using SteamWorkshopManager.Core.Sessions;
-using SteamWorkshopManager.Models;
+using WorkshopManager.Core.Sessions;
+using WorkshopManager.Models;
 
-namespace SteamWorkshopManager.Services.Platforms.Modio;
+namespace WorkshopManager.Services.Platforms.Modio;
 
 /// <summary>mod.io through the signed-in user's own token, for the active mod.io session.</summary>
 public sealed class ModioModPlatform(ModioApiClient client, ModioAccount account, ISessionContext context) : IModPlatform

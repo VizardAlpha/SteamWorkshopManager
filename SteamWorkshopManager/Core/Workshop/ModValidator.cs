@@ -1,6 +1,6 @@
 using System.IO;
 
-namespace SteamWorkshopManager.Core.Workshop;
+namespace WorkshopManager.Core.Workshop;
 
 /// <summary>
 /// Outcome of a pre-submit validation pass. <see cref="ErrorKey"/> matches a

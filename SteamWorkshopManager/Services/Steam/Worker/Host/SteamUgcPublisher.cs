@@ -2,14 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
-using SteamWorkshopManager.Core.Steam;
-using SteamWorkshopManager.Core.Workshop;
-using SteamWorkshopManager.Models;
+using WorkshopManager.Core.Steam;
+using WorkshopManager.Core.Workshop;
+using WorkshopManager.Models;
 using Steamworks;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.Services.Steam.Worker.Contracts.Dtos;
+using WorkshopManager.Services.Log;
+using WorkshopManager.Services.Steam.Worker.Contracts.Dtos;
 
-namespace SteamWorkshopManager.Services.Steam.Worker.Host;
+namespace WorkshopManager.Services.Steam.Worker.Host;
 
 /// <summary>Workshop writes: create, update, per-language text and delete, with upload progress.</summary>
 internal sealed class SteamUgcPublisher(SteamService steam, uint appId)

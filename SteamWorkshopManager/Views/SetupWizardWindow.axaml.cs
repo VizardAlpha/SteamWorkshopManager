@@ -1,8 +1,8 @@
 using System;
 using Avalonia.Controls;
-using SteamWorkshopManager.ViewModels;
+using WorkshopManager.ViewModels;
 
-namespace SteamWorkshopManager.Views;
+namespace WorkshopManager.Views;
 
 public partial class SetupWizardWindow : Window
 {

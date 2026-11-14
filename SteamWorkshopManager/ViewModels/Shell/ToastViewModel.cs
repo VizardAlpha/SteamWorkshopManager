@@ -2,11 +2,11 @@ using System.Threading.Tasks;
 using Avalonia.Layout;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Core;
-using SteamWorkshopManager.Services.Notifications;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Core;
+using WorkshopManager.Services.Notifications;
 
-namespace SteamWorkshopManager.ViewModels.Shell;
+namespace WorkshopManager.ViewModels.Shell;
 
 /// <summary>Success/error toasts raised through <see cref="INotificationService"/>, and the corner they dock to.</summary>
 public partial class ToastViewModel : ViewModelBase

@@ -1,6 +1,6 @@
 # Overview
 
-Steam Workshop Manager lets mod authors create, update and manage their Steam Workshop items, and their mod.io mods, without each game's own upload tool.
+Workshop Manager lets mod authors create, update and manage their Steam Workshop items, and their mod.io mods, without each game's own upload tool.
 
 ## Who it is for
 

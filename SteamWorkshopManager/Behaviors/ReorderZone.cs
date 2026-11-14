@@ -4,10 +4,10 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.VisualTree;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Log;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Log;
 
-namespace SteamWorkshopManager.Behaviors;
+namespace WorkshopManager.Behaviors;
 
 /// <summary>
 /// In-app drag reorder for list rows. Attach to the row container:

@@ -5,7 +5,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
 
-namespace SteamWorkshopManager.Services.UI;
+namespace WorkshopManager.Services.UI;
 
 public class FileDialogService : IFileDialogService
 {

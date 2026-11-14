@@ -1,4 +1,4 @@
-namespace SteamWorkshopManager.Models;
+namespace WorkshopManager.Models;
 
 public enum VisibilityType
 {

@@ -144,7 +144,7 @@
     <x:String x:Key="DeleteSessionFailed">Échec de la suppression de la session</x:String>
     <x:String x:Key="PreviewDownloadFailed">Impossible de télécharger une image de prévisualisation existante depuis Steam. Rien n'a été modifié, réessaie.</x:String>
     <x:String x:Key="CloseDuringUploadTitle">Upload en cours</x:String>
-    <x:String x:Key="CloseDuringUploadBody">Fermer maintenant interrompra l'envoi vers Steam. L'item risque de rester incomplet.</x:String>
+    <x:String x:Key="CloseDuringUploadBody">Fermer maintenant interrompra l'envoi. L'item risque de rester incomplet.</x:String>
     <x:String x:Key="CloseDuringUploadKeep">Continuer l'upload</x:String>
     <x:String x:Key="CloseDuringUploadQuit">Quitter quand même</x:String>
     <x:String x:Key="UpdateInstall">Mettre à jour et redémarrer</x:String>
@@ -668,7 +668,7 @@
     <x:String x:Key="PrivacyPolicy">Politique de confidentialité</x:String>
     <x:String x:Key="TelemetryConsentTitle">Préférences de confidentialité</x:String>
     <x:String x:Key="TelemetryConsentSubtitle">Une vérification rapide avant de continuer</x:String>
-    <x:String x:Key="TelemetryConsentBody">La politique de confidentialité a été mise à jour : SteamWorkshopManager peut désormais afficher ce sur quoi vous travaillez dans votre statut Discord. Cette fonctionnalité reste désactivée tant que vous ne l'activez pas. Les données d'usage partagées avec le tableau de bord public swm-stats.com sont facultatives et pseudonymes : système d'exploitation, version de l'application, actions sur les mods. Aucun identifiant Steam, aucune information personnelle. Vous pouvez modifier ces choix à tout moment dans Paramètres → Confidentialité.</x:String>
+    <x:String x:Key="TelemetryConsentBody">La politique de confidentialité a été mise à jour : Workshop Manager peut désormais afficher ce sur quoi vous travaillez dans votre statut Discord. Cette fonctionnalité reste désactivée tant que vous ne l'activez pas. Les données d'usage partagées avec le tableau de bord public swm-stats.com sont facultatives et pseudonymes : système d'exploitation, version de l'application, actions sur les mods. Aucun identifiant Steam, aucune information personnelle. Vous pouvez modifier ces choix à tout moment dans Paramètres → Confidentialité.</x:String>
     <x:String x:Key="TelemetryConsentFooter">Vous pourrez modifier ce choix dans Paramètres → Confidentialité.</x:String>
     <x:String x:Key="Continue">Continuer</x:String>
     <x:String x:Key="YourInstanceId">Votre identifiant d'instance</x:String>
@@ -679,7 +679,7 @@
     <!-- Settings: storage / cache -->
     <x:String x:Key="SettingsStorage">Stockage</x:String>
     <x:String x:Key="CacheEnable">Cache</x:String>
-    <x:String x:Key="CacheEnableDescription">Conserve les données récupérées depuis Steam (visuels des jeux, catalogues de tags, miniatures...) d'un lancement à l'autre pour ne pas les retélécharger. Les fichiers des mods ne sont jamais stockés dans le cache.</x:String>
+    <x:String x:Key="CacheEnableDescription">Conserve les données récupérées depuis Steam et mod.io (visuels des jeux, catalogues de tags, miniatures...) d'un lancement à l'autre pour ne pas les retélécharger. Les fichiers des mods ne sont jamais stockés dans le cache.</x:String>
     <x:String x:Key="CacheLimit">Limite de taille</x:String>
     <x:String x:Key="CacheLimitDescription">Quand la limite est atteinte, rien n'est supprimé : le cache arrête de grossir jusqu'à ce que vous augmentiez la limite, le désactiviez ou le vidiez.</x:String>
     <x:String x:Key="MegabytesUnit">Mo</x:String>
@@ -696,7 +696,7 @@
 
     <!-- Cached mod list -->
     <x:String x:Key="ItemRefreshing">Vérification des changements sur {0}</x:String>
-    <x:String x:Key="ItemsRefreshFailed">Steam est injoignable, la liste affichée n'est peut-être pas à jour</x:String>
+    <x:String x:Key="ItemsRefreshFailed">La liste n'a pas pu être actualisée et n'est peut-être pas à jour</x:String>
     <x:String x:Key="ItemUpdatedFromSteam">Ce mod a changé sur Steam : l'éditeur affiche maintenant la dernière version</x:String>
     <x:String x:Key="ItemChangedOnSteam">Ce mod a changé sur Steam depuis son ouverture. Enregistrer écrasera ces changements</x:String>
     <x:String x:Key="ItemRemovedOnSteam">Ce mod n'est plus sur Steam</x:String>

@@ -7,12 +7,12 @@ using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using SteamWorkshopManager.Services.Cache;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.Services.Notifications;
-using SteamWorkshopManager.Services.Platforms.Modio;
+using WorkshopManager.Services.Cache;
+using WorkshopManager.Services.Log;
+using WorkshopManager.Services.Notifications;
+using WorkshopManager.Services.Platforms.Modio;
 
-namespace SteamWorkshopManager.ViewModels.Modio;
+namespace WorkshopManager.ViewModels.Modio;
 
 /// <summary>A mod in the dependency list or in the search results.</summary>
 public partial class ModioDependencyEntry : ObservableObject, IDisposable

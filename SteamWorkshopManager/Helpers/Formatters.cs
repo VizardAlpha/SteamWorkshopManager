@@ -1,7 +1,7 @@
 using System;
-using SteamWorkshopManager.Services.Core;
+using WorkshopManager.Services.Core;
 
-namespace SteamWorkshopManager.Helpers;
+namespace WorkshopManager.Helpers;
 
 /// <summary>
 /// Display formatters shared by dashboards, list rows, and detail views so the

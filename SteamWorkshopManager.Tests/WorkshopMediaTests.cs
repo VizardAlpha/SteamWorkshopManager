@@ -1,8 +1,8 @@
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SteamWorkshopManager.Core.Workshop;
+using WorkshopManager.Core.Workshop;
 
-namespace SteamWorkshopManager.Tests;
+namespace WorkshopManager.Tests;
 
 [TestClass]
 public class WorkshopMediaTests

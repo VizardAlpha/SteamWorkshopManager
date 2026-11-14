@@ -6,11 +6,12 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using SteamWorkshopManager.Services.Cache;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.Services.Steam;
+using WorkshopManager.Services.Core;
+using WorkshopManager.Services.Cache;
+using WorkshopManager.Services.Log;
+using WorkshopManager.Services.Steam;
 
-namespace SteamWorkshopManager.Services.Workshop;
+namespace WorkshopManager.Services.Workshop;
 
 /// <summary>
 /// Public tag payload surfaced to view-models. <see cref="TagsByCategory"/>
@@ -49,7 +50,7 @@ public class WorkshopTagsService(ICacheStore cache)
         @"<script[^>]*\bid=""valve-ssr-data""[^>]*>([\s\S]*?)</script>",
         RegexOptions.Compiled);
 
-    private readonly HttpClient _httpClient = SteamHttpClientFactory.Create(withAgeGateCookies: true);
+    private readonly HttpClient _httpClient = AppHttpClientFactory.Create(withAgeGateCookies: true);
 
     public async Task<TagsResult> GetTagsForAppAsync(uint appId, bool forceRefresh = false)
     {

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using SteamWorkshopManager.Models;
+using WorkshopManager.Models;
 
-namespace SteamWorkshopManager.Helpers;
+namespace WorkshopManager.Helpers;
 
 public static class BbCodeTags
 {

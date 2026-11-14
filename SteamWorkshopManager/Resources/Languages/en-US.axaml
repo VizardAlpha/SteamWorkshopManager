@@ -144,7 +144,7 @@
     <x:String x:Key="DeleteSessionFailed">Failed to delete session</x:String>
     <x:String x:Key="PreviewDownloadFailed">Could not download an existing preview image from Steam. Nothing was changed, please try again.</x:String>
     <x:String x:Key="CloseDuringUploadTitle">Upload in progress</x:String>
-    <x:String x:Key="CloseDuringUploadBody">Closing now will interrupt the upload to Steam. The item may be left incomplete.</x:String>
+    <x:String x:Key="CloseDuringUploadBody">Closing now will interrupt the upload. The item may be left incomplete.</x:String>
     <x:String x:Key="CloseDuringUploadKeep">Keep uploading</x:String>
     <x:String x:Key="CloseDuringUploadQuit">Quit anyway</x:String>
     <x:String x:Key="UpdateInstall">Update and restart</x:String>
@@ -668,7 +668,7 @@
     <x:String x:Key="PrivacyPolicy">Privacy policy</x:String>
     <x:String x:Key="TelemetryConsentTitle">Privacy preferences</x:String>
     <x:String x:Key="TelemetryConsentSubtitle">A quick check before we continue</x:String>
-    <x:String x:Key="TelemetryConsentBody">The privacy policy has been updated: SteamWorkshopManager can now show what you are working on in your Discord status. That feature stays off until you enable it. Usage data shared with the public dashboard at swm-stats.com is optional and pseudonymous: operating system, app version, mod actions. No Steam ID, no personal information. You can change these choices at any time in Settings → Privacy.</x:String>
+    <x:String x:Key="TelemetryConsentBody">The privacy policy has been updated: Workshop Manager can now show what you are working on in your Discord status. That feature stays off until you enable it. Usage data shared with the public dashboard at swm-stats.com is optional and pseudonymous: operating system, app version, mod actions. No Steam ID, no personal information. You can change these choices at any time in Settings → Privacy.</x:String>
     <x:String x:Key="TelemetryConsentFooter">You can change this later in Settings → Privacy.</x:String>
     <x:String x:Key="Continue">Continue</x:String>
     <x:String x:Key="YourInstanceId">Your instance ID</x:String>
@@ -679,7 +679,7 @@
     <!-- Settings: storage / cache -->
     <x:String x:Key="SettingsStorage">Storage</x:String>
     <x:String x:Key="CacheEnable">Cache</x:String>
-    <x:String x:Key="CacheEnableDescription">Keeps data fetched from Steam (game artwork, tag catalogs, thumbnails...) between launches so it doesn't have to be downloaded again. Mod files are never stored in the cache.</x:String>
+    <x:String x:Key="CacheEnableDescription">Keeps data fetched from Steam and mod.io (game artwork, tag catalogs, thumbnails...) between launches so it doesn't have to be downloaded again. Mod files are never stored in the cache.</x:String>
     <x:String x:Key="CacheLimit">Size limit</x:String>
     <x:String x:Key="CacheLimitDescription">When the limit is reached nothing is deleted: the cache stops growing until you raise the limit, turn it off or clear it.</x:String>
     <x:String x:Key="MegabytesUnit">MB</x:String>
@@ -696,7 +696,7 @@
 
     <!-- Cached mod list -->
     <x:String x:Key="ItemRefreshing">Checking for changes on {0}</x:String>
-    <x:String x:Key="ItemsRefreshFailed">Steam could not be reached, the list shown may be out of date</x:String>
+    <x:String x:Key="ItemsRefreshFailed">The list could not be refreshed and may be out of date</x:String>
     <x:String x:Key="ItemUpdatedFromSteam">This mod changed on Steam: the editor now shows the latest version</x:String>
     <x:String x:Key="ItemChangedOnSteam">This mod changed on Steam since it was opened. Saving will overwrite those changes</x:String>
     <x:String x:Key="ItemRemovedOnSteam">This mod is no longer on Steam</x:String>

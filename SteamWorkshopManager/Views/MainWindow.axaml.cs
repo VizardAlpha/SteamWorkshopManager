@@ -1,9 +1,9 @@
 using System;
 using Avalonia.Controls;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.ViewModels;
+using WorkshopManager.Services.Log;
+using WorkshopManager.ViewModels;
 
-namespace SteamWorkshopManager.Views;
+namespace WorkshopManager.Views;
 
 public partial class MainWindow : Window
 {

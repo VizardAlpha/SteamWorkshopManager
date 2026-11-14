@@ -1,9 +1,9 @@
 using System.IO.Pipes;
 using System.Threading.Tasks;
 using StreamJsonRpc;
-using SteamWorkshopManager.Services.Steam.Worker.Contracts;
+using WorkshopManager.Services.Steam.Worker.Contracts;
 
-namespace SteamWorkshopManager.Services.Steam.Worker.Host;
+namespace WorkshopManager.Services.Steam.Worker.Host;
 
 /// <summary>
 /// Entry point for the Steam worker mode.

@@ -1,6 +1,6 @@
 using System;
 
-namespace SteamWorkshopManager.Services.Steam;
+namespace WorkshopManager.Services.Steam;
 
 /// <summary>
 /// A Workshop query could not be answered: Steam refused it, never replied, or

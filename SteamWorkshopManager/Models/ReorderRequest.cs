@@ -1,4 +1,4 @@
-namespace SteamWorkshopManager.Models;
+namespace WorkshopManager.Models;
 
 /// <summary>
 /// Payload of a drag reorder: <paramref name="Source"/> was dropped onto

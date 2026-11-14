@@ -1,4 +1,4 @@
-namespace SteamWorkshopManager.Services.Steam.Worker.Contracts.Dtos;
+namespace WorkshopManager.Services.Steam.Worker.Contracts.Dtos;
 
 /// <summary>
 /// JSON-friendly mirror of <see cref="Models.GameBranch"/>. Raw flags bits are

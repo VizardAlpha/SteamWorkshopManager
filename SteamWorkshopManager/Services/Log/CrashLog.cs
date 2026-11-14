@@ -3,9 +3,9 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using StreamJsonRpc;
-using SteamWorkshopManager.Helpers;
+using WorkshopManager.Helpers;
 
-namespace SteamWorkshopManager.Services.Log;
+namespace WorkshopManager.Services.Log;
 
 /// <summary>
 /// Last-resort crash recorder. Writes straight to disk without touching

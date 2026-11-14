@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for suggesting an improvement to Steam Workshop Manager.
+        Thanks for suggesting an improvement to Workshop Manager.
 
   - type: checkboxes
     id: prerequisites

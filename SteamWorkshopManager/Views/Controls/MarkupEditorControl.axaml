@@ -3,9 +3,9 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:icons="using:Material.Icons.Avalonia"
-             xmlns:controls="using:SteamWorkshopManager.Views.Controls"
+             xmlns:controls="using:WorkshopManager.Views.Controls"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="300"
-             x:Class="SteamWorkshopManager.Views.Controls.MarkupEditorControl">
+             x:Class="WorkshopManager.Views.Controls.MarkupEditorControl">
 
     <StackPanel Spacing="8">
         <!-- Toggle + Toolbar + Preview + Expand -->

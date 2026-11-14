@@ -1,6 +1,6 @@
 using Avalonia.Controls;
 
-namespace SteamWorkshopManager.Views.Shell;
+namespace WorkshopManager.Views.Shell;
 
 public partial class FooterView : UserControl
 {

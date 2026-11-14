@@ -5,18 +5,18 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
-using SteamWorkshopManager.Helpers;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Log;
+using WorkshopManager.Helpers;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Log;
 
-namespace SteamWorkshopManager.Services.Notifications;
+namespace WorkshopManager.Services.Notifications;
 
 public static class UpdateCheckerService
 {
     private static readonly Logger Log = new(nameof(UpdateCheckerService), LogService.Instance);
 
-    public const string RepoUrl = "https://github.com/VizardAlpha/SteamWorkshopManager";
-    private const string ApiBase = "https://api.github.com/repos/VizardAlpha/SteamWorkshopManager";
+    public const string RepoUrl = "https://github.com/VizardAlpha/WorkshopManager";
+    private const string ApiBase = "https://api.github.com/repos/VizardAlpha/WorkshopManager";
     // Drafts aren't returned by the public API, so the list is safe to scan as-is.
     private const string AllReleasesUrl = $"{ApiBase}/releases?per_page=30";
 
@@ -27,16 +27,16 @@ public static class UpdateCheckerService
         Timeout = TimeSpan.FromSeconds(10),
         DefaultRequestHeaders =
         {
-            { "User-Agent", $"SteamWorkshopManager/{AppInfo.Version}" },
+            { "User-Agent", $"WorkshopManager/{AppInfo.Version}" },
             { "Accept", "application/vnd.github+json" }
         }
     };
 
     /// <summary>Release zip name for the running OS, matching the CI matrix.</summary>
     public static string? PlatformPackageName =>
-        OperatingSystem.IsWindows() ? "SteamWorkshopManager-windows.zip"
-        : OperatingSystem.IsMacOS() ? "SteamWorkshopManager-macos.zip"
-        : OperatingSystem.IsLinux() ? "SteamWorkshopManager-linux.zip"
+        OperatingSystem.IsWindows() ? "WorkshopManager-windows.zip"
+        : OperatingSystem.IsMacOS() ? "WorkshopManager-macos.zip"
+        : OperatingSystem.IsLinux() ? "WorkshopManager-linux.zip"
         : null;
 
     /// <summary>

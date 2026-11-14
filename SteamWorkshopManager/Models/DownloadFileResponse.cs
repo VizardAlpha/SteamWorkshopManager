@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace SteamWorkshopManager.Models;
+namespace WorkshopManager.Models;
 
 public class DownloadFileResponse
 {

@@ -5,16 +5,16 @@ using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using SteamWorkshopManager.Core.Sessions;
-using SteamWorkshopManager.Services.Steam;
-using SteamWorkshopManager.Core.Workshop;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.Services.Workshop;
-using SteamWorkshopManager.Services.Notifications;
+using WorkshopManager.Core.Sessions;
+using WorkshopManager.Services.Steam;
+using WorkshopManager.Core.Workshop;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Log;
+using WorkshopManager.Services.Workshop;
+using WorkshopManager.Services.Notifications;
 using Steamworks;
 
-namespace SteamWorkshopManager.ViewModels.Editor;
+namespace WorkshopManager.ViewModels.Editor;
 
 /// <summary>
 /// Required mods and apps. Staged mode (create view) only edits the lists, the

@@ -1,3 +1,3 @@
-namespace SteamWorkshopManager.Services.Steam.Worker.Contracts.Dtos;
+namespace WorkshopManager.Services.Steam.Worker.Contracts.Dtos;
 
 public sealed record ModVersionInfoDto(uint VersionIndex, string BranchMin, string BranchMax);

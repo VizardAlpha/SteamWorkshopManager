@@ -5,14 +5,14 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using SteamWorkshopManager.Core.Sessions;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Cache;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.Services.Session;
-using SteamWorkshopManager.Services.Steam;
+using WorkshopManager.Core.Sessions;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Cache;
+using WorkshopManager.Services.Log;
+using WorkshopManager.Services.Session;
+using WorkshopManager.Services.Steam;
 
-namespace SteamWorkshopManager.Services.Workshop;
+namespace WorkshopManager.Services.Workshop;
 
 [JsonSerializable(typeof(ChangeLogEntry))]
 [JsonSerializable(typeof(List<ChangeLogEntry>))]

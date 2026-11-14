@@ -1,8 +1,8 @@
 using System.Text.Json;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SteamWorkshopManager.Services.Workshop;
+using WorkshopManager.Services.Workshop;
 
-namespace SteamWorkshopManager.Tests;
+namespace WorkshopManager.Tests;
 
 [TestClass]
 public class ScraperParsingTests

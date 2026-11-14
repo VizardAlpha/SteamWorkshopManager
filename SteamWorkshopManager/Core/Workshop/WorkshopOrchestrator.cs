@@ -2,18 +2,18 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using SteamWorkshopManager.Core.Steam;
-using SteamWorkshopManager.Core.Sessions;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Workshop;
-using SteamWorkshopManager.Services.Core;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.Services.Notifications;
-using SteamWorkshopManager.Services.Steam;
-using SteamWorkshopManager.Services.Telemetry;
+using WorkshopManager.Core.Steam;
+using WorkshopManager.Core.Sessions;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Workshop;
+using WorkshopManager.Services.Core;
+using WorkshopManager.Services.Log;
+using WorkshopManager.Services.Notifications;
+using WorkshopManager.Services.Steam;
+using WorkshopManager.Services.Telemetry;
 using Steamworks;
 
-namespace SteamWorkshopManager.Core.Workshop;
+namespace WorkshopManager.Core.Workshop;
 
 /// <summary>Outcome of a publish/update/delete flow surfaced to the VM.</summary>
 public sealed record WorkshopActionResult(

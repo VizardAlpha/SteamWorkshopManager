@@ -5,14 +5,14 @@ using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using SteamWorkshopManager.Helpers;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Cache;
-using SteamWorkshopManager.Services.Platforms.Modio;
-using SteamWorkshopManager.Services.UI;
-using SteamWorkshopManager.ViewModels.Editor;
+using WorkshopManager.Helpers;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Cache;
+using WorkshopManager.Services.Platforms.Modio;
+using WorkshopManager.Services.UI;
+using WorkshopManager.ViewModels.Editor;
 
-namespace SteamWorkshopManager.ViewModels.Modio;
+namespace WorkshopManager.ViewModels.Modio;
 
 /// <summary>Details step of a mod.io mod: what mod.io's own form asks before the mod exists.</summary>
 public partial class ModioDetailsViewModel : ViewModelBase, IDisposable

@@ -1,4 +1,4 @@
-namespace SteamWorkshopManager.Models;
+namespace WorkshopManager.Models;
 
 /// <summary>
 /// Screen corner where transient toast notifications appear. Chosen by the user

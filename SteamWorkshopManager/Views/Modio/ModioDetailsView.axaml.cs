@@ -1,6 +1,6 @@
 using Avalonia.Controls;
 
-namespace SteamWorkshopManager.Views.Modio;
+namespace WorkshopManager.Views.Modio;
 
 public partial class ModioDetailsView : UserControl
 {

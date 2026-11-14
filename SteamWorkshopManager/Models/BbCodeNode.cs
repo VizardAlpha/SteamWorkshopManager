@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace SteamWorkshopManager.Models;
+namespace WorkshopManager.Models;
 
 public abstract record BbCodeNode;
 

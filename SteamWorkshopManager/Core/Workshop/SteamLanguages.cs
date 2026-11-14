@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace SteamWorkshopManager.Core.Workshop;
+namespace WorkshopManager.Core.Workshop;
 
 /// <summary>A Steam API language: <see cref="ApiCode"/> goes to Steamworks, <see cref="NativeName"/> to the UI.</summary>
 public sealed record SteamLanguage(string ApiCode, string NativeName);

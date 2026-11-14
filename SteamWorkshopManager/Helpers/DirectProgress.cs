@@ -1,6 +1,6 @@
 using System;
 
-namespace SteamWorkshopManager.Helpers;
+namespace WorkshopManager.Helpers;
 
 /// <summary>
 /// Reports on the caller's thread, in call order. <see cref="Progress{T}"/> posts each report

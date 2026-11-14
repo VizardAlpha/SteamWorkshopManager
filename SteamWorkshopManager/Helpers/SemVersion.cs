@@ -1,7 +1,7 @@
 using System;
 using System.Text.RegularExpressions;
 
-namespace SteamWorkshopManager.Helpers;
+namespace WorkshopManager.Helpers;
 
 /// <summary>
 /// Minimal SemVer: "v1.8.10", "1.8.10-beta.2", "1.9.0-alpha3". A pre-release sorts

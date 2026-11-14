@@ -1,6 +1,6 @@
 using System;
 
-namespace SteamWorkshopManager.Services.Presence;
+namespace WorkshopManager.Services.Presence;
 
 public interface IDiscordPresenceService
 {

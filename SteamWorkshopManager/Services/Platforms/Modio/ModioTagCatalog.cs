@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace SteamWorkshopManager.Services.Platforms.Modio;
+namespace WorkshopManager.Services.Platforms.Modio;
 
 /// <summary>A game's mod.io tag groups in the shape sessions store tags.</summary>
 public sealed record ModioTagCatalog(Dictionary<string, List<string>> TagsByCategory, List<string> DropdownCategories)

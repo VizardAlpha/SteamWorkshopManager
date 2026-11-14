@@ -1,8 +1,8 @@
 using Avalonia.Controls;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.ViewModels;
+using WorkshopManager.Models;
+using WorkshopManager.ViewModels;
 
-namespace SteamWorkshopManager.Views;
+namespace WorkshopManager.Views;
 
 public partial class ItemListView : UserControl
 {

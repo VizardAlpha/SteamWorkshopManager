@@ -1,6 +1,6 @@
 using System.Collections.ObjectModel;
 
-namespace SteamWorkshopManager.Helpers;
+namespace WorkshopManager.Helpers;
 
 public static class ListReorder
 {

@@ -2,7 +2,7 @@ using System;
 using System.Text.Json.Serialization.Metadata;
 using System.Threading.Tasks;
 
-namespace SteamWorkshopManager.Services.Cache;
+namespace WorkshopManager.Services.Cache;
 
 /// <summary>
 /// On-disk cache shared by every platform. When disabled, reads miss and writes are

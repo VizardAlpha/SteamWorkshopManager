@@ -6,12 +6,12 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using SteamWorkshopManager.Helpers;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Core;
-using SteamWorkshopManager.Services.Log;
+using WorkshopManager.Helpers;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Core;
+using WorkshopManager.Services.Log;
 
-namespace SteamWorkshopManager.Services.Session;
+namespace WorkshopManager.Services.Session;
 
 [JsonSerializable(typeof(WorkshopSession))]
 [JsonSourceGenerationOptions(WriteIndented = true, AllowOutOfOrderMetadataProperties = true)]

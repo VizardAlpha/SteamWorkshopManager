@@ -1,6 +1,6 @@
 using System;
 
-namespace SteamWorkshopManager.Services.Steam.Worker.Contracts.Dtos;
+namespace WorkshopManager.Services.Steam.Worker.Contracts.Dtos;
 
 /// <summary>
 /// Wire format for a log entry crossing the worker → shell RPC channel. The

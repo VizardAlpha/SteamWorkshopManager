@@ -8,12 +8,12 @@ using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Cache;
-using SteamWorkshopManager.Services.Platforms.Modio;
-using SteamWorkshopManager.Services.UI;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Cache;
+using WorkshopManager.Services.Platforms.Modio;
+using WorkshopManager.Services.UI;
 
-namespace SteamWorkshopManager.ViewModels.Modio;
+namespace WorkshopManager.ViewModels.Modio;
 
 /// <summary>One gallery image: already on mod.io (removed by file name) or picked here (uploaded from its path).</summary>
 public partial class ModioGalleryImage : ObservableObject, IDisposable

@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace SteamWorkshopManager.Services.Telemetry;
+namespace WorkshopManager.Services.Telemetry;
 
 public interface ITelemetryService
 {

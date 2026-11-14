@@ -12,25 +12,25 @@ using Avalonia.Input.Platform;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using SteamWorkshopManager.Helpers;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Cache;
-using SteamWorkshopManager.Services.Core;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.Services.Notifications;
-using SteamWorkshopManager.Services.Platforms.Modio;
-using SteamWorkshopManager.Services.Presence;
-using SteamWorkshopManager.Services.Session;
-using SteamWorkshopManager.Services.Steam;
-using SteamWorkshopManager.Services.Telemetry;
+using WorkshopManager.Helpers;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Cache;
+using WorkshopManager.Services.Core;
+using WorkshopManager.Services.Log;
+using WorkshopManager.Services.Notifications;
+using WorkshopManager.Services.Platforms.Modio;
+using WorkshopManager.Services.Presence;
+using WorkshopManager.Services.Session;
+using WorkshopManager.Services.Steam;
+using WorkshopManager.Services.Telemetry;
 
-namespace SteamWorkshopManager.ViewModels;
+namespace WorkshopManager.ViewModels;
 
 public partial class SettingsViewModel : ViewModelBase
 {
     private static readonly Logger Log = LogService.GetLogger<SettingsViewModel>();
 
-    private const string GitHubRepoUrl = "https://github.com/VizardAlpha/SteamWorkshopManager";
+    private const string GitHubRepoUrl = "https://github.com/VizardAlpha/WorkshopManager";
     private const string DiscordUrl = "https://discord.gg/DCnfnMpbhf";
     private const string PrivacyPolicyUrl = "https://swm-stats.com/Privacy";
     private const string StatsSiteUrl = "https://swm-stats.com";

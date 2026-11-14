@@ -4,12 +4,12 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Workshop;
-using SteamWorkshopManager.Services.Log;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Workshop;
+using WorkshopManager.Services.Log;
 using Steamworks;
 
-namespace SteamWorkshopManager.ViewModels.Editor;
+namespace WorkshopManager.ViewModels.Editor;
 
 /// <summary>Game-branch targeting (min/max beta range) shared by the create and edit views.</summary>
 public partial class VersionRangeViewModel(VersioningService versioningService) : ViewModelBase

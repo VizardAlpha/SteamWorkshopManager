@@ -8,18 +8,18 @@ using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using SteamWorkshopManager.Core.Sessions;
-using SteamWorkshopManager.Core.Workshop;
-using SteamWorkshopManager.Helpers;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Core;
-using SteamWorkshopManager.Services.Notifications;
-using SteamWorkshopManager.Services.Steam;
-using SteamWorkshopManager.Services.UI;
-using SteamWorkshopManager.ViewModels.Editor;
+using WorkshopManager.Core.Sessions;
+using WorkshopManager.Core.Workshop;
+using WorkshopManager.Helpers;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Core;
+using WorkshopManager.Services.Notifications;
+using WorkshopManager.Services.Steam;
+using WorkshopManager.Services.UI;
+using WorkshopManager.ViewModels.Editor;
 using Steamworks;
 
-namespace SteamWorkshopManager.ViewModels;
+namespace WorkshopManager.ViewModels;
 
 /// <summary>
 /// Create form. Owns the new item's own fields and drafts; tags, branches,

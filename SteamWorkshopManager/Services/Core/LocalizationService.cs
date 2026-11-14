@@ -5,10 +5,10 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using Avalonia;
 using Avalonia.Controls;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Log;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Log;
 
-namespace SteamWorkshopManager.Services.Core;
+namespace WorkshopManager.Services.Core;
 
 public class LocalizationService : INotifyPropertyChanged
 {

@@ -5,22 +5,22 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Steamworks;
-using SteamWorkshopManager.Core.Sessions;
-using SteamWorkshopManager.Core.Workshop;
-using SteamWorkshopManager.Helpers;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Cache;
-using SteamWorkshopManager.Services.Core;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.Services.Notifications;
-using SteamWorkshopManager.Services.Platforms.Modio;
-using SteamWorkshopManager.Services.Presence;
-using SteamWorkshopManager.Services.Session;
-using SteamWorkshopManager.Services.Steam;
-using SteamWorkshopManager.ViewModels.Shell;
-using ShellTab = SteamWorkshopManager.Models.ShellTab;
+using WorkshopManager.Core.Sessions;
+using WorkshopManager.Core.Workshop;
+using WorkshopManager.Helpers;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Cache;
+using WorkshopManager.Services.Core;
+using WorkshopManager.Services.Log;
+using WorkshopManager.Services.Notifications;
+using WorkshopManager.Services.Platforms.Modio;
+using WorkshopManager.Services.Presence;
+using WorkshopManager.Services.Session;
+using WorkshopManager.Services.Steam;
+using WorkshopManager.ViewModels.Shell;
+using ShellTab = WorkshopManager.Models.ShellTab;
 
-namespace SteamWorkshopManager.ViewModels;
+namespace WorkshopManager.ViewModels;
 
 /// <summary>Shell: navigation between screens, session switching, worker lifecycle feedback.</summary>
 public partial class MainViewModel : ViewModelBase
@@ -65,7 +65,7 @@ public partial class MainViewModel : ViewModelBase
 
     public bool HasActiveSession => _context.Current is not null;
 
-    public string WindowTitle => $"Steam Workshop Manager - {ActiveGameName}";
+    public string WindowTitle => $"Workshop Manager - {ActiveGameName}";
 
     /// <summary>Drives the full-window overlay during the worker swap + item reload.</summary>
     [ObservableProperty]

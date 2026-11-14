@@ -1,6 +1,6 @@
 using System;
 
-namespace SteamWorkshopManager.Services.Steam.Worker.Contracts;
+namespace WorkshopManager.Services.Steam.Worker.Contracts;
 
 /// <summary>
 /// Strongly typed view of the command-line arguments the shell passes when

@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Core.Sessions;
-using SteamWorkshopManager.Services.Session;
+using WorkshopManager.Models;
+using WorkshopManager.Core.Sessions;
+using WorkshopManager.Services.Session;
 
-namespace SteamWorkshopManager.Core.Workshop;
+namespace WorkshopManager.Core.Workshop;
 
 /// <summary>
 /// Tag-selection logic shared between the Create and Edit flows. Persists

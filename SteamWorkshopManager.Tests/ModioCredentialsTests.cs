@@ -2,9 +2,9 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SteamWorkshopManager.Services.Platforms.Modio;
+using WorkshopManager.Services.Platforms.Modio;
 
-namespace SteamWorkshopManager.Tests;
+namespace WorkshopManager.Tests;
 
 [TestClass]
 public class ModioCredentialsTests

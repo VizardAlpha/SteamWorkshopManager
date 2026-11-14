@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using SteamWorkshopManager.Models;
+using WorkshopManager.Models;
 
-namespace SteamWorkshopManager.Services.Steam.Worker.Contracts.Dtos;
+namespace WorkshopManager.Services.Steam.Worker.Contracts.Dtos;
 
 /// <summary>
 /// Payload for <c>ISteamWorker.CreateItemAsync</c>. Groups every create-item

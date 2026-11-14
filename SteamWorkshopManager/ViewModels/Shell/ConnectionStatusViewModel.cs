@@ -1,10 +1,10 @@
 using System;
 using CommunityToolkit.Mvvm.ComponentModel;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Core;
-using SteamWorkshopManager.Services.Steam;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Core;
+using WorkshopManager.Services.Steam;
 
-namespace SteamWorkshopManager.ViewModels.Shell;
+namespace WorkshopManager.ViewModels.Shell;
 
 /// <summary>Connection dot and status line of the footer, for the active session's platform.</summary>
 public partial class ConnectionStatusViewModel : ViewModelBase

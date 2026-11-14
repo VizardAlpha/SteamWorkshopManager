@@ -1,8 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using SteamWorkshopManager.Core.Workshop;
-using SteamWorkshopManager.Models;
+using WorkshopManager.Core.Workshop;
+using WorkshopManager.Models;
 
-namespace SteamWorkshopManager.ViewModels.Editor;
+namespace WorkshopManager.ViewModels.Editor;
 
 /// <summary>One language row: the text being edited and what Steam currently holds.</summary>
 public partial class TranslationEntryViewModel(SteamLanguage language) : ObservableObject

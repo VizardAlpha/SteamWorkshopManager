@@ -1,8 +1,8 @@
 using System;
 using System.IO;
-using SteamWorkshopManager.Services.Log;
+using WorkshopManager.Services.Log;
 
-namespace SteamWorkshopManager.Helpers;
+namespace WorkshopManager.Helpers;
 
 /// <summary>Scratch folders under <see cref="AppPaths.TempRoot"/> are deleted by their owner; a crash leaves them behind.</summary>
 internal static class TempFiles

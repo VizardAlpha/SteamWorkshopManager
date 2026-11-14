@@ -6,10 +6,10 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Platform.Storage;
-using SteamWorkshopManager.Core.Workshop;
-using SteamWorkshopManager.Models;
+using WorkshopManager.Core.Workshop;
+using WorkshopManager.Models;
 
-namespace SteamWorkshopManager.Behaviors;
+namespace WorkshopManager.Behaviors;
 
 /// <summary>
 /// Reusable drag-and-drop drop target. Attach to any Control:

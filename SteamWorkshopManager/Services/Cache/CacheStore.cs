@@ -5,11 +5,11 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using System.Threading.Tasks;
-using SteamWorkshopManager.Helpers;
-using SteamWorkshopManager.Services.Core;
-using SteamWorkshopManager.Services.Log;
+using WorkshopManager.Helpers;
+using WorkshopManager.Services.Core;
+using WorkshopManager.Services.Log;
 
-namespace SteamWorkshopManager.Services.Cache;
+namespace WorkshopManager.Services.Cache;
 
 /// <summary>
 /// One file per entry under <see cref="AppPaths.CacheRoot"/>. JSON entries are wrapped in

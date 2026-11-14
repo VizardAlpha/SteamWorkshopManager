@@ -4,9 +4,9 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using SteamKit2;
-using SteamWorkshopManager.Services.Log;
+using WorkshopManager.Services.Log;
 
-namespace SteamWorkshopManager.Services.Steam;
+namespace WorkshopManager.Services.Steam;
 
 /// <summary>
 /// Fetches public Steam app metadata (icon hashes and similar) via SteamKit2's

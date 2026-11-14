@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace SteamWorkshopManager.Services.Platforms.Modio;
+namespace WorkshopManager.Services.Platforms.Modio;
 
 /// <summary>
 /// A mod.io call failed. Switch on <see cref="ErrorRef"/>, not the message;

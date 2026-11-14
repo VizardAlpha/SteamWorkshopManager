@@ -1,12 +1,12 @@
 using System;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
-using SteamWorkshopManager.Helpers;
+using WorkshopManager.Helpers;
 using CommunityToolkit.Mvvm.Input;
-using SteamWorkshopManager.Services.Steam;
-using SteamWorkshopManager.Services.UI;
+using WorkshopManager.Services.Steam;
+using WorkshopManager.Services.UI;
 
-namespace SteamWorkshopManager.ViewModels.Shell;
+namespace WorkshopManager.ViewModels.Shell;
 
 /// <summary>Upload toast fed by the progress the worker streams back.</summary>
 public partial class UploadProgressViewModel : ViewModelBase

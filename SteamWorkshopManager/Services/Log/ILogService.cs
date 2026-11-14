@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace SteamWorkshopManager.Services.Log;
+namespace WorkshopManager.Services.Log;
 
 /// <summary>
 /// Interface for the logging service.

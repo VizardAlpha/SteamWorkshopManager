@@ -1,6 +1,6 @@
 using System;
 
-namespace SteamWorkshopManager.Models;
+namespace WorkshopManager.Models;
 
 /// <param name="PackageUrl">Zip for this platform, null when the release has none (manual download only).</param>
 /// <param name="ChecksumsUrl">SHA256SUMS.txt asset, required for the in-app install.</param>

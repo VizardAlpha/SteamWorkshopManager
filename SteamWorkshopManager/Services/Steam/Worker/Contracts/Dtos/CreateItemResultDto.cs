@@ -1,4 +1,4 @@
-﻿namespace SteamWorkshopManager.Services.Steam.Worker.Contracts.Dtos;
+﻿namespace WorkshopManager.Services.Steam.Worker.Contracts.Dtos;
 
 /// <summary>
 /// Result of <c>ISteamWorker.CreateItemAsync</c>. <see cref="FileId"/> is 0 when

@@ -1,6 +1,6 @@
 # Third-party notices
 
-SteamWorkshopManager redistributes the components listed below. Each one remains
+Workshop Manager redistributes the components listed below. Each one remains
 under its own licence, reproduced or referenced here as those licences require.
 
 Last reviewed: 2026-11-14.
@@ -76,6 +76,6 @@ These are used by the dashboard at swm-stats.com, not by the desktop application
 
 ## Steam
 
-Steam and the Steam logo are trademarks of Valve Corporation. SteamWorkshopManager
+Steam and the Steam logo are trademarks of Valve Corporation. Workshop Manager
 is an independent community project and is not affiliated with, endorsed by, or
 sponsored by Valve Corporation.

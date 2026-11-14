@@ -1,4 +1,4 @@
-namespace SteamWorkshopManager.Core.Workshop;
+namespace WorkshopManager.Core.Workshop;
 
 /// <summary>
 /// Media formats Steam accepts for Workshop preview images. Single source of

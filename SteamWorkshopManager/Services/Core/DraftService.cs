@@ -4,11 +4,11 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using SteamWorkshopManager.Helpers;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Log;
+using WorkshopManager.Helpers;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Log;
 
-namespace SteamWorkshopManager.Services.Core;
+namespace WorkshopManager.Services.Core;
 
 [JsonSourceGenerationOptions(
     WriteIndented = true,

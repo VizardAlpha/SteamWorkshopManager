@@ -4,10 +4,10 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using Avalonia.Media.Imaging;
-using SteamWorkshopManager.Helpers;
+using WorkshopManager.Helpers;
 using Steamworks;
 
-namespace SteamWorkshopManager.Models;
+namespace WorkshopManager.Models;
 
 public class WorkshopItem : INotifyPropertyChanged
 {

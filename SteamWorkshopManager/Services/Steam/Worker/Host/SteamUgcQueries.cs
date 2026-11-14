@@ -1,13 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using SteamWorkshopManager.Core.Workshop;
-using SteamWorkshopManager.Models;
+using WorkshopManager.Core.Workshop;
+using WorkshopManager.Models;
 using Steamworks;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.Services.Steam.Worker.Contracts.Dtos;
+using WorkshopManager.Services.Log;
+using WorkshopManager.Services.Steam.Worker.Contracts.Dtos;
 
-namespace SteamWorkshopManager.Services.Steam.Worker.Host;
+namespace WorkshopManager.Services.Steam.Worker.Host;
 
 /// <summary>Workshop reads: the user's published items, one item, one item's text in a language.</summary>
 internal sealed class SteamUgcQueries(SteamService steam, uint appId)

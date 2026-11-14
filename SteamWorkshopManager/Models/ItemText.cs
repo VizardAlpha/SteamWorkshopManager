@@ -1,4 +1,4 @@
-namespace SteamWorkshopManager.Models;
+namespace WorkshopManager.Models;
 
 /// <summary>Title and description of a Workshop item in one language.</summary>
 public sealed record ItemText(string Title, string Description);

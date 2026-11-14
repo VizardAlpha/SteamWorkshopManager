@@ -1,35 +1,35 @@
 using System.IO;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SteamWorkshopManager.Helpers;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Core;
-using SteamWorkshopManager.Services.Notifications;
-using SteamWorkshopManager.Services.Steam;
+using WorkshopManager.Helpers;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Core;
+using WorkshopManager.Services.Notifications;
+using WorkshopManager.Services.Steam;
 
-namespace SteamWorkshopManager.Tests;
+namespace WorkshopManager.Tests;
 
 [TestClass]
 public class UpdaterTests
 {
-    private const string Repo = "https://github.com/VizardAlpha/SteamWorkshopManager";
+    private const string Repo = "https://github.com/VizardAlpha/WorkshopManager";
     private const string Hash = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
 
     [TestMethod]
-    [DataRow($"{Hash}  SteamWorkshopManager-windows.zip")]
-    [DataRow($"{Hash} *SteamWorkshopManager-windows.zip")]
-    [DataRow($"{Hash}  ./SteamWorkshopManager-windows.zip")]
+    [DataRow($"{Hash}  WorkshopManager-windows.zip")]
+    [DataRow($"{Hash} *WorkshopManager-windows.zip")]
+    [DataRow($"{Hash}  ./WorkshopManager-windows.zip")]
     public void ParseChecksum_FindsHashInSha256sumFormats(string line)
     {
-        var sums = $"{new string('f', 64)}  SteamWorkshopManager-linux.zip\n{line}\r\n";
+        var sums = $"{new string('f', 64)}  WorkshopManager-linux.zip\n{line}\r\n";
 
-        Assert.AreEqual(Hash, AppUpdater.ParseChecksum(sums, "SteamWorkshopManager-windows.zip"));
+        Assert.AreEqual(Hash, AppUpdater.ParseChecksum(sums, "WorkshopManager-windows.zip"));
     }
 
     [TestMethod]
     public void ParseChecksum_MissingOrMalformed_ReturnsNull()
     {
-        Assert.IsNull(AppUpdater.ParseChecksum($"{Hash}  other.zip", "SteamWorkshopManager-windows.zip"));
-        Assert.IsNull(AppUpdater.ParseChecksum("abc  SteamWorkshopManager-windows.zip", "SteamWorkshopManager-windows.zip"));
+        Assert.IsNull(AppUpdater.ParseChecksum($"{Hash}  other.zip", "WorkshopManager-windows.zip"));
+        Assert.IsNull(AppUpdater.ParseChecksum("abc  WorkshopManager-windows.zip", "WorkshopManager-windows.zip"));
     }
 
     [TestMethod]
@@ -63,8 +63,8 @@ public class UpdaterTests
         Assert.IsTrue(UpdateCheckerService.IsTrustedAssetUrl($"{Repo}/releases/download/v1.8.10/SHA256SUMS.txt"));
 
         Assert.IsFalse(UpdateCheckerService.IsTrustedReleasePageUrl("file:///C:/Windows/System32/calc.exe"));
-        Assert.IsFalse(UpdateCheckerService.IsTrustedReleasePageUrl("https://github.com/evil/SteamWorkshopManager/releases/x"));
-        Assert.IsFalse(UpdateCheckerService.IsTrustedAssetUrl("https://github.com/VizardAlpha/SteamWorkshopManager.evil.com/releases/download/x"));
+        Assert.IsFalse(UpdateCheckerService.IsTrustedReleasePageUrl("https://github.com/evil/WorkshopManager/releases/x"));
+        Assert.IsFalse(UpdateCheckerService.IsTrustedAssetUrl("https://github.com/VizardAlpha/WorkshopManager.evil.com/releases/download/x"));
         Assert.IsFalse(UpdateCheckerService.IsTrustedAssetUrl(null));
     }
 
@@ -289,6 +289,28 @@ public class UpdaterTests
             Assert.AreEqual("old a", File.ReadAllText(Path.Combine(target, "a.dll")));
             Assert.IsFalse(File.Exists(Path.Combine(target, "c.dll")));
             Assert.IsFalse(File.Exists(Path.Combine(target, AppUpdater.ManifestName)));
+        }
+        finally { Directory.Delete(root, recursive: true); }
+    }
+
+    [TestMethod]
+    public void LegacyBinaries_AreRemovedUnlessStillRunningUnderTheOldName()
+    {
+        var (_, target, root) = UpdateFolders();
+        try
+        {
+            var oldExe = Path.Combine(target, "SteamWorkshopManager.exe");
+            var oldDll = Path.Combine(target, "SteamWorkshopManager.dll");
+            var other = Path.Combine(target, "SteamKit2.dll");
+            foreach (var file in new[] { oldExe, oldDll, other }) File.WriteAllText(file, "x");
+
+            LegacyBinaries.Remove(target, oldExe);
+            Assert.IsTrue(File.Exists(oldDll));
+
+            LegacyBinaries.Remove(target, Path.Combine(target, "WorkshopManager.exe"));
+            Assert.IsFalse(File.Exists(oldExe));
+            Assert.IsFalse(File.Exists(oldDll));
+            Assert.IsTrue(File.Exists(other));
         }
         finally { Directory.Delete(root, recursive: true); }
     }

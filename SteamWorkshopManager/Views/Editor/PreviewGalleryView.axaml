@@ -1,12 +1,12 @@
 <!-- Additional previews (videos, models, images) shared by the Steam create and edit views. -->
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:editor="using:SteamWorkshopManager.ViewModels.Editor"
-             xmlns:sections="using:SteamWorkshopManager.Views.Editor"
-             xmlns:models="using:SteamWorkshopManager.Models"
-             xmlns:behaviors="using:SteamWorkshopManager.Behaviors"
+             xmlns:editor="using:WorkshopManager.ViewModels.Editor"
+             xmlns:sections="using:WorkshopManager.Views.Editor"
+             xmlns:models="using:WorkshopManager.Models"
+             xmlns:behaviors="using:WorkshopManager.Behaviors"
              xmlns:icons="using:Material.Icons.Avalonia"
-             x:Class="SteamWorkshopManager.Views.Editor.PreviewGalleryView"
+             x:Class="WorkshopManager.Views.Editor.PreviewGalleryView"
              x:DataType="editor:PreviewGalleryViewModel">
 
     <UserControl.Resources>
@@ -97,7 +97,7 @@
     </UserControl.Resources>
 
     <UserControl.Styles>
-        <StyleInclude Source="avares://SteamWorkshopManager/Themes/EditorStyles.axaml"/>
+        <StyleInclude Source="avares://WorkshopManager/Themes/EditorStyles.axaml"/>
     </UserControl.Styles>
 
     <StackPanel Spacing="14">

@@ -1,9 +1,9 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
-using SteamWorkshopManager.ViewModels;
-using SteamWorkshopManager.Views;
+using WorkshopManager.ViewModels;
+using WorkshopManager.Views;
 
-namespace SteamWorkshopManager;
+namespace WorkshopManager;
 
 public class ViewLocator : IDataTemplate
 {

@@ -1,8 +1,8 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Presence;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Presence;
 
-namespace SteamWorkshopManager.Tests;
+namespace WorkshopManager.Tests;
 
 [TestClass]
 public class DiscordPresenceServiceTests
@@ -104,7 +104,7 @@ public class DiscordPresenceServiceTests
         var presence = Build(State(game: null, appId: 0), DiscordPresenceMode.Game);
 
         Assert.AreEqual("app_logo", presence.Assets.LargeImageKey);
-        Assert.AreEqual("Steam Workshop Manager", presence.Assets.LargeImageText);
+        Assert.AreEqual("Workshop Manager", presence.Assets.LargeImageText);
         Assert.IsTrue(string.IsNullOrEmpty(presence.State));
     }
 
@@ -113,7 +113,7 @@ public class DiscordPresenceServiceTests
     {
         var presence = Build(State(), DiscordPresenceMode.Minimal);
 
-        Assert.AreEqual("Steam Workshop Manager", presence.Assets.LargeImageText);
+        Assert.AreEqual("Workshop Manager", presence.Assets.LargeImageText);
     }
 
     [TestMethod]

@@ -6,9 +6,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
-using SteamWorkshopManager.Helpers;
+using WorkshopManager.Helpers;
 
-namespace SteamWorkshopManager.Services.Log;
+namespace WorkshopManager.Services.Log;
 
 public class LogService : ILogService
 {

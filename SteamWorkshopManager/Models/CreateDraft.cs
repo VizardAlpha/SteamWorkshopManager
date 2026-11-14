@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace SteamWorkshopManager.Models;
+namespace WorkshopManager.Models;
 
 /// <summary>
 /// Persisted state for an in-progress mod creation. Each draft lives on disk

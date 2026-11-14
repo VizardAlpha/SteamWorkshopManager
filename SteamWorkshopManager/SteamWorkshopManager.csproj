@@ -3,6 +3,10 @@
         <OutputType>WinExe</OutputType>
         <ApplicationIcon>Assets/workshop-manager.ico</ApplicationIcon>
         <TargetFramework>net10.0</TargetFramework>
+        <!-- The binaries are named after the app; the project folder keeps the historical name for now. -->
+        <AssemblyName>WorkshopManager</AssemblyName>
+        <RootNamespace>WorkshopManager</RootNamespace>
+        <Product>Workshop Manager</Product>
         <Nullable>enable</Nullable>
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>

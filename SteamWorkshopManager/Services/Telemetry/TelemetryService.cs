@@ -11,13 +11,13 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using SteamWorkshopManager.Helpers;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Core;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.Services.Steam;
+using WorkshopManager.Helpers;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Core;
+using WorkshopManager.Services.Log;
+using WorkshopManager.Services.Steam;
 
-namespace SteamWorkshopManager.Services.Telemetry;
+namespace WorkshopManager.Services.Telemetry;
 
 [JsonSerializable(typeof(TelemetryState))]
 [JsonSerializable(typeof(TelemetryPayload))]
@@ -71,7 +71,7 @@ public class TelemetryService : ITelemetryService, IDisposable
 
     private static readonly string StatePath = AppPaths.TelemetryStateFile;
 
-    private static readonly HttpClient Http = SteamHttpClientFactory.Create(timeout: TimeSpan.FromSeconds(10));
+    private static readonly HttpClient Http = AppHttpClientFactory.Create(timeout: TimeSpan.FromSeconds(10));
 
     private readonly ISettingsService _settingsService;
     private readonly string _endpoint;

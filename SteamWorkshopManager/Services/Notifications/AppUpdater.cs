@@ -8,11 +8,11 @@ using System.Net.Http;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
-using SteamWorkshopManager.Helpers;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Log;
+using WorkshopManager.Helpers;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Log;
 
-namespace SteamWorkshopManager.Services.Notifications;
+namespace WorkshopManager.Services.Notifications;
 
 /// <summary>
 /// In-app update: download the release zip, verify it against the release's
@@ -33,7 +33,7 @@ public static class AppUpdater
     private static readonly HttpClient Http = new()
     {
         Timeout = TimeSpan.FromMinutes(10),
-        DefaultRequestHeaders = { { "User-Agent", $"SteamWorkshopManager/{AppInfo.Version}" } },
+        DefaultRequestHeaders = { { "User-Agent", $"WorkshopManager/{AppInfo.Version}" } },
     };
 
     private static string InstallDir => Path.TrimEndingDirectorySeparator(AppContext.BaseDirectory);

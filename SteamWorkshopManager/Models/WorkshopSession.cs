@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
 using Avalonia.Media.Imaging;
 
-namespace SteamWorkshopManager.Models;
+namespace WorkshopManager.Models;
 
 /// <summary>
 /// Tracks a file/folder path with size and modification date for change detection.

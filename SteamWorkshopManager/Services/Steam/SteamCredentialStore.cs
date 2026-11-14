@@ -3,10 +3,10 @@ using System.IO;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using SteamWorkshopManager.Helpers;
-using SteamWorkshopManager.Services.Log;
+using WorkshopManager.Helpers;
+using WorkshopManager.Services.Log;
 
-namespace SteamWorkshopManager.Services.Steam;
+namespace WorkshopManager.Services.Steam;
 
 public sealed record SteamCredentials(string? RefreshToken, string? AccessToken, string? AccountName, ulong SteamId64)
 {

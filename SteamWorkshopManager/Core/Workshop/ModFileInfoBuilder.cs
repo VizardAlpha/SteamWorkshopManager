@@ -1,9 +1,9 @@
 using System;
 using System.IO;
 using System.Linq;
-using SteamWorkshopManager.Models;
+using WorkshopManager.Models;
 
-namespace SteamWorkshopManager.Core.Workshop;
+namespace WorkshopManager.Core.Workshop;
 
 /// <summary>
 /// Snapshot of a file or folder's content fingerprint, used as the "before"

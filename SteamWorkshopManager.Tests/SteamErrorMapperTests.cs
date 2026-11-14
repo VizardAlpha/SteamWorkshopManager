@@ -1,8 +1,8 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Steamworks;
-using SteamWorkshopManager.Core.Steam;
+using WorkshopManager.Core.Steam;
 
-namespace SteamWorkshopManager.Tests;
+namespace WorkshopManager.Tests;
 
 // No Avalonia Application in tests, so LocalizationService.GetString echoes the key.
 [TestClass]

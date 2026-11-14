@@ -1,13 +1,13 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.Services.Steam;
-using SteamWorkshopManager.Services.Steam.Worker.Client;
-using SteamWorkshopManager.Services.Steam.Worker.Contracts;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Log;
+using WorkshopManager.Services.Steam;
+using WorkshopManager.Services.Steam.Worker.Client;
+using WorkshopManager.Services.Steam.Worker.Contracts;
 
-namespace SteamWorkshopManager.Services.Session;
+namespace WorkshopManager.Services.Session;
 
 /// <summary>
 /// Owns the Steam worker process for the currently active session.

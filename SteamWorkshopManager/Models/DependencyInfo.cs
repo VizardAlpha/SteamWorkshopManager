@@ -1,6 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace SteamWorkshopManager.Models;
+namespace WorkshopManager.Models;
 
 public partial class DependencyInfo : ObservableObject
 {

@@ -1,4 +1,4 @@
-namespace SteamWorkshopManager.Services.Steam;
+namespace WorkshopManager.Services.Steam;
 
 /// <summary>
 /// Single source of truth for the public Steam endpoints the app queries.

@@ -1,15 +1,15 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:modio="using:SteamWorkshopManager.ViewModels.Modio"
-             xmlns:models="using:SteamWorkshopManager.Models"
-             xmlns:behaviors="using:SteamWorkshopManager.Behaviors"
+             xmlns:modio="using:WorkshopManager.ViewModels.Modio"
+             xmlns:models="using:WorkshopManager.Models"
+             xmlns:behaviors="using:WorkshopManager.Behaviors"
              xmlns:icons="using:Material.Icons.Avalonia"
-             xmlns:controls="using:SteamWorkshopManager.Views.Controls"
-             x:Class="SteamWorkshopManager.Views.Modio.ModioDetailsView"
+             xmlns:controls="using:WorkshopManager.Views.Controls"
+             x:Class="WorkshopManager.Views.Modio.ModioDetailsView"
              x:DataType="modio:ModioDetailsViewModel">
 
     <UserControl.Styles>
-        <StyleInclude Source="avares://SteamWorkshopManager/Themes/EditorStyles.axaml"/>
+        <StyleInclude Source="avares://WorkshopManager/Themes/EditorStyles.axaml"/>
     </UserControl.Styles>
 
     <StackPanel Spacing="14" IsEnabled="{Binding !IsLocked}">

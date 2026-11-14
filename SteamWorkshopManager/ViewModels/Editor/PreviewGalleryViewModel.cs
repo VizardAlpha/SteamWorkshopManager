@@ -9,16 +9,17 @@ using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using SteamWorkshopManager.Core.Workshop;
-using SteamWorkshopManager.Helpers;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Cache;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.Services.Steam;
-using SteamWorkshopManager.Services.UI;
+using WorkshopManager.Services.Core;
+using WorkshopManager.Core.Workshop;
+using WorkshopManager.Helpers;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Cache;
+using WorkshopManager.Services.Log;
+using WorkshopManager.Services.Steam;
+using WorkshopManager.Services.UI;
 using Steamworks;
 
-namespace SteamWorkshopManager.ViewModels.Editor;
+namespace WorkshopManager.ViewModels.Editor;
 
 /// <summary>
 /// Additional previews (images, YouTube videos, read-only Sketchfab models) shared by
@@ -27,7 +28,7 @@ namespace SteamWorkshopManager.ViewModels.Editor;
 public partial class PreviewGalleryViewModel(IFileDialogService fileDialogService, ThumbnailCache thumbnails) : ViewModelBase
 {
     private static readonly Logger Log = LogService.GetLogger<PreviewGalleryViewModel>();
-    private static readonly HttpClient Http = SteamHttpClientFactory.Create(timeout: TimeSpan.FromSeconds(30));
+    private static readonly HttpClient Http = AppHttpClientFactory.Create(timeout: TimeSpan.FromSeconds(30));
 
     /// <summary>Carousel sub-lists, shown by Steam as separate sections: reorder is per list.</summary>
     public ObservableCollection<WorkshopPreview> ImagePreviews { get; } = [];

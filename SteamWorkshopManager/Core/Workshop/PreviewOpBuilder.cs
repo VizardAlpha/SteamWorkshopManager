@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Steam;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Steam;
 
-namespace SteamWorkshopManager.Core.Workshop;
+namespace WorkshopManager.Core.Workshop;
 
 /// <summary>
 /// Builds the <see cref="PreviewOp"/> list submitted with a Workshop update.

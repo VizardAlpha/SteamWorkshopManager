@@ -1,9 +1,9 @@
 using System.IO;
 using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SteamWorkshopManager.Helpers;
+using WorkshopManager.Helpers;
 
-namespace SteamWorkshopManager.Tests;
+namespace WorkshopManager.Tests;
 
 [TestClass]
 public class AtomicFileTests

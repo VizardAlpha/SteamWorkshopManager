@@ -2,13 +2,13 @@ using System;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using SteamWorkshopManager.Core.Sessions;
-using SteamWorkshopManager.Helpers;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.Services.Session;
+using WorkshopManager.Core.Sessions;
+using WorkshopManager.Helpers;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Log;
+using WorkshopManager.Services.Session;
 
-namespace SteamWorkshopManager.Services.Core;
+namespace WorkshopManager.Services.Core;
 
 [JsonSerializable(typeof(AppSettings))]
 [JsonSourceGenerationOptions(WriteIndented = true)]

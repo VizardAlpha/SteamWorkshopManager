@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace SteamWorkshopManager.Core.Workshop;
+namespace WorkshopManager.Core.Workshop;
 
 /// <summary>
 /// Parses user-entered Workshop item references and YouTube links into ids.

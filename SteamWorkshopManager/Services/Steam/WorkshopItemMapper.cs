@@ -1,9 +1,9 @@
 using System.Linq;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Steam.Worker.Contracts.Dtos;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Steam.Worker.Contracts.Dtos;
 using Steamworks;
 
-namespace SteamWorkshopManager.Services.Steam;
+namespace WorkshopManager.Services.Steam;
 
 /// <summary>Converts items between the wire/cache DTO and the shell model.</summary>
 internal static class WorkshopItemMapper

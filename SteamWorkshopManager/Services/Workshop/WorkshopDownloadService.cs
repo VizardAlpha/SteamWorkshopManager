@@ -7,13 +7,14 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using SteamWorkshopManager.Helpers;
-using SteamWorkshopManager.Models;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.Services.Session;
-using SteamWorkshopManager.Services.Steam;
+using WorkshopManager.Services.Core;
+using WorkshopManager.Helpers;
+using WorkshopManager.Models;
+using WorkshopManager.Services.Log;
+using WorkshopManager.Services.Session;
+using WorkshopManager.Services.Steam;
 
-namespace SteamWorkshopManager.Services.Workshop;
+namespace WorkshopManager.Services.Workshop;
 
 [JsonSerializable(typeof(DownloadFileResponse))]
 internal partial class DownloadJsonContext : JsonSerializerContext;
@@ -28,7 +29,7 @@ public class WorkshopDownloadService
     public WorkshopDownloadService(SessionHost host, HttpClient? httpClient = null)
     {
         _host = host;
-        _httpClient = httpClient ?? SteamHttpClientFactory.Create();
+        _httpClient = httpClient ?? AppHttpClientFactory.Create();
     }
 
     public async Task<string?> GetDownloadUrlAsync(ulong publishedFileId, long revision, string manifestId)

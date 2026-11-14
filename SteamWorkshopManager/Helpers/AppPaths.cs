@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 
-namespace SteamWorkshopManager.Helpers;
+namespace WorkshopManager.Helpers;
 
 /// <summary>
 /// Single source of truth for every on-disk location the app writes to.

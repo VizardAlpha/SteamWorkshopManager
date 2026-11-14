@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Steamworks;
 
-namespace SteamWorkshopManager.Services.Steam.Worker.Host;
+namespace WorkshopManager.Services.Steam.Worker.Host;
 
 /// <summary>
 /// Turns a Steam CallResult into a task. <see cref="SteamCallbackPump"/> completes it;

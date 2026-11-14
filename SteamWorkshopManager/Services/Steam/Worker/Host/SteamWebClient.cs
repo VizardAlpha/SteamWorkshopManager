@@ -1,10 +1,10 @@
 using System;
 using System.Text;
 using System.Threading.Tasks;
-using SteamWorkshopManager.Services.Log;
+using WorkshopManager.Services.Log;
 using Steamworks;
 
-namespace SteamWorkshopManager.Services.Steam.Worker.Host;
+namespace WorkshopManager.Services.Steam.Worker.Host;
 
 /// <summary>
 /// Wraps SteamHTTP into async methods with a shared cookie container.

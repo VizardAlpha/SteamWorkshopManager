@@ -1,4 +1,4 @@
-# Steam Workshop Manager
+# Workshop Manager
 
 Built with .NET 10 and Avalonia UI, it works on Windows, macOS, and Linux.
 
@@ -32,17 +32,17 @@ Features:
 
 # Releases
 
-Download the latest release for your platform from the [Releases](https://github.com/VizardAlpha/SteamWorkshopManager/releases) page:
-- **Windows**: `SteamWorkshopManager-windows.zip`
-- **macOS**: `SteamWorkshopManager-macos.zip`
-- **Linux**: `SteamWorkshopManager-linux.zip`
+Download the latest release for your platform from the [Releases](https://github.com/VizardAlpha/WorkshopManager/releases) page:
+- **Windows**: `WorkshopManager-windows.zip`
+- **macOS**: `WorkshopManager-macos.zip`
+- **Linux**: `WorkshopManager-linux.zip`
 
 # Build from source
 
 ```bash
 # Clone
-git clone https://github.com/VizardAlpha/SteamWorkshopManager.git
-cd SteamWorkshopManager
+git clone https://github.com/VizardAlpha/WorkshopManager.git
+cd WorkshopManager
 
 # Run
 dotnet run --project SteamWorkshopManager

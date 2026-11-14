@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace SteamWorkshopManager.Services.UI;
+namespace WorkshopManager.Services.UI;
 
 public interface IFileDialogService
 {

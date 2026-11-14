@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
-using SteamWorkshopManager.Core.Sessions;
+using WorkshopManager.Core.Sessions;
 
-namespace SteamWorkshopManager.Services.Platforms;
+namespace WorkshopManager.Services.Platforms;
 
 /// <summary>Picks the <see cref="IModPlatform"/> of the active session.</summary>
 public sealed class ModPlatforms(IEnumerable<IModPlatform> platforms, ISessionContext context)

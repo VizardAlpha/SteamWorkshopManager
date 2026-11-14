@@ -1,17 +1,17 @@
 using Avalonia;
 using Microsoft.Extensions.DependencyInjection;
-using SteamWorkshopManager.Helpers;
-using SteamWorkshopManager.Services;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.Services.Notifications;
-using SteamWorkshopManager.Services.Steam.Worker.Contracts;
-using SteamWorkshopManager.Services.Steam.Worker.Host;
+using WorkshopManager.Helpers;
+using WorkshopManager.Services;
+using WorkshopManager.Services.Log;
+using WorkshopManager.Services.Notifications;
+using WorkshopManager.Services.Steam.Worker.Contracts;
+using WorkshopManager.Services.Steam.Worker.Host;
 using System;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Threading;
 
-namespace SteamWorkshopManager;
+namespace WorkshopManager;
 
 sealed class Program
 {
@@ -45,8 +45,8 @@ sealed class Program
             // Route worker logs to the shell. Debug starts on so init logs
             // get buffered; SetLogSinkAsync overrides this with the user's
             // setting once the shell connects.
-            SteamWorkshopManager.Services.Log.LogService.Instance.EnableRemoteForwarding();
-            SteamWorkshopManager.Services.Log.LogService.Instance.SetDebugMode(true);
+            WorkshopManager.Services.Log.LogService.Instance.EnableRemoteForwarding();
+            WorkshopManager.Services.Log.LogService.Instance.SetDebugMode(true);
             SteamWorkerHost.RunAsync(workerArgs).GetAwaiter().GetResult();
             return;
         }
@@ -56,6 +56,7 @@ sealed class Program
         AppUpdater.CleanupStaleUpdates();
         LogService.Instance.PurgeOldLogs();
         TempFiles.PurgeStale();
+        LegacyBinaries.Remove();
 
         // Dev affordance: `--force-setup-wizard` makes startup treat the session
         // repository as empty so the wizard is shown even when a session exists.

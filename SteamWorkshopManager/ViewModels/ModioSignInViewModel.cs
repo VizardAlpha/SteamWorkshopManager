@@ -4,10 +4,10 @@ using System.Threading.Tasks;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using SteamWorkshopManager.Services.Log;
-using SteamWorkshopManager.Services.Platforms.Modio;
+using WorkshopManager.Services.Log;
+using WorkshopManager.Services.Platforms.Modio;
 
-namespace SteamWorkshopManager.ViewModels;
+namespace WorkshopManager.ViewModels;
 
 /// <summary>Signs in to mod.io with the user's own token. Used by the add-session flows and the mod list.</summary>
 public partial class ModioSignInViewModel : ViewModelBase, IDisposable
