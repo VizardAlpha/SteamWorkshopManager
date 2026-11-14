@@ -99,6 +99,10 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ViewModels.IViewModelFactory, ViewModels.ViewModelFactory>();
         services.AddTransient<ViewModels.MainViewModel>();
 
+        // Create and edit screens, one builder per platform.
+        services.AddSingleton<ViewModels.IEditorScreens, ViewModels.SteamEditorScreens>();
+        services.AddSingleton<ViewModels.IEditorScreens, ViewModels.ModioEditorScreens>();
+
         // Editor sections shared by the create and edit views: one instance per view.
         services.AddTransient<ViewModels.Editor.TagEditorViewModel>();
         services.AddTransient<ViewModels.Editor.VersionRangeViewModel>();

@@ -75,9 +75,10 @@ body:
     attributes:
       label: Logs
       description: >-
-        Paste any relevant log output. Logs live under
-        %LocalAppData%\WorkshopManager\ on Windows
-        (Settings → Debug → Open log folder).
+        Paste any relevant log output. Settings → Debug → Open log folder
+        takes you there. Logs live under %LocalAppData%\WorkshopManager\ on
+        Windows, ~/.local/share/WorkshopManager/ on Linux and
+        ~/Library/Application Support/WorkshopManager/ on macOS.
       render: shell
     validations:
       required: false

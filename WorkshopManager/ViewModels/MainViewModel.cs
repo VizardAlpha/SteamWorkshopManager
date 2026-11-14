@@ -1,10 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Steamworks;
 using WorkshopManager.Core.Sessions;
 using WorkshopManager.Core.Workshop;
 using WorkshopManager.Helpers;
@@ -23,7 +23,7 @@ using ShellTab = WorkshopManager.Models.ShellTab;
 namespace WorkshopManager.ViewModels;
 
 /// <summary>Shell: navigation between screens, session switching, worker lifecycle feedback.</summary>
-public partial class MainViewModel : ViewModelBase
+public partial class MainViewModel : ViewModelBase, IEditorShell
 {
     private static readonly Logger Log = LogService.GetLogger<MainViewModel>();
 
@@ -37,6 +37,7 @@ public partial class MainViewModel : ViewModelBase
     private readonly IViewModelFactory _viewModels;
     private readonly ICacheStore _cache;
     private readonly ModioAccount _modioAccount;
+    private readonly IEditorScreens[] _screens;
 
     [ObservableProperty]
     private ViewModelBase? _currentView;
@@ -104,9 +105,11 @@ public partial class MainViewModel : ViewModelBase
         ISessionContext context,
         IViewModelFactory viewModels,
         ICacheStore cache,
-        ModioAccount modioAccount)
+        ModioAccount modioAccount,
+        IEnumerable<IEditorScreens> screens)
     {
         _modioAccount = modioAccount;
+        _screens = screens.ToArray();
         Updates = updates;
         _context = context;
         _viewModels = viewModels;
@@ -272,82 +275,56 @@ public partial class MainViewModel : ViewModelBase
 
     private void OpenEditor(WorkshopItem item)
     {
-        if (_context.Platform == WorkshopPlatform.ModIo)
-        {
-            OpenModioEditor(item);
-            return;
-        }
-
         DetachCurrentView();
-        var editor = _viewModels.Create<ItemEditorViewModel>(item, Upload.Reporter);
-        editor.ItemUpdated += OnItemUpdated;
-        editor.ItemDeleted += OnItemDeleted;
-        _unhookCurrentView = () =>
-        {
-            editor.ItemUpdated -= OnItemUpdated;
-            editor.ItemDeleted -= OnItemDeleted;
-        };
-        CurrentView = editor;
-        ActiveTab = ShellTab.MyMods;
-    }
-
-    private void OpenModioEditor(WorkshopItem item)
-    {
-        DetachCurrentView();
-        var editor = _viewModels.Create<ModioItemEditorViewModel>(item, Upload.Reporter);
-        editor.ItemUpdated += OnModioItemUpdated;
-        editor.ItemDeleted += OnItemDeleted;
-        _unhookCurrentView = () =>
-        {
-            editor.ItemUpdated -= OnModioItemUpdated;
-            editor.ItemDeleted -= OnItemDeleted;
-        };
-        CurrentView = editor;
+        Mount(Screens.CreateEditor(item, this));
         ActiveTab = ShellTab.MyMods;
     }
 
     private void OpenCreator()
     {
         DetachCurrentView();
-        if (_context.Platform == WorkshopPlatform.ModIo)
-        {
-            var modioCreator = _viewModels.Create<CreateModioItemViewModel>(Upload.Reporter);
-            modioCreator.ItemCreated += OnModioItemCreated;
-            _unhookCurrentView = () => modioCreator.ItemCreated -= OnModioItemCreated;
-            CurrentView = modioCreator;
-            return;
-        }
-
-        var creator = _viewModels.Create<CreateItemViewModel>(Upload.Reporter);
-        creator.ItemCreated += OnItemCreated;
-        _unhookCurrentView = () => creator.ItemCreated -= OnItemCreated;
-        CurrentView = creator;
+        Mount(Screens.CreateCreator(this));
     }
 
-    private void OnModioItemUpdated(ulong id) => FireAndForget(async () =>
+    /// <summary>Screens of the active session's platform; Steam's when no session is active.</summary>
+    private IEditorScreens Screens =>
+        _screens.FirstOrDefault(s => s.Platform == _context.Platform)
+        ?? _screens.First(s => s.Platform == WorkshopPlatform.Steam);
+
+    private void Mount(EditorScreen screen)
     {
-        if (await ItemListViewModel.RefreshItemAsync(id) is null)
-            await ItemListViewModel.LoadItemsAsync();
-    }, "Post-save refresh");
+        _unhookCurrentView = screen.Unhook;
+        CurrentView = screen.View;
+    }
+
+    IProgress<UploadProgress> IEditorShell.UploadProgress => Upload.Reporter;
 
     /// <summary>Post-save: keep the editor mounted, refresh only the matching list row.</summary>
-    private async Task<WorkshopItem?> OnItemUpdated(PublishedFileId_t fileId)
+    async Task<WorkshopItem?> IEditorShell.OnItemSavedAsync(ulong id)
     {
-        var fresh = await ItemListViewModel.RefreshItemAsync(fileId.m_PublishedFileId);
-        // Single-item fetch failed: best-effort full reload so the next list visit isn't stale.
-        if (fresh is null) FireAndForget(() => ItemListViewModel.LoadItemsAsync(), "Post-save reload");
-        return fresh;
+        try
+        {
+            var fresh = await ItemListViewModel.RefreshItemAsync(id);
+            // Single-item fetch failed: best-effort full reload so the next list visit isn't stale.
+            if (fresh is null) FireAndForget(() => ItemListViewModel.LoadItemsAsync(), "Post-save reload");
+            return fresh;
+        }
+        catch (Exception ex)
+        {
+            Log.Error("Post-save refresh failed", ex);
+            return null;
+        }
     }
+
+    void IEditorShell.OnItemDeleted() => OnItemDeleted();
+
+    void IEditorShell.OnItemCreated(ulong id) => OpenCreatedItem(id);
 
     private void OnItemDeleted() => FireAndForget(async () =>
     {
         Show(ItemListViewModel, ShellTab.MyMods);
         await ItemListViewModel.LoadItemsAsync();
     }, "Post-delete reload");
-
-    private void OnItemCreated(PublishedFileId_t fileId) => OpenCreatedItem(fileId.m_PublishedFileId);
-
-    private void OnModioItemCreated(ulong id) => OpenCreatedItem(id);
 
     /// <summary>
     /// Post-publish: fetches only the new item and opens it in the editor, or falls back to a
