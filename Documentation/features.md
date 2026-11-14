@@ -73,7 +73,8 @@ Other editor actions: copy the item id, delete the item (confirmed by typing `DE
 | --- | --- |
 | General | Language |
 | Customization | Toast position, Discord Rich Presence detail level (Minimal, Game, Detailed) |
-| Privacy | Telemetry toggle, your pseudonymous instance id (for data requests), Discord on/off, Steam account and sign-out |
+| Privacy | Telemetry toggle, your pseudonymous instance id (for data requests), Discord on/off, mod.io account and sign-out |
+| Steam | Steam account and sign-out; when to release Steam (stay connected, after each action, or after a delay you choose) |
 | Debug | Debug logging, open the log and data folders, log folder size, clear logs |
 | Updates | Current version, check for updates, beta channel toggle, install the update, notes of the latest version |
 | About | Version, GitHub, official Discord, changelog, third-party notices |

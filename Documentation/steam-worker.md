@@ -25,6 +25,12 @@ Steamworks keeps process-wide state bound to one AppId. To switch games without 
 3. Switching session stops the current worker (5 s shutdown timeout, then the process is killed) and starts a new one.
 4. Start, stop and crash recovery are serialized by one lock, so they never overlap.
 
+## Standby
+
+While the worker runs, Steam shows the user as playing the game. Settings > Steam can release it: after each action (a 3 s grace, so the calls made by one screen stay together) or after a chosen idle delay. `SessionHost` then stops the worker on purpose and keeps the session active with its last init result; the footer reads "Steam on standby".
+
+The shell never holds the worker proxy directly: `SessionHost.Worker` is a `StandbyWorker`, which starts the worker again before a call when needed and counts calls in flight, so an upload is never cut. If Steam is gone when waking up, the call fails, the footer shows the failure and the next call tries again. Standby is off by default.
+
 ## Crash recovery
 
 An unexpected exit triggers a respawn with a 1 s, 2 s then 5 s backoff, at most 3 times per minute. A recovery is skipped when the session changed or was stopped during the backoff. When it gives up, the UI shows a disconnected state and the user can switch sessions to retry.

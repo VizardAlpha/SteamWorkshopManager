@@ -8,4 +8,6 @@ public enum SteamConnectionState
     Connecting,
     Connected,
     Disconnected,
+    /// <summary>Session active, worker stopped until the next Steam call.</summary>
+    Standby,
 }

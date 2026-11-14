@@ -108,9 +108,11 @@ public sealed class SteamWorkerClient : IAsyncDisposable
         // Fire-and-forget: the worker holds this call open for the lifetime
         // of the session so its IProgress<LogEntryDto> sink stays valid.
         // Direct: Progress<T> would post every worker log line to the UI context.
+        // It ends with a lost connection when the worker stops: observed here, it is not an error.
         _ = Proxy.SetLogSinkAsync(
-            new DirectProgress<LogEntryDto>(IngestWorkerLog),
-            LogService.Instance.IsDebugEnabled);
+                new DirectProgress<LogEntryDto>(IngestWorkerLog),
+                LogService.Instance.IsDebugEnabled)
+            .ContinueWith(t => _ = t.Exception, TaskContinuationOptions.OnlyOnFaulted);
     }
 
     private static void IngestWorkerLog(LogEntryDto dto) =>

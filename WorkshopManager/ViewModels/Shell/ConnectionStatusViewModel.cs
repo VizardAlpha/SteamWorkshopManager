@@ -15,6 +15,7 @@ public partial class ConnectionStatusViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(IsConnecting))]
     [NotifyPropertyChangedFor(nameof(IsConnected))]
     [NotifyPropertyChangedFor(nameof(IsDisconnected))]
+    [NotifyPropertyChangedFor(nameof(IsStandby))]
     private SteamConnectionState _state = SteamConnectionState.Connecting;
 
     [ObservableProperty]
@@ -23,6 +24,7 @@ public partial class ConnectionStatusViewModel : ViewModelBase
     public bool IsConnecting => State == SteamConnectionState.Connecting;
     public bool IsConnected => State == SteamConnectionState.Connected;
     public bool IsDisconnected => State == SteamConnectionState.Disconnected;
+    public bool IsStandby => State == SteamConnectionState.Standby;
 
     public event Action<SteamConnectionState>? StateChanged;
 
@@ -33,6 +35,9 @@ public partial class ConnectionStatusViewModel : ViewModelBase
     }
 
     public void SetConnecting() => Set(SteamConnectionState.Connecting, "ConnectingToSteam");
+
+    /// <summary>Steam was released on purpose; the next action reconnects.</summary>
+    public void SetStandby() => Set(SteamConnectionState.Standby, "SteamStandby");
 
     public void SetDisconnected(string statusKey = "SteamNotAvailable") => Set(SteamConnectionState.Disconnected, statusKey);
 

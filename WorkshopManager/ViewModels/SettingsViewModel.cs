@@ -58,6 +58,7 @@ public partial class SettingsViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(IsGeneralActive))]
     [NotifyPropertyChangedFor(nameof(IsCustomizationActive))]
     [NotifyPropertyChangedFor(nameof(IsPrivacyActive))]
+    [NotifyPropertyChangedFor(nameof(IsSteamActive))]
     [NotifyPropertyChangedFor(nameof(IsStorageActive))]
     [NotifyPropertyChangedFor(nameof(IsDebugActive))]
     [NotifyPropertyChangedFor(nameof(IsUpdatesActive))]
@@ -67,6 +68,7 @@ public partial class SettingsViewModel : ViewModelBase
     public bool IsGeneralActive => ActiveCategory == SettingsCategory.General;
     public bool IsCustomizationActive => ActiveCategory == SettingsCategory.Customization;
     public bool IsPrivacyActive => ActiveCategory == SettingsCategory.Privacy;
+    public bool IsSteamActive => ActiveCategory == SettingsCategory.Steam;
     public bool IsStorageActive => ActiveCategory == SettingsCategory.Storage;
     public bool IsDebugActive => ActiveCategory == SettingsCategory.Debug;
     public bool IsUpdatesActive => ActiveCategory == SettingsCategory.Updates;
@@ -245,6 +247,8 @@ public partial class SettingsViewModel : ViewModelBase
         _modioAccount.Changed += OnModioAccountChanged;
 
         _isCacheEnabled = _settingsService.Settings.CacheEnabled;
+        _steamIdleModeIndex = (int)_settingsService.Settings.SteamIdleMode;
+        _steamIdleSeconds = _settingsService.Settings.SteamIdleSeconds;
         _isCacheUnlimited = _settingsService.Settings.CacheLimitMb <= 0;
         _cacheLimitMb = _isCacheUnlimited ? DefaultCacheLimitMb : _settingsService.Settings.CacheLimitMb;
         RefreshCacheInfo();
@@ -317,6 +321,37 @@ public partial class SettingsViewModel : ViewModelBase
         ShellLauncher.Current.OpenFolder(CacheFolderPath);
     }
 
+    /// <summary>Index into <see cref="SteamIdleMode"/>, bound to the combo box.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsSteamIdleDelayUsed))]
+    private int _steamIdleModeIndex;
+
+    [ObservableProperty]
+    private decimal? _steamIdleSeconds;
+
+    public bool IsSteamIdleDelayUsed => SteamIdleModeIndex == (int)SteamIdleMode.AfterInactivity;
+
+    partial void OnSteamIdleModeIndexChanged(int value) => ApplySteamIdleSettings();
+
+    partial void OnSteamIdleSecondsChanged(decimal? value) => ApplySteamIdleSettings();
+
+    private void ApplySteamIdleSettings()
+    {
+        var mode = Enum.IsDefined(typeof(SteamIdleMode), SteamIdleModeIndex)
+            ? (SteamIdleMode)SteamIdleModeIndex
+            : SteamIdleMode.StayConnected;
+        var seconds = (int)Math.Clamp(SteamIdleSeconds ?? WorkerIdlePolicy.DefaultSeconds,
+            WorkerIdlePolicy.MinSeconds, WorkerIdlePolicy.MaxSeconds);
+
+        var settings = _settingsService.Settings;
+        if (settings.SteamIdleMode == mode && settings.SteamIdleSeconds == seconds) return;
+
+        settings.SteamIdleMode = mode;
+        settings.SteamIdleSeconds = seconds;
+        _settingsService.Save();
+        _sessionHost.RefreshIdlePolicy();
+    }
+
     private void OnAuthStateChanged() =>
         Dispatcher.UIThread.Post(() => SteamAccountName = SteamAuthService.AccountName);
 
@@ -374,6 +409,9 @@ public partial class SettingsViewModel : ViewModelBase
 
     [RelayCommand]
     private void NavigateToPrivacy() => ActiveCategory = SettingsCategory.Privacy;
+
+    [RelayCommand]
+    private void NavigateToSteam() => ActiveCategory = SettingsCategory.Steam;
 
     [RelayCommand]
     private void NavigateToStorage() => ActiveCategory = SettingsCategory.Storage;

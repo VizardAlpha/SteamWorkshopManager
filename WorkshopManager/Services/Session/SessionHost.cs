@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkshopManager.Models;
+using WorkshopManager.Services.Core;
 using WorkshopManager.Services.Log;
 using WorkshopManager.Services.Steam;
 using WorkshopManager.Services.Steam.Worker.Client;
@@ -28,6 +29,10 @@ namespace WorkshopManager.Services.Session;
 /// a backoff (1s → 2s → 5s) capped at <see cref="MaxRestartsPerWindow"/>
 /// attempts over <see cref="RestartWindow"/> - beyond that we stop trying so a
 /// broken Steam install doesn't burn CPU in a restart loop.
+///
+/// Standby (see <see cref="SteamIdleMode"/>): once idle, the worker is stopped on purpose so Steam
+/// no longer shows the user as playing. The session stays active, its last init result is kept,
+/// and the next call made through <see cref="Worker"/> starts the worker again.
 /// </summary>
 public sealed class SessionHost : IAsyncDisposable
 {
@@ -45,7 +50,32 @@ public sealed class SessionHost : IAsyncDisposable
 
     private SteamWorkerClient? _client;
 
-    public ISteamWorker? Worker => _client?.Proxy;
+    private readonly ISettingsService _settings;
+    private readonly StandbyWorker _gate;
+
+    // AppId of the session whose worker was stopped on purpose; 0 when not on standby.
+    private uint _standbyAppId;
+    private int _callsInFlight;
+    private readonly object _idleLock = new();
+    private CancellationTokenSource? _idleTimer;
+
+    public SessionHost(ISettingsService settings)
+    {
+        _settings = settings;
+        _gate = new StandbyWorker(this);
+    }
+
+    /// <summary>Null when no Steam session is active. Calling it wakes a worker on standby.</summary>
+    public ISteamWorker? Worker => _client is not null || _standbyAppId != 0 ? _gate : null;
+
+    /// <summary>The worker process itself, null on standby: for calls that must not wake it.</summary>
+    internal ISteamWorker? RunningWorker => _client?.Proxy;
+
+    /// <summary>The session is active but its worker is stopped until the next Steam call.</summary>
+    public bool IsStandby => _client is null && _standbyAppId != 0;
+
+    /// <summary>Raised from any thread when the worker goes on standby or wakes up.</summary>
+    public event Action? ConnectionChanged;
 
     public uint ActiveAppId { get; private set; }
 
@@ -90,6 +120,139 @@ public sealed class SessionHost : IAsyncDisposable
         await _lifecycle.WaitAsync();
         try { await StopCoreAsync(); }
         finally { _lifecycle.Release(); }
+    }
+
+    /// <summary>
+    /// Hands out the running worker for one call, starting it first when it is on standby.
+    /// Every call must be matched by <see cref="Release"/>.
+    /// </summary>
+    internal async Task<ISteamWorker> AcquireAsync()
+    {
+        Interlocked.Increment(ref _callsInFlight);
+        CancelIdleTimer();
+        try
+        {
+            var woke = false;
+            ISteamWorker worker;
+            // Under the lifecycle lock: a standby stop can't slip in between the check and the call.
+            await _lifecycle.WaitAsync();
+            try
+            {
+                if (_client is null)
+                {
+                    var appId = _standbyAppId;
+                    if (appId == 0) throw new InvalidOperationException("No Steam session is active.");
+
+                    Log.Info($"Waking the Steam worker for AppId {appId}");
+                    var result = await StartCoreAsync(appId);
+                    woke = true;
+                    if (result != SteamInitResult.Success)
+                    {
+                        // Steam went away meanwhile: back to standby so the next call tries again.
+                        await StopCoreAsync();
+                        _standbyAppId = appId;
+                        ActiveAppId = appId;
+                        LastInitResult = result;
+                    }
+                }
+
+                worker = _client?.Proxy ?? throw new InvalidOperationException("Steam is not available.");
+            }
+            finally
+            {
+                _lifecycle.Release();
+                if (woke) RaiseConnectionChanged();
+            }
+
+            return worker;
+        }
+        catch
+        {
+            Release();
+            throw;
+        }
+    }
+
+    internal void Release()
+    {
+        if (Interlocked.Decrement(ref _callsInFlight) == 0) ScheduleStandby();
+    }
+
+    /// <summary>Applies a change of the idle setting to a worker that is already idle.</summary>
+    public void RefreshIdlePolicy()
+    {
+        CancelIdleTimer();
+        if (Volatile.Read(ref _callsInFlight) == 0) ScheduleStandby();
+    }
+
+    private void ScheduleStandby()
+    {
+        var settings = _settings.Settings;
+        if (WorkerIdlePolicy.DelayFor(settings.SteamIdleMode, settings.SteamIdleSeconds) is not { } delay) return;
+
+        var timer = new CancellationTokenSource();
+        lock (_idleLock)
+        {
+            _idleTimer?.Cancel();
+            _idleTimer = timer;
+        }
+
+        _ = EnterStandbyAfterAsync(delay, timer.Token);
+    }
+
+    private void CancelIdleTimer()
+    {
+        lock (_idleLock)
+        {
+            _idleTimer?.Cancel();
+            _idleTimer = null;
+        }
+    }
+
+    private async Task EnterStandbyAfterAsync(TimeSpan delay, CancellationToken ct)
+    {
+        try
+        {
+            await Task.Delay(delay, ct);
+
+            await _lifecycle.WaitAsync(ct);
+            try
+            {
+                // Only a healthy, idle worker goes on standby: a failed init must stay visible.
+                if (ct.IsCancellationRequested || _client is null || Volatile.Read(ref _callsInFlight) > 0
+                    || LastInitResult != SteamInitResult.Success)
+                    return;
+
+                var appId = ActiveAppId;
+                var userId = CurrentUserId;
+                await StopCoreAsync();
+                _standbyAppId = appId;
+                ActiveAppId = appId;
+                LastInitResult = SteamInitResult.Success;
+                CurrentUserId = userId;
+                Log.Info($"Steam worker for AppId {appId} is on standby");
+            }
+            finally
+            {
+                _lifecycle.Release();
+            }
+
+            RaiseConnectionChanged();
+        }
+        catch (OperationCanceledException)
+        {
+            // A new call or a session change came first.
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"Could not put the Steam worker on standby: {ex.Message}");
+        }
+    }
+
+    private void RaiseConnectionChanged()
+    {
+        try { ConnectionChanged?.Invoke(); }
+        catch (Exception ex) { Log.Debug($"ConnectionChanged handler threw: {ex.Message}"); }
     }
 
     private async Task<SteamInitResult> StartCoreAsync(uint appId)
@@ -144,10 +307,19 @@ public sealed class SessionHost : IAsyncDisposable
 
     private async Task StopCoreAsync()
     {
+        CancelIdleTimer();
+        var wasStandby = _standbyAppId != 0;
+        _standbyAppId = 0;
+
         if (_client is null)
         {
             // Also cancels a crash respawn waiting in its backoff.
             ActiveAppId = 0;
+            if (wasStandby)
+            {
+                LastInitResult = SteamInitResult.SteamNotRunning;
+                CurrentUserId = 0;
+            }
             return;
         }
 

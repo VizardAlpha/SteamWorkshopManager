@@ -64,6 +64,9 @@
         <Style Selector="Border.hero-dot.disconnected">
             <Setter Property="Background" Value="{DynamicResource FeedbackDangerBrush}"/>
         </Style>
+        <Style Selector="Border.hero-dot.standby">
+            <Setter Property="Background" Value="{DynamicResource TextMutedBrush}"/>
+        </Style>
     </UserControl.Styles>
 
     <ScrollViewer>
@@ -123,7 +126,8 @@
                             <Border Classes="hero-dot"
                                     Classes.connecting="{Binding IsConnecting}"
                                     Classes.connected="{Binding IsConnected}"
-                                    Classes.disconnected="{Binding IsDisconnected}"/>
+                                    Classes.disconnected="{Binding IsDisconnected}"
+                                    Classes.standby="{Binding IsStandby}"/>
                             <TextBlock Text="{Binding ConnectionText}"
                                        FontSize="13"
                                        Foreground="#8CFFFFFF"

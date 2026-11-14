@@ -86,12 +86,14 @@ public partial class HomeViewModel : ViewModelBase
         (_, WorkshopPlatform.ModIo) => Loc["ModioSignedOutShort"],
         (SteamConnectionState.Connected, _) => Loc["ConnectedToSteam"],
         (SteamConnectionState.Connecting, _) => Loc["ConnectingToSteam"],
+        (SteamConnectionState.Standby, _) => Loc["SteamStandby"],
         _ => Loc["SteamNotAvailableShort"],
     };
 
     public bool IsConnecting => ConnectionState == SteamConnectionState.Connecting;
     public bool IsConnected => ConnectionState == SteamConnectionState.Connected;
     public bool IsDisconnected => ConnectionState == SteamConnectionState.Disconnected;
+    public bool IsStandby => ConnectionState == SteamConnectionState.Standby;
 
     partial void OnConnectionStateChanged(SteamConnectionState value)
     {
@@ -99,6 +101,7 @@ public partial class HomeViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsConnecting));
         OnPropertyChanged(nameof(IsConnected));
         OnPropertyChanged(nameof(IsDisconnected));
+        OnPropertyChanged(nameof(IsStandby));
     }
 
     private void OnItemsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)

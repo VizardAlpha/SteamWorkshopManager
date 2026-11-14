@@ -6,7 +6,7 @@
 - Reading item history and downloading past versions needs a Steam web session, obtained by scanning a QR code with the Steam mobile app (SteamKit2).
 - The resulting tokens are stored by `SteamCredentialStore` in `%LocalAppData%/WorkshopManager/credentials.bin`: encrypted with DPAPI for the current user on Windows, owner-only file permissions (0600) on macOS and Linux. They are never written to `settings.json` and never logged.
 - Tokens from older versions, which lived in plaintext in `settings.json`, are migrated on startup and removed from it.
-- Settings > Privacy shows the signed-in account and a sign-out button. To revoke the session on Steam's side as well, remove "WorkshopManager" (or "SteamWorkshopManager" for a sign-in made before 1.9.0) from Steam's Authorized Devices page.
+- Settings > Steam shows the signed-in account and a sign-out button. To revoke the session on Steam's side as well, remove "WorkshopManager" (or "SteamWorkshopManager" for a sign-in made before 1.9.0) from Steam's Authorized Devices page.
 
 ## mod.io access
 

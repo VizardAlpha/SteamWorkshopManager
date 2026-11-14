@@ -683,6 +683,15 @@
     <x:String x:Key="CacheEnableDescription">Conserve les données récupérées depuis Steam et mod.io (visuels des jeux, catalogues de tags, miniatures...) d'un lancement à l'autre pour ne pas les retélécharger. Les fichiers des mods ne sont jamais stockés dans le cache.</x:String>
     <x:String x:Key="CacheLimit">Limite de taille</x:String>
     <x:String x:Key="CacheLimitDescription">Quand la limite est atteinte, rien n'est supprimé : le cache arrête de grossir jusqu'à ce que vous augmentiez la limite, le désactiviez ou le vidiez.</x:String>
+    <x:String x:Key="SettingsSteam">Steam</x:String>
+    <x:String x:Key="SteamStandby">Steam en veille</x:String>
+    <x:String x:Key="SteamIdleTitle">Libérer Steam quand l'app est inactive</x:String>
+    <x:String x:Key="SteamIdleDescription">Tant que l'app est connectée, Steam vous affiche en jeu. En veille, la connexion est fermée et se rouvre d'elle-même à votre prochaine action.</x:String>
+    <x:String x:Key="SteamIdleStayConnected">Rester connecté</x:String>
+    <x:String x:Key="SteamIdleAfterAction">Après chaque action</x:String>
+    <x:String x:Key="SteamIdleAfterInactivity">Après un délai d'inactivité</x:String>
+    <x:String x:Key="SteamIdleDelay">Délai d'inactivité</x:String>
+    <x:String x:Key="SecondsUnit">secondes</x:String>
     <x:String x:Key="MegabytesUnit">Mo</x:String>
     <x:String x:Key="CacheUnlimited">Illimité</x:String>
     <x:String x:Key="CacheUsage">Taille du cache</x:String>

@@ -683,6 +683,15 @@
     <x:String x:Key="CacheEnableDescription">Keeps data fetched from Steam and mod.io (game artwork, tag catalogs, thumbnails...) between launches so it doesn't have to be downloaded again. Mod files are never stored in the cache.</x:String>
     <x:String x:Key="CacheLimit">Size limit</x:String>
     <x:String x:Key="CacheLimitDescription">When the limit is reached nothing is deleted: the cache stops growing until you raise the limit, turn it off or clear it.</x:String>
+    <x:String x:Key="SettingsSteam">Steam</x:String>
+    <x:String x:Key="SteamStandby">Steam on standby</x:String>
+    <x:String x:Key="SteamIdleTitle">Release Steam when idle</x:String>
+    <x:String x:Key="SteamIdleDescription">While the app is connected, Steam shows you as playing the game. On standby the connection is closed, and it reopens by itself at your next action.</x:String>
+    <x:String x:Key="SteamIdleStayConnected">Stay connected</x:String>
+    <x:String x:Key="SteamIdleAfterAction">After each action</x:String>
+    <x:String x:Key="SteamIdleAfterInactivity">After a period of inactivity</x:String>
+    <x:String x:Key="SteamIdleDelay">Inactivity delay</x:String>
+    <x:String x:Key="SecondsUnit">seconds</x:String>
     <x:String x:Key="MegabytesUnit">MB</x:String>
     <x:String x:Key="CacheUnlimited">Unlimited</x:String>
     <x:String x:Key="CacheUsage">Cache size</x:String>

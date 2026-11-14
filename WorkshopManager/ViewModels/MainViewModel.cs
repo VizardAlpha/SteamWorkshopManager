@@ -143,6 +143,7 @@ public partial class MainViewModel : ViewModelBase, IEditorShell
 
         _sessionHost.WorkerRecovered += OnWorkerRecovered;
         _sessionHost.WorkerUnrecoverable += OnWorkerUnrecoverable;
+        _sessionHost.ConnectionChanged += OnWorkerConnectionChanged;
 
         CurrentView = HomeViewModel;
         ActiveTab = ShellTab.Home;
@@ -222,6 +223,16 @@ public partial class MainViewModel : ViewModelBase, IEditorShell
 
     private void OnModioTokenExpired() =>
         Dispatcher.UIThread.Post(() => _notificationService.ShowError(Loc["ModioSessionExpired"]));
+
+    // The worker went on standby or woke up for a call.
+    private void OnWorkerConnectionChanged() => Dispatcher.UIThread.Post(() =>
+    {
+        if (_context.Platform == WorkshopPlatform.ModIo) return;
+
+        var result = _sessionHost.LastInitResult;
+        if (_sessionHost.IsStandby && result == SteamInitResult.Success) Connection.SetStandby();
+        else Connection.Apply(result);
+    });
 
     // SessionHost raises both from the threadpool after Process.Exited.
     private void OnWorkerRecovered() => Dispatcher.UIThread.Post(() =>

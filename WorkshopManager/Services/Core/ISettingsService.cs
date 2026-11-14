@@ -77,6 +77,12 @@ public class AppSettings
     /// </summary>
     public DiscordPresenceMode DiscordPresenceMode { get; set; } = DiscordPresenceMode.Off;
 
+    /// <summary>When the Steam worker is stopped so Steam no longer shows the user as playing.</summary>
+    public SteamIdleMode SteamIdleMode { get; set; } = SteamIdleMode.StayConnected;
+
+    /// <summary>Idle time before standby, for <see cref="SteamIdleMode.AfterInactivity"/>.</summary>
+    public int SteamIdleSeconds { get; set; } = 60;
+
     /// <summary>Keeps fetched platform data on disk between runs (see <c>CacheStore</c>).</summary>
     public bool CacheEnabled { get; set; } = true;
 

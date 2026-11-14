@@ -24,6 +24,9 @@
         <Style Selector="Border.status-dot.disconnected">
             <Setter Property="Background" Value="{DynamicResource FeedbackDangerBrush}"/>
         </Style>
+        <Style Selector="Border.status-dot.standby">
+            <Setter Property="Background" Value="{DynamicResource TextMutedBrush}"/>
+        </Style>
     </UserControl.Styles>
 
     <Border Background="{DynamicResource SurfaceElevatedBrush}"
@@ -37,7 +40,8 @@
                 <Border Classes="status-dot"
                         Classes.connecting="{Binding Connection.IsConnecting}"
                         Classes.connected="{Binding Connection.IsConnected}"
-                        Classes.disconnected="{Binding Connection.IsDisconnected}"/>
+                        Classes.disconnected="{Binding Connection.IsDisconnected}"
+                        Classes.standby="{Binding Connection.IsStandby}"/>
                 <TextBlock Text="{Binding Connection.StatusMessage}"
                            FontSize="12"
                            Foreground="{DynamicResource TextMutedBrush}"

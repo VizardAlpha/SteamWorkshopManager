@@ -9,6 +9,7 @@ public enum SettingsCategory
     General,
     Customization,
     Privacy,
+    Steam,
     Storage,
     Debug,
     Updates,

@@ -154,6 +154,15 @@
                 </Button>
 
                 <Button Classes="nav-item"
+                        Classes.active="{Binding IsSteamActive}"
+                        Command="{Binding NavigateToSteamCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                        <icons:MaterialIcon Kind="Steam" Width="16" Height="16"/>
+                        <TextBlock Text="{DynamicResource SettingsSteam}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+
+                <Button Classes="nav-item"
                         Classes.active="{Binding IsStorageActive}"
                         Command="{Binding NavigateToStorageCommand}">
                     <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
@@ -529,6 +538,67 @@
                         </StackPanel>
                     </Border>
 
+                    <!-- mod.io account (the user's own token) -->
+                    <Border Classes="section">
+                        <Grid Classes="row" ColumnDefinitions="*,Auto">
+                            <StackPanel Grid.Column="0" Spacing="6">
+                                <TextBlock Classes="row-label" Text="{DynamicResource ModioAccountTitle}"/>
+                                <TextBlock Classes="row-desc" Text="{DynamicResource ModioAccountDescription}"/>
+                                <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsModioSignedIn}">
+                                    <icons:MaterialIcon Kind="AccountCircleOutline" Width="14" Height="14"
+                                                        Foreground="{DynamicResource FeedbackSuccessBrush}"
+                                                        VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding ModioUsername}"
+                                               FontSize="12"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <TextBlock Text="{DynamicResource SteamNotSignedIn}"
+                                           IsVisible="{Binding !IsModioSignedIn}"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextMutedBrush}"/>
+                                <Button Classes="link" Padding="0"
+                                        Background="Transparent" BorderThickness="0"
+                                        HorizontalAlignment="Left"
+                                        Command="{Binding OpenModioAccessCommand}">
+                                    <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                        <TextBlock Text="{DynamicResource ModioManageAccess}"
+                                                   FontSize="12"
+                                                   Foreground="{DynamicResource AccentPrimaryBrush}"/>
+                                        <icons:MaterialIcon Kind="OpenInNew" Width="11" Height="11"
+                                                            Foreground="{DynamicResource AccentPrimaryBrush}"
+                                                            VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                            <Button Grid.Column="1"
+                                    Command="{Binding SignOutOfModioCommand}"
+                                    IsVisible="{Binding IsModioSignedIn}"
+                                    Background="{DynamicResource SurfaceElevatedBrush}"
+                                    BorderBrush="{DynamicResource BorderStrongBrush}"
+                                    BorderThickness="1"
+                                    Foreground="{DynamicResource TextPrimaryBrush}"
+                                    CornerRadius="6"
+                                    Padding="12,8"
+                                    FontSize="13"
+                                    VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <icons:MaterialIcon Kind="Logout" Width="14" Height="14"/>
+                                    <TextBlock Text="{DynamicResource ModioSignOut}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+
+                <!-- ── STEAM ── -->
+                <StackPanel Spacing="12" IsVisible="{Binding IsSteamActive}">
+                    <TextBlock Text="{DynamicResource SettingsSteam}"
+                               FontSize="20"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimaryBrush}"/>
+
                     <!-- Steam web session (QR login used for changelog history and downloads) -->
                     <Border Classes="section">
                         <Grid Classes="row" ColumnDefinitions="*,Auto">
@@ -582,57 +652,45 @@
                         </Grid>
                     </Border>
 
-                    <!-- mod.io account (the user's own token) -->
+                    <!-- Standby: when the worker lets go of Steam -->
                     <Border Classes="section">
-                        <Grid Classes="row" ColumnDefinitions="*,Auto">
-                            <StackPanel Grid.Column="0" Spacing="6">
-                                <TextBlock Classes="row-label" Text="{DynamicResource ModioAccountTitle}"/>
-                                <TextBlock Classes="row-desc" Text="{DynamicResource ModioAccountDescription}"/>
-                                <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsModioSignedIn}">
-                                    <icons:MaterialIcon Kind="AccountCircleOutline" Width="14" Height="14"
-                                                        Foreground="{DynamicResource FeedbackSuccessBrush}"
-                                                        VerticalAlignment="Center"/>
-                                    <TextBlock Text="{Binding ModioUsername}"
-                                               FontSize="12"
-                                               FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                        <StackPanel Spacing="0">
+                            <Grid Classes="row" ColumnDefinitions="*,Auto">
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock Classes="row-label" Text="{DynamicResource SteamIdleTitle}"/>
+                                    <TextBlock Classes="row-desc" Text="{DynamicResource SteamIdleDescription}"/>
+                                </StackPanel>
+                                <ComboBox Grid.Column="1"
+                                          SelectedIndex="{Binding SteamIdleModeIndex}"
+                                          MinWidth="220"
+                                          VerticalAlignment="Center">
+                                    <ComboBoxItem Content="{DynamicResource SteamIdleStayConnected}"/>
+                                    <ComboBoxItem Content="{DynamicResource SteamIdleAfterAction}"/>
+                                    <ComboBoxItem Content="{DynamicResource SteamIdleAfterInactivity}"/>
+                                </ComboBox>
+                            </Grid>
+
+                            <Border Height="1"
+                                    Background="{DynamicResource BorderSubtleBrush}"
+                                    Margin="16,0"
+                                    IsVisible="{Binding IsSteamIdleDelayUsed}"/>
+
+                            <Grid Classes="row" ColumnDefinitions="*,Auto" IsVisible="{Binding IsSteamIdleDelayUsed}">
+                                <TextBlock Grid.Column="0" Classes="row-label"
+                                           Text="{DynamicResource SteamIdleDelay}"
+                                           VerticalAlignment="Center"/>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                    <NumericUpDown Value="{Binding SteamIdleSeconds}"
+                                                   Minimum="5" Maximum="3600" Increment="5"
+                                                   FormatString="0"
+                                                   ParsingNumberStyle="Integer"
+                                                   Width="150"/>
+                                    <TextBlock Text="{DynamicResource SecondsUnit}"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
                                                VerticalAlignment="Center"/>
                                 </StackPanel>
-                                <TextBlock Text="{DynamicResource SteamNotSignedIn}"
-                                           IsVisible="{Binding !IsModioSignedIn}"
-                                           FontSize="12"
-                                           Foreground="{DynamicResource TextMutedBrush}"/>
-                                <Button Classes="link" Padding="0"
-                                        Background="Transparent" BorderThickness="0"
-                                        HorizontalAlignment="Left"
-                                        Command="{Binding OpenModioAccessCommand}">
-                                    <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                                        <TextBlock Text="{DynamicResource ModioManageAccess}"
-                                                   FontSize="12"
-                                                   Foreground="{DynamicResource AccentPrimaryBrush}"/>
-                                        <icons:MaterialIcon Kind="OpenInNew" Width="11" Height="11"
-                                                            Foreground="{DynamicResource AccentPrimaryBrush}"
-                                                            VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Button>
-                            </StackPanel>
-                            <Button Grid.Column="1"
-                                    Command="{Binding SignOutOfModioCommand}"
-                                    IsVisible="{Binding IsModioSignedIn}"
-                                    Background="{DynamicResource SurfaceElevatedBrush}"
-                                    BorderBrush="{DynamicResource BorderStrongBrush}"
-                                    BorderThickness="1"
-                                    Foreground="{DynamicResource TextPrimaryBrush}"
-                                    CornerRadius="6"
-                                    Padding="12,8"
-                                    FontSize="13"
-                                    VerticalAlignment="Center">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <icons:MaterialIcon Kind="Logout" Width="14" Height="14"/>
-                                    <TextBlock Text="{DynamicResource ModioSignOut}" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Button>
-                        </Grid>
+                            </Grid>
+                        </StackPanel>
                     </Border>
                 </StackPanel>
 
@@ -718,10 +776,10 @@
                                 </StackPanel>
                                 <Button Grid.Column="1"
                                         Command="{Binding ClearCacheCommand}"
-                                        Background="{DynamicResource SurfaceElevatedBrush}"
-                                        BorderBrush="{DynamicResource BorderStrongBrush}"
+                                        Background="Transparent"
+                                        BorderBrush="{DynamicResource FeedbackDangerBrush}"
                                         BorderThickness="1"
-                                        Foreground="{DynamicResource TextPrimaryBrush}"
+                                        Foreground="{DynamicResource FeedbackDangerTextBrush}"
                                         CornerRadius="6"
                                         Padding="12,8"
                                         FontSize="13"
@@ -903,10 +961,10 @@
                                 </StackPanel>
                                 <Button Grid.Column="1"
                                         Command="{Binding ClearLogsCommand}"
-                                        Background="{DynamicResource SurfaceElevatedBrush}"
-                                        BorderBrush="{DynamicResource BorderStrongBrush}"
+                                        Background="Transparent"
+                                        BorderBrush="{DynamicResource FeedbackDangerBrush}"
                                         BorderThickness="1"
-                                        Foreground="{DynamicResource TextPrimaryBrush}"
+                                        Foreground="{DynamicResource FeedbackDangerTextBrush}"
                                         CornerRadius="6"
                                         Padding="12,8"
                                         FontSize="13"
