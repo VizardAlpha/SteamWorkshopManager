@@ -134,7 +134,8 @@ public partial class MainViewModel : ViewModelBase, IEditorShell
         SessionList = _viewModels.Create<SessionListViewModel>();
         SessionDeletion = _viewModels.Create<SessionDeletionViewModel>(SessionList, (Func<WorkshopSession, Task>)LeaveSessionAsync);
 
-        ItemListViewModel = _viewModels.Create<ItemListViewModel>(_notificationService);
+        ItemListViewModel = _viewModels.Create<ItemListViewModel>(
+            _notificationService, _viewModels.Create<BulkUpdateViewModel>(Upload));
         ItemListViewModel.ItemSelected += OpenEditor;
         ItemListViewModel.ItemsReconciled += OnItemsReconciled;
 

@@ -83,6 +83,12 @@ public partial class ItemListViewModel : ViewModelBase
     public bool IsBulkDeleteConfirmed =>
         string.Equals(BulkDeleteTypedConfirmation, DangerousActions.ConfirmationPassphrase, StringComparison.Ordinal);
 
+    /// <summary>Dialog and background run of "Update selected" (Steam sessions).</summary>
+    public BulkUpdateViewModel BulkUpdate { get; }
+
+    /// <summary>Sending content again from a remembered folder only exists for Steam.</summary>
+    public bool CanBulkUpdate => _context.Platform != WorkshopPlatform.ModIo;
+
     public ObservableCollection<WorkshopItem> Items { get; } = [];
 
     public ObservableCollection<WorkshopItem> FilteredItems { get; } = [];
@@ -108,6 +114,7 @@ public partial class ItemListViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(ShowModioSignIn));
         OnPropertyChanged(nameof(HasSteamVisibilities));
+        OnPropertyChanged(nameof(CanBulkUpdate));
         OnPlatformTextsChanged();
     }
 
@@ -127,8 +134,12 @@ public partial class ItemListViewModel : ViewModelBase
         ThumbnailCache thumbnails,
         PublishedItemsCache itemsCache,
         ModioSignInViewModel modioSignIn,
+        BulkUpdateViewModel bulkUpdate,
         INotificationService? notifications = null)
     {
+        BulkUpdate = bulkUpdate;
+        BulkUpdate.Started += ExitSelectionMode;
+        BulkUpdate.Finished += () => _ = LoadItemsAsync();
         ModioSignIn = modioSignIn;
         ModioSignIn.SignedInChanged += () => OnPropertyChanged(nameof(ShowModioSignIn));
         LocalizationService.Instance.LanguageChanged += OnPlatformTextsChanged;
@@ -495,6 +506,15 @@ public partial class ItemListViewModel : ViewModelBase
 
         ExitSelectionMode();
         await LoadItemsAsync();
+    }
+
+    // ─── Bulk update ──────────────────────────────────────────────────────────
+
+    [RelayCommand]
+    private async Task RequestBulkUpdateAsync()
+    {
+        if (!HasSelection || IsBulkProcessing || !CanBulkUpdate) return;
+        await BulkUpdate.OpenAsync(Items.Where(i => i.IsSelected).ToList());
     }
 
     // ─── Bulk delete ──────────────────────────────────────────────────────────

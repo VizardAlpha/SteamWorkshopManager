@@ -182,7 +182,8 @@ public sealed class WorkerSteamService(SessionHost host) : ISteamService
         try
         {
             var result = await host.Worker.UpdateItemAsync(request, bridge);
-            return new UpdateItemOutcome(result.Success, result.NeedsLegalAgreement);
+            return new UpdateItemOutcome(result.Success, result.NeedsLegalAgreement,
+                result.ErrorCode == 0 ? null : (EResult)result.ErrorCode);
         }
         catch (Exception ex)
         {

@@ -1,6 +1,7 @@
 using System;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
+using WorkshopManager.Core.Workshop;
 using WorkshopManager.Helpers;
 using CommunityToolkit.Mvvm.Input;
 using WorkshopManager.Services.Steam;
@@ -23,7 +24,7 @@ public partial class UploadProgressViewModel : ViewModelBase
     [ObservableProperty]
     private string _progressText = string.Empty;
 
-    /// <summary>The running upload can be stopped (mod.io only, see <see cref="UploadCancellation"/>).</summary>
+    /// <summary>The running upload can be stopped (mod.io uploads, bulk updates; see <see cref="UploadCancellation"/>).</summary>
     [ObservableProperty]
     private bool _canCancel;
 
@@ -49,6 +50,20 @@ public partial class UploadProgressViewModel : ViewModelBase
     public void Abort() => IsInProgress = false;
 
     partial void OnIsInProgressChanged(bool value) => InProgressChanged?.Invoke(value);
+
+    /// <summary>A bulk update owns the toast until <see cref="EndBatch"/>: one mod finishing must not close it.</summary>
+    public void ApplyBatch(BulkUpdateProgress p)
+    {
+        IsInProgress = true;
+        StatusMessage = p.RetryIn is { } wait
+            ? string.Format(Loc["BulkUpdateWaiting"], $"{(int)wait.TotalMinutes}:{wait.Seconds:00}")
+            : string.Format(Loc["BulkUpdateStatus"], p.Index, p.Total, p.Title);
+        Progress = p.BytesTotal > 0 ? p.BytesDone * 100.0 / p.BytesTotal : (p.Index - 1) * 100.0 / p.Total;
+        var left = string.Format(Loc["BulkUpdateLeft"], Formatters.Bytes(Math.Max(0, p.BytesTotal - p.BytesDone)));
+        ProgressText = $"{Formatters.Bytes(p.BytesDone)} / {Formatters.Bytes(p.BytesTotal)} ({Progress:F0}%) · {left}";
+    }
+
+    public void EndBatch() => IsInProgress = false;
 
     private void Apply(UploadProgress p)
     {

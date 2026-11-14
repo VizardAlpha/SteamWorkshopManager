@@ -112,6 +112,7 @@ public static class SteamErrorMapper
             EResult.k_EResultRestrictedDevice => "SteamRestrictedDevice",
             EResult.k_EResultRegionLocked => "SteamRegionLocked",
             EResult.k_EResultRateLimitExceeded => "SteamRateLimitExceeded",
+            EResult.k_EResultTooManyPending => "SteamTooManyPending",
             EResult.k_EResultItemDeleted => "SteamItemDeleted",
             EResult.k_EResultNotModified => "SteamNotModified",
             EResult.k_EResultAccountLimitExceeded => "SteamAccountLimitExceeded",

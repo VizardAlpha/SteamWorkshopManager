@@ -263,7 +263,7 @@ internal sealed class SteamUgcPublisher(SteamService steam, uint appId)
 
         Log.Error($"Failed to update item: {SteamErrorMapper.GetTechnicalDescription(result.m_eResult)}");
         Log.Error($"User message: {SteamErrorMapper.GetErrorMessage(result.m_eResult)}");
-        return false;
+        return new UpdateItemOutcome(false, Result: result.m_eResult);
         }
         finally
         {

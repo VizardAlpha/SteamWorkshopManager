@@ -9,4 +9,4 @@
 public record CreateItemResultDto(ulong FileId, int ErrorCode, bool NeedsLegalAgreement = false);
 
 /// <summary>Result of <c>ISteamWorker.UpdateItemAsync</c>.</summary>
-public record UpdateItemResultDto(bool Success, bool NeedsLegalAgreement);
+public record UpdateItemResultDto(bool Success, bool NeedsLegalAgreement, int ErrorCode = 0);

@@ -140,7 +140,7 @@ internal sealed class SteamWorkerImpl : ISteamWorker
             request.BranchMin,
             request.BranchMax,
             request.PreviewOps?.Select(FromDto).ToList());
-        return new UpdateItemResultDto(outcome.Success, outcome.NeedsLegalAgreement);
+        return new UpdateItemResultDto(outcome.Success, outcome.NeedsLegalAgreement, (int)(outcome.Result ?? 0));
     }
 
     public async Task<ItemTextDto?> GetItemTextAsync(ulong publishedFileId, string language, bool fullDescription)

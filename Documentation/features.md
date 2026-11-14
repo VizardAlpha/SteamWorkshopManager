@@ -28,7 +28,17 @@
 ## My mods
 
 - Grid of your published items with thumbnails and search by title. The grid is virtualized: only visible cards are created and fetch their thumbnail, so large accounts stay fast.
-- Selection mode for bulk actions: change visibility, or delete (confirmed by typing `DELETE`).
+- Selection mode for bulk actions: change visibility, update, or delete (confirmed by typing `DELETE`).
+
+### Update selected (Steam)
+
+Sends the selected mods again, each from the content folder used at its last upload in the app.
+
+- Before starting, a dialog shows how many mods will be sent and their total size. Mods whose folder has the same size and dates as at the last upload are skipped, and so are mods without a usable content folder (they are listed).
+- Change notes: one text for every mod, or a `.txt` / `.md` file. In a file, a line `# Mod title` (or `# id`) starts the notes of one mod; mods without a section get the typed text, or the text before the first heading. Markdown in a `.md` file is converted to the BBCode Steam renders. The file must be text, under 1 MB, and each note under 8000 characters; headings that match no mod are reported.
+- The mods are sent one by one in the background. The upload toast shows the current mod, its rank, the bytes sent and left for the whole batch, and a Cancel button that stops before the next mod (a Steam upload in flight cannot be interrupted).
+- Steam documents no rate limit for updates, so the pace adapts: 2 s between mods. When Steam asks to slow down, the whole queue freezes on the current mod and retries it after 1, 3, 5 then every 10 minutes, for up to 2 hours; a brief Steam outage is retried after 15 s, 30 s and 1 min. A mod that is finally given up on is reported with Steam's reason and the queue moves on to the next one: it never assumes the others would fail too. A reason such as "preview image over 1 MB, or Steam Cloud full" is not retried, since waiting cannot fix it.
+- Running it again later resumes where it stopped: mods already sent are seen as unchanged and skipped.
 
 ## Item editor
 

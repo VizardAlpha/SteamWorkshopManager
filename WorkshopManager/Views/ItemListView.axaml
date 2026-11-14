@@ -293,6 +293,15 @@
                         </Button.Flyout>
                     </Button>
                     <Button Classes="action"
+                            Command="{Binding RequestBulkUpdateCommand}"
+                            IsEnabled="{Binding HasSelection}"
+                            IsVisible="{Binding CanBulkUpdate}">
+                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                            <icons:MaterialIcon Kind="CloudUploadOutline" Width="14" Height="14"/>
+                            <TextBlock Text="{DynamicResource UpdateSelected}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="action"
                             Command="{Binding RequestBulkDeleteCommand}"
                             IsEnabled="{Binding HasSelection}"
                             Foreground="{DynamicResource FeedbackDangerTextBrush}"
@@ -502,6 +511,109 @@
             </ScrollViewer>
 
         </Grid>
+
+        <!-- Bulk update: what will be sent, and the change notes -->
+        <Border Grid.RowSpan="2"
+                IsVisible="{Binding BulkUpdate.IsOpen}"
+                Background="#CC000000">
+            <Border Background="{DynamicResource SurfaceOverlayBrush}"
+                    Padding="28" CornerRadius="12"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Width="560">
+                <StackPanel Spacing="18" DataContext="{Binding BulkUpdate}">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="{Binding Title}"
+                                   FontSize="20" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Text="{DynamicResource BulkUpdateIntro}"
+                                   TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextMutedBrush}"
+                                   FontSize="13"/>
+                    </StackPanel>
+
+                    <ProgressBar IsIndeterminate="True" Height="3"
+                                 IsVisible="{Binding IsPreparing}"
+                                 Background="{DynamicResource SurfaceElevatedBrush}"
+                                 Foreground="{DynamicResource AccentPrimaryBrush}"/>
+
+                    <StackPanel Spacing="6" IsVisible="{Binding !IsPreparing}">
+                        <TextBlock Text="{Binding ReadyText}"
+                                   TextWrapping="Wrap"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   FontSize="13"/>
+                        <TextBlock Text="{Binding UnchangedText}"
+                                   IsVisible="{Binding UnchangedText, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                   TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   FontSize="12"/>
+                        <TextBlock Text="{Binding NoFolderText}"
+                                   IsVisible="{Binding NoFolderText, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                   TextWrapping="Wrap"
+                                   Foreground="{DynamicResource FeedbackDangerTextBrush}"
+                                   FontSize="12"/>
+                    </StackPanel>
+
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="{DynamicResource BulkUpdateChangelogLabel}"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   FontSize="13"/>
+                        <TextBox Text="{Binding ChangelogText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 PlaceholderText="{DynamicResource ChangelogPlaceholder}"
+                                 AcceptsReturn="True"
+                                 TextWrapping="Wrap"
+                                 Height="90"/>
+                    </StackPanel>
+
+                    <StackPanel Spacing="6">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button Classes="action" Command="{Binding PickChangelogFileCommand}">
+                                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                    <icons:MaterialIcon Kind="FileDocumentOutline" Width="14" Height="14"/>
+                                    <TextBlock Text="{DynamicResource BulkUpdateChangelogFile}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                            <TextBlock Text="{Binding ChangelogFileName}"
+                                       IsVisible="{Binding HasChangelogFile}"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                       FontSize="12"
+                                       MaxWidth="220"
+                                       TextTrimming="CharacterEllipsis"
+                                       VerticalAlignment="Center"/>
+                            <Button Classes="action"
+                                    Command="{Binding RemoveChangelogFileCommand}"
+                                    IsVisible="{Binding HasChangelogFile}"
+                                    Content="{DynamicResource Remove}"/>
+                        </StackPanel>
+                        <TextBlock Text="{DynamicResource BulkUpdateChangelogFileHint}"
+                                   TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextDisabledBrush}"
+                                   FontSize="11"/>
+                        <TextBlock Text="{Binding ChangelogFileStatus}"
+                                   IsVisible="{Binding ChangelogFileStatus, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                   TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   FontSize="12"/>
+                        <TextBlock Text="{Binding ChangelogError}"
+                                   IsVisible="{Binding ChangelogError, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                   TextWrapping="Wrap"
+                                   Foreground="{DynamicResource FeedbackDangerTextBrush}"
+                                   FontSize="12"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Right">
+                        <Button Command="{Binding CancelCommand}"
+                                Classes="action"
+                                Content="{DynamicResource Cancel}"/>
+                        <Button Command="{Binding StartCommand}"
+                                Classes="action"
+                                Background="{DynamicResource AccentPrimaryGradientBrush}"
+                                Foreground="White"
+                                Content="{DynamicResource BulkUpdateStart}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Border>
 
         <!-- Bulk delete confirmation overlay - same type-DELETE gate as the
              single-mod path so the destructive action stays explicit. -->

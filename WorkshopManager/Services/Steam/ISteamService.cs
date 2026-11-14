@@ -52,7 +52,7 @@ public record CreateItemOutcome(PublishedFileId_t? FileId, EResult? Result = nul
 /// Result of an update. <see cref="NeedsLegalAgreement"/>: Steam took the upload but keeps the item
 /// hidden until the account accepts the Workshop legal agreement.
 /// </summary>
-public record UpdateItemOutcome(bool Success, bool NeedsLegalAgreement = false)
+public record UpdateItemOutcome(bool Success, bool NeedsLegalAgreement = false, EResult? Result = null)
 {
     public static implicit operator UpdateItemOutcome(bool success) => new(success);
 }
