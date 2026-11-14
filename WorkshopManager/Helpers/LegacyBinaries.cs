@@ -5,7 +5,7 @@ using WorkshopManager.Services.Log;
 namespace WorkshopManager.Helpers;
 
 /// <summary>
-/// The binaries were named SteamWorkshopManager before 1.9.0. Unzipping a newer release over
+    /// The binaries were named SteamWorkshopManager before 1.10.0. Unzipping a newer release over
 /// an old install leaves them behind, and the old shortcut would keep starting the old version.
 /// </summary>
 public static class LegacyBinaries

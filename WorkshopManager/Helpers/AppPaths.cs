@@ -18,7 +18,7 @@ public static class AppPaths
 {
     public const string AppName = "WorkshopManager";
 
-    /// <summary>Folder name before 1.9.0; such folders are renamed on first access.</summary>
+    /// <summary>Folder name before 1.10.0; such folders are renamed on first access.</summary>
     public const string LegacyAppName = "SteamWorkshopManager";
 
     public static string Root { get; } = ResolveAppFolder(

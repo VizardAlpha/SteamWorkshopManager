@@ -24,7 +24,7 @@
 
 The update button falls back to opening the release page when the release has no checksums, the install folder is not writable, or the app runs through `dotnet`. In-app updates work from 1.8.10 onward.
 
-The app was renamed from Steam Workshop Manager to Workshop Manager in 1.9.0, with the repository, the binaries and the release zips. Versions before 1.9.0 only trust assets of the old repository URL, so their update button opens the release page and that one update is installed by hand. On startup the app removes leftover `SteamWorkshopManager.*` binaries from its folder (`Helpers/LegacyBinaries`). The data folders are renamed too: on first start, `SteamWorkshopManager` under `%AppData%`, `%LocalAppData%` and the cache location is moved to `WorkshopManager` (`AppPaths.ResolveAppFolder`); if the move fails the app keeps using the old folder. Stored credentials are re-encrypted with the new key on first read.
+The app was renamed from Steam Workshop Manager to Workshop Manager in 1.10.0, with the repository, the binaries and the release zips. Versions before 1.10.0 (1.9.0-beta.1 included) only trust assets of the old repository URL, so their update button opens the release page and that one update is installed by hand. On startup the app removes leftover `SteamWorkshopManager.*` binaries from its folder (`Helpers/LegacyBinaries`). The data folders are renamed too: on first start, `SteamWorkshopManager` under `%AppData%`, `%LocalAppData%` and the cache location is moved to `WorkshopManager` (`AppPaths.ResolveAppFolder`); if the move fails the app keeps using the old folder. Stored credentials are re-encrypted with the new key on first read.
 
 ## Release notes in the app
 
