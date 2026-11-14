@@ -23,9 +23,6 @@ namespace SteamWorkshopManager.Services.Steam.Worker.Contracts;
 [GenerateShape(IncludeMethods = MethodShapeFlags.PublicInstance)]
 public partial interface ISteamWorker
 {
-    /// <summary>Liveness probe.</summary>
-    Task<string> PingAsync();
-
     /// <summary>Attaches the shell-side log sink and aligns the worker's
     /// debug-mode flag with the user's setting. Pass <c>null</c> to detach.</summary>
     Task SetLogSinkAsync(IProgress<LogEntryDto>? sink, bool debugEnabled);
@@ -66,7 +63,7 @@ public partial interface ISteamWorker
     /// Updates an existing Workshop item. Progress notifications are streamed
     /// over the RPC channel via <see cref="IProgress{T}"/>.
     /// </summary>
-    Task<bool> UpdateItemAsync(UpdateItemRequestDto request, IProgress<UploadProgressDto>? progress);
+    Task<UpdateItemResultDto> UpdateItemAsync(UpdateItemRequestDto request, IProgress<UploadProgressDto>? progress);
 
     /// <summary>
     /// Title and description in one Steam API language. Steam returns the base

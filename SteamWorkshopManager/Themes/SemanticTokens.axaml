@@ -1,17 +1,15 @@
 <!--
   Semantic theme tokens.
 
-  Views should reference these via StaticResource so the theme variant can be
-  swapped at runtime. A `Light` dictionary slot is reserved below but intentionally
-  left empty for now - Phase A delivers only the Dark variant; Later will populate Light and wire a toggle in Settings.
+  Views reference the brushes via DynamicResource. Only the Dark variant is filled in.
 
-  Naming convention:
-    Surface.*        - container backgrounds, ordered from flat to elevated
-    Border.*         - strokes and outlines
-    Text.*           - text colors on standard surfaces
-    Accent.*         - primary/secondary brand hues
-    Feedback.*       - semantic status colors (success/warning/danger)
-    Brush.*          - SolidColorBrush or LinearGradientBrush wrappers
+  Key prefixes:
+    Surface*         - container backgrounds, ordered from flat to elevated
+    Border*          - strokes and outlines
+    Text*            - text colors on standard surfaces
+    Accent*          - primary/secondary brand hues
+    Feedback*        - semantic status colors (success/warning/danger)
+    *Brush           - SolidColorBrush or LinearGradientBrush over the color of the same name
 -->
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">

@@ -214,4 +214,58 @@ public class ModioPublisherTests
     {
         Assert.AreEqual(expected, ModioModRules.ValidateImage(path));
     }
+
+    [TestMethod]
+    public async Task GetMod_WhenModioRefuses_KeepsModiosOwnError()
+    {
+        var (publisher, handler) = await CreateAsync();
+        handler.Status = _ => HttpStatusCode.NotFound;
+
+        try
+        {
+            await publisher.GetModAsync(9);
+            Assert.Fail("A 404 should surface");
+        }
+        catch (ModioApiException ex)
+        {
+            Assert.AreEqual(404, ex.StatusCode);
+        }
+    }
+
+    [TestMethod]
+    public async Task GetFiles_WhenModioRefuses_ThrowsInsteadOfAnEmptyList()
+    {
+        var (publisher, handler) = await CreateAsync();
+        handler.Status = _ => HttpStatusCode.Forbidden;
+
+        try
+        {
+            await publisher.GetFilesAsync(9);
+            Assert.Fail("A 403 should surface");
+        }
+        catch (ModioApiException ex)
+        {
+            Assert.AreEqual(403, ex.StatusCode);
+        }
+    }
+
+    [TestMethod]
+    public async Task Update_Cancelled_StopsBeforeSendingAnything()
+    {
+        var (publisher, handler) = await CreateAsync();
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        try
+        {
+            await publisher.UpdateAsync(new ModioModUpdate(9, new ModioModEdit(Summary: "Short"), [], [],
+                LogoPath: null, ModioMediaChange.None, File: null), ct: cts.Token);
+            Assert.Fail("A cancelled update should throw");
+        }
+        catch (OperationCanceledException)
+        {
+        }
+
+        Assert.AreEqual(0, handler.Requests.Count);
+    }
 }

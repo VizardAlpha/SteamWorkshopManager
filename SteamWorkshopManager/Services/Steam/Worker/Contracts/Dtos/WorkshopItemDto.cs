@@ -15,7 +15,6 @@ public sealed record WorkshopItemDto(
     ulong PublishedFileId,
     string Title,
     string Description,
-    string? PreviewImagePath,
     string? PreviewImageUrl,
     VisibilityType Visibility,
     List<WorkshopTagDto> Tags,

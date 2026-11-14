@@ -93,8 +93,6 @@ public partial class ModioMediaViewModel : ViewModelBase, IDisposable
         else image.Thumbnail = bitmap;
     }
 
-    public bool HasChanges => BuildChange() is { } c && (c.HasAdditions || c.HasRemovals);
-
     public ModioMediaChange BuildChange() => new(
         Images.Where(i => i.IsNew).Select(i => i.LocalPath!).ToList(),
         YoutubeUrls.Where(u => !_savedYoutube.Contains(u)).ToList(),

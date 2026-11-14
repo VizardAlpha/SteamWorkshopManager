@@ -15,5 +15,5 @@ public class GameBranch
     public bool IsPrivate => (Flags & 4) != 0;
 
     public string DisplayName => string.IsNullOrEmpty(Description) || Description == Name
-        ? Name : $"{Name} \u2014 {Description}";
+        ? Name : $"{Name} - {Description}";
 }

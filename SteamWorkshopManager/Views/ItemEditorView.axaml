@@ -9,195 +9,15 @@
              xmlns:helpers="using:SteamWorkshopManager.Helpers"
              xmlns:converters="using:SteamWorkshopManager.Converters"
              xmlns:controls="using:SteamWorkshopManager.Views.Controls"
+             xmlns:sections="using:SteamWorkshopManager.Views.Editor"
              xmlns:behaviors="using:SteamWorkshopManager.Behaviors"
              xmlns:icons="using:Material.Icons.Avalonia"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="SteamWorkshopManager.Views.ItemEditorView"
              x:DataType="vm:ItemEditorViewModel">
 
-    <UserControl.Resources>
-        <DataTemplate x:Key="PreviewItemTemplate" DataType="models:WorkshopPreview">
-            <Border Classes="reorder-row"
-                    behaviors:ReorderZone.Command="{Binding $parent[UserControl].((vm:ItemEditorViewModel)DataContext).Gallery.ReorderPreviewCommand}"
-                    Background="{DynamicResource SurfaceElevatedBrush}"
-                    BorderBrush="{DynamicResource BorderSubtleBrush}"
-                    BorderThickness="1"
-                    CornerRadius="6"
-                    Padding="10,8" Margin="0,0,0,4">
-                <Grid ColumnDefinitions="Auto,80,*,Auto" VerticalAlignment="Center">
-                    <icons:MaterialIcon Kind="DragVertical" Width="16" Height="16"
-                                        Margin="0,0,6,0"
-                                        VerticalAlignment="Center"
-                                        Foreground="{DynamicResource TextDisabledBrush}"
-                                        IsVisible="{Binding !IsSketchfab}"
-                                        ToolTip.Tip="{DynamicResource DragToReorder}"/>
-                    <Border Grid.Column="1" Width="80" Height="45"
-                            Background="{DynamicResource SurfaceCardBrush}"
-                            BorderBrush="{DynamicResource BorderSubtleBrush}"
-                            BorderThickness="1"
-                            CornerRadius="4" ClipToBounds="True">
-                        <Panel>
-                            <Image Source="{Binding Thumbnail}" Stretch="UniformToFill"
-                                   IsVisible="{Binding Thumbnail, Converter={x:Static ObjectConverters.IsNotNull}}"/>
-                            <icons:MaterialIcon Kind="Youtube" Width="22" Height="22"
-                                                HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                Foreground="#E62117"
-                                                IsVisible="{Binding IsVideo}"/>
-                            <icons:MaterialIcon Kind="CubeOutline" Width="22" Height="22"
-                                                HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                Foreground="{DynamicResource AccentPrimaryBrush}"
-                                                IsVisible="{Binding IsSketchfab}"/>
-                            <icons:MaterialIcon Kind="ImageOutline" Width="22" Height="22"
-                                                HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                Opacity="0.3"
-                                                Foreground="{DynamicResource TextMutedBrush}"
-                                                IsVisible="{Binding ShouldShowImagePlaceholder}"/>
-                        </Panel>
-                    </Border>
-                    <StackPanel Grid.Column="2" Margin="12,0,0,0" VerticalAlignment="Center" Spacing="2">
-                        <TextBlock Text="{Binding DisplayLabel}"
-                                   FontWeight="Medium"
-                                   Foreground="{DynamicResource TextPrimaryBrush}"
-                                   FontSize="13"
-                                   TextTrimming="CharacterEllipsis"/>
-                        <TextBlock Text="{DynamicResource PendingUpload}"
-                                   Foreground="{DynamicResource AccentPrimaryBrush}"
-                                   FontSize="11"
-                                   IsVisible="{Binding IsNew}"/>
-                    </StackPanel>
-                    <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
-                        <Button Command="{Binding $parent[UserControl].((vm:ItemEditorViewModel)DataContext).Gallery.MovePreviewUpCommand}"
-                                CommandParameter="{Binding}"
-                                Background="Transparent" BorderThickness="0"
-                                Padding="6,4"
-                                IsVisible="{Binding !IsSketchfab}"
-                                ToolTip.Tip="{DynamicResource MoveUp}">
-                            <icons:MaterialIcon Kind="ChevronUp" Width="12" Height="12" Foreground="{DynamicResource TextMutedBrush}"/>
-                        </Button>
-                        <Button Command="{Binding $parent[UserControl].((vm:ItemEditorViewModel)DataContext).Gallery.MovePreviewDownCommand}"
-                                CommandParameter="{Binding}"
-                                Background="Transparent" BorderThickness="0"
-                                Padding="6,4"
-                                IsVisible="{Binding !IsSketchfab}"
-                                ToolTip.Tip="{DynamicResource MoveDown}">
-                            <icons:MaterialIcon Kind="ChevronDown" Width="12" Height="12" Foreground="{DynamicResource TextMutedBrush}"/>
-                        </Button>
-                        <Button Command="{Binding $parent[UserControl].((vm:ItemEditorViewModel)DataContext).Gallery.RemovePreviewCommand}"
-                                CommandParameter="{Binding}"
-                                Background="Transparent" BorderThickness="0"
-                                Padding="6,4"
-                                Foreground="{DynamicResource TextMutedBrush}"
-                                ToolTip.Tip="{DynamicResource RemovePreview}">
-                            <icons:MaterialIcon Kind="Close" Width="14" Height="14"/>
-                        </Button>
-                    </StackPanel>
-                </Grid>
-            </Border>
-        </DataTemplate>
-    </UserControl.Resources>
-
     <UserControl.Styles>
-        <!-- Drop target under the cursor while dragging a preview row -->
-        <Style Selector="Border.reorder-row:dragover">
-            <Setter Property="BorderBrush" Value="{DynamicResource AccentPrimaryBrush}"/>
-            <Setter Property="Background" Value="{DynamicResource SurfaceOverlayBrush}"/>
-        </Style>
-
-        <Style Selector="Button.nav-item">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="12,10"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="HorizontalAlignment" Value="Stretch"/>
-            <Setter Property="HorizontalContentAlignment" Value="Left"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}"/>
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="FontWeight" Value="Medium"/>
-        </Style>
-        <Style Selector="Button.nav-item:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceCardBrush}"/>
-            <Setter Property="TextElement.Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
-        </Style>
-        <Style Selector="Button.nav-item.active">
-            <Setter Property="Background" Value="{DynamicResource SurfaceOverlayBrush}"/>
-            <Setter Property="Foreground" Value="{DynamicResource AccentPrimaryBrush}"/>
-        </Style>
-        <Style Selector="Button.nav-item.active:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceOverlayBrush}"/>
-        </Style>
-
-        <!-- Panel header (title + subtitle above each section) -->
-        <Style Selector="TextBlock.panel-title">
-            <Setter Property="FontSize" Value="18"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
-        </Style>
-        <Style Selector="TextBlock.panel-sub">
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}"/>
-        </Style>
-
-        <!-- Section card: header band + divider + body -->
-        <Style Selector="Border.section-card">
-            <Setter Property="Background" Value="{DynamicResource SurfaceCardBrush}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtleBrush}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="12"/>
-            <Setter Property="ClipToBounds" Value="True"/>
-        </Style>
-        <Style Selector="TextBlock.card-title">
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
-        </Style>
-        <Style Selector="TextBlock.card-meta">
-            <Setter Property="FontSize" Value="11"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}"/>
-        </Style>
-        <Style Selector="TextBlock.field-label">
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}"/>
-            <Setter Property="Margin" Value="0,0,0,6"/>
-        </Style>
-
-        <!-- Tag chip: ToggleButton styled as a rounded pill. Checked state uses
-             a tinted accent background; base is a neutral surface with a thin
-             border. Applied uniformly to categorized tags and custom tags. -->
-        <Style Selector="ToggleButton.tag-chip">
-            <Setter Property="Background" Value="{DynamicResource SurfaceElevatedBrush}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtleBrush}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="14"/>
-            <Setter Property="Padding" Value="12,4"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
-            <Setter Property="MinHeight" Value="0"/>
-            <Setter Property="Margin" Value="0,0,6,6"/>
-        </Style>
-        <Style Selector="ToggleButton.tag-chip:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceOverlayBrush}"/>
-        </Style>
-        <Style Selector="ToggleButton.tag-chip:checked /template/ ContentPresenter">
-            <Setter Property="Background" Value="#1F5B9CF6"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource AccentPrimaryBrush}"/>
-            <Setter Property="TextElement.Foreground" Value="{DynamicResource AccentPrimaryBrush}"/>
-        </Style>
-        <Style Selector="ToggleButton.tag-chip:checked:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#2F5B9CF6"/>
-        </Style>
-
-        <!-- Small × button next to a custom-tag chip for removal. -->
-        <Style Selector="Button.chip-remove">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="4,2"/>
-            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}"/>
-        </Style>
-        <Style Selector="Button.chip-remove:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#1FE04A4A"/>
-            <Setter Property="TextElement.Foreground" Value="{DynamicResource FeedbackDangerTextBrush}"/>
-        </Style>
+        <StyleInclude Source="avares://SteamWorkshopManager/Themes/EditorStyles.axaml"/>
     </UserControl.Styles>
 
     <Grid RowDefinitions="*,Auto">
@@ -459,10 +279,15 @@
                                         </Panel>
                                     </Border>
                                     <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center" Spacing="10">
-                                        <TextBlock Text="{Binding PreviewImagePath, TargetNullValue='No image selected'}"
+                                        <TextBlock Text="{Binding PreviewImagePath}"
                                                    TextTrimming="CharacterEllipsis"
                                                    Foreground="{DynamicResource TextSecondaryBrush}"
-                                                   FontSize="13"/>
+                                                   FontSize="13"
+                                                   IsVisible="{Binding PreviewImagePath, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                        <TextBlock Text="{DynamicResource NoImageSelected}"
+                                                   Foreground="{DynamicResource TextMutedBrush}"
+                                                   FontSize="13"
+                                                   IsVisible="{Binding PreviewImagePath, Converter={x:Static StringConverters.IsNullOrEmpty}}"/>
                                         <Grid>
                                             <TextBlock Text="{Binding PreviewImageSize}"
                                                        Foreground="{DynamicResource TextMutedBrush}"
@@ -530,7 +355,7 @@
                                                  PlaceholderText="{DynamicResource TitlePlaceholder}"/>
                                     </StackPanel>
 
-                                    <!-- Description (BBCode editor kept as-is) -->
+                                    <!-- Description (BBCode) -->
                                     <StackPanel>
                                         <TextBlock Classes="field-label" Text="{DynamicResource Description}"/>
                                         <controls:MarkupEditorControl Text="{Binding Description}"
@@ -599,145 +424,7 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- ── Card: Tags ── -->
-                        <Border Classes="section-card">
-                            <StackPanel>
-                                <Grid Margin="16,14,16,12" ColumnDefinitions="*,Auto,Auto">
-                                    <TextBlock Classes="card-title" Text="{DynamicResource Tags}" VerticalAlignment="Center"/>
-                                    <TextBlock Grid.Column="1" Classes="card-meta"
-                                               Text="{Binding Tags.TagsLastUpdatedText}"
-                                               VerticalAlignment="Center"
-                                               Margin="0,0,8,0"/>
-                                    <Button Grid.Column="2"
-                                            Command="{Binding Tags.RefreshTagsCommand}"
-                                            Background="Transparent"
-                                            BorderBrush="{DynamicResource BorderSubtleBrush}"
-                                            BorderThickness="1"
-                                            Foreground="{DynamicResource TextPrimaryBrush}"
-                                            CornerRadius="6"
-                                            Padding="10,5"
-                                            FontSize="12"
-                                            IsEnabled="{Binding !Tags.IsRefreshingTags}">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <icons:MaterialIcon Kind="Refresh" Width="12" Height="12"/>
-                                            <TextBlock IsVisible="{Binding Tags.IsRefreshingTags}"
-                                                       Text="{DynamicResource RefreshingTags}" VerticalAlignment="Center"/>
-                                            <TextBlock IsVisible="{Binding !Tags.IsRefreshingTags}"
-                                                       Text="{DynamicResource RefreshTags}" VerticalAlignment="Center"/>
-                                        </StackPanel>
-                                    </Button>
-                                </Grid>
-                                <Border Height="1" Background="{DynamicResource BorderSubtleBrush}"/>
-                                <StackPanel Margin="16" Spacing="16">
-
-                                    <!-- Empty-catalog banner when Steam returned nothing -->
-                                    <TextBlock Text="{DynamicResource NoTagsForWorkshop}"
-                                               IsVisible="{Binding !Tags.HasTags}"
-                                               Foreground="{DynamicResource TextMutedBrush}"
-                                               FontSize="12"
-                                               FontStyle="Italic"/>
-
-                                    <!-- Categories -->
-                                    <ItemsControl ItemsSource="{Binding Tags.TagCategories}"
-                                                  IsVisible="{Binding Tags.HasTags}">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate DataType="models:TagCategory">
-                                                <StackPanel Margin="0,0,0,12">
-                                                    <TextBlock Classes="field-label" Text="{Binding Name}"/>
-                                                    <!-- Dropdown variant -->
-                                                    <Grid IsVisible="{Binding IsDropdown}"
-                                                          ColumnDefinitions="*,Auto"
-                                                          MaxWidth="320"
-                                                          HorizontalAlignment="Left">
-                                                        <ComboBox Grid.Column="0"
-                                                                  ItemsSource="{Binding Tags}"
-                                                                  SelectedItem="{Binding SelectedTag}"
-                                                                  PlaceholderText="-"
-                                                                  HorizontalAlignment="Stretch">
-                                                            <ComboBox.ItemTemplate>
-                                                                <DataTemplate DataType="models:WorkshopTag">
-                                                                    <TextBlock Text="{Binding Name}"/>
-                                                                </DataTemplate>
-                                                            </ComboBox.ItemTemplate>
-                                                        </ComboBox>
-                                                        <Button Grid.Column="1"
-                                                                Command="{Binding ClearSelectedTagCommand}"
-                                                                IsVisible="{Binding SelectedTag, Converter={x:Static ObjectConverters.IsNotNull}}"
-                                                                Classes="chip-remove"
-                                                                Margin="4,0,0,0">
-                                                            <icons:MaterialIcon Kind="Close" Width="12" Height="12"/>
-                                                        </Button>
-                                                    </Grid>
-                                                    <!-- Chip variant -->
-                                                    <ItemsControl ItemsSource="{Binding Tags}"
-                                                                  IsVisible="{Binding !IsDropdown}">
-                                                        <ItemsControl.ItemsPanel>
-                                                            <ItemsPanelTemplate>
-                                                                <WrapPanel Orientation="Horizontal"/>
-                                                            </ItemsPanelTemplate>
-                                                        </ItemsControl.ItemsPanel>
-                                                        <ItemsControl.ItemTemplate>
-                                                            <DataTemplate DataType="models:WorkshopTag">
-                                                                <ToggleButton Classes="tag-chip"
-                                                                              IsChecked="{Binding IsSelected}"
-                                                                              Content="{Binding Name}"/>
-                                                            </DataTemplate>
-                                                        </ItemsControl.ItemTemplate>
-                                                    </ItemsControl>
-                                                </StackPanel>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-
-                                    <!-- Custom tags: input + chip row -->
-                                    <StackPanel>
-                                        <TextBlock Classes="field-label" Text="{DynamicResource CustomTags}"/>
-                                        <Grid ColumnDefinitions="*,Auto">
-                                            <TextBox Text="{Binding Tags.NewCustomTag}"
-                                                     PlaceholderText="{DynamicResource NewTagPlaceholder}"/>
-                                            <Button Grid.Column="1"
-                                                    Command="{Binding Tags.AddCustomTagCommand}"
-                                                    Background="{DynamicResource AccentPrimaryGradientBrush}"
-                                                    Foreground="White"
-                                                    FontWeight="SemiBold"
-                                                    BorderThickness="0"
-                                                    CornerRadius="6"
-                                                    Padding="12,6"
-                                                    FontSize="13"
-                                                    Margin="10,0,0,0">
-                                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                                    <icons:MaterialIcon Kind="Plus" Width="14" Height="14"/>
-                                                    <TextBlock Text="{DynamicResource AddCustomTag}" VerticalAlignment="Center"/>
-                                                </StackPanel>
-                                            </Button>
-                                        </Grid>
-                                        <ItemsControl ItemsSource="{Binding Tags.CustomTags}" Margin="0,10,0,0">
-                                            <ItemsControl.ItemsPanel>
-                                                <ItemsPanelTemplate>
-                                                    <WrapPanel Orientation="Horizontal"/>
-                                                </ItemsPanelTemplate>
-                                            </ItemsControl.ItemsPanel>
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate DataType="models:WorkshopTag">
-                                                    <StackPanel Orientation="Horizontal" Spacing="0" Margin="0,0,6,6">
-                                                        <ToggleButton Classes="tag-chip"
-                                                                      IsChecked="{Binding IsSelected}"
-                                                                      Content="{Binding Name}"
-                                                                      Margin="0"/>
-                                                        <Button Classes="chip-remove"
-                                                                Command="{Binding $parent[ItemsControl].((vm:ItemEditorViewModel)DataContext).Tags.RemoveCustomTagCommand}"
-                                                                CommandParameter="{Binding}"
-                                                                ToolTip.Tip="{DynamicResource RemoveTag}">
-                                                            <icons:MaterialIcon Kind="Close" Width="11" Height="11"/>
-                                                        </Button>
-                                                    </StackPanel>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                    </StackPanel>
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
+                        <sections:TagsCardView DataContext="{Binding Tags}"/>
 
                     </StackPanel>
                 </ScrollViewer>
@@ -846,99 +533,9 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- ── Card: Version compatibility (next upload) ── -->
-                        <Border Classes="section-card" IsVisible="{Binding Versions.IsVersioningEnabled}">
-                            <StackPanel>
-                                <Grid Margin="16,14,16,12" ColumnDefinitions="*,Auto">
-                                    <TextBlock Classes="card-title" Text="{DynamicResource VersionCompatibility}"/>
-                                </Grid>
-                                <Border Height="1" Background="{DynamicResource BorderSubtleBrush}"/>
-                                <StackPanel Margin="16" Spacing="14">
-                                    <!-- Current branch pill -->
-                                    <StackPanel>
-                                        <TextBlock Classes="field-label" Text="{DynamicResource CurrentBranch}"/>
-                                        <Border Background="#1F5B9CF6"
-                                                BorderBrush="#405B9CF6"
-                                                BorderThickness="1"
-                                                CornerRadius="6"
-                                                Padding="10,6"
-                                                HorizontalAlignment="Left">
-                                            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                                <icons:MaterialIcon Kind="SourceBranch" Width="14" Height="14"
-                                                                    Foreground="{DynamicResource AccentPrimaryBrush}"/>
-                                                <TextBlock Text="{Binding Versions.CurrentBranch}"
-                                                           FontSize="13" FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                            </StackPanel>
-                                        </Border>
-                                    </StackPanel>
-
-                                    <!-- Target-all toggle -->
-                                    <Border Background="{DynamicResource SurfaceElevatedBrush}"
-                                            BorderBrush="{DynamicResource BorderSubtleBrush}"
-                                            BorderThickness="1"
-                                            CornerRadius="6"
-                                            Padding="12,8">
-                                        <CheckBox Content="{DynamicResource TargetAllVersions}"
-                                                  IsChecked="{Binding Versions.TargetAllVersions}"/>
-                                    </Border>
-
-                                    <!-- Min/Max branch selects -->
-                                    <Grid ColumnDefinitions="*,12,*" IsEnabled="{Binding !Versions.TargetAllVersions}">
-                                        <StackPanel>
-                                            <TextBlock Classes="field-label" Text="{DynamicResource MinBranch}"/>
-                                            <ComboBox ItemsSource="{Binding Versions.AvailableBranches}"
-                                                      SelectedItem="{Binding Versions.SelectedBranchMin}"
-                                                      PlaceholderText="{DynamicResource AnyOlderVersion}"
-                                                      HorizontalAlignment="Stretch">
-                                                <ComboBox.ItemTemplate>
-                                                    <DataTemplate DataType="models:GameBranch">
-                                                        <TextBlock Text="{Binding DisplayName}"/>
-                                                    </DataTemplate>
-                                                </ComboBox.ItemTemplate>
-                                            </ComboBox>
-                                        </StackPanel>
-                                        <StackPanel Grid.Column="2">
-                                            <TextBlock Classes="field-label" Text="{DynamicResource MaxBranch}"/>
-                                            <ComboBox ItemsSource="{Binding Versions.AvailableBranches}"
-                                                      SelectedItem="{Binding Versions.SelectedBranchMax}"
-                                                      PlaceholderText="{DynamicResource AnyNewerVersion}"
-                                                      HorizontalAlignment="Stretch">
-                                                <ComboBox.ItemTemplate>
-                                                    <DataTemplate DataType="models:GameBranch">
-                                                        <TextBlock Text="{Binding DisplayName}"/>
-                                                    </DataTemplate>
-                                                </ComboBox.ItemTemplate>
-                                            </ComboBox>
-                                        </StackPanel>
-                                    </Grid>
-
-                                    <!-- Invalid range warning -->
-                                    <Border Background="#1FC23B2E" Padding="8" CornerRadius="4"
-                                            BorderBrush="{DynamicResource FeedbackDangerBrush}" BorderThickness="1"
-                                            IsVisible="{Binding Versions.IsBranchRangeInvalid}">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <icons:MaterialIcon Kind="AlertCircleOutline" Width="14" Height="14"
-                                                                Foreground="{DynamicResource FeedbackDangerTextBrush}"
-                                                                VerticalAlignment="Center"/>
-                                            <TextBlock Text="{DynamicResource InvalidBranchRange}"
-                                                       Foreground="{DynamicResource FeedbackDangerTextBrush}" FontSize="12"/>
-                                        </StackPanel>
-                                    </Border>
-
-                                    <!-- Content required note -->
-                                    <Border Background="{DynamicResource SurfaceElevatedBrush}" Padding="8" CornerRadius="4">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <icons:MaterialIcon Kind="InformationOutline" Width="14" Height="14"
-                                                                Foreground="{DynamicResource AccentPrimaryBrush}"
-                                                                VerticalAlignment="Center"/>
-                                            <TextBlock Text="{DynamicResource VersioningContentRequired}"
-                                                       Foreground="{DynamicResource TextMutedBrush}" FontSize="12"/>
-                                        </StackPanel>
-                                    </Border>
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
+                        <Panel IsVisible="{Binding Versions.IsVersioningEnabled}">
+                            <sections:VersionCompatibilityView DataContext="{Binding Versions}" ShowContentRequiredNote="True"/>
+                        </Panel>
                     </StackPanel>
                 </ScrollViewer>
 
@@ -1151,322 +748,7 @@
                             <TextBlock Classes="panel-sub" Text="{DynamicResource DependenciesHeaderSub}" Margin="0,4,0,0"/>
                         </StackPanel>
 
-                        <!-- ── Card: Workshop dependencies ── -->
-                        <Border Classes="section-card">
-                            <StackPanel>
-                                <Grid Margin="16,14,16,12" ColumnDefinitions="*,Auto">
-                                    <TextBlock Classes="card-title" Text="{DynamicResource WorkshopDependencies}" VerticalAlignment="Center"/>
-                                    <TextBlock Grid.Column="1" Classes="card-meta" VerticalAlignment="Center">
-                                        <Run Text="{Binding Dependencies.Dependencies.Count}"/>
-                                        <Run Text=" added"/>
-                                    </TextBlock>
-                                </Grid>
-                                <Border Height="1" Background="{DynamicResource BorderSubtleBrush}"/>
-                                <StackPanel Margin="16" Spacing="12">
-                                    <!-- Input + search -->
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <TextBox Text="{Binding Dependencies.NewDependencyInput}"
-                                                 PlaceholderText="{DynamicResource DependencyInputPlaceholder}"/>
-                                        <Button Grid.Column="1"
-                                                Command="{Binding Dependencies.SearchDependencyCommand}"
-                                                Background="{DynamicResource AccentPrimaryGradientBrush}"
-                                                Foreground="White" FontWeight="SemiBold"
-                                                BorderThickness="0"
-                                                CornerRadius="6"
-                                                Padding="14,7"
-                                                FontSize="13"
-                                                Margin="12,0,0,0"
-                                                IsEnabled="{Binding !Dependencies.IsSearchingDependency}">
-                                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                                <icons:MaterialIcon Kind="Magnify" Width="14" Height="14"/>
-                                                <TextBlock Text="{DynamicResource SearchDependency}" VerticalAlignment="Center"/>
-                                            </StackPanel>
-                                        </Button>
-                                    </Grid>
-
-                                    <ProgressBar IsIndeterminate="True"
-                                                 IsVisible="{Binding Dependencies.IsSearchingDependency}"
-                                                 Height="4"/>
-                                    <ProgressBar IsIndeterminate="True"
-                                                 IsVisible="{Binding Dependencies.IsLoadingDependencies}"
-                                                 Height="4"/>
-
-                                    <!-- Preview -->
-                                    <Border IsVisible="{Binding Dependencies.PreviewDependency, Converter={x:Static ObjectConverters.IsNotNull}}"
-                                            Background="{DynamicResource SurfaceElevatedBrush}"
-                                            BorderBrush="{DynamicResource AccentPrimaryBrush}"
-                                            BorderThickness="1"
-                                            CornerRadius="10"
-                                            Padding="14,12">
-                                        <Grid ColumnDefinitions="*,Auto">
-                                            <StackPanel Spacing="4">
-                                                <TextBlock Text="{DynamicResource ConfirmAddDependency}"
-                                                           Foreground="{DynamicResource TextMutedBrush}" FontSize="11"/>
-                                                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding Dependencies.PreviewDependency.Title}"
-                                                               FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="14"
-                                                               VerticalAlignment="Center"/>
-                                                    <TextBlock Text="{Binding Dependencies.PreviewDependency.PublishedFileId}"
-                                                               Foreground="{DynamicResource TextDisabledBrush}" FontSize="11"
-                                                               FontFamily="Consolas, Menlo, monospace"
-                                                               VerticalAlignment="Center"/>
-                                                </StackPanel>
-                                            </StackPanel>
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                                <Button Command="{Binding Dependencies.ConfirmAddDependencyCommand}"
-                                                        Background="{DynamicResource AccentPrimaryGradientBrush}"
-                                                        Foreground="White" FontWeight="SemiBold"
-                                                        BorderThickness="0" CornerRadius="6"
-                                                        Padding="12,6" FontSize="12"
-                                                        Content="{DynamicResource AddDependency}"
-                                                        IsEnabled="{Binding !Dependencies.IsAddingDependency}"/>
-                                                <Button Command="{Binding Dependencies.CancelDependencyPreviewCommand}"
-                                                        Background="{DynamicResource SurfaceOverlayBrush}"
-                                                        BorderBrush="{DynamicResource BorderSubtleBrush}"
-                                                        BorderThickness="1"
-                                                        Foreground="{DynamicResource TextPrimaryBrush}"
-                                                        CornerRadius="6"
-                                                        Padding="12,6" FontSize="12"
-                                                        Content="{DynamicResource Cancel}"/>
-                                            </StackPanel>
-                                        </Grid>
-                                    </Border>
-
-                                    <!-- Error -->
-                                    <Border IsVisible="{Binding Dependencies.DependencyError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                                            Background="#1FC23B2E" Padding="8" CornerRadius="4"
-                                            BorderBrush="{DynamicResource FeedbackDangerBrush}" BorderThickness="1">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <icons:MaterialIcon Kind="AlertCircleOutline" Width="14" Height="14"
-                                                                Foreground="{DynamicResource FeedbackDangerTextBrush}"
-                                                                VerticalAlignment="Center"/>
-                                            <TextBlock Text="{Binding Dependencies.DependencyError}"
-                                                       Foreground="{DynamicResource FeedbackDangerTextBrush}" FontSize="12"/>
-                                        </StackPanel>
-                                    </Border>
-
-                                    <!-- Empty state -->
-                                    <TextBlock Text="{DynamicResource NoDependencies}"
-                                               Foreground="{DynamicResource TextMutedBrush}"
-                                               FontSize="12"
-                                               HorizontalAlignment="Center"
-                                               Margin="0,12"
-                                               IsVisible="{Binding !Dependencies.Dependencies.Count}"/>
-
-                                    <!-- List -->
-                                    <ItemsControl ItemsSource="{Binding Dependencies.Dependencies}">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate DataType="models:DependencyInfo">
-                                                <Border Background="{DynamicResource SurfaceElevatedBrush}"
-                                                        BorderBrush="{DynamicResource BorderSubtleBrush}"
-                                                        BorderThickness="1"
-                                                        CornerRadius="6"
-                                                        Padding="10,8" Margin="0,0,0,4">
-                                                    <Grid ColumnDefinitions="*,Auto,Auto,Auto" VerticalAlignment="Center">
-                                                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                                            <TextBlock Text="{Binding Title}"
-                                                                       FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13"
-                                                                       VerticalAlignment="Center"/>
-                                                            <TextBlock Text="{Binding PublishedFileId}"
-                                                                       Foreground="{DynamicResource TextDisabledBrush}" FontSize="11"
-                                                                       FontFamily="Consolas, Menlo, monospace"
-                                                                       VerticalAlignment="Center"/>
-                                                        </StackPanel>
-                                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
-                                                            <Button Command="{Binding $parent[UserControl].((vm:ItemEditorViewModel)DataContext).Dependencies.MoveDependencyUpCommand}"
-                                                                    CommandParameter="{Binding}"
-                                                                    Background="Transparent" BorderThickness="0"
-                                                                    Padding="6,4"
-                                                                    ToolTip.Tip="{DynamicResource MoveUp}">
-                                                                <icons:MaterialIcon Kind="ChevronUp" Width="12" Height="12" Foreground="{DynamicResource TextMutedBrush}"/>
-                                                            </Button>
-                                                            <Button Command="{Binding $parent[UserControl].((vm:ItemEditorViewModel)DataContext).Dependencies.MoveDependencyDownCommand}"
-                                                                    CommandParameter="{Binding}"
-                                                                    Background="Transparent" BorderThickness="0"
-                                                                    Padding="6,4"
-                                                                    ToolTip.Tip="{DynamicResource MoveDown}">
-                                                                <icons:MaterialIcon Kind="ChevronDown" Width="12" Height="12" Foreground="{DynamicResource TextMutedBrush}"/>
-                                                            </Button>
-                                                        </StackPanel>
-                                                        <Button Grid.Column="2"
-                                                                Command="{Binding $parent[UserControl].((vm:ItemEditorViewModel)DataContext).Dependencies.OpenDependencyInBrowserCommand}"
-                                                                CommandParameter="{Binding}"
-                                                                Background="Transparent" BorderThickness="0"
-                                                                Padding="6,4"
-                                                                Foreground="{DynamicResource TextMutedBrush}"
-                                                                ToolTip.Tip="{DynamicResource OpenInBrowser}">
-                                                            <icons:MaterialIcon Kind="OpenInNew" Width="14" Height="14"/>
-                                                        </Button>
-                                                        <Panel Grid.Column="3" Margin="2,0,0,0">
-                                                            <Button Command="{Binding $parent[UserControl].((vm:ItemEditorViewModel)DataContext).Dependencies.RemoveDependencyCommand}"
-                                                                    CommandParameter="{Binding}"
-                                                                    Background="Transparent" BorderThickness="0"
-                                                                    Padding="6,4"
-                                                                    Foreground="{DynamicResource TextMutedBrush}"
-                                                                    IsVisible="{Binding !IsRemoving}">
-                                                                <icons:MaterialIcon Kind="Close" Width="14" Height="14"/>
-                                                            </Button>
-                                                            <ProgressBar IsIndeterminate="True"
-                                                                         IsVisible="{Binding IsRemoving}"
-                                                                         Width="20" Height="20"/>
-                                                        </Panel>
-                                                    </Grid>
-                                                </Border>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- ── Card: Required Apps / DLCs ── -->
-                        <Border Classes="section-card">
-                            <StackPanel>
-                                <Grid Margin="16,14,16,12" ColumnDefinitions="*,Auto">
-                                    <TextBlock Classes="card-title" Text="{DynamicResource RequiredApps}" VerticalAlignment="Center"/>
-                                    <TextBlock Grid.Column="1" Classes="card-meta" VerticalAlignment="Center">
-                                        <Run Text="{Binding Dependencies.AppDependencies.Count}"/>
-                                        <Run Text=" added"/>
-                                    </TextBlock>
-                                </Grid>
-                                <Border Height="1" Background="{DynamicResource BorderSubtleBrush}"/>
-                                <StackPanel Margin="16" Spacing="12">
-                                    <!-- AppID or URL input + search -->
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <TextBox Text="{Binding Dependencies.NewAppIdInput}"
-                                                 PlaceholderText="{DynamicResource AppIdPlaceholder}"/>
-                                        <Button Grid.Column="1"
-                                                Command="{Binding Dependencies.SearchAppCommand}"
-                                                Background="{DynamicResource AccentPrimaryGradientBrush}"
-                                                Foreground="White" FontWeight="SemiBold"
-                                                BorderThickness="0"
-                                                CornerRadius="6"
-                                                Padding="14,7"
-                                                FontSize="13"
-                                                Margin="12,0,0,0"
-                                                IsEnabled="{Binding !Dependencies.IsSearchingApp}">
-                                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                                <icons:MaterialIcon Kind="Magnify" Width="14" Height="14"/>
-                                                <TextBlock Text="{DynamicResource SearchDependency}" VerticalAlignment="Center"/>
-                                            </StackPanel>
-                                        </Button>
-                                    </Grid>
-
-                                    <ProgressBar IsIndeterminate="True"
-                                                 IsVisible="{Binding Dependencies.IsSearchingApp}"
-                                                 Height="4"/>
-
-                                    <!-- App preview -->
-                                    <Border IsVisible="{Binding Dependencies.AppPreviewInfo, Converter={x:Static ObjectConverters.IsNotNull}}"
-                                            Background="{DynamicResource SurfaceElevatedBrush}"
-                                            BorderBrush="{DynamicResource AccentPrimaryBrush}"
-                                            BorderThickness="1"
-                                            CornerRadius="10"
-                                            Padding="14,12">
-                                        <Grid ColumnDefinitions="*,Auto">
-                                            <StackPanel Spacing="4">
-                                                <TextBlock Text="{DynamicResource ConfirmAddApp}"
-                                                           Foreground="{DynamicResource TextMutedBrush}" FontSize="11"/>
-                                                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding Dependencies.AppPreviewInfo.DisplayName}"
-                                                               FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="14"
-                                                               VerticalAlignment="Center"/>
-                                                    <TextBlock Text="{Binding Dependencies.AppPreviewInfo.AppId, StringFormat='AppID: {0}'}"
-                                                               Foreground="{DynamicResource TextDisabledBrush}" FontSize="11"
-                                                               FontFamily="Consolas, Menlo, monospace"
-                                                               VerticalAlignment="Center"/>
-                                                </StackPanel>
-                                            </StackPanel>
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                                <Button Command="{Binding Dependencies.ConfirmAddAppCommand}"
-                                                        Background="{DynamicResource AccentPrimaryGradientBrush}"
-                                                        Foreground="White" FontWeight="SemiBold"
-                                                        BorderThickness="0" CornerRadius="6"
-                                                        Padding="12,6" FontSize="12"
-                                                        Content="{DynamicResource AddDependency}"
-                                                        IsEnabled="{Binding !Dependencies.IsAddingApp}"/>
-                                                <Button Command="{Binding Dependencies.CancelAppPreviewCommand}"
-                                                        Background="{DynamicResource SurfaceOverlayBrush}"
-                                                        BorderBrush="{DynamicResource BorderSubtleBrush}"
-                                                        BorderThickness="1"
-                                                        Foreground="{DynamicResource TextPrimaryBrush}"
-                                                        CornerRadius="6"
-                                                        Padding="12,6" FontSize="12"
-                                                        Content="{DynamicResource Cancel}"/>
-                                            </StackPanel>
-                                        </Grid>
-                                    </Border>
-
-                                    <!-- App error -->
-                                    <Border IsVisible="{Binding Dependencies.AddAppError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                                            Background="#1FC23B2E" Padding="8" CornerRadius="4"
-                                            BorderBrush="{DynamicResource FeedbackDangerBrush}" BorderThickness="1">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <icons:MaterialIcon Kind="AlertCircleOutline" Width="14" Height="14"
-                                                                Foreground="{DynamicResource FeedbackDangerTextBrush}"
-                                                                VerticalAlignment="Center"/>
-                                            <TextBlock Text="{Binding Dependencies.AddAppError}"
-                                                       Foreground="{DynamicResource FeedbackDangerTextBrush}" FontSize="12"/>
-                                        </StackPanel>
-                                    </Border>
-
-                                    <!-- Empty state -->
-                                    <TextBlock Text="{DynamicResource NoAppDependencies}"
-                                               Foreground="{DynamicResource TextMutedBrush}"
-                                               FontSize="12"
-                                               HorizontalAlignment="Center"
-                                               Margin="0,12"
-                                               IsVisible="{Binding !Dependencies.AppDependencies.Count}"/>
-
-                                    <!-- App list -->
-                                    <ItemsControl ItemsSource="{Binding Dependencies.AppDependencies}">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate DataType="models:AppDependencyInfo">
-                                                <Border Background="{DynamicResource SurfaceElevatedBrush}"
-                                                        BorderBrush="{DynamicResource BorderSubtleBrush}"
-                                                        BorderThickness="1"
-                                                        CornerRadius="6"
-                                                        Padding="10,8" Margin="0,0,0,4">
-                                                    <Grid ColumnDefinitions="*,Auto,Auto" VerticalAlignment="Center">
-                                                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                                            <TextBlock Text="{Binding DisplayName}"
-                                                                       FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13"
-                                                                       VerticalAlignment="Center"/>
-                                                            <TextBlock Text="{Binding AppId, StringFormat='AppID: {0}'}"
-                                                                       Foreground="{DynamicResource TextDisabledBrush}" FontSize="11"
-                                                                       FontFamily="Consolas, Menlo, monospace"
-                                                                       VerticalAlignment="Center"/>
-                                                        </StackPanel>
-                                                        <Button Grid.Column="1"
-                                                                Command="{Binding $parent[UserControl].((vm:ItemEditorViewModel)DataContext).Dependencies.OpenAppInStoreCommand}"
-                                                                CommandParameter="{Binding}"
-                                                                Background="Transparent" BorderThickness="0"
-                                                                Padding="6,4"
-                                                                Foreground="{DynamicResource TextMutedBrush}"
-                                                                ToolTip.Tip="{DynamicResource OpenInStore}">
-                                                            <icons:MaterialIcon Kind="Storefront" Width="14" Height="14"/>
-                                                        </Button>
-                                                        <Panel Grid.Column="2" Margin="2,0,0,0">
-                                                            <Button Command="{Binding $parent[UserControl].((vm:ItemEditorViewModel)DataContext).Dependencies.RemoveAppDependencyCommand}"
-                                                                    CommandParameter="{Binding}"
-                                                                    Background="Transparent" BorderThickness="0"
-                                                                    Padding="6,4"
-                                                                    Foreground="{DynamicResource TextMutedBrush}"
-                                                                    IsVisible="{Binding !IsRemoving}">
-                                                                <icons:MaterialIcon Kind="Close" Width="14" Height="14"/>
-                                                            </Button>
-                                                            <ProgressBar IsIndeterminate="True"
-                                                                         IsVisible="{Binding IsRemoving}"
-                                                                         Width="20" Height="20"/>
-                                                        </Panel>
-                                                    </Grid>
-                                                </Border>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
+                        <sections:DependenciesView DataContext="{Binding Dependencies}"/>
                     </StackPanel>
                 </ScrollViewer>
 
@@ -1479,111 +761,7 @@
                             <TextBlock Classes="panel-sub" Text="{DynamicResource PreviewsHeaderSub}" Margin="0,4,0,0"/>
                         </StackPanel>
 
-                        <!-- Validation error pill -->
-                        <Border IsVisible="{Binding Gallery.PreviewError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                                Background="#1FC23B2E" Padding="8" CornerRadius="4"
-                                BorderBrush="{DynamicResource FeedbackDangerBrush}" BorderThickness="1">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <icons:MaterialIcon Kind="AlertCircleOutline" Width="14" Height="14"
-                                                    Foreground="{DynamicResource FeedbackDangerTextBrush}"
-                                                    VerticalAlignment="Center"/>
-                                <TextBlock Text="{Binding Gallery.PreviewError}"
-                                           Foreground="{DynamicResource FeedbackDangerTextBrush}" FontSize="12"/>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- ── Card: YouTube videos ── -->
-                        <Border Classes="section-card">
-                            <StackPanel>
-                                <Grid Margin="16,14,16,12" ColumnDefinitions="*,Auto">
-                                    <TextBlock Classes="card-title" Text="{DynamicResource YouTubeSection}" VerticalAlignment="Center"/>
-                                    <TextBlock Grid.Column="1" Classes="card-meta" VerticalAlignment="Center">
-                                        <Run Text="{Binding Gallery.VideoPreviews.Count}"/>
-                                        <Run Text=" video(s)"/>
-                                    </TextBlock>
-                                </Grid>
-                                <Border Height="1" Background="{DynamicResource BorderSubtleBrush}"/>
-                                <StackPanel Margin="16" Spacing="10">
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <TextBox Text="{Binding Gallery.NewYouTubeInput}"
-                                                 PlaceholderText="{DynamicResource YouTubePlaceholder}"/>
-                                        <Button Grid.Column="1"
-                                                Command="{Binding Gallery.AddYouTubeVideoCommand}"
-                                                IsEnabled="{Binding Gallery.IsYouTubeInputValid}"
-                                                Background="{DynamicResource AccentPrimaryGradientBrush}"
-                                                Foreground="White" FontWeight="SemiBold"
-                                                BorderThickness="0" CornerRadius="6"
-                                                Padding="14,7" FontSize="13"
-                                                Margin="12,0,0,0">
-                                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                                <icons:MaterialIcon Kind="Plus" Width="14" Height="14"/>
-                                                <TextBlock Text="{DynamicResource AddVideo}" VerticalAlignment="Center"/>
-                                            </StackPanel>
-                                        </Button>
-                                    </Grid>
-                                    <TextBlock Text="{DynamicResource NoVideosYet}"
-                                               Foreground="{DynamicResource TextMutedBrush}" FontSize="12"
-                                               HorizontalAlignment="Center" Margin="0,12"
-                                               IsVisible="{Binding !Gallery.VideoPreviews.Count}"/>
-                                    <ItemsControl ItemsSource="{Binding Gallery.VideoPreviews}"
-                                                  ItemTemplate="{StaticResource PreviewItemTemplate}"/>
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- ── Card: 3D models (read-only - Steam SDK doesn't expose adding) ── -->
-                        <Border Classes="section-card" IsVisible="{Binding Gallery.ModelPreviews.Count}">
-                            <StackPanel>
-                                <Grid Margin="16,14,16,12" ColumnDefinitions="*,Auto">
-                                    <TextBlock Classes="card-title" Text="{DynamicResource ModelsSection}" VerticalAlignment="Center"/>
-                                    <TextBlock Grid.Column="1" Classes="card-meta" VerticalAlignment="Center">
-                                        <Run Text="{Binding Gallery.ModelPreviews.Count}"/>
-                                        <Run Text=" model(s)"/>
-                                    </TextBlock>
-                                </Grid>
-                                <Border Height="1" Background="{DynamicResource BorderSubtleBrush}"/>
-                                <StackPanel Margin="16" Spacing="10">
-                                    <TextBlock Text="{DynamicResource ModelsReadOnlyHint}"
-                                               Foreground="{DynamicResource TextMutedBrush}" FontSize="11"
-                                               TextWrapping="Wrap"/>
-                                    <ItemsControl ItemsSource="{Binding Gallery.ModelPreviews}"
-                                                  ItemTemplate="{StaticResource PreviewItemTemplate}"/>
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- ── Card: Images ── -->
-                        <Border Classes="section-card">
-                            <StackPanel>
-                                <Grid Margin="16,14,16,12" ColumnDefinitions="*,Auto,Auto">
-                                    <TextBlock Classes="card-title" Text="{DynamicResource ImagesSection}" VerticalAlignment="Center"/>
-                                    <TextBlock Grid.Column="1" Classes="card-meta" VerticalAlignment="Center" Margin="0,0,12,0">
-                                        <Run Text="{Binding Gallery.ImagePreviews.Count}"/>
-                                        <Run Text=" image(s)"/>
-                                    </TextBlock>
-                                    <Button Grid.Column="2"
-                                            Command="{Binding Gallery.AddImagePreviewCommand}"
-                                            Background="{DynamicResource AccentPrimaryGradientBrush}"
-                                            Foreground="White" FontWeight="SemiBold"
-                                            BorderThickness="0" CornerRadius="6"
-                                            Padding="12,6" FontSize="13">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <icons:MaterialIcon Kind="ImagePlusOutline" Width="14" Height="14"/>
-                                            <TextBlock Text="{DynamicResource ChooseImage}" VerticalAlignment="Center"/>
-                                        </StackPanel>
-                                    </Button>
-                                </Grid>
-                                <Border Height="1" Background="{DynamicResource BorderSubtleBrush}"/>
-                                <StackPanel Margin="16" Spacing="10">
-                                    <TextBlock Text="{DynamicResource NoImagesYet}"
-                                               Foreground="{DynamicResource TextMutedBrush}" FontSize="12"
-                                               HorizontalAlignment="Center" Margin="0,12"
-                                               IsVisible="{Binding !Gallery.ImagePreviews.Count}"/>
-                                    <ItemsControl ItemsSource="{Binding Gallery.ImagePreviews}"
-                                                  ItemTemplate="{StaticResource PreviewItemTemplate}"/>
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
+                        <sections:PreviewGalleryView DataContext="{Binding Gallery}" ShowPendingUpload="True"/>
                     </StackPanel>
                 </ScrollViewer>
 
@@ -1597,210 +775,40 @@
                                        TextWrapping="Wrap" Margin="0,4,0,0"/>
                         </StackPanel>
 
-                        <!-- Scan progress: one short query per language -->
-                        <StackPanel Spacing="6" IsVisible="{Binding Translations.IsScanning}">
-                            <TextBlock Classes="card-meta">
-                                <Run Text="{DynamicResource TranslationsScanning}"/>
-                                <Run Text="{Binding Translations.ScannedCount}"/><Run Text="/"/><Run Text="{Binding Translations.ScanTotal}"/>
-                            </TextBlock>
-                            <ProgressBar Minimum="0" Height="4"
-                                         Maximum="{Binding Translations.ScanTotal}"
-                                         Value="{Binding Translations.ScannedCount}"/>
-                        </StackPanel>
-
-                        <Border IsVisible="{Binding Translations.Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                                Background="#1FC23B2E" Padding="8" CornerRadius="4"
-                                BorderBrush="{DynamicResource FeedbackDangerBrush}" BorderThickness="1">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <icons:MaterialIcon Kind="AlertCircleOutline" Width="14" Height="14"
-                                                    Foreground="{DynamicResource FeedbackDangerTextBrush}"
-                                                    VerticalAlignment="Center"/>
-                                <TextBlock Text="{Binding Translations.Error}" TextWrapping="Wrap"
-                                           Foreground="{DynamicResource FeedbackDangerTextBrush}" FontSize="12"/>
-                            </StackPanel>
-                        </Border>
-
-                        <Grid ColumnDefinitions="240,*">
-
-                            <!-- ── Card: Languages ── -->
-                            <Border Grid.Column="0" Classes="section-card" VerticalAlignment="Top">
-                                <StackPanel>
-                                    <Grid Margin="16,14,16,12" ColumnDefinitions="*,Auto">
-                                        <TextBlock Classes="card-title" Text="{DynamicResource TranslationsLanguages}" VerticalAlignment="Center"/>
-                                        <TextBlock Grid.Column="1" Classes="card-meta"
-                                                   Text="{Binding Translations.TranslatedCount}"
-                                                   VerticalAlignment="Center"/>
-                                    </Grid>
-                                    <Border Height="1" Background="{DynamicResource BorderSubtleBrush}"/>
-                                    <StackPanel Margin="8" Spacing="4">
-                                        <!-- Base language: edited in the Info section -->
-                                        <StackPanel Margin="10,6">
-                                            <TextBlock Text="{Binding Translations.BaseLanguage.NativeName}"
-                                                       FontSize="13" FontWeight="Medium"
-                                                       Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                            <TextBlock Text="{DynamicResource TranslationsBaseHint}"
-                                                       FontSize="11" Foreground="{DynamicResource TextMutedBrush}"/>
-                                        </StackPanel>
-
-                                        <ListBox ItemsSource="{Binding Translations.Entries}"
-                                                 SelectedItem="{Binding Translations.Selected}"
-                                                 Background="Transparent">
-                                            <ListBox.Styles>
-                                                <Style Selector="ListBoxItem">
-                                                    <Setter Property="Padding" Value="10,8"/>
-                                                    <Setter Property="CornerRadius" Value="6"/>
-                                                </Style>
-                                            </ListBox.Styles>
-                                            <ListBox.ItemTemplate>
-                                                <DataTemplate DataType="editor:TranslationEntryViewModel">
-                                                    <Grid ColumnDefinitions="*,Auto,Auto">
-                                                        <TextBlock Text="{Binding Language.NativeName}"
-                                                                   FontSize="13"
-                                                                   TextTrimming="CharacterEllipsis"
-                                                                   VerticalAlignment="Center"/>
-                                                        <!-- Blank on Steam: visitors in this language see nothing -->
-                                                        <icons:MaterialIcon Grid.Column="1" Kind="AlertCircleOutline"
-                                                                            Width="14" Height="14" Margin="8,0,0,0"
-                                                                            Foreground="{DynamicResource FeedbackDangerTextBrush}"
-                                                                            VerticalAlignment="Center"
-                                                                            IsVisible="{Binding IsEmptyOnSteam}"/>
-                                                        <!-- Unsent changes -->
-                                                        <Ellipse Grid.Column="2" Width="8" Height="8"
-                                                                 Margin="8,0,0,0"
-                                                                 Fill="{DynamicResource AccentPrimaryBrush}"
-                                                                 VerticalAlignment="Center"
-                                                                 IsVisible="{Binding IsDirty}"/>
-                                                    </Grid>
-                                                </DataTemplate>
-                                            </ListBox.ItemTemplate>
-                                        </ListBox>
-
-                                        <TextBlock Text="{DynamicResource TranslationsEmpty}"
-                                                   Foreground="{DynamicResource TextMutedBrush}"
-                                                   FontSize="12" TextWrapping="Wrap"
-                                                   Margin="10,4">
-                                            <TextBlock.IsVisible>
-                                                <MultiBinding Converter="{x:Static BoolConverters.And}">
-                                                    <Binding Path="!Translations.HasEntries"/>
-                                                    <Binding Path="!Translations.IsScanning"/>
-                                                </MultiBinding>
-                                            </TextBlock.IsVisible>
-                                        </TextBlock>
-
-                                        <ComboBox ItemsSource="{Binding Translations.AvailableLanguages}"
-                                                  SelectedItem="{Binding Translations.LanguageToAdd}"
-                                                  PlaceholderText="{DynamicResource AddLanguage}"
-                                                  HorizontalAlignment="Stretch"
-                                                  Margin="0,6,0,0">
-                                            <ComboBox.ItemTemplate>
-                                                <DataTemplate DataType="workshop:SteamLanguage">
-                                                    <TextBlock Text="{Binding NativeName}"/>
-                                                </DataTemplate>
-                                            </ComboBox.ItemTemplate>
-                                        </ComboBox>
-                                    </StackPanel>
-                                </StackPanel>
-                            </Border>
-
-                            <!-- ── Card: Selected language ── -->
-                            <Border Grid.Column="1" Classes="section-card" Margin="16,0,0,0" VerticalAlignment="Top">
-                                <Panel>
-                                    <TextBlock Text="{DynamicResource TranslationSelectHint}"
-                                               Foreground="{DynamicResource TextMutedBrush}"
-                                               FontSize="12" TextWrapping="Wrap"
-                                               HorizontalAlignment="Center"
-                                               Margin="24,32"
-                                               IsVisible="{Binding !Translations.HasSelection}"/>
-
-                                    <StackPanel IsVisible="{Binding Translations.HasSelection}">
-                                        <Grid Margin="16,14,16,12" ColumnDefinitions="*,Auto">
-                                            <StackPanel VerticalAlignment="Center" Spacing="2">
-                                                <TextBlock Classes="card-title" Text="{Binding Translations.Selected.Language.NativeName, FallbackValue=''}"/>
-                                                <TextBlock Classes="card-meta"
-                                                           Text="{DynamicResource TranslationModified}"
-                                                           Foreground="{DynamicResource AccentPrimaryBrush}"
-                                                           IsVisible="{Binding Translations.Selected.IsDirty, FallbackValue=False}"/>
-                                            </StackPanel>
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                                <Button Command="{Binding Translations.CopyBaseCommand}"
-                                                        IsEnabled="{Binding Translations.Selected.IsEditable, FallbackValue=False}"
-                                                        Background="{DynamicResource SurfaceElevatedBrush}"
-                                                        BorderBrush="{DynamicResource BorderSubtleBrush}"
-                                                        BorderThickness="1"
-                                                        Foreground="{DynamicResource TextPrimaryBrush}"
-                                                        CornerRadius="6" Padding="10,5" FontSize="12">
-                                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                                        <icons:MaterialIcon Kind="ContentCopy" Width="12" Height="12"/>
-                                                        <TextBlock Text="{DynamicResource CopyBaseText}" VerticalAlignment="Center"/>
-                                                    </StackPanel>
-                                                </Button>
-                                                <!-- Only a language never sent: Steam cannot delete a translation -->
-                                                <Button Command="{Binding Translations.RemoveCommand}"
-                                                        CommandParameter="{Binding Translations.Selected}"
-                                                        IsVisible="{Binding !Translations.Selected.ExistsOnSteam, FallbackValue=False}"
-                                                        Background="Transparent"
-                                                        BorderBrush="{DynamicResource BorderSubtleBrush}"
-                                                        BorderThickness="1"
-                                                        Foreground="{DynamicResource FeedbackDangerTextBrush}"
-                                                        CornerRadius="6" Padding="10,5" FontSize="12">
-                                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                                        <icons:MaterialIcon Kind="TrashCanOutline" Width="12" Height="12"/>
-                                                        <TextBlock Text="{DynamicResource RemoveTranslation}" VerticalAlignment="Center"/>
-                                                    </StackPanel>
-                                                </Button>
-                                            </StackPanel>
-                                        </Grid>
-                                        <Border Height="1" Background="{DynamicResource BorderSubtleBrush}"/>
-
-                                        <StackPanel Margin="16" Spacing="16">
-                                            <Border IsVisible="{Binding Translations.Selected.IsEmptyOnSteam, FallbackValue=False}"
-                                                    Background="#1FC23B2E" Padding="8" CornerRadius="4"
-                                                    BorderBrush="{DynamicResource FeedbackDangerBrush}" BorderThickness="1">
-                                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                                    <icons:MaterialIcon Kind="AlertCircleOutline" Width="14" Height="14"
-                                                                        Foreground="{DynamicResource FeedbackDangerTextBrush}"
-                                                                        VerticalAlignment="Top"/>
-                                                    <TextBlock Text="{DynamicResource TranslationEmptyOnSteam}" TextWrapping="Wrap"
-                                                               Foreground="{DynamicResource FeedbackDangerTextBrush}" FontSize="12"/>
-                                                </StackPanel>
-                                            </Border>
-
-                                            <StackPanel Spacing="6" IsVisible="{Binding Translations.Selected.IsLoading, FallbackValue=False}">
-                                                <TextBlock Classes="card-meta" Text="{DynamicResource TranslationLoading}"/>
-                                                <ProgressBar IsIndeterminate="True" Height="4"/>
-                                            </StackPanel>
-
-                                            <StackPanel Spacing="16" IsEnabled="{Binding Translations.Selected.IsEditable, FallbackValue=False}">
-                                                <StackPanel>
-                                                    <TextBlock Classes="field-label" Text="{DynamicResource Title}"/>
-                                                    <!-- The base title as placeholder: it is what an empty field falls back to -->
-                                                    <TextBox Text="{Binding Translations.Selected.Title, FallbackValue=''}" MaxLength="128"
-                                                             PlaceholderText="{Binding Title}"/>
-                                                </StackPanel>
-                                                <StackPanel>
-                                                    <TextBlock Classes="field-label" Text="{DynamicResource Description}"/>
-                                                    <controls:MarkupEditorControl Text="{Binding Translations.Selected.Description, FallbackValue=''}"
-                                                                                  EditorHeight="200"
-                                                                                  PlaceholderText="{DynamicResource DescriptionPlaceholder}"/>
-                                                </StackPanel>
-                                                <TextBlock Classes="card-meta" Text="{DynamicResource TranslationFallbackHint}"/>
-                                                <TextBlock Classes="card-meta" TextWrapping="Wrap"
-                                                           Text="{DynamicResource TranslationCannotDelete}"
-                                                           IsVisible="{Binding Translations.Selected.ExistsOnSteam, FallbackValue=False}"/>
-                                            </StackPanel>
-                                        </StackPanel>
-                                    </StackPanel>
-                                </Panel>
-                            </Border>
-                        </Grid>
+                        <sections:TranslationsView DataContext="{Binding Translations}"
+                                           BaseTitle="{Binding $parent[UserControl].((vm:ItemEditorViewModel)DataContext).Title}"/>
                     </StackPanel>
                 </ScrollViewer>
             </Grid>
         </Grid>
 
+        <StackPanel Grid.Row="1">
+        <!-- Uploaded but hidden on Steam until the account accepts the Workshop legal agreement -->
+        <Border IsVisible="{Binding NeedsLegalAgreement}"
+                Background="#1FC23B2E" Padding="16" Margin="24,0,24,16" CornerRadius="8"
+                BorderBrush="{DynamicResource FeedbackDangerBrush}" BorderThickness="1">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <icons:MaterialIcon Kind="AlertCircleOutline" Width="18" Height="18"
+                                    Foreground="{DynamicResource FeedbackDangerBrush}"
+                                    VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Margin="12,0" TextWrapping="Wrap" VerticalAlignment="Center"
+                           Text="{DynamicResource WorkshopLegalAgreementRequired}"
+                           Foreground="{DynamicResource FeedbackDangerTextBrush}"/>
+                <Button Grid.Column="2" Command="{Binding OpenLegalAgreementCommand}"
+                        Background="{DynamicResource SurfaceElevatedBrush}"
+                        BorderBrush="{DynamicResource BorderSubtleBrush}" BorderThickness="1"
+                        Foreground="{DynamicResource TextPrimaryBrush}"
+                        CornerRadius="6" Padding="12,6" FontSize="13">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="{DynamicResource WorkshopLegalAgreementOpen}" VerticalAlignment="Center"/>
+                        <icons:MaterialIcon Kind="OpenInNew" Width="11" Height="11" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+
         <!-- Error message -->
-        <Border Grid.Row="1"
-                IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+        <Border IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                 Background="#1FC23B2E" Padding="16" Margin="24,0,24,16" CornerRadius="8"
                 BorderBrush="{DynamicResource FeedbackDangerBrush}" BorderThickness="1">
             <StackPanel Orientation="Horizontal" Spacing="12">
@@ -1810,6 +818,7 @@
                 <TextBlock Text="{Binding ErrorMessage}" Foreground="{DynamicResource FeedbackDangerTextBrush}"/>
             </StackPanel>
         </Border>
+        </StackPanel>
 
         <!-- Delete confirmation overlay -->
         <Border Grid.RowSpan="2"

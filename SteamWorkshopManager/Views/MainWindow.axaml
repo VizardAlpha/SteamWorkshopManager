@@ -72,7 +72,10 @@
                             FontSize="12">
                         <Panel>
                             <TextBlock Text="{DynamicResource UpdateInstall}" IsVisible="{Binding Updates.CanInstallInApp}"/>
-                            <TextBlock Text="{DynamicResource Download}" IsVisible="{Binding !Updates.CanInstallInApp}"/>
+                            <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding !Updates.CanInstallInApp}">
+                                <TextBlock Text="{DynamicResource Download}" VerticalAlignment="Center"/>
+                                <icons:MaterialIcon Kind="OpenInNew" Width="11" Height="11" VerticalAlignment="Center"/>
+                            </StackPanel>
                         </Panel>
                     </Button>
                     <Button Grid.Column="2"
@@ -198,6 +201,15 @@
                              CornerRadius="2"
                              Background="{DynamicResource BorderStrongBrush}"
                              Foreground="{DynamicResource AccentPrimaryGradientBrush}"/>
+                <!-- Only uploads that can be stopped (mod.io) offer it -->
+                <Button Command="{Binding Upload.CancelCommand}"
+                        IsVisible="{Binding Upload.CanCancel}"
+                        Content="{DynamicResource Cancel}"
+                        HorizontalAlignment="Right"
+                        Background="Transparent"
+                        BorderBrush="{DynamicResource BorderStrongBrush}" BorderThickness="1"
+                        Foreground="{DynamicResource TextPrimaryBrush}"
+                        CornerRadius="6" Padding="12,5" FontSize="12"/>
             </StackPanel>
         </Border>
 

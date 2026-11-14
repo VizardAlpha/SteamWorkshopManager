@@ -4,6 +4,7 @@ using System.IO.Pipes;
 using System.Threading;
 using System.Threading.Tasks;
 using StreamJsonRpc;
+using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Steam.Worker.Contracts;
 using SteamWorkshopManager.Services.Steam.Worker.Contracts.Dtos;
@@ -37,11 +38,6 @@ public sealed class SteamWorkerClient : IAsyncDisposable
     public ISteamWorker Proxy { get; private set; } = null!;
 
     /// <summary>
-    /// <c>true</c> once the worker has connected and the proxy is usable.
-    /// </summary>
-    public bool IsConnected => _rpc is not null && !_rpc.IsDisposed;
-
-    /// <summary>
     /// Fired when the worker process exits without a preceding
     /// <see cref="MarkIntentionalShutdown"/> call - i.e. a crash. Handlers run
     /// on the <see cref="Process.Exited"/> threadpool callback, so they must
@@ -63,7 +59,7 @@ public sealed class SteamWorkerClient : IAsyncDisposable
     public async Task StartAsync(uint appId, CancellationToken ct = default)
     {
         var pipeName = $"swm-worker-{Guid.NewGuid():N}";
-        var workerArgs = new SteamWorkerArgs(pipeName, appId, Environment.ProcessId);
+        var workerArgs = new SteamWorkerArgs(pipeName, appId);
 
         _pipe = new NamedPipeServerStream(
             pipeName,
@@ -90,9 +86,8 @@ public sealed class SteamWorkerClient : IAsyncDisposable
         _process = Process.Start(psi)
                    ?? throw new InvalidOperationException("Failed to spawn Steam worker process.");
 
-        // Wire the exit-watcher before we block on the pipe handshake - if the
-        // child dies during startup the event fires and we surface a crash
-        // instead of hanging on a never-completing connect.
+        // Subscribed before the handshake so a crash during startup is not missed.
+        // The connect below still waits for its own timeout.
         _process.EnableRaisingEvents = true;
         _process.Exited += OnProcessExited;
 
@@ -112,15 +107,10 @@ public sealed class SteamWorkerClient : IAsyncDisposable
 
         // Fire-and-forget: the worker holds this call open for the lifetime
         // of the session so its IProgress<LogEntryDto> sink stays valid.
+        // Direct: Progress<T> would post every worker log line to the UI context.
         _ = Proxy.SetLogSinkAsync(
             new DirectProgress<LogEntryDto>(IngestWorkerLog),
             LogService.Instance.IsDebugEnabled);
-    }
-
-    // Progress<T> would capture the UI context and post every worker log line to it.
-    private sealed class DirectProgress<T>(Action<T> handler) : IProgress<T>
-    {
-        public void Report(T value) => handler(value);
     }
 
     private static void IngestWorkerLog(LogEntryDto dto) =>

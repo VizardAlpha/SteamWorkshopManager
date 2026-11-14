@@ -60,6 +60,21 @@ public partial class PreviewGalleryViewModel(IFileDialogService fileDialogServic
         }
     }
 
+    /// <summary>After a save: drops pending edits and old indices, then reloads what Steam now has.</summary>
+    public void Rebase(IEnumerable<WorkshopPreview> previews)
+    {
+        var fresh = previews.ToList();
+        var stale = ImagePreviews.Concat(VideoPreviews).Concat(ModelPreviews).Except(fresh).ToList();
+        ImagePreviews.Clear();
+        VideoPreviews.Clear();
+        ModelPreviews.Clear();
+        foreach (var preview in stale) preview.Thumbnail?.Dispose();
+
+        _originalExistingIndices.Clear();
+        _removedExistingIndices.Clear();
+        LoadExisting(fresh);
+    }
+
     [RelayCommand]
     private async Task AddImagePreviewAsync()
     {

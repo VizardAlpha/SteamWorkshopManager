@@ -424,10 +424,13 @@
                                                 Background="Transparent" BorderThickness="0"
                                                 Command="{Binding OpenStatsSiteCommand}">
                                             <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                                <icons:MaterialIcon Kind="ChartBar" Width="11" Height="11"
+                                                                    Foreground="{DynamicResource AccentPrimaryBrush}"
+                                                                    VerticalAlignment="Center"/>
                                                 <TextBlock Text="{DynamicResource ViewLiveStats}"
                                                            FontSize="12"
                                                            Foreground="{DynamicResource AccentPrimaryBrush}"/>
-                                                <icons:MaterialIcon Kind="ChartBar" Width="11" Height="11"
+                                                <icons:MaterialIcon Kind="OpenInNew" Width="11" Height="11"
                                                                     Foreground="{DynamicResource AccentPrimaryBrush}"
                                                                     VerticalAlignment="Center"/>
                                             </StackPanel>
@@ -1041,6 +1044,9 @@
                                                     <TextBlock Text="{DynamicResource Download}"
                                                                IsVisible="{Binding !Updates.CanInstallInApp}"
                                                                VerticalAlignment="Center"/>
+                                                    <icons:MaterialIcon Kind="OpenInNew" Width="11" Height="11"
+                                                                        IsVisible="{Binding !Updates.CanInstallInApp}"
+                                                                        VerticalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                         </StackPanel>
@@ -1137,6 +1143,9 @@
                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                         <icons:MaterialIcon Kind="Github" Width="14" Height="14"/>
                                         <TextBlock Text="{DynamicResource OpenGitHub}" VerticalAlignment="Center"/>
+                                        <icons:MaterialIcon Kind="OpenInNew" Width="11" Height="11"
+                                                            Foreground="{DynamicResource TextMutedBrush}"
+                                                            VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Button>
                                 <Button Command="{Binding OpenDiscordCommand}"
@@ -1150,6 +1159,9 @@
                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                         <icons:MaterialIcon Kind="ForumOutline" Width="14" Height="14"/>
                                         <TextBlock Text="{DynamicResource JoinDiscord}" VerticalAlignment="Center"/>
+                                        <icons:MaterialIcon Kind="OpenInNew" Width="11" Height="11"
+                                                            Foreground="{DynamicResource TextMutedBrush}"
+                                                            VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Button>
                                 <Button Command="{Binding OpenChangelogCommand}"
@@ -1163,6 +1175,9 @@
                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                         <icons:MaterialIcon Kind="FileDocumentOutline" Width="14" Height="14"/>
                                         <TextBlock Text="{DynamicResource OpenChangelog}" VerticalAlignment="Center"/>
+                                        <icons:MaterialIcon Kind="OpenInNew" Width="11" Height="11"
+                                                            Foreground="{DynamicResource TextMutedBrush}"
+                                                            VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Button>
                                 <Button Command="{Binding OpenThirdPartyNoticesCommand}"
@@ -1176,6 +1191,9 @@
                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                         <icons:MaterialIcon Kind="ScaleBalance" Width="14" Height="14"/>
                                         <TextBlock Text="{DynamicResource OpenThirdPartyNotices}" VerticalAlignment="Center"/>
+                                        <icons:MaterialIcon Kind="OpenInNew" Width="11" Height="11"
+                                                            Foreground="{DynamicResource TextMutedBrush}"
+                                                            VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Button>
                             </StackPanel>

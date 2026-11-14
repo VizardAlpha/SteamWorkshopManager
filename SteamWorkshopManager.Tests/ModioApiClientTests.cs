@@ -298,4 +298,33 @@ public class ModioApiClientTests
         File.WriteAllBytes(path, Enumerable.Range(0, size).Select(i => (byte)i).ToArray());
         return path;
     }
+
+    [TestMethod]
+    public async Task UploadModfile_PartFails_DeletesTheUploadSession()
+    {
+        var (client, handler, _) = Create(threshold: 100, partSize: 400);
+        var zip = TempFile(1000);
+        try
+        {
+            handler.Responses.Enqueue(Json("""{"upload_id":"u-123","status":0}"""));
+            handler.Responses.Enqueue(Json("{}"));
+            handler.Responses.Enqueue(Json("""{"error":{"code":500,"message":"boom"}}""", HttpStatusCode.InternalServerError));
+            handler.Responses.Enqueue(Json("{}", HttpStatusCode.NoContent));
+
+            try
+            {
+                await client.UploadModfileAsync(Auth, 5, 9, zip, null, null);
+                Assert.Fail("The failed part should surface");
+            }
+            catch (ModioApiException)
+            {
+            }
+
+            var last = handler.Requests[^1];
+            Assert.AreEqual(HttpMethod.Delete, last.Method);
+            Assert.AreEqual("/v1/games/5/mods/9/files/multipart", last.Uri.AbsolutePath);
+            StringAssert.Contains(last.Uri.Query, "upload_id=u-123");
+        }
+        finally { File.Delete(zip); }
+    }
 }

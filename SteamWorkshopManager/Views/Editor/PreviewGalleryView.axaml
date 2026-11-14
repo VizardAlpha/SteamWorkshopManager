@@ -1,0 +1,217 @@
+<!-- Additional previews (videos, models, images) shared by the Steam create and edit views. -->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:editor="using:SteamWorkshopManager.ViewModels.Editor"
+             xmlns:sections="using:SteamWorkshopManager.Views.Editor"
+             xmlns:models="using:SteamWorkshopManager.Models"
+             xmlns:behaviors="using:SteamWorkshopManager.Behaviors"
+             xmlns:icons="using:Material.Icons.Avalonia"
+             x:Class="SteamWorkshopManager.Views.Editor.PreviewGalleryView"
+             x:DataType="editor:PreviewGalleryViewModel">
+
+    <UserControl.Resources>
+        <DataTemplate x:Key="PreviewItemTemplate" DataType="models:WorkshopPreview">
+            <Border Classes="reorder-row"
+                    behaviors:ReorderZone.Command="{Binding $parent[UserControl].((editor:PreviewGalleryViewModel)DataContext).ReorderPreviewCommand}"
+                    Background="{DynamicResource SurfaceElevatedBrush}"
+                    BorderBrush="{DynamicResource BorderSubtleBrush}"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Padding="10,8" Margin="0,0,0,4">
+                <Grid ColumnDefinitions="Auto,80,*,Auto" VerticalAlignment="Center">
+                    <icons:MaterialIcon Kind="DragVertical" Width="16" Height="16"
+                                        Margin="0,0,6,0"
+                                        VerticalAlignment="Center"
+                                        Foreground="{DynamicResource TextDisabledBrush}"
+                                        IsVisible="{Binding !IsSketchfab}"
+                                        ToolTip.Tip="{DynamicResource DragToReorder}"/>
+                    <Border Grid.Column="1" Width="80" Height="45"
+                            Background="{DynamicResource SurfaceCardBrush}"
+                            BorderBrush="{DynamicResource BorderSubtleBrush}"
+                            BorderThickness="1"
+                            CornerRadius="4" ClipToBounds="True">
+                        <Panel>
+                            <Image Source="{Binding Thumbnail}" Stretch="UniformToFill"
+                                   IsVisible="{Binding Thumbnail, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                            <icons:MaterialIcon Kind="Youtube" Width="22" Height="22"
+                                                HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                Foreground="#E62117"
+                                                IsVisible="{Binding IsVideo}"/>
+                            <icons:MaterialIcon Kind="CubeOutline" Width="22" Height="22"
+                                                HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                Foreground="{DynamicResource AccentPrimaryBrush}"
+                                                IsVisible="{Binding IsSketchfab}"/>
+                            <icons:MaterialIcon Kind="ImageOutline" Width="22" Height="22"
+                                                HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                Opacity="0.3"
+                                                Foreground="{DynamicResource TextMutedBrush}"
+                                                IsVisible="{Binding ShouldShowImagePlaceholder}"/>
+                        </Panel>
+                    </Border>
+                    <StackPanel Grid.Column="2" Margin="12,0,0,0" VerticalAlignment="Center" Spacing="2">
+                        <TextBlock Text="{Binding DisplayLabel}"
+                                   FontWeight="Medium"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   FontSize="13"
+                                   TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Text="{DynamicResource PendingUpload}"
+                                   Foreground="{DynamicResource AccentPrimaryBrush}"
+                                   FontSize="11">
+                            <TextBlock.IsVisible>
+                                <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                    <Binding Path="IsNew"/>
+                                    <Binding Path="$parent[sections:PreviewGalleryView].ShowPendingUpload"/>
+                                </MultiBinding>
+                            </TextBlock.IsVisible>
+                        </TextBlock>
+                    </StackPanel>
+                    <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+                        <Button Command="{Binding $parent[UserControl].((editor:PreviewGalleryViewModel)DataContext).MovePreviewUpCommand}"
+                                CommandParameter="{Binding}"
+                                Background="Transparent" BorderThickness="0"
+                                Padding="6,4"
+                                IsVisible="{Binding !IsSketchfab}"
+                                ToolTip.Tip="{DynamicResource MoveUp}">
+                            <icons:MaterialIcon Kind="ChevronUp" Width="12" Height="12" Foreground="{DynamicResource TextMutedBrush}"/>
+                        </Button>
+                        <Button Command="{Binding $parent[UserControl].((editor:PreviewGalleryViewModel)DataContext).MovePreviewDownCommand}"
+                                CommandParameter="{Binding}"
+                                Background="Transparent" BorderThickness="0"
+                                Padding="6,4"
+                                IsVisible="{Binding !IsSketchfab}"
+                                ToolTip.Tip="{DynamicResource MoveDown}">
+                            <icons:MaterialIcon Kind="ChevronDown" Width="12" Height="12" Foreground="{DynamicResource TextMutedBrush}"/>
+                        </Button>
+                        <Button Command="{Binding $parent[UserControl].((editor:PreviewGalleryViewModel)DataContext).RemovePreviewCommand}"
+                                CommandParameter="{Binding}"
+                                Background="Transparent" BorderThickness="0"
+                                Padding="6,4"
+                                Foreground="{DynamicResource TextMutedBrush}"
+                                ToolTip.Tip="{DynamicResource RemovePreview}">
+                            <icons:MaterialIcon Kind="Close" Width="14" Height="14"/>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <UserControl.Styles>
+        <StyleInclude Source="avares://SteamWorkshopManager/Themes/EditorStyles.axaml"/>
+    </UserControl.Styles>
+
+    <StackPanel Spacing="14">
+
+        <!-- Validation error pill -->
+        <Border IsVisible="{Binding PreviewError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                Background="#1FC23B2E" Padding="8" CornerRadius="4"
+                BorderBrush="{DynamicResource FeedbackDangerBrush}" BorderThickness="1">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+                <icons:MaterialIcon Kind="AlertCircleOutline" Width="14" Height="14"
+                                    Foreground="{DynamicResource FeedbackDangerTextBrush}"
+                                    VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding PreviewError}"
+                           Foreground="{DynamicResource FeedbackDangerTextBrush}" FontSize="12"/>
+            </StackPanel>
+        </Border>
+
+        <!-- ── Card: YouTube videos ── -->
+        <Border Classes="section-card">
+            <StackPanel>
+                <Grid Margin="16,14,16,12" ColumnDefinitions="*,Auto">
+                    <TextBlock Classes="card-title" Text="{DynamicResource YouTubeSection}" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="1" Classes="card-meta" VerticalAlignment="Center">
+                        <Run Text="{Binding VideoPreviews.Count}"/>
+                        <Run Text=" video(s)"/>
+                    </TextBlock>
+                </Grid>
+                <Border Height="1" Background="{DynamicResource BorderSubtleBrush}"/>
+                <StackPanel Margin="16" Spacing="10">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBox Text="{Binding NewYouTubeInput}"
+                                 PlaceholderText="{DynamicResource YouTubePlaceholder}"/>
+                        <Button Grid.Column="1"
+                                Command="{Binding AddYouTubeVideoCommand}"
+                                IsEnabled="{Binding IsYouTubeInputValid}"
+                                Background="{DynamicResource AccentPrimaryGradientBrush}"
+                                Foreground="White" FontWeight="SemiBold"
+                                BorderThickness="0" CornerRadius="6"
+                                Padding="14,7" FontSize="13"
+                                Margin="12,0,0,0">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <icons:MaterialIcon Kind="Plus" Width="14" Height="14"/>
+                                <TextBlock Text="{DynamicResource AddVideo}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                    <TextBlock Text="{DynamicResource NoVideosYet}"
+                               Foreground="{DynamicResource TextMutedBrush}" FontSize="12"
+                               HorizontalAlignment="Center" Margin="0,12"
+                               IsVisible="{Binding !VideoPreviews.Count}"/>
+                    <ItemsControl ItemsSource="{Binding VideoPreviews}"
+                                  ItemTemplate="{StaticResource PreviewItemTemplate}"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- ── Card: 3D models (read-only - Steam SDK doesn't expose adding) ── -->
+        <Border Classes="section-card" IsVisible="{Binding ModelPreviews.Count}">
+            <StackPanel>
+                <Grid Margin="16,14,16,12" ColumnDefinitions="*,Auto">
+                    <TextBlock Classes="card-title" Text="{DynamicResource ModelsSection}" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="1" Classes="card-meta" VerticalAlignment="Center">
+                        <Run Text="{Binding ModelPreviews.Count}"/>
+                        <Run Text=" model(s)"/>
+                    </TextBlock>
+                </Grid>
+                <Border Height="1" Background="{DynamicResource BorderSubtleBrush}"/>
+                <StackPanel Margin="16" Spacing="10">
+                    <TextBlock Text="{DynamicResource ModelsReadOnlyHint}"
+                               Foreground="{DynamicResource TextMutedBrush}" FontSize="11"
+                               TextWrapping="Wrap"/>
+                    <ItemsControl ItemsSource="{Binding ModelPreviews}"
+                                  ItemTemplate="{StaticResource PreviewItemTemplate}"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- ── Card: Images ── -->
+        <Border Classes="section-card">
+            <StackPanel>
+                <Grid Margin="16,14,16,12" ColumnDefinitions="*,Auto,Auto">
+                    <TextBlock Classes="card-title" Text="{DynamicResource ImagesSection}" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="1" Classes="card-meta" VerticalAlignment="Center" Margin="0,0,12,0">
+                        <Run Text="{Binding ImagePreviews.Count}"/>
+                        <Run Text=" image(s)"/>
+                    </TextBlock>
+                    <Button Grid.Column="2"
+                            Command="{Binding AddImagePreviewCommand}"
+                            Background="{DynamicResource AccentPrimaryGradientBrush}"
+                            Foreground="White" FontWeight="SemiBold"
+                            BorderThickness="0" CornerRadius="6"
+                            Padding="12,6" FontSize="13">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <icons:MaterialIcon Kind="ImagePlusOutline" Width="14" Height="14"/>
+                            <TextBlock Text="{DynamicResource ChooseImage}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+                <Border Height="1" Background="{DynamicResource BorderSubtleBrush}"/>
+                <StackPanel Margin="16" Spacing="10">
+                    <ContentControl Classes="dropzone" Padding="12"
+                                    behaviors:DropZone.Accepts="Images"
+                                    behaviors:DropZone.Command="{Binding PreviewImagesDroppedCommand}">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="{DynamicResource NoImagesYet}"
+                                       Foreground="{DynamicResource TextMutedBrush}" FontSize="12"
+                                       HorizontalAlignment="Center" Margin="0,12"
+                                       IsVisible="{Binding !ImagePreviews.Count}"/>
+                            <ItemsControl ItemsSource="{Binding ImagePreviews}"
+                                          ItemTemplate="{StaticResource PreviewItemTemplate}"/>
+                        </StackPanel>
+                    </ContentControl>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

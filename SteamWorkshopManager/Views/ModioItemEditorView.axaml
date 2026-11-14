@@ -11,7 +11,7 @@
              x:DataType="vm:ModioItemEditorViewModel">
 
     <UserControl.Styles>
-        <StyleInclude Source="avares://SteamWorkshopManager/Themes/ModioEditorStyles.axaml"/>
+        <StyleInclude Source="avares://SteamWorkshopManager/Themes/EditorStyles.axaml"/>
     </UserControl.Styles>
 
     <Grid RowDefinitions="*,Auto">

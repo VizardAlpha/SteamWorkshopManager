@@ -40,11 +40,21 @@ public abstract record PreviewOp
 /// <see cref="Result"/> then carries Steam's own reason. Without it the reason is
 /// lost behind a generic "creation failed" message.
 /// </summary>
-public record CreateItemOutcome(PublishedFileId_t? FileId, EResult? Result = null)
+public record CreateItemOutcome(PublishedFileId_t? FileId, EResult? Result = null, bool NeedsLegalAgreement = false)
 {
-    public static CreateItemOutcome Created(PublishedFileId_t fileId) => new(fileId);
+    public static CreateItemOutcome Created(PublishedFileId_t fileId, bool needsLegalAgreement = false) =>
+        new(fileId, null, needsLegalAgreement);
 
     public static CreateItemOutcome Failed(EResult? result = null) => new(null, result);
+}
+
+/// <summary>
+/// Result of an update. <see cref="NeedsLegalAgreement"/>: Steam took the upload but keeps the item
+/// hidden until the account accepts the Workshop legal agreement.
+/// </summary>
+public record UpdateItemOutcome(bool Success, bool NeedsLegalAgreement = false)
+{
+    public static implicit operator UpdateItemOutcome(bool success) => new(success);
 }
 
 public interface ISteamService
@@ -64,7 +74,7 @@ public interface ISteamService
         string? previewImagePath, VisibilityType visibility, List<string> tags, string? changelog,
         IProgress<UploadProgress>? progress = null, string? branchMin = null, string? branchMax = null,
         IReadOnlyList<PreviewOp>? previewOps = null);
-    Task<bool> UpdateItemAsync(PublishedFileId_t fileId, string? title, string? description,
+    Task<UpdateItemOutcome> UpdateItemAsync(PublishedFileId_t fileId, string? title, string? description,
         string? contentFolderPath, string? previewImagePath, VisibilityType? visibility,
         List<string>? tags, string? changelog, IProgress<UploadProgress>? progress = null,
         string? branchMin = null, string? branchMax = null,

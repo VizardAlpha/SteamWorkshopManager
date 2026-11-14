@@ -20,7 +20,7 @@
 2. Verifies the zip's SHA-256; a mismatch aborts the install.
 3. Extracts it under `%LocalAppData%/SteamWorkshopManager/updates/<version>/`.
 4. Starts the extracted executable with `--apply-update --target <install folder> --pid <current process>` and closes the app.
-5. The new copy waits for the old process to exit, copies itself over the install folder (retrying while the worker releases files), then restarts the app. On failure it restarts the previous version.
+5. The new copy waits for the old process to exit, copies itself over the install folder (retrying while the worker releases files), then restarts the app. The copy is all or nothing: each replaced file is first moved to `.update-backup/` and put back if any step fails, so a failure restarts the previous version intact. A successful update writes `update-manifest.txt` (the files it installed); the next update uses it to delete files the new version no longer ships, and never touches files it did not install.
 
 The update button falls back to opening the release page when the release has no checksums, the install folder is not writable, or the app runs through `dotnet`. In-app updates work from 1.8.10 onward.
 

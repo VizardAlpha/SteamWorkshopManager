@@ -9,6 +9,7 @@ using SteamWorkshopManager.Core.Sessions;
 using SteamWorkshopManager.Services.Steam;
 using SteamWorkshopManager.Core.Workshop;
 using SteamWorkshopManager.Models;
+using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Workshop;
 using SteamWorkshopManager.Services.Notifications;
 using Steamworks;
@@ -240,7 +241,7 @@ public partial class DependencyEditorViewModel(
     private static void OpenDependencyInBrowser(DependencyInfo? dep)
     {
         if (dep == null) return;
-        Process.Start(new ProcessStartInfo { FileName = dep.WorkshopUrl, UseShellExecute = true });
+        OpenUrl(dep.WorkshopUrl);
     }
 
     // ─── Apps (DLC / tools) ───────────────────────────────────────────────────
@@ -365,6 +366,12 @@ public partial class DependencyEditorViewModel(
     private static void OpenAppInStore(AppDependencyInfo? dep)
     {
         if (dep == null) return;
-        Process.Start(new ProcessStartInfo { FileName = dep.StoreUrl, UseShellExecute = true });
+        OpenUrl(dep.StoreUrl);
+    }
+
+    private static void OpenUrl(string url)
+    {
+        try { Process.Start(new ProcessStartInfo { FileName = url, UseShellExecute = true }); }
+        catch (Exception ex) { LogService.GetLogger<DependencyEditorViewModel>().Debug($"Failed to open {url}: {ex.Message}"); }
     }
 }

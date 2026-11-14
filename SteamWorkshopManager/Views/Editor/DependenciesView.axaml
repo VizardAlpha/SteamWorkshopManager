@@ -1,0 +1,333 @@
+<!-- Workshop and app dependency cards shared by the Steam create and edit views. -->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:editor="using:SteamWorkshopManager.ViewModels.Editor"
+             xmlns:models="using:SteamWorkshopManager.Models"
+             xmlns:icons="using:Material.Icons.Avalonia"
+             x:Class="SteamWorkshopManager.Views.Editor.DependenciesView"
+             x:DataType="editor:DependencyEditorViewModel">
+
+    <UserControl.Styles>
+        <StyleInclude Source="avares://SteamWorkshopManager/Themes/EditorStyles.axaml"/>
+    </UserControl.Styles>
+
+    <StackPanel Spacing="14">
+
+        <!-- ── Card: Workshop dependencies ── -->
+        <Border Classes="section-card">
+            <StackPanel>
+                <Grid Margin="16,14,16,12" ColumnDefinitions="*,Auto">
+                    <TextBlock Classes="card-title" Text="{DynamicResource WorkshopDependencies}" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="1" Classes="card-meta" VerticalAlignment="Center">
+                        <Run Text="{Binding Dependencies.Count}"/>
+                        <Run Text=" added"/>
+                    </TextBlock>
+                </Grid>
+                <Border Height="1" Background="{DynamicResource BorderSubtleBrush}"/>
+                <StackPanel Margin="16" Spacing="12">
+                    <!-- Input + search -->
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBox Text="{Binding NewDependencyInput}"
+                                 PlaceholderText="{DynamicResource DependencyInputPlaceholder}"/>
+                        <Button Grid.Column="1"
+                                Command="{Binding SearchDependencyCommand}"
+                                Background="{DynamicResource AccentPrimaryGradientBrush}"
+                                Foreground="White" FontWeight="SemiBold"
+                                BorderThickness="0"
+                                CornerRadius="6"
+                                Padding="14,7"
+                                FontSize="13"
+                                Margin="12,0,0,0"
+                                IsEnabled="{Binding !IsSearchingDependency}">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <icons:MaterialIcon Kind="Magnify" Width="14" Height="14"/>
+                                <TextBlock Text="{DynamicResource SearchDependency}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+
+                    <ProgressBar IsIndeterminate="True"
+                                 IsVisible="{Binding IsSearchingDependency}"
+                                 Height="4"/>
+                    <ProgressBar IsIndeterminate="True"
+                                 IsVisible="{Binding IsLoadingDependencies}"
+                                 Height="4"/>
+
+                    <!-- Preview -->
+                    <Border IsVisible="{Binding PreviewDependency, Converter={x:Static ObjectConverters.IsNotNull}}"
+                            Background="{DynamicResource SurfaceElevatedBrush}"
+                            BorderBrush="{DynamicResource AccentPrimaryBrush}"
+                            BorderThickness="1"
+                            CornerRadius="10"
+                            Padding="14,12">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="{DynamicResource ConfirmAddDependency}"
+                                           Foreground="{DynamicResource TextMutedBrush}" FontSize="11"/>
+                                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding PreviewDependency.Title}"
+                                               FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="14"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding PreviewDependency.PublishedFileId}"
+                                               Foreground="{DynamicResource TextDisabledBrush}" FontSize="11"
+                                               FontFamily="Consolas, Menlo, monospace"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                <Button Command="{Binding ConfirmAddDependencyCommand}"
+                                        Background="{DynamicResource AccentPrimaryGradientBrush}"
+                                        Foreground="White" FontWeight="SemiBold"
+                                        BorderThickness="0" CornerRadius="6"
+                                        Padding="12,6" FontSize="12"
+                                        Content="{DynamicResource AddDependency}"
+                                        IsEnabled="{Binding !IsAddingDependency}"/>
+                                <Button Command="{Binding CancelDependencyPreviewCommand}"
+                                        Background="{DynamicResource SurfaceOverlayBrush}"
+                                        BorderBrush="{DynamicResource BorderSubtleBrush}"
+                                        BorderThickness="1"
+                                        Foreground="{DynamicResource TextPrimaryBrush}"
+                                        CornerRadius="6"
+                                        Padding="12,6" FontSize="12"
+                                        Content="{DynamicResource Cancel}"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Error -->
+                    <Border IsVisible="{Binding DependencyError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                            Background="#1FC23B2E" Padding="8" CornerRadius="4"
+                            BorderBrush="{DynamicResource FeedbackDangerBrush}" BorderThickness="1">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <icons:MaterialIcon Kind="AlertCircleOutline" Width="14" Height="14"
+                                                Foreground="{DynamicResource FeedbackDangerTextBrush}"
+                                                VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding DependencyError}"
+                                       Foreground="{DynamicResource FeedbackDangerTextBrush}" FontSize="12"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Empty state -->
+                    <TextBlock Text="{DynamicResource NoDependencies}"
+                               Foreground="{DynamicResource TextMutedBrush}"
+                               FontSize="12"
+                               HorizontalAlignment="Center"
+                               Margin="0,12"
+                               IsVisible="{Binding !Dependencies.Count}"/>
+
+                    <!-- List -->
+                    <ItemsControl ItemsSource="{Binding Dependencies}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="models:DependencyInfo">
+                                <Border Background="{DynamicResource SurfaceElevatedBrush}"
+                                        BorderBrush="{DynamicResource BorderSubtleBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="6"
+                                        Padding="10,8" Margin="0,0,0,4">
+                                    <Grid ColumnDefinitions="*,Auto,Auto,Auto" VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Title}"
+                                                       FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13"
+                                                       VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding PublishedFileId}"
+                                                       Foreground="{DynamicResource TextDisabledBrush}" FontSize="11"
+                                                       FontFamily="Consolas, Menlo, monospace"
+                                                       VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+                                            <Button Command="{Binding $parent[UserControl].((editor:DependencyEditorViewModel)DataContext).MoveDependencyUpCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    Background="Transparent" BorderThickness="0"
+                                                    Padding="6,4"
+                                                    ToolTip.Tip="{DynamicResource MoveUp}">
+                                                <icons:MaterialIcon Kind="ChevronUp" Width="12" Height="12" Foreground="{DynamicResource TextMutedBrush}"/>
+                                            </Button>
+                                            <Button Command="{Binding $parent[UserControl].((editor:DependencyEditorViewModel)DataContext).MoveDependencyDownCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    Background="Transparent" BorderThickness="0"
+                                                    Padding="6,4"
+                                                    ToolTip.Tip="{DynamicResource MoveDown}">
+                                                <icons:MaterialIcon Kind="ChevronDown" Width="12" Height="12" Foreground="{DynamicResource TextMutedBrush}"/>
+                                            </Button>
+                                        </StackPanel>
+                                        <Button Grid.Column="2"
+                                                Command="{Binding $parent[UserControl].((editor:DependencyEditorViewModel)DataContext).OpenDependencyInBrowserCommand}"
+                                                CommandParameter="{Binding}"
+                                                Background="Transparent" BorderThickness="0"
+                                                Padding="6,4"
+                                                Foreground="{DynamicResource TextMutedBrush}"
+                                                ToolTip.Tip="{DynamicResource OpenInBrowser}">
+                                            <icons:MaterialIcon Kind="OpenInNew" Width="14" Height="14"/>
+                                        </Button>
+                                        <Panel Grid.Column="3" Margin="2,0,0,0">
+                                            <Button Command="{Binding $parent[UserControl].((editor:DependencyEditorViewModel)DataContext).RemoveDependencyCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    Background="Transparent" BorderThickness="0"
+                                                    Padding="6,4"
+                                                    Foreground="{DynamicResource TextMutedBrush}"
+                                                    IsVisible="{Binding !IsRemoving}">
+                                                <icons:MaterialIcon Kind="Close" Width="14" Height="14"/>
+                                            </Button>
+                                            <ProgressBar IsIndeterminate="True"
+                                                         IsVisible="{Binding IsRemoving}"
+                                                         Width="20" Height="20"/>
+                                        </Panel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- ── Card: Required Apps / DLCs ── -->
+        <Border Classes="section-card">
+            <StackPanel>
+                <Grid Margin="16,14,16,12" ColumnDefinitions="*,Auto">
+                    <TextBlock Classes="card-title" Text="{DynamicResource RequiredApps}" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="1" Classes="card-meta" VerticalAlignment="Center">
+                        <Run Text="{Binding AppDependencies.Count}"/>
+                        <Run Text=" added"/>
+                    </TextBlock>
+                </Grid>
+                <Border Height="1" Background="{DynamicResource BorderSubtleBrush}"/>
+                <StackPanel Margin="16" Spacing="12">
+                    <!-- AppID or URL input + search -->
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBox Text="{Binding NewAppIdInput}"
+                                 PlaceholderText="{DynamicResource AppIdPlaceholder}"/>
+                        <Button Grid.Column="1"
+                                Command="{Binding SearchAppCommand}"
+                                Background="{DynamicResource AccentPrimaryGradientBrush}"
+                                Foreground="White" FontWeight="SemiBold"
+                                BorderThickness="0"
+                                CornerRadius="6"
+                                Padding="14,7"
+                                FontSize="13"
+                                Margin="12,0,0,0"
+                                IsEnabled="{Binding !IsSearchingApp}">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <icons:MaterialIcon Kind="Magnify" Width="14" Height="14"/>
+                                <TextBlock Text="{DynamicResource SearchDependency}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+
+                    <ProgressBar IsIndeterminate="True"
+                                 IsVisible="{Binding IsSearchingApp}"
+                                 Height="4"/>
+
+                    <!-- App preview -->
+                    <Border IsVisible="{Binding AppPreviewInfo, Converter={x:Static ObjectConverters.IsNotNull}}"
+                            Background="{DynamicResource SurfaceElevatedBrush}"
+                            BorderBrush="{DynamicResource AccentPrimaryBrush}"
+                            BorderThickness="1"
+                            CornerRadius="10"
+                            Padding="14,12">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="{DynamicResource ConfirmAddApp}"
+                                           Foreground="{DynamicResource TextMutedBrush}" FontSize="11"/>
+                                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding AppPreviewInfo.DisplayName}"
+                                               FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="14"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding AppPreviewInfo.AppId, StringFormat='AppID: {0}'}"
+                                               Foreground="{DynamicResource TextDisabledBrush}" FontSize="11"
+                                               FontFamily="Consolas, Menlo, monospace"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                <Button Command="{Binding ConfirmAddAppCommand}"
+                                        Background="{DynamicResource AccentPrimaryGradientBrush}"
+                                        Foreground="White" FontWeight="SemiBold"
+                                        BorderThickness="0" CornerRadius="6"
+                                        Padding="12,6" FontSize="12"
+                                        Content="{DynamicResource AddDependency}"
+                                        IsEnabled="{Binding !IsAddingApp}"/>
+                                <Button Command="{Binding CancelAppPreviewCommand}"
+                                        Background="{DynamicResource SurfaceOverlayBrush}"
+                                        BorderBrush="{DynamicResource BorderSubtleBrush}"
+                                        BorderThickness="1"
+                                        Foreground="{DynamicResource TextPrimaryBrush}"
+                                        CornerRadius="6"
+                                        Padding="12,6" FontSize="12"
+                                        Content="{DynamicResource Cancel}"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- App error -->
+                    <Border IsVisible="{Binding AddAppError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                            Background="#1FC23B2E" Padding="8" CornerRadius="4"
+                            BorderBrush="{DynamicResource FeedbackDangerBrush}" BorderThickness="1">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <icons:MaterialIcon Kind="AlertCircleOutline" Width="14" Height="14"
+                                                Foreground="{DynamicResource FeedbackDangerTextBrush}"
+                                                VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding AddAppError}"
+                                       Foreground="{DynamicResource FeedbackDangerTextBrush}" FontSize="12"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Empty state -->
+                    <TextBlock Text="{DynamicResource NoAppDependencies}"
+                               Foreground="{DynamicResource TextMutedBrush}"
+                               FontSize="12"
+                               HorizontalAlignment="Center"
+                               Margin="0,12"
+                               IsVisible="{Binding !AppDependencies.Count}"/>
+
+                    <!-- App list -->
+                    <ItemsControl ItemsSource="{Binding AppDependencies}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="models:AppDependencyInfo">
+                                <Border Background="{DynamicResource SurfaceElevatedBrush}"
+                                        BorderBrush="{DynamicResource BorderSubtleBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="6"
+                                        Padding="10,8" Margin="0,0,0,4">
+                                    <Grid ColumnDefinitions="*,Auto,Auto" VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding DisplayName}"
+                                                       FontWeight="Medium" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13"
+                                                       VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding AppId, StringFormat='AppID: {0}'}"
+                                                       Foreground="{DynamicResource TextDisabledBrush}" FontSize="11"
+                                                       FontFamily="Consolas, Menlo, monospace"
+                                                       VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                        <Button Grid.Column="1"
+                                                Command="{Binding $parent[UserControl].((editor:DependencyEditorViewModel)DataContext).OpenAppInStoreCommand}"
+                                                CommandParameter="{Binding}"
+                                                Background="Transparent" BorderThickness="0"
+                                                Padding="6,4"
+                                                Foreground="{DynamicResource TextMutedBrush}"
+                                                ToolTip.Tip="{DynamicResource OpenInStore}">
+                                            <icons:MaterialIcon Kind="OpenInNew" Width="14" Height="14"/>
+                                        </Button>
+                                        <Panel Grid.Column="2" Margin="2,0,0,0">
+                                            <Button Command="{Binding $parent[UserControl].((editor:DependencyEditorViewModel)DataContext).RemoveAppDependencyCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    Background="Transparent" BorderThickness="0"
+                                                    Padding="6,4"
+                                                    Foreground="{DynamicResource TextMutedBrush}"
+                                                    IsVisible="{Binding !IsRemoving}">
+                                                <icons:MaterialIcon Kind="Close" Width="14" Height="14"/>
+                                            </Button>
+                                            <ProgressBar IsIndeterminate="True"
+                                                         IsVisible="{Binding IsRemoving}"
+                                                         Width="20" Height="20"/>
+                                        </Panel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

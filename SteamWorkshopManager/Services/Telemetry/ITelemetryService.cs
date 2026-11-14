@@ -38,7 +38,7 @@ public static class TelemetryConsent
 {
     /// <summary>
     /// Version 1: introduces the public dashboard at swm-stats.com,
-    /// CF-derived country code, and the opt-out workflow. Existing
+    /// CF-derived country code, and the opt-in workflow. Existing
     /// 1.4.x installs upgrade with version 0 and must reconfirm.
     ///
     /// Version 2: the app can now publish activity to Discord. Nothing is

@@ -1,0 +1,152 @@
+<!-- Tags card shared by the Steam create and edit views. -->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:editor="using:SteamWorkshopManager.ViewModels.Editor"
+             xmlns:models="using:SteamWorkshopManager.Models"
+             xmlns:icons="using:Material.Icons.Avalonia"
+             x:Class="SteamWorkshopManager.Views.Editor.TagsCardView"
+             x:DataType="editor:TagEditorViewModel">
+
+    <UserControl.Styles>
+        <StyleInclude Source="avares://SteamWorkshopManager/Themes/EditorStyles.axaml"/>
+    </UserControl.Styles>
+
+    <Border Classes="section-card">
+        <StackPanel>
+            <Grid Margin="16,14,16,12" ColumnDefinitions="*,Auto,Auto">
+                <TextBlock Classes="card-title" Text="{DynamicResource Tags}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Classes="card-meta"
+                           Text="{Binding TagsLastUpdatedText}"
+                           VerticalAlignment="Center"
+                           Margin="0,0,8,0"/>
+                <Button Grid.Column="2"
+                        Command="{Binding RefreshTagsCommand}"
+                        Background="Transparent"
+                        BorderBrush="{DynamicResource BorderSubtleBrush}"
+                        BorderThickness="1"
+                        Foreground="{DynamicResource TextPrimaryBrush}"
+                        CornerRadius="6"
+                        Padding="10,5"
+                        FontSize="12"
+                        IsEnabled="{Binding !IsRefreshingTags}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <icons:MaterialIcon Kind="Refresh" Width="12" Height="12"/>
+                        <TextBlock IsVisible="{Binding IsRefreshingTags}"
+                                   Text="{DynamicResource RefreshingTags}" VerticalAlignment="Center"/>
+                        <TextBlock IsVisible="{Binding !IsRefreshingTags}"
+                                   Text="{DynamicResource RefreshTags}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
+            <Border Height="1" Background="{DynamicResource BorderSubtleBrush}"/>
+            <StackPanel Margin="16" Spacing="16">
+
+                <!-- Empty-catalog banner when Steam returned nothing -->
+                <TextBlock Text="{DynamicResource NoTagsForWorkshop}"
+                           IsVisible="{Binding !HasTags}"
+                           Foreground="{DynamicResource TextMutedBrush}"
+                           FontSize="12"
+                           FontStyle="Italic"/>
+
+                <!-- Categories -->
+                <ItemsControl ItemsSource="{Binding TagCategories}"
+                              IsVisible="{Binding HasTags}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="models:TagCategory">
+                            <StackPanel Margin="0,0,0,12">
+                                <TextBlock Classes="field-label" Text="{Binding Name}"/>
+                                <!-- Dropdown variant -->
+                                <Grid IsVisible="{Binding IsDropdown}"
+                                      ColumnDefinitions="*,Auto"
+                                      MaxWidth="320"
+                                      HorizontalAlignment="Left">
+                                    <ComboBox Grid.Column="0"
+                                              ItemsSource="{Binding Tags}"
+                                              SelectedItem="{Binding SelectedTag}"
+                                              PlaceholderText="-"
+                                              HorizontalAlignment="Stretch">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate DataType="models:WorkshopTag">
+                                                <TextBlock Text="{Binding Name}"/>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                    <Button Grid.Column="1"
+                                            Command="{Binding ClearSelectedTagCommand}"
+                                            IsVisible="{Binding SelectedTag, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                            Classes="chip-remove"
+                                            Margin="4,0,0,0">
+                                        <icons:MaterialIcon Kind="Close" Width="12" Height="12"/>
+                                    </Button>
+                                </Grid>
+                                <!-- Chip variant -->
+                                <ItemsControl ItemsSource="{Binding Tags}"
+                                              IsVisible="{Binding !IsDropdown}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="models:WorkshopTag">
+                                            <ToggleButton Classes="tag-chip"
+                                                          IsChecked="{Binding IsSelected}"
+                                                          Content="{Binding Name}"/>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- Custom tags: input + chip row -->
+                <StackPanel>
+                    <TextBlock Classes="field-label" Text="{DynamicResource CustomTags}"/>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBox Text="{Binding NewCustomTag}"
+                                 PlaceholderText="{DynamicResource NewTagPlaceholder}"/>
+                        <Button Grid.Column="1"
+                                Command="{Binding AddCustomTagCommand}"
+                                Background="{DynamicResource AccentPrimaryGradientBrush}"
+                                Foreground="White"
+                                FontWeight="SemiBold"
+                                BorderThickness="0"
+                                CornerRadius="6"
+                                Padding="12,6"
+                                FontSize="13"
+                                Margin="10,0,0,0">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <icons:MaterialIcon Kind="Plus" Width="14" Height="14"/>
+                                <TextBlock Text="{DynamicResource AddCustomTag}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                    <ItemsControl ItemsSource="{Binding CustomTags}" Margin="0,10,0,0">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="models:WorkshopTag">
+                                <StackPanel Orientation="Horizontal" Spacing="0" Margin="0,0,6,6">
+                                    <ToggleButton Classes="tag-chip"
+                                                  IsChecked="{Binding IsSelected}"
+                                                  Content="{Binding Name}"
+                                                  Margin="0"/>
+                                    <Button Classes="chip-remove"
+                                            Command="{Binding $parent[UserControl].((editor:TagEditorViewModel)DataContext).RemoveCustomTagCommand}"
+                                            CommandParameter="{Binding}"
+                                            ToolTip.Tip="{DynamicResource RemoveTag}">
+                                        <icons:MaterialIcon Kind="Close" Width="11" Height="11"/>
+                                    </Button>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</UserControl>

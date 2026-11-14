@@ -10,7 +10,7 @@
              x:DataType="vm:CreateModioItemViewModel">
 
     <UserControl.Styles>
-        <StyleInclude Source="avares://SteamWorkshopManager/Themes/ModioEditorStyles.axaml"/>
+        <StyleInclude Source="avares://SteamWorkshopManager/Themes/EditorStyles.axaml"/>
         <Style Selector="Border.step-number">
             <Setter Property="Width" Value="20"/>
             <Setter Property="Height" Value="20"/>

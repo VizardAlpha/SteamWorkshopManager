@@ -117,7 +117,7 @@ public class WorkshopDownloadService
                     await fileStream.WriteAsync(buffer.AsMemory(0, read), ct);
                     bytesRead += read;
 
-                    // Throttled: one report per 8 KB chunk used to flood the UI dispatcher.
+                    // Throttled: one report per chunk used to flood the UI dispatcher.
                     if (totalBytes > 0 && lastReport.ElapsedMilliseconds >= 100)
                     {
                         progress?.Report((double)bytesRead / totalBytes);

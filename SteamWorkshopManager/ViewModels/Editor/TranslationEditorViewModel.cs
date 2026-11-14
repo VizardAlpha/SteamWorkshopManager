@@ -71,7 +71,7 @@ public partial class TranslationEditorViewModel : ViewModelBase, IDisposable
 
     public bool HasSelection => Selected is not null;
 
-    private bool IsAttached => _owner != PublishedFileId_t.Invalid;
+    public bool IsAttached => _owner != PublishedFileId_t.Invalid;
 
     /// <summary>Languages on Steam; in staged mode, the languages with text to send.</summary>
     public int TranslatedCount => Entries.Count(e => IsAttached ? e.ExistsOnSteam : e.IsDirty);

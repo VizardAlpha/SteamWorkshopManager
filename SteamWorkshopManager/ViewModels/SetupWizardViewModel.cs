@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Extensions.DependencyInjection;
 using SteamWorkshopManager.Core.Sessions;
 using SteamWorkshopManager.Core.Steam;
 using SteamWorkshopManager.Models;
@@ -113,8 +112,9 @@ public partial class SetupWizardViewModel : ViewModelBase
 
     public ModioSessionSetupViewModel Modio { get; }
 
-    /// <summary>The Steam path is already gated at validation; mod.io has no validation step.</summary>
-    public bool CanCreate => IsSteam ? IsValid : Modio.IsReady && (!RequiresLegalAcceptance || IsPrivacyAccepted);
+    /// <summary>An opt-in can be switched on after the Steam validation, so the legal gate applies to both paths.</summary>
+    public bool CanCreate =>
+        (IsSteam ? IsValid : Modio.IsReady) && (!RequiresLegalAcceptance || IsPrivacyAccepted);
 
     [RelayCommand]
     private void SelectPlatform(WorkshopPlatform platform) => Platform = platform;

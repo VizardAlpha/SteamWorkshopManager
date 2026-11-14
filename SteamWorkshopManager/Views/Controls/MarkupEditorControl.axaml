@@ -21,7 +21,7 @@
                           Focusable="False"
                           Content="BBCode"/>
 
-            <!-- BBCode toolbar -->
+            <!-- Formatting toolbar (BBCode or HTML) -->
             <Border Grid.Column="1"
                     x:Name="ToolbarPanel"
                     IsVisible="False"
@@ -57,7 +57,7 @@
         </Grid>
 
         <!-- Editor / preview swap -->
-        <Panel x:Name="EditorArea">
+        <Panel>
             <TextBox x:Name="EditorTextBox"
                      AcceptsReturn="True"
                      TextWrapping="Wrap"

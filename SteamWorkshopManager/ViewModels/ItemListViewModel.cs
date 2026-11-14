@@ -61,11 +61,13 @@ public partial class ItemListViewModel : ViewModelBase
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasSelection))]
-    [NotifyPropertyChangedFor(nameof(AllSelected))]
+    [NotifyPropertyChangedFor(nameof(SelectedCountText))]
+    [NotifyPropertyChangedFor(nameof(BulkDeleteTitle))]
     private int _selectedCount;
 
     public bool HasSelection => SelectedCount > 0;
-    public bool AllSelected => Items.Count > 0 && SelectedCount == Items.Count;
+    public string SelectedCountText => string.Format(Loc["SelectedCount"], SelectedCount);
+    public string BulkDeleteTitle => string.Format(Loc["ConfirmBulkDelete"], SelectedCount);
 
     [ObservableProperty]
     private bool _isBulkProcessing;
@@ -117,7 +119,6 @@ public partial class ItemListViewModel : ViewModelBase
     }
 
     public event Action<WorkshopItem>? ItemSelected;
-    public event Action? CreateRequested;
 
     public ItemListViewModel(
         ModPlatforms platforms,
@@ -389,12 +390,6 @@ public partial class ItemListViewModel : ViewModelBase
         ItemSelected?.Invoke(item);
     }
 
-    [RelayCommand]
-    private void CreateNewItem()
-    {
-        CreateRequested?.Invoke();
-    }
-
     // ─── Selection-mode lifecycle ─────────────────────────────────────────────
 
     [RelayCommand]
@@ -443,7 +438,6 @@ public partial class ItemListViewModel : ViewModelBase
     private void RecomputeSelectionState()
     {
         SelectedCount = Items.Count(i => i.IsSelected);
-        OnPropertyChanged(nameof(AllSelected));
     }
 
     // No telemetry for mod.io for now.

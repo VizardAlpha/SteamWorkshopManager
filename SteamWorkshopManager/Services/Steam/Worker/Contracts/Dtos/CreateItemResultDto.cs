@@ -6,4 +6,7 @@
 /// caused it (0 when Steam reported none), rehydrated by the shell-side proxy so
 /// the mapping to a user-facing message stays in one place.
 /// </summary>
-public record CreateItemResultDto(ulong FileId, int ErrorCode);
+public record CreateItemResultDto(ulong FileId, int ErrorCode, bool NeedsLegalAgreement = false);
+
+/// <summary>Result of <c>ISteamWorker.UpdateItemAsync</c>.</summary>
+public record UpdateItemResultDto(bool Success, bool NeedsLegalAgreement);

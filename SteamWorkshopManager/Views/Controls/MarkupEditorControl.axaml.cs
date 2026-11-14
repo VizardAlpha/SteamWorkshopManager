@@ -201,8 +201,9 @@ public partial class MarkupEditorControl : UserControl
             Focusable = false,
         };
 
-        if (tag.Tooltip is not null)
-            ToolTip.SetTip(btn, tag.Tooltip);
+        // Bound to the resource so it follows a language switch.
+        if (tag.TooltipKey is not null)
+            btn.Bind(ToolTip.TipProperty, btn.GetResourceObservable(tag.TooltipKey));
 
         return btn;
     }
@@ -265,15 +266,7 @@ public partial class MarkupEditorControl : UserControl
             // Wrap selection
             var selected = text.Substring(selStart, selLen);
 
-            string insertion;
-            if (tag.OpenTag.EndsWith('='))
-            {
-                insertion = $"{tag.OpenTag}{selected}]{selected}{tag.CloseTag}";
-            }
-            else
-            {
-                insertion = $"{tag.OpenTag}{selected}{tag.CloseTag}";
-            }
+            var insertion = $"{tag.OpenTag}{selected}{tag.CloseTag}";
 
             var newText = text.Remove(selStart, selLen).Insert(selStart, insertion);
             textBox.Text = newText;
@@ -282,21 +275,15 @@ public partial class MarkupEditorControl : UserControl
         else
         {
             // Insert with placeholder
-            var inner = tag.Placeholder ?? string.Empty;
+            var inner = tag.PlaceholderKey is not null
+                ? LocalizationService.GetString(tag.PlaceholderKey)
+                : tag.Placeholder ?? string.Empty;
 
-            string insertion;
-            if (tag.OpenTag.EndsWith('='))
-            {
-                insertion = $"{tag.OpenTag}]{inner}{tag.CloseTag}";
-            }
-            else
-            {
-                insertion = $"{tag.OpenTag}{inner}{tag.CloseTag}";
-            }
+            var insertion = $"{tag.OpenTag}{inner}{tag.CloseTag}";
 
             var newText = text.Insert(selStart, insertion);
             textBox.Text = newText;
-            textBox.CaretIndex = selStart + tag.OpenTag.Length + (tag.OpenTag.EndsWith('=') ? 1 : 0);
+            textBox.CaretIndex = selStart + tag.OpenTag.Length;
         }
 
         textBox.Focus();

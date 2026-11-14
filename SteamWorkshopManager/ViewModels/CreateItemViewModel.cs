@@ -119,7 +119,6 @@ public partial class CreateItemViewModel : ViewModelBase
                                   && !string.IsNullOrEmpty(ContentFolderPath)
                                   && !IsImageTooLarge;
     public bool IsVersionsComplete => !Versions.IsBranchRangeInvalid;
-    public bool IsDependenciesComplete => true;
 
     /// <summary>Side-panel nav: Info, Versions, Dependencies, Previews and Translations apply to a new item.</summary>
     [ObservableProperty]

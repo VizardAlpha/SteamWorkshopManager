@@ -1,4 +1,4 @@
-<!-- Styles shared by the mod.io edit and create views and their sections. -->
+<!-- Styles shared by the Steam and mod.io edit and create views and their sections. -->
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
@@ -118,4 +118,21 @@
         <Setter Property="HorizontalAlignment" Value="Stretch"/>
         <Setter Property="HorizontalContentAlignment" Value="Center"/>
     </Style>
+
+    <Style Selector="ToggleButton.tag-chip:checked:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#2F5B9CF6"/>
+    </Style>
+
+    <Style Selector="TextBlock.field-hint">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}"/>
+        <Setter Property="Margin" Value="0,6,0,0"/>
+    </Style>
+
+    <!-- Drop target under the cursor while dragging a preview row -->
+    <Style Selector="Border.reorder-row:dragover">
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentPrimaryBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource SurfaceOverlayBrush}"/>
+    </Style>
+
 </Styles>

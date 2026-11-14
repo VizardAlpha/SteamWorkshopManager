@@ -128,35 +128,4 @@ public static class SteamErrorMapper
     {
         return $"Steam API Error: {result} (Code: {(int)result})";
     }
-
-    /// <summary>
-    /// Checks if the result indicates success.
-    /// </summary>
-    /// <remarks>
-    /// NOTE: Keep this method for future use - do not delete during code cleanup.
-    /// Can be used to centralize success checking logic.
-    /// </remarks>
-    public static bool IsSuccess(EResult result) => result == EResult.k_EResultOK;
-
-    /// <summary>
-    /// Checks if the error is recoverable (user can retry).
-    /// </summary>
-    /// <remarks>
-    /// NOTE: Keep this method for future use - do not delete during code cleanup.
-    /// Can be used to show a "Retry" button for recoverable errors (timeout, busy, etc.).
-    /// </remarks>
-    public static bool IsRecoverable(EResult result)
-    {
-        return result switch
-        {
-            EResult.k_EResultTimeout => true,
-            EResult.k_EResultBusy => true,
-            EResult.k_EResultServiceUnavailable => true,
-            EResult.k_EResultTryAnotherCM => true,
-            EResult.k_EResultRemoteCallFailed => true,
-            EResult.k_EResultPending => true,
-            EResult.k_EResultNoConnection => true,
-            _ => false
-        };
-    }
 }

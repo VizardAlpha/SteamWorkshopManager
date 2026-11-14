@@ -56,7 +56,6 @@ public static class PublishedItemsReconciler
         && a.Visibility == b.Visibility
         && a.UpdatedAt == b.UpdatedAt
         && a.PreviewImageUrl == b.PreviewImageUrl
-        && a.PreviewImagePath == b.PreviewImagePath
         && a.SubscriberCount == b.SubscriberCount
         && a.FileSize == b.FileSize
         && a.IsOwner == b.IsOwner

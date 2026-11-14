@@ -9,6 +9,7 @@ using CommunityToolkit.Mvvm.Input;
 using SteamWorkshopManager.Core.Sessions;
 using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Models;
+using SteamWorkshopManager.Services.UI;
 using SteamWorkshopManager.Services.Cache;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Platforms.Modio;
@@ -32,6 +33,7 @@ public partial class ModioItemEditorViewModel : ViewModelBase, IDisposable
     private readonly ISessionContext _context;
     private readonly ThumbnailCache _thumbnails;
     private readonly IProgress<UploadProgress>? _uploadProgress;
+    private readonly UploadCancellation _cancellation;
 
     // Last values mod.io holds, moved forward after each save.
     private string _savedTitle;
@@ -107,6 +109,7 @@ public partial class ModioItemEditorViewModel : ViewModelBase, IDisposable
         ModioMediaViewModel media,
         ModioFileViewModel file,
         ModioDependenciesViewModel dependencies,
+        UploadCancellation cancellation,
         IProgress<UploadProgress>? uploadProgress = null)
     {
         _item = item;
@@ -114,6 +117,7 @@ public partial class ModioItemEditorViewModel : ViewModelBase, IDisposable
         _context = context;
         _thumbnails = thumbnails;
         _uploadProgress = uploadProgress;
+        _cancellation = cancellation;
         _profileUrl = item.ProfileUrl;
         Details = details;
         Media = media;
@@ -225,7 +229,8 @@ public partial class ModioItemEditorViewModel : ViewModelBase, IDisposable
         ErrorMessage = null;
         try
         {
-            await _publisher.UpdateAsync(update, _uploadProgress);
+            using (var upload = _cancellation.Begin())
+                await _publisher.UpdateAsync(update, _uploadProgress, upload.Token);
 
             _savedTitle = d.Title;
             _savedSummary = d.Summary;
@@ -239,6 +244,11 @@ public partial class ModioItemEditorViewModel : ViewModelBase, IDisposable
             // New gallery file names and the new live file only exist on mod.io's side.
             ApplyMod(await _publisher.GetModAsync(_item.Id));
             if (update.File is not null) await File.LoadHistoryAsync();
+        }
+        catch (OperationCanceledException)
+        {
+            // Steps sent before the cancel are kept by mod.io; the baseline stays, so they are resent.
+            ErrorMessage = Loc["UploadCancelled"];
         }
         catch (ModioApiException ex)
         {
@@ -284,6 +294,13 @@ public partial class ModioItemEditorViewModel : ViewModelBase, IDisposable
         catch (ModioApiException ex)
         {
             ErrorMessage = ModioErrors.Describe(ex, "DeleteFailed");
+            ShowDeleteConfirmation = false;
+        }
+        catch (Exception ex)
+        {
+            // Network failures are not wrapped in ModioApiException.
+            Log.Error("mod.io delete failed", ex);
+            ErrorMessage = $"{Loc["DeleteFailed"]}: {ex.Message}";
             ShowDeleteConfirmation = false;
         }
         finally

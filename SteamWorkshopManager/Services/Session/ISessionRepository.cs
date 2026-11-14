@@ -30,11 +30,6 @@ public interface ISessionRepository
     Task SaveSessionAsync(WorkshopSession session);
 
     /// <summary>
-    /// Deletes a session by its ID.
-    /// </summary>
-    Task DeleteSessionAsync(string sessionId);
-
-    /// <summary>
     /// Sets the active session by ID.
     /// </summary>
     Task SetActiveSessionAsync(string sessionId);

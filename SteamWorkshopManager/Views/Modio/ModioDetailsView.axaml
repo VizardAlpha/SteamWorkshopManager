@@ -9,7 +9,7 @@
              x:DataType="modio:ModioDetailsViewModel">
 
     <UserControl.Styles>
-        <StyleInclude Source="avares://SteamWorkshopManager/Themes/ModioEditorStyles.axaml"/>
+        <StyleInclude Source="avares://SteamWorkshopManager/Themes/EditorStyles.axaml"/>
     </UserControl.Styles>
 
     <StackPanel Spacing="14" IsEnabled="{Binding !IsLocked}">

@@ -3,25 +3,25 @@
 SteamWorkshopManager redistributes the components listed below. Each one remains
 under its own licence, reproduced or referenced here as those licences require.
 
-Last reviewed: 2026-10-29.
+Last reviewed: 2026-11-14.
 
 ## MIT licence
 
 | Component | Version | Author | Source |
 | --- | --- | --- | --- |
-| Avalonia | 12.1.4 | Avalonia Team | https://github.com/AvaloniaUI/Avalonia |
-| Avalonia.Desktop | 12.1.4 | Avalonia Team | https://github.com/AvaloniaUI/Avalonia |
-| Avalonia.Themes.Fluent | 12.1.4 | Avalonia Team | https://github.com/AvaloniaUI/Avalonia |
-| Avalonia.Fonts.Inter | 12.1.4 | Avalonia Team | https://github.com/AvaloniaUI/Avalonia |
+| Avalonia | 12.1.6 | Avalonia Team | https://github.com/AvaloniaUI/Avalonia |
+| Avalonia.Desktop | 12.1.6 | Avalonia Team | https://github.com/AvaloniaUI/Avalonia |
+| Avalonia.Themes.Fluent | 12.1.6 | Avalonia Team | https://github.com/AvaloniaUI/Avalonia |
+| Avalonia.Fonts.Inter | 12.1.6 | Avalonia Team | https://github.com/AvaloniaUI/Avalonia |
 | Avalonia.Controls.ItemsRepeater | 12.0.0 | Avalonia Team | https://github.com/AvaloniaUI/Avalonia |
 | CommunityToolkit.Mvvm | 8.4.2 | Microsoft | https://github.com/CommunityToolkit/dotnet |
 | DiscordRichPresence | 1.143.0 | Lachee | https://github.com/Lachee/discord-rpc-csharp |
 | Material.Icons.Avalonia | 3.0.2 | SKProCH | https://github.com/AvaloniaUtils/Material.Icons.Avalonia |
-| Microsoft.Extensions.DependencyInjection | 10.0.14 | Microsoft | https://github.com/dotnet/dotnet |
+| Microsoft.Extensions.DependencyInjection | 11.0.0 | Microsoft | https://github.com/dotnet/dotnet |
 | QRCoder | 1.8.1 | Raffael Herrmann, Shane Krueger | https://github.com/Shane32/QRCoder |
 | Steamworks.NET | 2025.165.0 | Riley Labrecque | https://github.com/rlabrecque/Steamworks.NET |
 | StreamJsonRpc | 2.26.150 | Microsoft | https://github.com/microsoft/vs-streamjsonrpc |
-| System.Security.Cryptography.ProtectedData | 10.0.14 | Microsoft | https://github.com/dotnet/dotnet |
+| System.Security.Cryptography.ProtectedData | 11.0.0 | Microsoft | https://github.com/dotnet/dotnet |
 
 Copyright remains with the respective authors listed above. The MIT licence
 text below applies to every component in this table.

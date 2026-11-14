@@ -7,7 +7,7 @@
              x:DataType="modio:ModioMediaViewModel">
 
     <UserControl.Styles>
-        <StyleInclude Source="avares://SteamWorkshopManager/Themes/ModioEditorStyles.axaml"/>
+        <StyleInclude Source="avares://SteamWorkshopManager/Themes/EditorStyles.axaml"/>
     </UserControl.Styles>
 
     <StackPanel Spacing="14">

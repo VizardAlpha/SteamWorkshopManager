@@ -69,10 +69,13 @@ public static class AppPaths
 
     /// <summary>Scratch directory for the rebuild path of preview ops, alive for one
     /// Steam UGC update. Per-user on purpose: a shared /tmp parent could be pre-created by another user.</summary>
-    public static string TempPreviewDir() => Path.Combine(LocalRoot, "tmp", "previews", Guid.NewGuid().ToString("N"));
+    public static string TempPreviewDir() => Path.Combine(TempRoot, "previews", Guid.NewGuid().ToString("N"));
 
     /// <summary>Fresh folder for a mod.io upload zip, deleted once the file is sent.</summary>
-    public static string TempUploadDir() => Path.Combine(LocalRoot, "tmp", "uploads", Guid.NewGuid().ToString("N"));
+    public static string TempUploadDir() => Path.Combine(TempRoot, "uploads", Guid.NewGuid().ToString("N"));
+
+    /// <summary>Parent of every scratch folder; swept at startup by <see cref="TempFiles"/>.</summary>
+    public static string TempRoot => Path.Combine(LocalRoot, "tmp");
 
     private static string ResolveCacheRoot()
     {

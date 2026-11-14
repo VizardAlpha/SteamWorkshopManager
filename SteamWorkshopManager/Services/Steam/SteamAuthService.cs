@@ -140,7 +140,7 @@ public static class SteamAuthService
 
             client.Connect();
 
-            if (!await connectedTcs.Task)
+            if (!await connectedTcs.Task.WaitAsync(cts.Token))
             {
                 Log.Warning("Failed to connect to Steam CM servers");
                 return false;
@@ -155,7 +155,7 @@ public static class SteamAuthService
                 LoginID = 0x534B3200,
             });
 
-            var logOnResult = await loggedOnTcs.Task;
+            var logOnResult = await loggedOnTcs.Task.WaitAsync(cts.Token);
 
             if (logOnResult.Result != EResult.OK)
             {
@@ -174,7 +174,7 @@ public static class SteamAuthService
 
             // Generate a fresh web access token
             var tokenResult = await client.Authentication.GenerateAccessTokenForAppAsync(
-                logOnResult.ClientSteamID!, _refreshToken!, true);
+                logOnResult.ClientSteamID!, _refreshToken!, true).WaitAsync(cts.Token);
 
             _accessToken = tokenResult.AccessToken;
 
@@ -227,7 +227,7 @@ public static class SteamAuthService
 
             client.Connect();
 
-            if (!await connectedTcs.Task)
+            if (!await connectedTcs.Task.WaitAsync(linkedCts.Token))
                 throw new InvalidOperationException("Failed to connect to Steam CM servers");
 
             Log.Debug("Connected to CM, starting QR auth session...");
@@ -237,7 +237,7 @@ public static class SteamAuthService
                 {
                     DeviceFriendlyName = AppPaths.AppName,
                     IsPersistentSession = true,
-                });
+                }).WaitAsync(linkedCts.Token);
 
             // Fire initial QR URL
             QrChallengeUrlChanged?.Invoke(authSession.ChallengeURL);
@@ -266,7 +266,7 @@ public static class SteamAuthService
                 LoginID = 0x534B3200,
             });
 
-            var logOnResult = await loggedOnTcs.Task;
+            var logOnResult = await loggedOnTcs.Task.WaitAsync(linkedCts.Token);
 
             if (logOnResult.Result != EResult.OK)
             {
@@ -279,7 +279,7 @@ public static class SteamAuthService
             _refreshToken = pollResult.RefreshToken;
             
             var tokenResult = await client.Authentication.GenerateAccessTokenForAppAsync(
-                logOnResult.ClientSteamID!, _refreshToken!, true);
+                logOnResult.ClientSteamID!, _refreshToken!, true).WaitAsync(linkedCts.Token);
             _accessToken = tokenResult.AccessToken;
             if (!string.IsNullOrEmpty(tokenResult.RefreshToken))
                 _refreshToken = tokenResult.RefreshToken;

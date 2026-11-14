@@ -6,7 +6,7 @@
              x:DataType="modio:ModioDependenciesViewModel">
 
     <UserControl.Styles>
-        <StyleInclude Source="avares://SteamWorkshopManager/Themes/ModioEditorStyles.axaml"/>
+        <StyleInclude Source="avares://SteamWorkshopManager/Themes/EditorStyles.axaml"/>
     </UserControl.Styles>
 
     <UserControl.Resources>

@@ -21,12 +21,12 @@ public sealed class SteamModPlatform(ISteamService steam) : IModPlatform
 
     public Task<WorkshopItem?> GetModAsync(ulong id) => steam.GetPublishedItemAsync(new PublishedFileId_t(id));
 
-    public Task<bool> SetVisibilityAsync(ulong id, VisibilityType visibility) =>
-        steam.UpdateItemAsync(new PublishedFileId_t(id),
+    public async Task<bool> SetVisibilityAsync(ulong id, VisibilityType visibility) =>
+        (await steam.UpdateItemAsync(new PublishedFileId_t(id),
             title: null, description: null,
             contentFolderPath: null, previewImagePath: null,
             visibility: visibility,
-            tags: null, changelog: null);
+            tags: null, changelog: null)).Success;
 
     public Task<bool> DeleteModAsync(ulong id) => steam.DeleteItemAsync(new PublishedFileId_t(id));
 }

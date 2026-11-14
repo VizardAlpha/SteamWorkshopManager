@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Threading;
@@ -137,15 +139,15 @@ public static class AppUpdater
 
             var source = InstallDir;
             Log.Info($"Update installer: copying new version into {target}");
-            CopyDirectory(source, target);
+            InstallPayload(source, target);
             Log.Info("Update installer: done");
         }
         catch (Exception ex)
         {
-            Log.Error("Update installer failed, relaunching the previous version", ex);
+            Log.Error("Update installer failed, files restored, relaunching the previous version", ex);
         }
 
-        // Relaunch whatever is in the install folder now (new version, or old one after a failure).
+        // Relaunch what is in the install folder now: the new version, or the restored one after a failure.
         try
         {
             var exe = Path.Combine(target, Path.GetFileName(Environment.ProcessPath!));
@@ -255,30 +257,120 @@ public static class AppUpdater
         }
     }
 
-    private static void CopyDirectory(string source, string target)
-    {
-        foreach (var dir in Directory.GetDirectories(source, "*", SearchOption.AllDirectories))
-            Directory.CreateDirectory(Path.Combine(target, Path.GetRelativePath(source, dir)));
+    internal const string ManifestName = "update-manifest.txt";
+    private const string BackupFolderName = ".update-backup";
 
-        foreach (var file in Directory.GetFiles(source, "*", SearchOption.AllDirectories))
-            CopyWithRetry(file, Path.Combine(target, Path.GetRelativePath(source, file)));
+    /// <summary>
+    /// Copies the payload over the install folder, all or nothing: replaced files are set
+    /// aside first and put back if any step fails. Files a previous update installed and
+    /// that this payload no longer ships are removed, per <see cref="ManifestName"/>.
+    /// </summary>
+    internal static void InstallPayload(string source, string target, int attempts = 40)
+    {
+        var backup = Path.Combine(target, BackupFolderName);
+        if (Directory.Exists(backup)) Directory.Delete(backup, recursive: true);
+
+        var files = Directory.GetFiles(source, "*", SearchOption.AllDirectories)
+            .Select(file => Path.GetRelativePath(source, file))
+            .Where(rel => !rel.StartsWith(BackupFolderName, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        var replaced = new List<string>();
+        var added = new List<string>();
+
+        try
+        {
+            foreach (var rel in files)
+            {
+                var to = Path.Combine(target, rel);
+                Directory.CreateDirectory(Path.GetDirectoryName(to)!);
+
+                if (File.Exists(to))
+                {
+                    var kept = Path.Combine(backup, rel);
+                    Directory.CreateDirectory(Path.GetDirectoryName(kept)!);
+                    Retry(() => File.Move(to, kept), attempts);
+                    replaced.Add(rel);
+                }
+                else
+                {
+                    added.Add(rel);
+                }
+
+                Retry(() => File.Copy(Path.Combine(source, rel), to, overwrite: true), attempts);
+            }
+        }
+        catch
+        {
+            Rollback(target, backup, replaced, added);
+            throw;
+        }
+
+        RemoveFilesNoLongerShipped(target, files);
+        try { File.WriteAllLines(Path.Combine(target, ManifestName), files); }
+        catch (Exception ex) { Log.Warning($"Update manifest not written: {ex.Message}"); }
+
+        try { Directory.Delete(backup, recursive: true); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or DirectoryNotFoundException)
+        {
+            // Removed at the start of the next update.
+        }
+    }
+
+    private static void Rollback(string target, string backup, List<string> replaced, List<string> added)
+    {
+        foreach (var rel in added)
+        {
+            try
+            {
+                var path = Path.Combine(target, rel);
+                if (File.Exists(path)) File.Delete(path);
+            }
+            catch (Exception ex) { Log.Warning($"Rollback could not remove {rel}: {ex.Message}"); }
+        }
+
+        foreach (var rel in replaced)
+        {
+            try { File.Move(Path.Combine(backup, rel), Path.Combine(target, rel), overwrite: true); }
+            catch (Exception ex) { Log.Error($"Rollback could not restore {rel}: {ex.Message}"); }
+        }
+    }
+
+    // Only what an earlier update listed: files the user or the app added by themselves stay.
+    private static void RemoveFilesNoLongerShipped(string target, List<string> shipped)
+    {
+        var manifest = Path.Combine(target, ManifestName);
+        if (!File.Exists(manifest)) return;
+
+        try
+        {
+            var root = Path.GetFullPath(target) + Path.DirectorySeparatorChar;
+            var kept = shipped.ToHashSet(StringComparer.OrdinalIgnoreCase);
+            foreach (var rel in File.ReadAllLines(manifest))
+            {
+                if (string.IsNullOrWhiteSpace(rel) || kept.Contains(rel)) continue;
+
+                var path = Path.GetFullPath(Path.Combine(target, rel));
+                if (!path.StartsWith(root, StringComparison.OrdinalIgnoreCase) || !File.Exists(path)) continue;
+                File.Delete(path);
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Warning($"Old files not cleaned up: {ex.Message}");
+        }
     }
 
     // The Steam worker (same exe) can hold files for a moment after the shell exits.
-    private static void CopyWithRetry(string from, string to)
+    private static void Retry(Action action, int attempts)
     {
         for (var attempt = 1; ; attempt++)
         {
             try
             {
-                File.Copy(from, to, overwrite: true);
+                action();
                 return;
             }
-            catch (IOException) when (attempt < 40)
-            {
-                Thread.Sleep(500);
-            }
-            catch (UnauthorizedAccessException) when (attempt < 40)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException && attempt < attempts)
             {
                 Thread.Sleep(500);
             }

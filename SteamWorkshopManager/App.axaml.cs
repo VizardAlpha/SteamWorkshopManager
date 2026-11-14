@@ -165,8 +165,7 @@ public partial class App : Application
         Services.GetRequiredService<ISessionContext>().Activate(session);
         Log.Info($"Starting with session: {session}");
 
-        // Spawn the Steam worker before the UI queries Steam so the
-        // first ISteamService.Initialize() call returns the live state.
+        // Spawn the Steam worker before the UI queries Steam, so its first call sees the live state.
         await Services.GetRequiredService<SessionHost>().StartSessionAsync(session);
 
         // Consent has already been committed (this run or a prior one).

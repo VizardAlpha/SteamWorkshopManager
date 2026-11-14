@@ -12,6 +12,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
+using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Steam;
 
@@ -83,6 +84,9 @@ public sealed class ModioApiClient
 
     // A retry-after of 0 means a rolling limit: mod.io advises waiting a minute.
     private static readonly TimeSpan DefaultRetryAfter = TimeSpan.FromSeconds(60);
+
+    // Metadata calls answer in seconds; only file transfers may run up to the HttpClient timeout.
+    private static readonly TimeSpan ApiTimeout = TimeSpan.FromSeconds(60);
 
     private readonly HttpClient _http;
     private readonly TimeProvider _time;
@@ -180,7 +184,7 @@ public sealed class ModioApiClient
         using var form = new MultipartFormDataContent();
         AddFile(form, "logo", logoPath);
         using var req = new HttpRequestMessage(HttpMethod.Post, Url(auth, $"games/{gameId}/mods/{modId}/media")) { Content = form };
-        using var _ = await SendAsync(auth, req, ct);
+        using var _ = await SendAsync(auth, req, ct, transfer: true);
     }
 
     /// <summary>Appends images, YouTube videos and Sketchfab models to the gallery.</summary>
@@ -195,7 +199,7 @@ public sealed class ModioApiClient
         foreach (var url in change.AddSketchfab) form.Add(new StringContent(url), "sketchfab[]");
 
         using var req = new HttpRequestMessage(HttpMethod.Post, Url(auth, $"games/{gameId}/mods/{modId}/media")) { Content = form };
-        using var _ = await SendAsync(auth, req, ct);
+        using var _ = await SendAsync(auth, req, ct, transfer: true);
     }
 
     public async Task DeleteMediaAsync(ModioCredentials auth, long gameId, long modId, ModioMediaChange change, CancellationToken ct = default)
@@ -292,7 +296,8 @@ public sealed class ModioApiClient
             if (uploadId is null)
             {
                 file = File.OpenRead(zipPath);
-                var bytes = new Progress<long>(sent =>
+                // Direct: Progress<T> could deliver a byte count after the final report.
+                var bytes = new DirectProgress<long>(sent =>
                     progress?.Report(new UploadProgress("UploadingContent", (ulong)sent, (ulong)length)));
                 var content = new ProgressStreamContent(file, length, bytes);
                 content.Headers.ContentType = new MediaTypeHeaderValue("application/zip");
@@ -307,7 +312,7 @@ public sealed class ModioApiClient
             if (!string.IsNullOrEmpty(changelog)) form.Add(new StringContent(changelog), "changelog");
 
             using var req = new HttpRequestMessage(HttpMethod.Post, Url(auth, $"games/{gameId}/mods/{modId}/files")) { Content = form };
-            using var resp = await SendAsync(auth, req, ct);
+            using var resp = await SendAsync(auth, req, ct, transfer: true);
             progress?.Report(new UploadProgress("Finalizing", 0, 0, 100));
             return await ReadAsync(resp, ModioJsonContext.Default.ModioModfile, ct);
         }
@@ -337,6 +342,37 @@ public sealed class ModioApiClient
         }
 
         var query = $"?upload_id={Uri.EscapeDataString(uploadId)}";
+        try
+        {
+            await SendPartsAsync(auth, filesPath + query, zipPath, length, progress, ct);
+            using var complete = new HttpRequestMessage(HttpMethod.Post, Url(auth, filesPath + "/complete" + query));
+            using (await SendAsync(auth, complete, ct)) { }
+            return uploadId;
+        }
+        catch
+        {
+            // Cancelled or failed: the half-sent session is of no use to mod.io either.
+            await TryDeleteUploadSessionAsync(auth, filesPath + query);
+            throw;
+        }
+    }
+
+    private async Task TryDeleteUploadSessionAsync(ModioCredentials auth, string sessionPath)
+    {
+        try
+        {
+            using var req = new HttpRequestMessage(HttpMethod.Delete, Url(auth, sessionPath));
+            using (await SendAsync(auth, req, CancellationToken.None)) { }
+        }
+        catch (Exception ex)
+        {
+            Log.Debug($"mod.io upload session not removed: {ex.Message}");
+        }
+    }
+
+    private async Task SendPartsAsync(ModioCredentials auth, string sessionPath, string zipPath, long length,
+        IProgress<UploadProgress>? progress, CancellationToken ct)
+    {
         var buffer = new byte[(int)Math.Min(_partSize, length)];
         await using (var file = File.OpenRead(zipPath))
         {
@@ -346,21 +382,17 @@ public sealed class ModioApiClient
                 var read = await file.ReadAtLeastAsync(buffer, buffer.Length, throwOnEndOfStream: false, ct);
                 if (read == 0) break;
 
-                using var part = new HttpRequestMessage(HttpMethod.Put, Url(auth, filesPath + query))
+                using var part = new HttpRequestMessage(HttpMethod.Put, Url(auth, sessionPath))
                 {
                     Content = new ByteArrayContent(buffer, 0, read),
                 };
                 part.Content.Headers.ContentRange = new ContentRangeHeaderValue(start, start + read - 1, length);
-                using (await SendAsync(auth, part, ct)) { }
+                using (await SendAsync(auth, part, ct, transfer: true)) { }
 
                 start += read;
                 progress?.Report(new UploadProgress("UploadingContent", (ulong)start, (ulong)length));
             }
         }
-
-        using var complete = new HttpRequestMessage(HttpMethod.Post, Url(auth, filesPath + "/complete" + query));
-        using (await SendAsync(auth, complete, ct)) { }
-        return uploadId;
     }
 
     /// <summary>Every published file of a mod, newest first.</summary>
@@ -479,12 +511,25 @@ public sealed class ModioApiClient
         }
     }
 
-    private async Task<HttpResponseMessage> SendAsync(ModioCredentials auth, HttpRequestMessage req, CancellationToken ct)
+    private async Task<HttpResponseMessage> SendAsync(ModioCredentials auth, HttpRequestMessage req, CancellationToken ct,
+        bool transfer = false)
     {
         ThrowIfRateLimited();
         req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", auth.Token);
 
-        var resp = await _http.SendAsync(req, ct);
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        if (!transfer) timeout.CancelAfter(ApiTimeout);
+
+        HttpResponseMessage resp;
+        try
+        {
+            resp = await _http.SendAsync(req, timeout.Token);
+        }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        {
+            throw new TimeoutException("mod.io did not answer in time.");
+        }
+
         if (resp.IsSuccessStatusCode) return resp;
 
         using (resp) throw await ToExceptionAsync(resp, req, ct);

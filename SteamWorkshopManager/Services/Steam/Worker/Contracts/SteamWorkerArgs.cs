@@ -7,15 +7,14 @@ namespace SteamWorkshopManager.Services.Steam.Worker.Contracts;
 /// spawning the worker binary. The shell serializes with
 /// <see cref="ToCommandLine"/>; the worker restores with <see cref="TryParse"/>.
 /// </summary>
-public sealed record SteamWorkerArgs(string PipeName, uint AppId, int ParentPid)
+public sealed record SteamWorkerArgs(string PipeName, uint AppId)
 {
     public const string WorkerFlag = "--steam-worker";
     public const string PipeNameFlag = "--pipe-name";
     public const string AppIdFlag = "--app-id";
-    public const string ParentPidFlag = "--parent-pid";
 
     public string ToCommandLine() =>
-        $"{WorkerFlag} {PipeNameFlag} {PipeName} {AppIdFlag} {AppId} {ParentPidFlag} {ParentPid}";
+        $"{WorkerFlag} {PipeNameFlag} {PipeName} {AppIdFlag} {AppId}";
 
     public static bool TryParse(string[] args, out SteamWorkerArgs parsed)
     {
@@ -26,13 +25,11 @@ public sealed record SteamWorkerArgs(string PipeName, uint AppId, int ParentPid)
 
         var pipeName = ExtractValue(args, PipeNameFlag);
         var appIdRaw = ExtractValue(args, AppIdFlag);
-        var parentPidRaw = ExtractValue(args, ParentPidFlag);
 
         if (string.IsNullOrEmpty(pipeName)) return false;
         if (!uint.TryParse(appIdRaw, out var appId)) return false;
-        if (!int.TryParse(parentPidRaw, out var parentPid)) return false;
 
-        parsed = new SteamWorkerArgs(pipeName, appId, parentPid);
+        parsed = new SteamWorkerArgs(pipeName, appId);
         return true;
     }
 

@@ -1,5 +1,6 @@
 using Avalonia;
 using Microsoft.Extensions.DependencyInjection;
+using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Services;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Notifications;
@@ -54,6 +55,7 @@ sealed class Program
         if (AppUpdater.TryRunInstaller(args)) return;
         AppUpdater.CleanupStaleUpdates();
         LogService.Instance.PurgeOldLogs();
+        TempFiles.PurgeStale();
 
         // Dev affordance: `--force-setup-wizard` makes startup treat the session
         // repository as empty so the wizard is shown even when a session exists.

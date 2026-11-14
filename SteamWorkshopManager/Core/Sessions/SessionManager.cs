@@ -166,8 +166,8 @@ public class SessionManager
         }
         catch (Exception ex)
         {
-            Log.Error($"Failed to update steam_appid.txt", ex);
-            throw;
+            // Read-only install folder: nothing depends on the file, so the switch goes on.
+            Log.Warning($"Could not update steam_appid.txt: {ex.Message}");
         }
     }
 

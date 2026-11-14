@@ -61,7 +61,9 @@ Other editor actions: copy the item id, delete the item (confirmed by typing `DE
 ## Uploads
 
 - A progress toast shows the current step and bytes sent; navigation is locked while an upload runs.
+- A mod.io upload can be cancelled from the toast: the request is aborted and a half-sent multipart session is deleted on mod.io. Steps already accepted (details, tags, images) stay. A Steam upload cannot be cancelled, Steamworks offers no call for it.
 - An upload only times out when Steam stops reporting progress for 5 minutes, so large items on slow connections finish.
+- When Steam accepts an upload but keeps the item hidden because the account has not accepted the Workshop legal agreement yet, the toast says so and the editor shows a banner with a link to the agreement until an upload goes through without it.
 - A failed creation removes the empty item Steam allocated.
 - Closing the app during an upload asks for confirmation.
 

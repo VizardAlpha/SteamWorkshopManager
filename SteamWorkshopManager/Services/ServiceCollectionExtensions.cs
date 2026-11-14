@@ -18,8 +18,8 @@ namespace SteamWorkshopManager.Services;
 
 /// <summary>
 /// Central registration point for the application's services.
-/// All services use <c>AddSingleton</c> because this is a single-user desktop app
-/// where shared state is expected and instance reuse avoids redundant work.
+/// Services are singletons (single-user desktop app, shared state is expected);
+/// view-models built per view are transient.
 /// Static classes (<see cref="BundleService"/>, <see cref="SteamAuthService"/>,
 /// <see cref="SteamWebClient"/>, <see cref="SteamErrorMapper"/>,
 /// <see cref="SteamHttpClientFactory"/>, <see cref="UpdateCheckerService"/>)
@@ -68,15 +68,16 @@ public static class ServiceCollectionExtensions
         // UI-facing services
         services.AddSingleton<INotificationService, NotificationService>();
         services.AddSingleton<IFileDialogService, FileDialogService>();
+        services.AddSingleton<UploadCancellation>();
         services.AddSingleton<IDiscordPresenceService, DiscordPresenceService>();
         services.AddSingleton<ViewModels.UpdateController>();
 
-        // Workshop + dependency services
         // Cache shared by every platform
         services.AddSingleton<ICacheStore, CacheStore>();
         services.AddSingleton<SteamImageCache>();
         services.AddSingleton<ThumbnailCache>();
 
+        // Workshop + dependency services
         services.AddSingleton<WorkshopTagsService>();
         services.AddSingleton<PublishedItemsCache>();
         services.AddSingleton<WorkshopDownloadService>();

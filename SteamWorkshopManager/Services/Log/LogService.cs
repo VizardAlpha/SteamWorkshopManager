@@ -15,7 +15,6 @@ public class LogService : ILogService
     private static LogService? _instance;
     public static LogService Instance => _instance ??= new LogService();
 
-    private readonly List<LogEntry> _logs = [];
     private readonly Lock _lock = new();
     private readonly string _appLogPath;
     private readonly string _debugLogPath;
@@ -149,16 +148,11 @@ public class LogService : ILogService
     }
 
     /// <summary>Writes a forwarded entry from another process to this
-    /// LogService's file + memory ring. Bypasses remote-sink forwarding.</summary>
+    /// LogService's file. Bypasses remote-sink forwarding.</summary>
     public void IngestRemote(LogLevel level, string source, string message, string? exception, DateTime timestampUtc)
     {
         if (level == LogLevel.Debug && !_isDebugEnabled) return;
         var entry = new LogEntry(timestampUtc.ToLocalTime(), level, source, message, exception);
-        lock (_lock)
-        {
-            _logs.Add(entry);
-            if (_logs.Count > 1000) _logs.RemoveAt(0);
-        }
         WriteEntryToDisk(entry);
     }
 
@@ -246,17 +240,6 @@ public class LogService : ILogService
             SanitizeMessage(message),
             exception != null ? SanitizeMessage(exception.ToString()) : null
         );
-
-        lock (_lock)
-        {
-            _logs.Add(entry);
-
-            // Keep only last 1000 entries in memory
-            if (_logs.Count > 1000)
-            {
-                _logs.RemoveAt(0);
-            }
-        }
 
         WriteToFile(entry);
     }
@@ -352,14 +335,6 @@ public class LogService : ILogService
             .Concat(Directory.EnumerateFiles(AppPaths.LocalRoot, "debug_*.log"))
             .Concat(Directory.EnumerateFiles(AppPaths.LocalRoot, "crash_*.log"));
 
-    public IReadOnlyList<LogEntry> GetRecentLogs(int count = 100)
-    {
-        lock (_lock)
-        {
-            return _logs.TakeLast(count).ToList().AsReadOnly();
-        }
-    }
-
     public long GetLogFolderSize()
     {
         try
@@ -381,10 +356,6 @@ public class LogService : ILogService
 
     public void ClearLogs()
     {
-        lock (_lock)
-        {
-            _logs.Clear();
-        }
         Flush();
 
         try

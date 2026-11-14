@@ -8,30 +8,30 @@ public static class HtmlTags
 {
     public static IReadOnlyList<MarkupTag> Formatting { get; } =
     [
-        new("B", "<strong>", "</strong>", Tooltip: "Bold text"),
-        new("I", "<em>", "</em>", Tooltip: "Italic text"),
-        new("U", "<u>", "</u>", Tooltip: "Underlined text"),
-        new("S", "<s>", "</s>", Tooltip: "Strikethrough text"),
-        new("Code", "<code>", "</code>", Tooltip: "Inline code"),
+        new("B", "<strong>", "</strong>", TooltipKey: "MarkupBold"),
+        new("I", "<em>", "</em>", TooltipKey: "MarkupItalic"),
+        new("U", "<u>", "</u>", TooltipKey: "MarkupUnderline"),
+        new("S", "<s>", "</s>", TooltipKey: "MarkupStrikethrough"),
+        new("Code", "<code>", "</code>", TooltipKey: "MarkupInlineCode"),
     ];
 
     public static IReadOnlyList<MarkupTag> Structure { get; } =
     [
-        new("P", "<p>", "</p>", "Paragraph", "Paragraph"),
-        new("BR", "<br>", "", Tooltip: "Line break"),
-        new("H1", "<h1>", "</h1>", "Heading", "Heading 1"),
-        new("H2", "<h2>", "</h2>", "Heading", "Heading 2"),
-        new("H3", "<h3>", "</h3>", "Heading", "Heading 3"),
-        new("HR", "<hr>", "", Tooltip: "Horizontal rule"),
-        new("List", "<ul>\n<li>", "</li>\n</ul>", "Item", "Bullet list"),
-        new("OList", "<ol>\n<li>", "</li>\n</ol>", "Item", "Ordered list"),
+        new("P", "<p>", "</p>", "MarkupSampleParagraph", "MarkupParagraph"),
+        new("BR", "<br>", "", TooltipKey: "MarkupLineBreak"),
+        new("H1", "<h1>", "</h1>", "MarkupSampleHeading", "MarkupHeading1"),
+        new("H2", "<h2>", "</h2>", "MarkupSampleHeading", "MarkupHeading2"),
+        new("H3", "<h3>", "</h3>", "MarkupSampleHeading", "MarkupHeading3"),
+        new("HR", "<hr>", "", TooltipKey: "MarkupHorizontalRule"),
+        new("List", "<ul>\n<li>", "</li>\n</ul>", "MarkupSampleItem", "MarkupBulletList"),
+        new("OList", "<ol>\n<li>", "</li>\n</ol>", "MarkupSampleItem", "MarkupOrderedList"),
     ];
 
     public static IReadOnlyList<MarkupTag> Content { get; } =
     [
-        new("Link", "<a href=\"https://\">", "</a>", "link", "Website link"),
-        new("Img", "<img src=\"", "\" alt=\"\">", "https://", "Image"),
-        new("Quote", "<blockquote>", "</blockquote>", "Quoted text", "Quote"),
-        new("Pre", "<pre>", "</pre>", Tooltip: "Fixed-width block,\npreserves    spaces"),
+        new("Link", "<a href=\"https://\">", "</a>", "MarkupSampleLink", "MarkupLink"),
+        new("Img", "<img src=\"", "\" alt=\"\">", TooltipKey: "MarkupImage", Placeholder: "https://"),
+        new("Quote", "<blockquote>", "</blockquote>", "MarkupSampleQuote", "MarkupQuote"),
+        new("Pre", "<pre>", "</pre>", TooltipKey: "MarkupPreBlock"),
     ];
 }

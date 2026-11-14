@@ -67,9 +67,6 @@ public partial class MainViewModel : ViewModelBase
 
     public string WindowTitle => $"Steam Workshop Manager - {ActiveGameName}";
 
-    [ObservableProperty]
-    private WorkshopItem? _selectedItem;
-
     /// <summary>Drives the full-window overlay during the worker swap + item reload.</summary>
     [ObservableProperty]
     private bool _isSwitchingSession;
@@ -136,7 +133,6 @@ public partial class MainViewModel : ViewModelBase
 
         ItemListViewModel = _viewModels.Create<ItemListViewModel>(_notificationService);
         ItemListViewModel.ItemSelected += OpenEditor;
-        ItemListViewModel.CreateRequested += OpenCreator;
         ItemListViewModel.ItemsReconciled += OnItemsReconciled;
 
         HomeViewModel = _viewModels.Create<HomeViewModel>(ItemListViewModel);
@@ -293,7 +289,6 @@ public partial class MainViewModel : ViewModelBase
         }
 
         DetachCurrentView();
-        SelectedItem = item;
         var editor = _viewModels.Create<ItemEditorViewModel>(item, Upload.Reporter);
         editor.ItemUpdated += OnItemUpdated;
         editor.ItemDeleted += OnItemDeleted;
@@ -304,7 +299,6 @@ public partial class MainViewModel : ViewModelBase
     private void OpenModioEditor(WorkshopItem item)
     {
         DetachCurrentView();
-        SelectedItem = item;
         var editor = _viewModels.Create<ModioItemEditorViewModel>(item, Upload.Reporter);
         editor.ItemUpdated += OnModioItemUpdated;
         editor.ItemDeleted += OnItemDeleted;
@@ -335,33 +329,35 @@ public partial class MainViewModel : ViewModelBase
     }, "Post-save refresh");
 
     /// <summary>Post-save: keep the editor mounted, refresh only the matching list row.</summary>
-    private void OnItemUpdated(PublishedFileId_t fileId) => FireAndForget(async () =>
+    private async Task<WorkshopItem?> OnItemUpdated(PublishedFileId_t fileId)
     {
+        var fresh = await ItemListViewModel.RefreshItemAsync(fileId.m_PublishedFileId);
         // Single-item fetch failed: best-effort full reload so the next list visit isn't stale.
-        if (await ItemListViewModel.RefreshItemAsync(fileId.m_PublishedFileId) is null)
-            await ItemListViewModel.LoadItemsAsync();
-    }, "Post-save refresh");
+        if (fresh is null) FireAndForget(() => ItemListViewModel.LoadItemsAsync(), "Post-save reload");
+        return fresh;
+    }
 
     private void OnItemDeleted() => FireAndForget(async () =>
     {
         Show(ItemListViewModel, ShellTab.MyMods);
-        SelectedItem = null;
         await ItemListViewModel.LoadItemsAsync();
     }, "Post-delete reload");
 
-    /// <summary>
-    /// Post-publish: fetch only the new item and open it in the editor. If Steam can't
-    /// resolve the fresh id yet (indexing latency), fall back to a full list reload.
-    /// </summary>
     private void OnItemCreated(PublishedFileId_t fileId) => OpenCreatedItem(fileId.m_PublishedFileId);
 
     private void OnModioItemCreated(ulong id) => OpenCreatedItem(id);
 
+    /// <summary>
+    /// Post-publish: fetches only the new item and opens it in the editor, or falls back to a
+    /// full list reload when the platform can't resolve the fresh id yet. The create view stays
+    /// mounted during the fetch, so it is detached exactly once.
+    /// </summary>
     private void OpenCreatedItem(ulong id) => FireAndForget(async () =>
     {
-        DetachCurrentView();
-
+        var creator = CurrentView;
         var item = await ItemListViewModel.RefreshItemAsync(id);
+        if (!ReferenceEquals(CurrentView, creator)) return;
+
         if (item is not null)
         {
             OpenEditor(item);
@@ -369,8 +365,7 @@ public partial class MainViewModel : ViewModelBase
         }
 
         _notificationService.ShowError(Loc["PostPublishFetchFailed"]);
-        CurrentView = ItemListViewModel;
-        ActiveTab = ShellTab.MyMods;
+        Show(ItemListViewModel, ShellTab.MyMods);
         await ItemListViewModel.LoadItemsAsync();
     }, "Post-publish navigation");
 
@@ -385,17 +380,18 @@ public partial class MainViewModel : ViewModelBase
     private void NavigateToHome()
     {
         Show(HomeViewModel, ShellTab.Home);
-        SelectedItem = null;
     }
 
     [RelayCommand]
     private void NavigateToList()
     {
         Show(ItemListViewModel, ShellTab.MyMods);
-        SelectedItem = null;
     }
 
-    [RelayCommand]
+    // Ctrl+N bypasses the top bar's disabled state, so the upload lock lives on the command.
+    private bool CanNavigateToCreate() => !Upload.IsInProgress;
+
+    [RelayCommand(CanExecute = nameof(CanNavigateToCreate))]
     private void NavigateToCreate()
     {
         OpenCreator();
@@ -413,6 +409,9 @@ public partial class MainViewModel : ViewModelBase
         {
             case ItemEditorViewModel editor when editor.SaveCommand.CanExecute(null):
                 editor.SaveCommand.Execute(null);
+                break;
+            case ModioItemEditorViewModel modioEditor when modioEditor.SaveCommand.CanExecute(null):
+                modioEditor.SaveCommand.Execute(null);
                 break;
             case CreateItemViewModel creator when creator.CreateCommand.CanExecute(null):
                 creator.CreateCommand.Execute(null);
@@ -487,6 +486,7 @@ public partial class MainViewModel : ViewModelBase
     {
         if (inProgress) Toasts.ApplyPosition();
         Updates.IsUploadInProgress = inProgress;
+        NavigateToCreateCommand.NotifyCanExecuteChanged();
         RefreshPresence();
     }
 
@@ -588,7 +588,7 @@ public partial class MainViewModel : ViewModelBase
         Connection.SetDisconnected();
         NotifySessionChanged();
 
-        if (CurrentView is ItemEditorViewModel)
+        if (CurrentView is ItemEditorViewModel or ModioItemEditorViewModel or CreateItemViewModel or CreateModioItemViewModel)
             Show(HomeViewModel, ShellTab.Home);
     }
 
@@ -598,7 +598,6 @@ public partial class MainViewModel : ViewModelBase
         ItemListViewModel.DisposeAndClearItems();
         HomeViewModel.HeaderImage = null;
         SessionList.ActiveIcon = null;
-        SelectedItem = null;
     }
 
     private void NotifySessionChanged()

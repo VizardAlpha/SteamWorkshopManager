@@ -20,6 +20,9 @@ public static class SteamUrls
     public static string HeaderImage(uint appId) =>
         $"https://cdn.cloudflare.steamstatic.com/steam/apps/{appId}/header.jpg";
 
+    /// <summary>Agreement an account accepts once before its Workshop items become visible.</summary>
+    public const string WorkshopLegalAgreement = "https://steamcommunity.com/sharedfiles/workshoplegalagreement";
+
     /// <summary>Path segment that tells a Workshop page apart from the game hub.</summary>
     public const string WorkshopPathSegment = "/workshop";
 }

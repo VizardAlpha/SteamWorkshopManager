@@ -97,9 +97,13 @@ public class TelemetryService : ITelemetryService, IDisposable
 
     public Guid InstanceId => _state.InstanceId;
 
+    /// <summary>An opt-in given under an older consent version does not count until it is reconfirmed.</summary>
+    private bool HasConsent =>
+        _settingsService.Settings is { TelemetryEnabled: true, TelemetryConsentVersion: >= TelemetryConsent.RequiredVersion };
+
     public void Track(string eventType, uint? steamAppId = null)
     {
-        if (!_settingsService.Settings.TelemetryEnabled) return;
+        if (!HasConsent) return;
 
         try
         {
@@ -158,7 +162,7 @@ public class TelemetryService : ITelemetryService, IDisposable
 
     private async Task FlushCoreAsync()
     {
-        if (!_settingsService.Settings.TelemetryEnabled)
+        if (!HasConsent)
         {
             await ClearQueueAsync();
             return;

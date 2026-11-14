@@ -159,7 +159,6 @@ public partial class UpdateController : ViewModelBase
     [RelayCommand]
     private void CancelInstall() => _installCts?.Cancel();
 
-    [RelayCommand]
     private void OpenReleasePage()
     {
         var url = UpdateInfo?.ReleaseUrl;

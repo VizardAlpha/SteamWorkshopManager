@@ -1,0 +1,108 @@
+<!-- Branch range card shared by the Steam create and edit views. -->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:editor="using:SteamWorkshopManager.ViewModels.Editor"
+             xmlns:sections="using:SteamWorkshopManager.Views.Editor"
+             xmlns:models="using:SteamWorkshopManager.Models"
+             xmlns:icons="using:Material.Icons.Avalonia"
+             x:Class="SteamWorkshopManager.Views.Editor.VersionCompatibilityView"
+             x:DataType="editor:VersionRangeViewModel">
+
+    <UserControl.Styles>
+        <StyleInclude Source="avares://SteamWorkshopManager/Themes/EditorStyles.axaml"/>
+    </UserControl.Styles>
+
+    <Border Classes="section-card">
+        <StackPanel>
+            <Grid Margin="16,14,16,12" ColumnDefinitions="*,Auto">
+                <TextBlock Classes="card-title" Text="{DynamicResource VersionCompatibility}"/>
+            </Grid>
+            <Border Height="1" Background="{DynamicResource BorderSubtleBrush}"/>
+            <StackPanel Margin="16" Spacing="14">
+                <!-- Current branch pill -->
+                <StackPanel>
+                    <TextBlock Classes="field-label" Text="{DynamicResource CurrentBranch}"/>
+                    <Border Background="#1F5B9CF6"
+                            BorderBrush="#405B9CF6"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="10,6"
+                            HorizontalAlignment="Left">
+                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <icons:MaterialIcon Kind="SourceBranch" Width="14" Height="14"
+                                                Foreground="{DynamicResource AccentPrimaryBrush}"/>
+                            <TextBlock Text="{Binding CurrentBranch}"
+                                       FontSize="13" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Target-all toggle -->
+                <Border Background="{DynamicResource SurfaceElevatedBrush}"
+                        BorderBrush="{DynamicResource BorderSubtleBrush}"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Padding="12,8">
+                    <CheckBox Content="{DynamicResource TargetAllVersions}"
+                              IsChecked="{Binding TargetAllVersions}"/>
+                </Border>
+
+                <!-- Min/Max branch selects -->
+                <Grid ColumnDefinitions="*,12,*" IsEnabled="{Binding !TargetAllVersions}">
+                    <StackPanel>
+                        <TextBlock Classes="field-label" Text="{DynamicResource MinBranch}"/>
+                        <ComboBox ItemsSource="{Binding AvailableBranches}"
+                                  SelectedItem="{Binding SelectedBranchMin}"
+                                  PlaceholderText="{DynamicResource AnyOlderVersion}"
+                                  HorizontalAlignment="Stretch">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate DataType="models:GameBranch">
+                                    <TextBlock Text="{Binding DisplayName}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Classes="field-label" Text="{DynamicResource MaxBranch}"/>
+                        <ComboBox ItemsSource="{Binding AvailableBranches}"
+                                  SelectedItem="{Binding SelectedBranchMax}"
+                                  PlaceholderText="{DynamicResource AnyNewerVersion}"
+                                  HorizontalAlignment="Stretch">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate DataType="models:GameBranch">
+                                    <TextBlock Text="{Binding DisplayName}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Invalid range warning -->
+                <Border Background="#1FC23B2E" Padding="8" CornerRadius="4"
+                        BorderBrush="{DynamicResource FeedbackDangerBrush}" BorderThickness="1"
+                        IsVisible="{Binding IsBranchRangeInvalid}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <icons:MaterialIcon Kind="AlertCircleOutline" Width="14" Height="14"
+                                            Foreground="{DynamicResource FeedbackDangerTextBrush}"
+                                            VerticalAlignment="Center"/>
+                        <TextBlock Text="{DynamicResource InvalidBranchRange}"
+                                   Foreground="{DynamicResource FeedbackDangerTextBrush}" FontSize="12"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Content required note -->
+                <Border Background="{DynamicResource SurfaceElevatedBrush}" Padding="8" CornerRadius="4"
+                        IsVisible="{Binding $parent[sections:VersionCompatibilityView].ShowContentRequiredNote}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <icons:MaterialIcon Kind="InformationOutline" Width="14" Height="14"
+                                            Foreground="{DynamicResource AccentPrimaryBrush}"
+                                            VerticalAlignment="Center"/>
+                        <TextBlock Text="{DynamicResource VersioningContentRequired}"
+                                   Foreground="{DynamicResource TextMutedBrush}" FontSize="12"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</UserControl>

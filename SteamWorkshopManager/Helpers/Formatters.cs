@@ -1,4 +1,5 @@
 using System;
+using SteamWorkshopManager.Services.Core;
 
 namespace SteamWorkshopManager.Helpers;
 
@@ -29,16 +30,18 @@ public static class Formatters
         };
     }
 
+    private static string Ago(string key, double count) =>
+        string.Format(LocalizationService.GetString(key), (int)count);
+
     public static string TimeAgo(DateTime utc)
     {
         var diff = DateTime.UtcNow - utc;
-        if (diff.TotalSeconds < 1) return "just now";
-        if (diff.TotalMinutes < 1) return "just now";
-        if (diff.TotalHours < 1) return $"{(int)diff.TotalMinutes}m ago";
-        if (diff.TotalDays < 1) return $"{(int)diff.TotalHours}h ago";
-        if (diff.TotalDays < 7) return $"{(int)diff.TotalDays}d ago";
-        if (diff.TotalDays < 30) return $"{(int)(diff.TotalDays / 7)}w ago";
-        if (diff.TotalDays < 365) return $"{(int)(diff.TotalDays / 30)}mo ago";
-        return $"{(int)(diff.TotalDays / 365)}y ago";
+        if (diff.TotalMinutes < 1) return LocalizationService.GetString("TimeAgoJustNow");
+        if (diff.TotalHours < 1) return Ago("TimeAgoMinutes", diff.TotalMinutes);
+        if (diff.TotalDays < 1) return Ago("TimeAgoHours", diff.TotalHours);
+        if (diff.TotalDays < 7) return Ago("TimeAgoDays", diff.TotalDays);
+        if (diff.TotalDays < 30) return Ago("TimeAgoWeeks", diff.TotalDays / 7);
+        if (diff.TotalDays < 365) return Ago("TimeAgoMonths", diff.TotalDays / 30);
+        return Ago("TimeAgoYears", diff.TotalDays / 365);
     }
 }

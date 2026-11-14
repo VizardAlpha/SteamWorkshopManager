@@ -1,12 +1,10 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Steamworks;
+using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Steam.Worker.Contracts;
 using SteamWorkshopManager.Services.Steam.Worker.Contracts.Dtos;
@@ -14,22 +12,25 @@ using SteamWorkshopManager.Services.Steam.Worker.Contracts.Dtos;
 namespace SteamWorkshopManager.Services.Steam.Worker.Host;
 
 /// <summary>
-/// Concrete <see cref="ISteamWorker"/> running inside the worker process.
-///
-/// All Steamworks.NET interaction lives here: the worker owns its own
-/// <see cref="SteamService"/> instance, so <c>SteamAPI.Init()</c> happens in
-/// this process only and the shell never touches the global Steam state.
-/// RPC calls are thin wrappers - they marshal domain models to the DTOs
-/// defined under <see cref="Contracts.Dtos"/>, nothing more.
+/// <see cref="ISteamWorker"/> running inside the worker process, the only one that calls
+/// Steamworks.NET. A thin RPC mapper over <see cref="SteamService"/>, <see cref="SteamUgcQueries"/> and
+/// <see cref="SteamUgcPublisher"/>.
 /// </summary>
-internal sealed class SteamWorkerImpl(uint appId) : ISteamWorker
+internal sealed class SteamWorkerImpl : ISteamWorker
 {
     private static readonly Logger Log = LogService.GetLogger<SteamWorkerImpl>();
 
-    private readonly SteamService _steam = new(appId);
+    private readonly SteamService _steam;
+    private readonly SteamUgcQueries _queries;
+    private readonly SteamUgcPublisher _publisher;
     private CancellationTokenSource? _logSinkCts;
 
-    public Task<string> PingAsync() => Task.FromResult("pong");
+    public SteamWorkerImpl(uint appId)
+    {
+        _steam = new SteamService(appId);
+        _queries = new SteamUgcQueries(_steam, appId);
+        _publisher = new SteamUgcPublisher(_steam, appId);
+    }
 
     public async Task SetLogSinkAsync(IProgress<LogEntryDto>? sink, bool debugEnabled)
     {
@@ -89,23 +90,23 @@ internal sealed class SteamWorkerImpl(uint appId) : ISteamWorker
 
     public async Task<List<WorkshopItemDto>> GetPublishedItemsAsync()
     {
-        var items = await _steam.GetPublishedItemsAsync();
+        var items = await _queries.GetPublishedItemsAsync();
         return items.Select(ToDto).ToList();
     }
 
     public async Task<WorkshopItemDto?> GetPublishedItemAsync(ulong publishedFileId)
     {
-        var item = await _steam.GetPublishedItemAsync(new PublishedFileId_t(publishedFileId));
+        var item = await _queries.GetPublishedItemAsync(new PublishedFileId_t(publishedFileId));
         return item is null ? null : ToDto(item);
     }
 
     public Task<bool> DeleteItemAsync(ulong publishedFileId) =>
-        _steam.DeleteItemAsync(new PublishedFileId_t(publishedFileId));
+        _publisher.DeleteItemAsync(new PublishedFileId_t(publishedFileId));
 
     public async Task<CreateItemResultDto> CreateItemAsync(CreateItemRequestDto request, IProgress<UploadProgressDto>? progress)
     {
         var bridge = BridgeProgress(progress);
-        var outcome = await _steam.CreateItemAsync(
+        var outcome = await _publisher.CreateItemAsync(
             request.Title,
             request.Description,
             request.ContentFolderPath,
@@ -119,13 +120,14 @@ internal sealed class SteamWorkerImpl(uint appId) : ISteamWorker
             request.PreviewOps?.Select(FromDto).ToList());
         return new CreateItemResultDto(
             outcome.FileId?.m_PublishedFileId ?? 0UL,
-            (int)(outcome.Result ?? 0));
+            (int)(outcome.Result ?? 0),
+            outcome.NeedsLegalAgreement);
     }
 
-    public Task<bool> UpdateItemAsync(UpdateItemRequestDto request, IProgress<UploadProgressDto>? progress)
+    public async Task<UpdateItemResultDto> UpdateItemAsync(UpdateItemRequestDto request, IProgress<UploadProgressDto>? progress)
     {
         var bridge = BridgeProgress(progress);
-        return _steam.UpdateItemAsync(
+        var outcome = await _publisher.UpdateItemAsync(
             new PublishedFileId_t(request.PublishedFileId),
             request.Title,
             request.Description,
@@ -138,16 +140,17 @@ internal sealed class SteamWorkerImpl(uint appId) : ISteamWorker
             request.BranchMin,
             request.BranchMax,
             request.PreviewOps?.Select(FromDto).ToList());
+        return new UpdateItemResultDto(outcome.Success, outcome.NeedsLegalAgreement);
     }
 
     public async Task<ItemTextDto?> GetItemTextAsync(ulong publishedFileId, string language, bool fullDescription)
     {
-        var text = await _steam.GetItemTextAsync(new PublishedFileId_t(publishedFileId), language, fullDescription);
+        var text = await _queries.GetItemTextAsync(new PublishedFileId_t(publishedFileId), language, fullDescription);
         return text is null ? null : new ItemTextDto(text.Title, text.Description);
     }
 
     public Task<bool> UpdateItemTextAsync(ulong publishedFileId, string language, string title, string description) =>
-        _steam.UpdateItemTextAsync(new PublishedFileId_t(publishedFileId), language, new Models.ItemText(title, description));
+        _publisher.UpdateItemTextAsync(new PublishedFileId_t(publishedFileId), language, new Models.ItemText(title, description));
 
     private static PreviewOp FromDto(PreviewOpDto dto) => dto.Kind switch
     {
@@ -159,278 +162,47 @@ internal sealed class SteamWorkerImpl(uint appId) : ISteamWorker
 
     /// <summary>
     /// Adapts the shell-bound <see cref="UploadProgressDto"/> channel back to
-    /// the <see cref="UploadProgress"/> type the local SteamService reports
+    /// the <see cref="UploadProgress"/> type the local publisher reports
     /// against. Returns null when no shell-side observer is attached, so we
     /// don't pay the allocation cost of a wrapper that reports into the void.
     /// </summary>
     private static IProgress<UploadProgress>? BridgeProgress(IProgress<UploadProgressDto>? sink)
     {
         if (sink is null) return null;
-        return new Progress<UploadProgress>(p =>
+        // Direct: on the thread pool a late "Finalizing" could overtake the final report.
+        return new DirectProgress<UploadProgress>(p =>
             sink.Report(new UploadProgressDto(p.Status, p.BytesProcessed, p.BytesTotal, p.PercentHint)));
     }
 
-    public async Task<List<DependencyInfoDto>> GetDependenciesAsync(ulong parentId)
-    {
-        var childIds = await GetChildIdsAsync(new PublishedFileId_t(parentId));
-        if (childIds.Count == 0) return [];
+    public Task<List<DependencyInfoDto>> GetDependenciesAsync(ulong parentId) =>
+        _queries.GetDependenciesAsync(parentId);
 
-        var results = new List<DependencyInfoDto>();
-        for (var i = 0; i < childIds.Count; i += 50)
-        {
-            var batch = childIds.GetRange(i, Math.Min(50, childIds.Count - i));
-            results.AddRange(await GetBatchDetailsAsync(batch));
-        }
-        return results;
-    }
+    public Task<DependencyInfoDto?> GetModDetailsAsync(ulong fileId) => _queries.GetModDetailsAsync(fileId);
 
-    public async Task<DependencyInfoDto?> GetModDetailsAsync(ulong fileId)
-    {
-        var results = await GetBatchDetailsAsync([new PublishedFileId_t(fileId)]);
-        return results.Count > 0 ? results[0] : null;
-    }
+    public Task<bool> AddDependencyAsync(ulong parentId, ulong childId) =>
+        _publisher.AddDependencyAsync(parentId, childId);
 
-    public async Task<bool> AddDependencyAsync(ulong parentId, ulong childId)
-    {
-        var parent = new PublishedFileId_t(parentId);
-        var child = new PublishedFileId_t(childId);
+    public Task<bool> RemoveDependencyAsync(ulong parentId, ulong childId) =>
+        _publisher.RemoveDependencyAsync(parentId, childId);
 
-        var tcs = new TaskCompletionSource<AddUGCDependencyResult_t>();
-        var callResult = CallResult<AddUGCDependencyResult_t>.Create((result, failure) =>
-        {
-            if (failure) tcs.SetException(new Exception("AddDependency call failed"));
-            else tcs.SetResult(result);
-        });
-        callResult.Set(SteamUGC.AddDependency(parent, child));
+    public Task<List<AppDependencyInfoDto>> GetAppDependenciesAsync(ulong modId) =>
+        _queries.GetAppDependenciesAsync(modId);
 
-        if (!await PollCallbackAsync(tcs.Task)) return false;
-        var result = await tcs.Task;
-        return result.m_eResult == EResult.k_EResultOK;
-    }
+    public Task<bool> AddAppDependencyAsync(ulong modId, uint appId) =>
+        _publisher.AddAppDependencyAsync(modId, appId);
 
-    public async Task<bool> RemoveDependencyAsync(ulong parentId, ulong childId)
-    {
-        var parent = new PublishedFileId_t(parentId);
-        var child = new PublishedFileId_t(childId);
+    public Task<bool> RemoveAppDependencyAsync(ulong modId, uint appId) =>
+        _publisher.RemoveAppDependencyAsync(modId, appId);
 
-        var tcs = new TaskCompletionSource<RemoveUGCDependencyResult_t>();
-        var callResult = CallResult<RemoveUGCDependencyResult_t>.Create((result, failure) =>
-        {
-            if (failure) tcs.SetException(new Exception("RemoveDependency call failed"));
-            else tcs.SetResult(result);
-        });
-        callResult.Set(SteamUGC.RemoveDependency(parent, child));
-
-        if (!await PollCallbackAsync(tcs.Task)) return false;
-        var result = await tcs.Task;
-        return result.m_eResult == EResult.k_EResultOK;
-    }
-
-    public async Task<List<AppDependencyInfoDto>> GetAppDependenciesAsync(ulong modId)
-    {
-        var tcs = new TaskCompletionSource<GetAppDependenciesResult_t>();
-        var callResult = CallResult<GetAppDependenciesResult_t>.Create((result, failure) =>
-        {
-            if (failure) tcs.SetException(new Exception("GetAppDependencies call failed"));
-            else tcs.SetResult(result);
-        });
-        callResult.Set(SteamUGC.GetAppDependencies(new PublishedFileId_t(modId)));
-
-        if (!await PollCallbackAsync(tcs.Task)) return [];
-        var result = await tcs.Task;
-        if (result.m_eResult != EResult.k_EResultOK) return [];
-
-        var deps = new List<AppDependencyInfoDto>();
-        for (uint i = 0; i < result.m_nNumAppDependencies; i++)
-        {
-            var appId = result.m_rgAppIDs[i];
-            // Names are resolved shell-side (AppDependencyService), which owns the cache.
-            deps.Add(new AppDependencyInfoDto(appId.m_AppId, null));
-        }
-        return deps;
-    }
-
-    public async Task<bool> AddAppDependencyAsync(ulong modId, uint appId)
-    {
-        var tcs = new TaskCompletionSource<AddAppDependencyResult_t>();
-        var callResult = CallResult<AddAppDependencyResult_t>.Create((result, failure) =>
-        {
-            if (failure) tcs.SetException(new Exception("AddAppDependency call failed"));
-            else tcs.SetResult(result);
-        });
-        callResult.Set(SteamUGC.AddAppDependency(new PublishedFileId_t(modId), new AppId_t(appId)));
-
-        if (!await PollCallbackAsync(tcs.Task)) return false;
-        var result = await tcs.Task;
-        return result.m_eResult == EResult.k_EResultOK;
-    }
-
-    public async Task<bool> RemoveAppDependencyAsync(ulong modId, uint appId)
-    {
-        var tcs = new TaskCompletionSource<RemoveAppDependencyResult_t>();
-        var callResult = CallResult<RemoveAppDependencyResult_t>.Create((result, failure) =>
-        {
-            if (failure) tcs.SetException(new Exception("RemoveAppDependency call failed"));
-            else tcs.SetResult(result);
-        });
-        callResult.Set(SteamUGC.RemoveAppDependency(new PublishedFileId_t(modId), new AppId_t(appId)));
-
-        if (!await PollCallbackAsync(tcs.Task)) return false;
-        var result = await tcs.Task;
-        return result.m_eResult == EResult.k_EResultOK;
-    }
-
-    public async Task<List<ModVersionInfoDto>> GetSupportedGameVersionsAsync(ulong fileId)
-    {
-        var versions = new List<ModVersionInfoDto>();
-        try
-        {
-            var query = SteamUGC.CreateQueryUGCDetailsRequest([new PublishedFileId_t(fileId)], 1);
-
-            var tcs = new TaskCompletionSource<SteamUGCQueryCompleted_t>();
-            var callResult = CallResult<SteamUGCQueryCompleted_t>.Create((result, failure) =>
-            {
-                if (failure) tcs.SetException(new Exception("Version query failed"));
-                else tcs.SetResult(result);
-            });
-            callResult.Set(SteamUGC.SendQueryUGCRequest(query));
-
-            if (!await PollCallbackAsync(tcs.Task))
-            {
-                SteamUGC.ReleaseQueryUGCRequest(query);
-                return versions;
-            }
-
-            var queryResult = await tcs.Task;
-            if (queryResult.m_eResult != EResult.k_EResultOK || queryResult.m_unNumResultsReturned == 0)
-            {
-                SteamUGC.ReleaseQueryUGCRequest(queryResult.m_handle);
-                return versions;
-            }
-
-            var numVersions = SteamUGC.GetNumSupportedGameVersions(queryResult.m_handle, 0);
-            for (uint i = 0; i < numVersions; i++)
-            {
-                if (SteamUGC.GetSupportedGameVersionData(queryResult.m_handle, 0, i,
-                        out var branchMin, out var branchMax, 128))
-                {
-                    versions.Add(new ModVersionInfoDto(i, branchMin, branchMax));
-                }
-            }
-
-            SteamUGC.ReleaseQueryUGCRequest(queryResult.m_handle);
-        }
-        catch (Exception ex)
-        {
-            Log.Error($"GetSupportedGameVersions failed: {ex.Message}", ex);
-        }
-        return versions;
-    }
+    public Task<List<ModVersionInfoDto>> GetSupportedGameVersionsAsync(ulong fileId) =>
+        _queries.GetSupportedGameVersionsAsync(fileId);
 
     public async Task<string?> FetchSteamWebAsync(string url)
     {
         // Routed here so the SteamHTTP cookie container & request lifecycle stay
         // inside the worker process - only here is SteamAPI initialised.
-        await SteamWebClient.InitializeAsync();
+        SteamWebClient.Initialize();
         return await SteamWebClient.GetStringAsync(url);
-    }
-
-    // ---- Steam UGC query helpers (worker-local) ----
-
-    private static async Task<List<PublishedFileId_t>> GetChildIdsAsync(PublishedFileId_t parentId)
-    {
-        var childIds = new List<PublishedFileId_t>();
-        var query = SteamUGC.CreateQueryUGCDetailsRequest([parentId], 1);
-        SteamUGC.SetReturnChildren(query, true);
-
-        var tcs = new TaskCompletionSource<SteamUGCQueryCompleted_t>();
-        var callResult = CallResult<SteamUGCQueryCompleted_t>.Create((result, failure) =>
-        {
-            if (failure) tcs.SetException(new Exception("Query children failed"));
-            else tcs.SetResult(result);
-        });
-        callResult.Set(SteamUGC.SendQueryUGCRequest(query));
-
-        if (!await PollCallbackAsync(tcs.Task))
-        {
-            SteamUGC.ReleaseQueryUGCRequest(query);
-            return childIds;
-        }
-
-        var queryResult = await tcs.Task;
-        if (queryResult.m_eResult != EResult.k_EResultOK || queryResult.m_unNumResultsReturned == 0)
-        {
-            SteamUGC.ReleaseQueryUGCRequest(queryResult.m_handle);
-            return childIds;
-        }
-
-        if (SteamUGC.GetQueryUGCResult(queryResult.m_handle, 0, out var details) && details.m_unNumChildren > 0)
-        {
-            var children = new PublishedFileId_t[details.m_unNumChildren];
-            if (SteamUGC.GetQueryUGCChildren(queryResult.m_handle, 0, children, details.m_unNumChildren))
-                childIds.AddRange(children);
-        }
-
-        SteamUGC.ReleaseQueryUGCRequest(queryResult.m_handle);
-        return childIds;
-    }
-
-    private static async Task<List<DependencyInfoDto>> GetBatchDetailsAsync(List<PublishedFileId_t> fileIds)
-    {
-        var results = new List<DependencyInfoDto>();
-        if (fileIds.Count == 0) return results;
-
-        var query = SteamUGC.CreateQueryUGCDetailsRequest(fileIds.ToArray(), (uint)fileIds.Count);
-
-        var tcs = new TaskCompletionSource<SteamUGCQueryCompleted_t>();
-        var callResult = CallResult<SteamUGCQueryCompleted_t>.Create((result, failure) =>
-        {
-            if (failure) tcs.SetException(new Exception("Batch details query failed"));
-            else tcs.SetResult(result);
-        });
-        callResult.Set(SteamUGC.SendQueryUGCRequest(query));
-
-        if (!await PollCallbackAsync(tcs.Task))
-        {
-            SteamUGC.ReleaseQueryUGCRequest(query);
-            return results;
-        }
-
-        var queryResult = await tcs.Task;
-        if (queryResult.m_eResult != EResult.k_EResultOK)
-        {
-            SteamUGC.ReleaseQueryUGCRequest(queryResult.m_handle);
-            return results;
-        }
-
-        for (uint i = 0; i < queryResult.m_unNumResultsReturned; i++)
-        {
-            if (SteamUGC.GetQueryUGCResult(queryResult.m_handle, i, out var details))
-            {
-                var previewUrl = "";
-                if (SteamUGC.GetQueryUGCPreviewURL(queryResult.m_handle, i, out var url, 1024))
-                    previewUrl = url;
-
-                results.Add(new DependencyInfoDto(
-                    PublishedFileId: (ulong)details.m_nPublishedFileId,
-                    Title: details.m_rgchTitle,
-                    PreviewUrl: previewUrl,
-                    IsValid: details.m_eResult == EResult.k_EResultOK));
-            }
-        }
-
-        SteamUGC.ReleaseQueryUGCRequest(queryResult.m_handle);
-        return results;
-    }
-
-    private static async Task<bool> PollCallbackAsync(Task task, int timeoutSeconds = 30)
-    {
-        var timeout = DateTime.UtcNow.AddSeconds(timeoutSeconds);
-        while (!task.IsCompleted && DateTime.UtcNow < timeout)
-        {
-            await Task.Delay(100);
-        }
-        return task.IsCompleted;
     }
 
     public Task<List<GameBranchDto>> GetGameBranchesAsync()
@@ -448,7 +220,6 @@ internal sealed class SteamWorkerImpl(uint appId) : ISteamWorker
         PublishedFileId: item.Id,
         Title: item.Title,
         Description: item.Description,
-        PreviewImagePath: item.PreviewImagePath,
         PreviewImageUrl: item.PreviewImageUrl,
         Visibility: item.Visibility,
         Tags: item.Tags.Select(t => new WorkshopTagDto(t.Name)).ToList(),

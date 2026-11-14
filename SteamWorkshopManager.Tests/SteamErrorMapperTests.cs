@@ -50,22 +50,4 @@ public class SteamErrorMapperTests
             "Steam API Error: k_EResultAccessDenied (Code: 15)",
             SteamErrorMapper.GetTechnicalDescription(EResult.k_EResultAccessDenied));
     }
-
-    [TestMethod]
-    public void IsSuccess_OnlyOk()
-    {
-        Assert.IsTrue(SteamErrorMapper.IsSuccess(EResult.k_EResultOK));
-        Assert.IsFalse(SteamErrorMapper.IsSuccess(EResult.k_EResultFail));
-    }
-
-    [TestMethod]
-    [DataRow(EResult.k_EResultTimeout, true)]
-    [DataRow(EResult.k_EResultBusy, true)]
-    [DataRow(EResult.k_EResultNoConnection, true)]
-    [DataRow(EResult.k_EResultAccessDenied, false)]
-    [DataRow(EResult.k_EResultBanned, false)]
-    public void IsRecoverable_ClassifiesTransientErrors(EResult result, bool expected)
-    {
-        Assert.AreEqual(expected, SteamErrorMapper.IsRecoverable(result));
-    }
 }

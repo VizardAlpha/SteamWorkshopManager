@@ -7,7 +7,6 @@
 
     <!-- Header -->
     <x:String x:Key="AppTitle">Workshop Manager</x:String>
-    <x:String x:Key="AppSubtitle">Songs of Syx</x:String>
     <x:String x:Key="Home">Accueil</x:String>
     <x:String x:Key="MyPublications">Mes publications</x:String>
     <x:String x:Key="NewItem">Nouveau</x:String>
@@ -62,24 +61,18 @@
     <x:String x:Key="JoinDiscord">Rejoindre le Discord</x:String>
     <x:String x:Key="OpenChangelog">Changelog</x:String>
     <x:String x:Key="OpenThirdPartyNotices">Licences tierces</x:String>
-    <x:String x:Key="SettingsSubtitle">Personnalise ton expérience Workshop Manager</x:String>
     <x:String x:Key="Refresh">Actualiser</x:String>
     <x:String x:Key="LoadingPublications">Chargement de vos publications...</x:String>
-    <x:String x:Key="NoImage">Pas d'image</x:String>
     <x:String x:Key="NoPublications">Aucune publication</x:String>
     <x:String x:Key="LoadingError">Erreur de chargement</x:String>
 
     <!-- Item Editor -->
-    <x:String x:Key="Back">Retour</x:String>
     <x:String x:Key="Delete">Supprimer</x:String>
-    <x:String x:Key="Save">Enregistrer</x:String>
     <x:String x:Key="SaveChanges">Enregistrer les modifications</x:String>
     <x:String x:Key="Saving">Enregistrement…</x:String>
     <x:String x:Key="SaveAsDraft">Enregistrer comme brouillon</x:String>
     <x:String x:Key="DraftSaved">Brouillon enregistré</x:String>
     <x:String x:Key="Drafts">Brouillons</x:String>
-    <x:String x:Key="NoDrafts">Aucun brouillon</x:String>
-    <x:String x:Key="LoadDraft">Charger le brouillon</x:String>
     <x:String x:Key="ModInformation">Informations du mod</x:String>
     <x:String x:Key="ModInformationSub">Détails principaux de votre mod : dossier, image de preview, titre et description.</x:String>
     <x:String x:Key="ModFolder">Dossier du mod</x:String>
@@ -110,12 +103,9 @@
     <x:String x:Key="UpdateNotes">Notes de mise à jour</x:String>
     <x:String x:Key="ChangelogPlaceholder">Décrivez les changements de cette mise à jour...</x:String>
     <x:String x:Key="ChangelogInfo">Ce texte sera visible dans l'historique des mises à jour sur le Workshop Steam.</x:String>
-    <x:String x:Key="MultiVersion">Multi-versions</x:String>
-    <x:String x:Key="MultiVersionInfo">Cette fonctionnalité permet de publier plusieurs versions de votre mod pour différentes versions du jeu. Vérifiez si elle est activée pour le jeu.</x:String>
     <x:String x:Key="AllVersions">Toutes versions</x:String>
 
     <!-- Create Item -->
-    <x:String x:Key="NewPublication">Nouvelle publication</x:String>
     <x:String x:Key="PublishToWorkshop">Publier sur le Workshop</x:String>
     <x:String x:Key="DragDropFolder">Glissez-déposez le dossier de votre mod</x:String>
     <x:String x:Key="Or">ou</x:String>
@@ -305,7 +295,6 @@
     <x:String x:Key="Settings">Paramètres</x:String>
     <x:String x:Key="Language">Langue</x:String>
     <x:String x:Key="English">Anglais</x:String>
-    <x:String x:Key="French">Français</x:String>
     <x:String x:Key="Close">Fermer</x:String>
 
     <!-- Upload Progress -->
@@ -344,6 +333,9 @@
     <!-- Notifications -->
     <x:String x:Key="ItemCreatedSuccess">Item créé avec succès !</x:String>
     <x:String x:Key="ItemUpdatedSuccess">Item mis à jour avec succès !</x:String>
+    <x:String x:Key="UploadCancelled">Envoi annulé.</x:String>
+    <x:String x:Key="WorkshopLegalAgreementRequired">Envoyé, mais masqué sur Steam tant que vous n'avez pas accepté l'accord légal du Steam Workshop.</x:String>
+    <x:String x:Key="WorkshopLegalAgreementOpen">Ouvrir l'accord</x:String>
     <x:String x:Key="ItemDeletedSuccess">Item supprimé avec succès !</x:String>
     <x:String x:Key="OperationFailed">L'opération a échoué</x:String>
     <x:String x:Key="PostPublishFetchFailed">Item publié, mais Steam ne l'a pas encore indexé. Rafraîchissement de la liste.</x:String>
@@ -352,7 +344,6 @@
     <x:String x:Key="DebugMode">Mode Debug</x:String>
     <x:String x:Key="EnableDebugMode">Activer les logs de debug</x:String>
     <x:String x:Key="DebugModeDescription">Lorsqu'activé, des logs détaillés sont enregistrés pour aider au diagnostic. Partagez le fichier de logs lors du signalement de problèmes.</x:String>
-    <x:String x:Key="LogFileLocation">Emplacement du fichier de logs :</x:String>
     <x:String x:Key="AppDataFolder">Dossier de données de l'application</x:String>
     <x:String x:Key="AppDataFolderDescription">Paramètres, sessions, file de télémétrie et téléchargements. Utile pour signaler un bug ou migrer vers une autre machine.</x:String>
     <x:String x:Key="LogFolderSize">Taille du dossier de logs</x:String>
@@ -362,10 +353,7 @@
     <!-- Sessions -->
     <x:String x:Key="Sessions">Sessions</x:String>
     <x:String x:Key="AddSession">Ajouter</x:String>
-    <x:String x:Key="AddNewSession">Ajouter une session</x:String>
-    <x:String x:Key="AddSessionInstructions">Entrez l'AppId Steam du jeu dont vous souhaitez gérer le Workshop.</x:String>
     <x:String x:Key="Active">Actif</x:String>
-    <x:String x:Key="SessionSwitchNotice">Changer de session redémarrera l'application pour recharger Steam avec le nouvel AppId.</x:String>
 
     <!-- Setup Wizard -->
     <x:String x:Key="SetupWizardTitle">Bienvenue dans Workshop Manager</x:String>
@@ -380,7 +368,7 @@
     <x:String x:Key="SetupWizardHint">Exemple : 1162750 pour Songs of Syx</x:String>
     <x:String x:Key="AppIdRequired">Entrez un AppId ou un lien Steam</x:String>
     <x:String x:Key="AppIdInvalid">Aucun AppId détecté. Collez un numéro ou une URL Steam</x:String>
-    <x:String x:Key="AddSessionHeroTitle">Ajouter un jeu Steam</x:String>
+    <x:String x:Key="AddSessionHeroTitle">Ajouter un jeu</x:String>
     <x:String x:Key="AddSessionHeroSubtitle">Choisissez où sont publiés les mods du jeu, puis le jeu lui-même.</x:String>
     <x:String x:Key="AppIdOrUrlLabel">AppID Steam ou URL</x:String>
     <x:String x:Key="AppIdOrUrlPlaceholder">480490 ou https://store.steampowered.com/app/480490/…</x:String>
@@ -407,7 +395,6 @@
     <x:String x:Key="PreviewsTab">Aperçus</x:String>
     <x:String x:Key="PreviewsHeader">Aperçus additionnels</x:String>
     <x:String x:Key="PreviewsHeaderSub">Gérez les images, vidéos YouTube et modèles 3D qui apparaissent dans le carrousel Workshop. L'ordre est indépendant par section, comme sur Steam.</x:String>
-    <x:String x:Key="AddYouTubeVideo">Ajouter une vidéo YouTube</x:String>
     <x:String x:Key="AddVideo">Ajouter</x:String>
     <x:String x:Key="YouTubePlaceholder">URL YouTube ou ID de vidéo...</x:String>
     <x:String x:Key="ImagesSection">Images</x:String>
@@ -546,8 +533,6 @@
     <!-- Discord Rich Presence -->
     <x:String x:Key="DiscordPresenceTitle">Discord Rich Presence</x:String>
     <x:String x:Key="DiscordPresenceDescription">Affiche ce sur quoi vous travaillez dans votre statut Discord. Nécessite l'application Discord.</x:String>
-    <x:String x:Key="DiscordPresenceOff">Désactivé</x:String>
-    <x:String x:Key="DiscordPresenceOffDesc">Rien n'est envoyé à Discord.</x:String>
     <x:String x:Key="DiscordPresenceDisabledOverlay">La Rich Presence est désactivée. Activez-la dans Paramètres > Confidentialité pour choisir le niveau de détail.</x:String>
     <x:String x:Key="DiscordPresenceMinimal">Minimal</x:String>
     <x:String x:Key="DiscordPresenceMinimalDesc">Affiche seulement la section où vous êtes, sans nom de jeu ni titre d'objet.</x:String>
@@ -562,14 +547,40 @@
     <x:String x:Key="DiscordPresenceWizardDescription">Affiche ce que vous faites dans votre statut Discord. Au départ, seule la section en cours est affichée, sans nom de jeu ni titre d'objet. Vous pourrez élargir ou désactiver dans les paramètres.</x:String>
 
     <!-- BBCode Editor -->
-    <x:String x:Key="BbCodeMode">BBCode</x:String>
-    <x:String x:Key="PlainTextMode">Texte brut</x:String>
     <x:String x:Key="Expand">Agrandir</x:String>
     <x:String x:Key="Preview">Aperçu</x:String>
     <x:String x:Key="BbCodePreviewEmpty">Rien à prévisualiser. Saisissez du BBCode pour voir le rendu Steam.</x:String>
     <x:String x:Key="HtmlPreviewEmpty">Rien à prévisualiser. Saisissez du HTML pour voir le rendu mod.io.</x:String>
     <x:String x:Key="BbCodeQuoteAuthor">Message original de {0} :</x:String>
     <x:String x:Key="BbCodeSpoilerHint">Survolez pour révéler le spoiler</x:String>
+    <x:String x:Key="MarkupBold">Texte en gras</x:String>
+    <x:String x:Key="MarkupItalic">Texte en italique</x:String>
+    <x:String x:Key="MarkupUnderline">Texte souligné</x:String>
+    <x:String x:Key="MarkupStrikethrough">Texte barré</x:String>
+    <x:String x:Key="MarkupSpoiler">Spoiler</x:String>
+    <x:String x:Key="MarkupNoParse">N'interprète pas les [b]balises[/b]</x:String>
+    <x:String x:Key="MarkupHeading1">Titre 1</x:String>
+    <x:String x:Key="MarkupHeading2">Titre 2</x:String>
+    <x:String x:Key="MarkupHeading3">Titre 3</x:String>
+    <x:String x:Key="MarkupHorizontalRule">Ligne horizontale</x:String>
+    <x:String x:Key="MarkupBulletList">Liste à puces</x:String>
+    <x:String x:Key="MarkupOrderedList">Liste numérotée</x:String>
+    <x:String x:Key="MarkupLink">Lien vers un site</x:String>
+    <x:String x:Key="MarkupImage">Image</x:String>
+    <x:String x:Key="MarkupQuote">Citation</x:String>
+    <x:String x:Key="MarkupQuoteWithAuthor">Citation avec son auteur</x:String>
+    <x:String x:Key="MarkupCodeBlock">Police à chasse fixe, conserve les espaces</x:String>
+    <x:String x:Key="MarkupPreBlock">Bloc à chasse fixe, conserve les espaces</x:String>
+    <x:String x:Key="MarkupInlineCode">Code en ligne</x:String>
+    <x:String x:Key="MarkupTable">Tableau</x:String>
+    <x:String x:Key="MarkupParagraph">Paragraphe</x:String>
+    <x:String x:Key="MarkupLineBreak">Saut de ligne</x:String>
+    <x:String x:Key="MarkupSampleHeading">Titre</x:String>
+    <x:String x:Key="MarkupSampleItem">Élément</x:String>
+    <x:String x:Key="MarkupSampleLink">lien</x:String>
+    <x:String x:Key="MarkupSampleQuote">Texte cité</x:String>
+    <x:String x:Key="MarkupSampleCell">Cellule</x:String>
+    <x:String x:Key="MarkupSampleParagraph">Paragraphe</x:String>
 
     <!-- Update Checker -->
     <x:String x:Key="UpdateAvailable">Une nouvelle version est disponible :</x:String>
@@ -583,6 +594,14 @@
     <x:String x:Key="OpenFolder">Ouvrir le dossier</x:String>
     <x:String x:Key="DownloadComplete">Téléchargement terminé !</x:String>
     <x:String x:Key="DownloadFailed">Échec du téléchargement</x:String>
+    <x:String x:Key="ChangelogLoadFailed">Impossible de charger l'historique des mises à jour</x:String>
+    <x:String x:Key="TimeAgoJustNow">à l'instant</x:String>
+    <x:String x:Key="TimeAgoMinutes">il y a {0} min</x:String>
+    <x:String x:Key="TimeAgoHours">il y a {0} h</x:String>
+    <x:String x:Key="TimeAgoDays">il y a {0} j</x:String>
+    <x:String x:Key="TimeAgoWeeks">il y a {0} sem.</x:String>
+    <x:String x:Key="TimeAgoMonths">il y a {0} mois</x:String>
+    <x:String x:Key="TimeAgoYears">il y a {0} an(s)</x:String>
     <x:String x:Key="AlreadyDownloaded">Déjà téléchargé</x:String>
     <x:String x:Key="NoChangelogs">Aucun changelog trouvé</x:String>
 
@@ -615,7 +634,6 @@
     <x:String x:Key="CurrentBranch">Branche actuelle :</x:String>
     <x:String x:Key="ExistingVersions">Versions existantes</x:String>
     <x:String x:Key="NoVersionsYet">Aucune information de version disponible</x:String>
-    <x:String x:Key="NextUploadVersioning">Compatibilité de version</x:String>
     <x:String x:Key="TargetAllVersions">Compatible avec toutes les versions</x:String>
     <x:String x:Key="MinBranch">Branche minimum</x:String>
     <x:String x:Key="MaxBranch">Branche maximum</x:String>

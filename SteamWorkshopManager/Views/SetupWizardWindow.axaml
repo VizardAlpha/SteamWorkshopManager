@@ -199,10 +199,13 @@
                                             Margin="0,2,0,0"
                                             Command="{Binding OpenStatsSiteCommand}">
                                         <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                            <icons:MaterialIcon Kind="ChartBar" Width="11" Height="11"
+                                                                Foreground="{DynamicResource AccentPrimaryBrush}"
+                                                                VerticalAlignment="Center"/>
                                             <TextBlock Text="{Binding Loc[ViewLiveStats]}"
                                                        FontSize="12"
                                                        Foreground="{DynamicResource AccentPrimaryBrush}"/>
-                                            <icons:MaterialIcon Kind="ChartBar" Width="11" Height="11"
+                                            <icons:MaterialIcon Kind="OpenInNew" Width="11" Height="11"
                                                                 Foreground="{DynamicResource AccentPrimaryBrush}"
                                                                 VerticalAlignment="Center"/>
                                         </StackPanel>

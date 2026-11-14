@@ -223,4 +223,73 @@ public class UpdaterTests
             Directory.Delete(Path.GetDirectoryName(path)!, recursive: true);
         }
     }
+
+    private static (string Source, string Target, string Root) UpdateFolders()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "swm-install-" + Guid.NewGuid().ToString("N"));
+        var source = Directory.CreateDirectory(Path.Combine(root, "payload")).FullName;
+        var target = Directory.CreateDirectory(Path.Combine(root, "install")).FullName;
+        return (source, target, root);
+    }
+
+    [TestMethod]
+    public void InstallPayload_ReplacesAddsAndDropsFilesTheNewVersionNoLongerShips()
+    {
+        var (source, target, root) = UpdateFolders();
+        try
+        {
+            File.WriteAllText(Path.Combine(source, "app.dll"), "new");
+            Directory.CreateDirectory(Path.Combine(source, "sub"));
+            File.WriteAllText(Path.Combine(source, "sub", "added.dll"), "added");
+
+            File.WriteAllText(Path.Combine(target, "app.dll"), "old");
+            File.WriteAllText(Path.Combine(target, "gone.dll"), "shipped by the previous update");
+            File.WriteAllText(Path.Combine(target, "steam_appid.txt"), "written by the app, never shipped");
+            File.WriteAllLines(Path.Combine(target, AppUpdater.ManifestName), ["app.dll", "gone.dll", @"..\outside.txt"]);
+            File.WriteAllText(Path.Combine(root, "outside.txt"), "must survive");
+
+            AppUpdater.InstallPayload(source, target, attempts: 1);
+
+            Assert.AreEqual("new", File.ReadAllText(Path.Combine(target, "app.dll")));
+            Assert.AreEqual("added", File.ReadAllText(Path.Combine(target, "sub", "added.dll")));
+            Assert.IsFalse(File.Exists(Path.Combine(target, "gone.dll")));
+            Assert.IsTrue(File.Exists(Path.Combine(target, "steam_appid.txt")));
+            Assert.IsTrue(File.Exists(Path.Combine(root, "outside.txt")), "A manifest entry must not reach outside the install folder");
+            Assert.IsFalse(Directory.Exists(Path.Combine(target, ".update-backup")));
+            CollectionAssert.AreEquivalent(
+                new[] { "app.dll", Path.Combine("sub", "added.dll") },
+                File.ReadAllLines(Path.Combine(target, AppUpdater.ManifestName)));
+        }
+        finally { Directory.Delete(root, recursive: true); }
+    }
+
+    [TestMethod]
+    public void InstallPayload_FailureMidway_RestoresThePreviousFiles()
+    {
+        var (source, target, root) = UpdateFolders();
+        try
+        {
+            File.WriteAllText(Path.Combine(source, "a.dll"), "new a");
+            File.WriteAllText(Path.Combine(source, "b.dll"), "new b");
+            File.WriteAllText(Path.Combine(source, "c.dll"), "new c");
+
+            File.WriteAllText(Path.Combine(target, "a.dll"), "old a");
+            // A folder where a file is expected makes the copy of b.dll fail.
+            Directory.CreateDirectory(Path.Combine(target, "b.dll"));
+
+            try
+            {
+                AppUpdater.InstallPayload(source, target, attempts: 1);
+                Assert.Fail("The copy over a folder should have failed");
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+            }
+
+            Assert.AreEqual("old a", File.ReadAllText(Path.Combine(target, "a.dll")));
+            Assert.IsFalse(File.Exists(Path.Combine(target, "c.dll")));
+            Assert.IsFalse(File.Exists(Path.Combine(target, AppUpdater.ManifestName)));
+        }
+        finally { Directory.Delete(root, recursive: true); }
+    }
 }

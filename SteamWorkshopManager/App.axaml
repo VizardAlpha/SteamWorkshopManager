@@ -3,6 +3,7 @@
              xmlns:materialIcons="using:Material.Icons.Avalonia"
              x:Class="SteamWorkshopManager.App"
              xmlns:local="using:SteamWorkshopManager"
+             xmlns:controls="using:SteamWorkshopManager.Views.Controls"
              RequestedThemeVariant="Dark">
 
     <Application.DataTemplates>
@@ -18,37 +19,18 @@
                 <ResourceInclude Source="avares://SteamWorkshopManager/Themes/SemanticTokens.axaml"/>
             </ResourceDictionary.MergedDictionaries>
 
-            <!-- Steam-inspired color palette -->
-            <Color x:Key="SteamDarkBlue">#1b2838</Color>
-            <Color x:Key="SteamMediumBlue">#2a475e</Color>
+            <!-- Legacy colors still used by the global styles below -->
             <Color x:Key="SteamLightBlue">#66c0f4</Color>
-            <Color x:Key="SteamGreen">#5c7e10</Color>
-            <Color x:Key="SteamBrightGreen">#a4d007</Color>
-            <Color x:Key="SteamDarkGray">#1e2328</Color>
-            <Color x:Key="SteamMediumGray">#2a2e33</Color>
             <Color x:Key="SteamLightGray">#c7d5e0</Color>
 
-            <SolidColorBrush x:Key="SteamDarkBlueBrush" Color="{StaticResource SteamDarkBlue}"/>
-            <SolidColorBrush x:Key="SteamMediumBlueBrush" Color="{StaticResource SteamMediumBlue}"/>
             <SolidColorBrush x:Key="SteamLightBlueBrush" Color="{StaticResource SteamLightBlue}"/>
-            <SolidColorBrush x:Key="SteamGreenBrush" Color="{StaticResource SteamGreen}"/>
-            <SolidColorBrush x:Key="SteamBrightGreenBrush" Color="{StaticResource SteamBrightGreen}"/>
-            <SolidColorBrush x:Key="SteamDarkGrayBrush" Color="{StaticResource SteamDarkGray}"/>
-            <SolidColorBrush x:Key="SteamMediumGrayBrush" Color="{StaticResource SteamMediumGray}"/>
             <SolidColorBrush x:Key="SteamLightGrayBrush" Color="{StaticResource SteamLightGray}"/>
-
-            <LinearGradientBrush x:Key="HeaderGradient" StartPoint="0%,0%" EndPoint="100%,0%">
-                <GradientStop Color="#1b2838" Offset="0"/>
-                <GradientStop Color="#2a475e" Offset="1"/>
-            </LinearGradientBrush>
 
             <LinearGradientBrush x:Key="AccentGradient" StartPoint="0%,0%" EndPoint="100%,0%">
                 <GradientStop Color="#5c7e10" Offset="0"/>
                 <GradientStop Color="#a4d007" Offset="1"/>
             </LinearGradientBrush>
 
-            <BoxShadows x:Key="CardShadow">0 2 8 0 #40000000</BoxShadows>
-            <BoxShadows x:Key="CardHoverShadow">0 4 16 0 #60000000</BoxShadows>
             <BoxShadows x:Key="ToastShadow">0 8 32 0 #80000000</BoxShadows>
         </ResourceDictionary>
     </Application.Resources>
@@ -78,6 +60,11 @@
         </Style>
         <Style Selector="CheckBox:not(:disabled)">
             <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <!-- A button label too long for its button scrolls instead of being cut -->
+        <Style Selector="Button">
+            <Setter Property="controls:Marquee.AutoWrap" Value="True"/>
         </Style>
 
         <!-- Primary action button style -->
@@ -130,14 +117,6 @@
         </Style>
         <Style Selector="Button.danger:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="#d44b3e"/>
-        </Style>
-
-        <!-- Card style -->
-        <Style Selector="Border.card">
-            <Setter Property="Background" Value="#2a2e33"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="BoxShadow" Value="{StaticResource CardShadow}"/>
-            <Setter Property="Padding" Value="16"/>
         </Style>
 
         <!-- Reusable drop zone (paired with behaviors:DropZone.Accepts). The
@@ -222,21 +201,6 @@
             <Setter Property="Background" Value="#1e2328"/>
             <Setter Property="BorderBrush" Value="#3a4a5a"/>
             <Setter Property="CornerRadius" Value="4"/>
-        </Style>
-
-        <!-- Section header style -->
-        <Style Selector="TextBlock.section-header">
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="{StaticResource SteamLightGrayBrush}"/>
-            <Setter Property="Margin" Value="0,0,0,8"/>
-        </Style>
-
-        <!-- Page title style -->
-        <Style Selector="TextBlock.page-title">
-            <Setter Property="FontSize" Value="24"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="Foreground" Value="White"/>
         </Style>
     </Application.Styles>
 </Application>

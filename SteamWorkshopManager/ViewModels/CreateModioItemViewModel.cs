@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using SteamWorkshopManager.Services.UI;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Notifications;
 using SteamWorkshopManager.Services.Platforms.Modio;
@@ -24,6 +25,7 @@ public partial class CreateModioItemViewModel : ViewModelBase, IDisposable
     private readonly ModioPublisher _publisher;
     private readonly INotificationService _notifications;
     private readonly IProgress<UploadProgress>? _uploadProgress;
+    private readonly UploadCancellation _cancellation;
     private string? _profileUrl;
     private bool _finished;
 
@@ -66,11 +68,13 @@ public partial class CreateModioItemViewModel : ViewModelBase, IDisposable
         ModioDetailsViewModel details,
         ModioMediaViewModel media,
         ModioFileViewModel file,
+        UploadCancellation cancellation,
         IProgress<UploadProgress>? uploadProgress = null)
     {
         _publisher = publisher;
         _notifications = notifications;
         _uploadProgress = uploadProgress;
+        _cancellation = cancellation;
         Details = details;
         Media = media;
         File = file;
@@ -135,7 +139,8 @@ public partial class CreateModioItemViewModel : ViewModelBase, IDisposable
 
         await RunAsync("ModioMediaFailed", async () =>
         {
-            await _publisher.UpdateMediaAsync(id, change, _uploadProgress);
+            using (var upload = _cancellation.Begin())
+                await _publisher.UpdateMediaAsync(id, change, _uploadProgress, upload.Token);
             IsMediaDone = true;
             ActiveStep = ModioCreateStep.File;
         });
@@ -156,7 +161,8 @@ public partial class CreateModioItemViewModel : ViewModelBase, IDisposable
 
         await RunAsync("ModioFileFailed", async () =>
         {
-            await _publisher.UploadFileAsync(id, upload, _uploadProgress);
+            using (var scope = _cancellation.Begin())
+                await _publisher.UploadFileAsync(id, upload, _uploadProgress, scope.Token);
             Finish();
         });
     }
@@ -187,6 +193,10 @@ public partial class CreateModioItemViewModel : ViewModelBase, IDisposable
         try
         {
             await step();
+        }
+        catch (OperationCanceledException)
+        {
+            ErrorMessage = Loc["UploadCancelled"];
         }
         catch (ModioApiException ex)
         {

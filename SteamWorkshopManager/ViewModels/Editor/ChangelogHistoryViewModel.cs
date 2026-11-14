@@ -83,7 +83,7 @@ public partial class ChangelogHistoryViewModel(
         }
         catch (Exception ex)
         {
-            notifications.ShowError($"{Loc["DownloadFailed"]}: {ex.Message}");
+            notifications.ShowError($"{Loc["ChangelogLoadFailed"]}: {ex.Message}");
         }
         finally
         {
@@ -139,7 +139,8 @@ public partial class ChangelogHistoryViewModel(
     {
         if (_item is not { } item) return;
         var url = $"https://steamcommunity.com/sharedfiles/filedetails/changelog/{(ulong)item.PublishedFileId}";
-        Process.Start(new ProcessStartInfo { FileName = url, UseShellExecute = true });
+        try { Process.Start(new ProcessStartInfo { FileName = url, UseShellExecute = true }); }
+        catch (Exception ex) { Log.Debug($"Failed to open the changelog page: {ex.Message}"); }
     }
 
     [RelayCommand]

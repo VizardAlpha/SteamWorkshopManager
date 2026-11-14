@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Steamworks;
 using StreamJsonRpc;
+using SteamWorkshopManager.Helpers;
 using SteamWorkshopManager.Models;
 using SteamWorkshopManager.Services.Log;
 using SteamWorkshopManager.Services.Session;
@@ -150,7 +151,8 @@ public sealed class WorkerSteamService(SessionHost host) : ISteamService
         try
         {
             var result = await host.Worker.CreateItemAsync(request, bridge);
-            if (result.FileId != 0UL) return CreateItemOutcome.Created(new PublishedFileId_t(result.FileId));
+            if (result.FileId != 0UL)
+                return CreateItemOutcome.Created(new PublishedFileId_t(result.FileId), result.NeedsLegalAgreement);
 
             return CreateItemOutcome.Failed(result.ErrorCode == 0 ? null : (EResult)result.ErrorCode);
         }
@@ -162,7 +164,7 @@ public sealed class WorkerSteamService(SessionHost host) : ISteamService
         }
     }
 
-    public async Task<bool> UpdateItemAsync(
+    public async Task<UpdateItemOutcome> UpdateItemAsync(
         PublishedFileId_t fileId, string? title, string? description,
         string? contentFolderPath, string? previewImagePath, VisibilityType? visibility,
         List<string>? tags, string? changelog, IProgress<UploadProgress>? progress = null,
@@ -179,7 +181,8 @@ public sealed class WorkerSteamService(SessionHost host) : ISteamService
         var bridge = BridgeProgress(progress);
         try
         {
-            return await host.Worker.UpdateItemAsync(request, bridge);
+            var result = await host.Worker.UpdateItemAsync(request, bridge);
+            return new UpdateItemOutcome(result.Success, result.NeedsLegalAgreement);
         }
         catch (Exception ex)
         {
@@ -212,7 +215,7 @@ public sealed class WorkerSteamService(SessionHost host) : ISteamService
     private static IProgress<UploadProgressDto>? BridgeProgress(IProgress<UploadProgress>? sink)
     {
         if (sink is null) return null;
-        return new Progress<UploadProgressDto>(p =>
+        return new DirectProgress<UploadProgressDto>(p =>
             sink.Report(new UploadProgress(p.Status, p.BytesProcessed, p.BytesTotal, p.PercentHint)));
     }
 }

@@ -12,8 +12,11 @@ Steamworks keeps process-wide state bound to one AppId. To switch games without 
 | Contract | `ISteamWorker` + `Contracts/Dtos` | The JSON-RPC surface and its wire types |
 | Worker | `SteamWorkerHost` | Entry point for `--steam-worker`, connects to the pipe |
 | Worker | `SteamWorkerImpl` | RPC implementation, maps domain models to DTOs |
-| Worker | `SteamService` | Steamworks calls for one game (internal, AppId given by constructor) |
+| Worker | `SteamService` | Steam lifecycle for one game: init, logon, shutdown, branches (internal, AppId given by constructor) |
+| Worker | `SteamUgcQueries` | Workshop reads: published items, one item, per-language text, dependencies, supported game versions |
+| Worker | `SteamUgcPublisher` | Workshop writes: create, update, per-language text, delete, dependencies, upload progress |
 | Worker | `SteamCallbackPump` | The single `SteamAPI.RunCallbacks` loop |
+| Worker | `SteamCall` | Turns a Steam CallResult into a task with a timeout |
 
 ## Lifecycle
 
@@ -28,7 +31,7 @@ An unexpected exit triggers a respawn with a 1 s, 2 s then 5 s backoff, at most 
 
 ## Callbacks
 
-Steamworks expects one callback pump. `SteamCallbackPump` runs `SteamAPI.RunCallbacks` every 50 ms on a dedicated thread; operations only wait for their CallResult. Uploads poll `GetItemUpdateProgress` and fail only after 5 minutes without any progress.
+Steamworks expects one callback pump. `SteamCallbackPump` runs `SteamAPI.RunCallbacks` every 50 ms on a dedicated thread; operations only wait for their CallResult through `SteamCall` (`AwaitAsync` with a timeout, `QueryAsync` for UGC queries, which also releases the query handle when there is no result to read). Uploads poll `GetItemUpdateProgress` and fail only after 5 minutes without any progress.
 
 ## Languages
 
@@ -36,7 +39,7 @@ Workshop queries and updates carry a language. Item queries set `english` explic
 
 ## Progress and logs
 
-- Upload progress streams back through an `IProgress<T>` argument, which StreamJsonRpc marshals natively. Status strings are localization keys translated by the shell. The shell's `JsonRpc` uses a `NonConcurrentSynchronizationContext`, so progress and log notifications are handled in arrival order (the default threadpool dispatch could deliver a late "Finalizing" after the final report and leave the toast stuck).
+- Upload progress streams back through an `IProgress<T>` argument, which StreamJsonRpc marshals natively. Status strings are localization keys translated by the shell. The shell's `JsonRpc` uses a `NonConcurrentSynchronizationContext`, so progress and log notifications are handled in arrival order (the default threadpool dispatch could deliver a late "Finalizing" after the final report and leave the toast stuck). For the same reason every hop of the progress chain, worker side included, uses `Helpers/DirectProgress` instead of `Progress<T>`, which posts each report to the thread pool.
 - The worker forwards its log entries to the shell, which writes them to the shared log files.
 - If the worker dies during an upload, the shell sends the final progress report itself so the UI unlocks.
 

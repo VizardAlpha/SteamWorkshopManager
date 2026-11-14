@@ -24,7 +24,7 @@ On macOS and Linux both folders are the platform equivalents returned by .NET fo
 | `credentials.bin` | Steam login tokens, encrypted (see [Security and privacy](security-and-privacy.md)) |
 | `modio-credentials.bin` | Your mod.io token and API path, encrypted the same way |
 | `updates/` | Downloaded and extracted updates, removed on the next start |
-| `tmp/previews/` | Scratch files while re-uploading previews, deleted after each save |
+| `tmp/previews/`, `tmp/uploads/` | Scratch files while re-uploading Steam previews or zipping a mod.io upload, deleted after each operation; folders older than a day (left by a crash) are removed at startup |
 
 ## Cache
 
@@ -56,7 +56,7 @@ One file per entry at `<platform>/<scope>/<name>` (`CacheKey`), for example `ste
 
 The mod list is per account (Steam or mod.io): another login on the same machine has other mods. `ItemListViewModel` shows the cached list with a spinning badge on each card, asks the platform, and merges the answer with `PublishedItemsReconciler`: unchanged items keep their instance (thumbnail, selection), changed ones are swapped, missing ones removed. While a mod is being checked the editor can't save it, so a cached version never overwrites a newer one. If it changed on Steam, the editor reloads it, or warns when the user already edited it.
 
-- `GetOrFetchAsync` serves an entry while its policy says it is fresh, refetches otherwise, and falls back to the expired entry when the refetch fails. Concurrent requests for one key share a single fetch.
+- `GetOrFetchAsync` serves an entry while its policy says it is fresh, refetches otherwise, and falls back to the expired entry when the refetch fails. Concurrent requests for one key share a single fetch. A failed fetch is a miss for the store: a caller that needs the reason (mod.io reads in `ModioPublisher.ReadAsync`) captures the exception in its fetch and rethrows it when nothing could be served.
 - Entries not rewritten for 30 days, and orphan `.tmp` files, are deleted on startup.
 - Settings > Storage turns the cache on or off, sets the size limit (500 MB by default, or none) and clears it. Disabled, reads miss and nothing is written.
 - When the limit is reached nothing is evicted: writes that would grow the cache are paused and the shell shows a banner until the user raises the limit, disables or clears the cache.

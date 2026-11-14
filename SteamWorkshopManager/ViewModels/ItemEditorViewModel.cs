@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -41,10 +42,16 @@ public partial class ItemEditorViewModel : ViewModelBase, IDisposable
     private readonly INotificationService _notificationService;
     private readonly IProgress<UploadProgress>? _uploadProgress;
 
-    private readonly string? _initialContentFolderPath;
+    // What Steam holds after the last successful save: the diff baseline.
+    private string _savedTitle;
+    private string _savedDescription;
+    private VisibilityType _savedVisibility;
+    private HashSet<string> _savedTags;
+
+    private string? _initialContentFolderPath;
     private long _initialFolderSize;
     private DateTime _initialFolderModified;
-    private readonly string? _initialPreviewImagePath;
+    private string? _initialPreviewImagePath;
     private long _initialImageSize;
     private DateTime _initialImageModified;
 
@@ -157,21 +164,25 @@ public partial class ItemEditorViewModel : ViewModelBase, IDisposable
     [ObservableProperty]
     private bool _isModIdCopied;
 
+    /// <summary>The item is uploaded but hidden until the account accepts the Workshop legal agreement.</summary>
+    [ObservableProperty]
+    private bool _needsLegalAgreement;
+
     public string ModId => ((ulong)_originalItem.PublishedFileId).ToString();
 
     public PublishedFileId_t ItemId => _originalItem.PublishedFileId;
 
     /// <summary>
-    /// Main fields changed since the editor opened. Decides whether a newer Steam
+    /// Main fields changed since the last save. Decides whether a newer Steam
     /// version can replace the editor silently or the user has to be warned.
     /// </summary>
     public bool HasUserEdits =>
-        Title != _originalItem.Title
-        || Description != _originalItem.Description
-        || Visibility != _originalItem.Visibility
+        Title != _savedTitle
+        || Description != _savedDescription
+        || Visibility != _savedVisibility
         || PreviewImagePath != _initialPreviewImagePath
         || ContentFolderPath != _initialContentFolderPath
-        || !Tags.SelectedNames.ToHashSet().SetEquals(_originalItem.Tags.Select(t => t.Name));
+        || !_savedTags.SetEquals(Tags.SelectedNames);
 
     /// <summary>Shown from the cache, Steam not checked yet: saving could overwrite a newer version.</summary>
     public bool IsCheckingSteam => _originalItem.IsRefreshing;
@@ -215,11 +226,11 @@ public partial class ItemEditorViewModel : ViewModelBase, IDisposable
     /// <summary>Section-ready flags for the left nav's green check.</summary>
     public bool IsInfoComplete => !string.IsNullOrWhiteSpace(Title) && !IsImageTooLarge;
     public bool IsVersionsComplete => !Versions.IsBranchRangeInvalid;
-    public bool IsDependenciesComplete => true;
 
     public static IEnumerable<VisibilityType> VisibilityOptions => Enum.GetValues<VisibilityType>();
 
-    public event Action<PublishedFileId_t>? ItemUpdated;
+    /// <summary>Raised after a save; the handler returns the item as Steam now has it, or null.</summary>
+    public event Func<PublishedFileId_t, Task<WorkshopItem?>>? ItemUpdated;
     public event Action? ItemDeleted;
 
     public ItemEditorViewModel(
@@ -241,6 +252,7 @@ public partial class ItemEditorViewModel : ViewModelBase, IDisposable
         _fileDialogService = fileDialogService;
         _settingsService = settingsService;
         _orchestrator = orchestrator;
+        _needsLegalAgreement = orchestrator.IsLegalAgreementPending;
         _notificationService = notificationService;
         _uploadProgress = uploadProgress;
 
@@ -251,13 +263,14 @@ public partial class ItemEditorViewModel : ViewModelBase, IDisposable
         History = history;
         Translations = translations;
 
-        _title = item.Title;
-        _description = item.Description;
-        _visibility = item.Visibility;
+        _title = _savedTitle = item.Title;
+        _description = _savedDescription = item.Description;
+        _visibility = _savedVisibility = item.Visibility;
+        _savedTags = item.Tags.Select(t => t.Name).ToHashSet();
 
-        // Saved fingerprints from the last upload, falling back to the item's own preview path.
+        // Saved fingerprints from the last upload.
         var savedImageInfo = settingsService.GetPreviewImageInfo((ulong)item.PublishedFileId);
-        _previewImagePath = savedImageInfo?.Path ?? item.PreviewImagePath;
+        _previewImagePath = savedImageInfo?.Path;
         _initialPreviewImagePath = _previewImagePath;
         _initialImageSize = savedImageInfo?.Size ?? 0;
         _initialImageModified = savedImageInfo?.LastModifiedUtc ?? DateTime.MinValue;
@@ -324,6 +337,13 @@ public partial class ItemEditorViewModel : ViewModelBase, IDisposable
         {
             Versions.IsLoadingVersions = false;
         }
+    }
+
+    [RelayCommand]
+    private static void OpenLegalAgreement()
+    {
+        try { Process.Start(new ProcessStartInfo(SteamUrls.WorkshopLegalAgreement) { UseShellExecute = true }); }
+        catch (Exception ex) { Log.Debug($"Failed to open the legal agreement page: {ex.Message}"); }
     }
 
     [RelayCommand]
@@ -422,23 +442,36 @@ public partial class ItemEditorViewModel : ViewModelBase, IDisposable
                 return;
             }
 
+            var title = Title;
+            var description = Description;
+            var visibility = Visibility;
+            var tags = Tags.SelectedNames;
+
             var request = new UpdateModRequest(
                 _originalItem.PublishedFileId,
-                Title != _originalItem.Title ? Title : null,
-                Description != _originalItem.Description ? Description : null,
+                title != _savedTitle ? title : null,
+                description != _savedDescription ? description : null,
                 contentFolder,
                 previewImage,
-                Visibility != _originalItem.Visibility ? Visibility : null,
-                Tags.SelectedNames,
+                visibility != _savedVisibility ? visibility : null,
+                tags,
                 string.IsNullOrWhiteSpace(NewChangelog) ? null : NewChangelog,
                 branchMin,
                 branchMax,
                 previewOps.Count > 0 ? previewOps : null);
 
             var result = await _orchestrator.UpdateAsync(request, _uploadProgress);
+            NeedsLegalAgreement = _orchestrator.IsLegalAgreementPending;
 
             if (result.Success)
             {
+                _savedTitle = title;
+                _savedDescription = description;
+                _savedVisibility = visibility;
+                _savedTags = tags.ToHashSet();
+                _initialContentFolderPath = ContentFolderPath;
+                _initialPreviewImagePath = PreviewImagePath;
+
                 // New baseline for the next "has changed" check; the folder was rescanned before the upload.
                 if (!string.IsNullOrEmpty(ContentFolderPath))
                 {
@@ -458,7 +491,7 @@ public partial class ItemEditorViewModel : ViewModelBase, IDisposable
 
                 NewChangelog = string.Empty;
                 await SaveTranslationsAsync();
-                ItemUpdated?.Invoke(_originalItem.PublishedFileId);
+                await RefreshAfterSaveAsync(galleryChanged: previewOps.Count > 0);
             }
             else
             {
@@ -471,6 +504,24 @@ public partial class ItemEditorViewModel : ViewModelBase, IDisposable
         {
             Gallery.CleanupTempFiles();
             IsSaving = false;
+        }
+    }
+
+    /// <summary>Refreshes the list row; Steam renumbers the previews, so the gallery reloads from the fresh item.</summary>
+    private async Task RefreshAfterSaveAsync(bool galleryChanged)
+    {
+        if (ItemUpdated is not { } refresh) return;
+        try
+        {
+            var fresh = await refresh(_originalItem.PublishedFileId);
+            if (!galleryChanged) return;
+
+            if (fresh is not null) Gallery.Rebase(fresh.AdditionalPreviews);
+            else Log.Warning("Post-save refresh returned no item: the gallery keeps its pre-save state");
+        }
+        catch (Exception ex)
+        {
+            Log.Warning($"Post-save refresh failed: {ex.Message}");
         }
     }
 

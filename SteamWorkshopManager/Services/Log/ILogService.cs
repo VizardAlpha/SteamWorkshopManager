@@ -17,14 +17,11 @@ public interface ILogService
     void Error(string source, string message, Exception? exception = null);
 
     string GetLogFilePath();
-    IReadOnlyList<LogEntry> GetRecentLogs(int count = 100);
 
-    /// <summary>Total size on disk (in bytes) of every <c>debug_*.log</c> file
-    /// the app has produced. 0 when the log folder is missing or empty.</summary>
+    /// <summary>Size in bytes of every app, debug and crash log file; 0 when there is none.</summary>
     long GetLogFolderSize();
 
-    /// <summary>Wipes the in-memory log buffer and deletes every
-    /// <c>debug_*.log</c> file in the log folder.</summary>
+    /// <summary>Deletes every app, debug and crash log file.</summary>
     void ClearLogs();
 }
 

@@ -34,7 +34,7 @@ public class ModPlatformsTests
         context.Activate(new SteamSession { AppId = 1 });
         Assert.AreSame(steam, platforms.Current);
 
-        // No mod.io implementation registered yet.
+        // Only the Steam platform is registered in this test.
         context.Activate(new ModioSession { GameId = 1 });
         Assert.IsNull(platforms.Current);
     }

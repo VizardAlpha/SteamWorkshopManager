@@ -18,7 +18,7 @@ namespace SteamWorkshopManager.Services.Core;
 internal partial class DraftJsonContext : JsonSerializerContext;
 
 /// <summary>
-/// Persists in-progress mod drafts under <c>%AppData%/SteamWorkshopManager/Tempo</c>.
+/// Persists in-progress mod drafts under <c>%AppData%/SteamWorkshopManager/tempo</c>.
 /// Layout: one sub-folder per draft, named with a compact Guid; each folder
 /// holds a <c>draft.json</c> mirroring <see cref="CreateDraft"/>. Retrieval is
 /// just "enumerate the sub-folders"; deletion is "recursively delete the
@@ -70,9 +70,6 @@ public sealed class DraftService
         }
         return results.OrderByDescending(d => d.UpdatedAt).ToList();
     }
-
-    public CreateDraft? Load(string tempId) =>
-        IsValidTempId(tempId) ? TryLoad(Path.Combine(DraftsRoot, tempId)) : null;
 
     /// <summary>TempIds come from draft.json content, so only a GUID may reach a path (no "..\").</summary>
     public static bool IsValidTempId(string? tempId) => Guid.TryParse(tempId, out _);

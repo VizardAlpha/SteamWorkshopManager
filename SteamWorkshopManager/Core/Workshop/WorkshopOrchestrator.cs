@@ -73,6 +73,12 @@ public sealed class WorkshopOrchestrator(
 {
     private static readonly Logger Log = LogService.GetLogger<WorkshopOrchestrator>();
 
+    /// <summary>
+    /// Steam's answer on the last upload: the account still has to accept the Workshop legal
+    /// agreement, and its items stay hidden until then. Account-wide, so the editors read it here.
+    /// </summary>
+    public bool IsLegalAgreementPending { get; private set; }
+
     public async Task<WorkshopActionResult> PublishAsync(
         CreateModRequest request,
         IProgress<UploadProgress>? progress = null,
@@ -103,6 +109,7 @@ public sealed class WorkshopOrchestrator(
                 return new WorkshopActionResult(false, null, "CreationFailed", null);
             }
 
+            IsLegalAgreementPending = outcome.NeedsLegalAgreement;
             telemetry.Track(TelemetryEventTypes.ModCreated, context.AppId);
 
             var id = (ulong)fileId;
@@ -130,6 +137,10 @@ public sealed class WorkshopOrchestrator(
                 notifications.ShowError(string.Format(
                     LocalizationService.GetString("TranslationsCreateFailed"), string.Join(", ", names)));
             }
+            else if (IsLegalAgreementPending)
+            {
+                notifications.ShowError(LocalizationService.GetString("WorkshopLegalAgreementRequired"));
+            }
             else
             {
                 notifications.ShowSuccess(LocalizationService.GetString("ItemCreatedSuccess"));
@@ -149,7 +160,7 @@ public sealed class WorkshopOrchestrator(
     {
         try
         {
-            var success = await steamService.UpdateItemAsync(
+            var outcome = await steamService.UpdateItemAsync(
                 request.FileId,
                 request.Title,
                 request.Description,
@@ -163,7 +174,7 @@ public sealed class WorkshopOrchestrator(
                 request.BranchMax,
                 request.PreviewOps);
 
-            if (!success)
+            if (!outcome.Success)
             {
                 notifications.ShowError(LocalizationService.GetString("UpdateFailed"));
                 return new WorkshopActionResult(false, request.FileId, "UpdateFailed", null);
@@ -182,7 +193,11 @@ public sealed class WorkshopOrchestrator(
             }
 
             telemetry.Track(TelemetryEventTypes.ModUpdated, context.AppId);
-            notifications.ShowSuccess(LocalizationService.GetString("ItemUpdatedSuccess"));
+            IsLegalAgreementPending = outcome.NeedsLegalAgreement;
+            if (IsLegalAgreementPending)
+                notifications.ShowError(LocalizationService.GetString("WorkshopLegalAgreementRequired"));
+            else
+                notifications.ShowSuccess(LocalizationService.GetString("ItemUpdatedSuccess"));
             return new WorkshopActionResult(true, request.FileId, null, null);
         }
         catch (Exception ex)

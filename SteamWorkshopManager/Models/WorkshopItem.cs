@@ -29,7 +29,6 @@ public class WorkshopItem : INotifyPropertyChanged
 
     /// <summary>Mod page on the platform's website, when the platform gives one.</summary>
     public string? ProfileUrl { get; set; }
-    public string? PreviewImagePath { get; set; }
     public string? PreviewImageUrl { get; set; }
     public VisibilityType Visibility { get; set; } = VisibilityType.Private;
     public List<WorkshopTag> Tags { get; set; } = [];
@@ -37,7 +36,7 @@ public class WorkshopItem : INotifyPropertyChanged
     /// <summary>
     /// Additional previews (images and YouTube videos) that show up in the
     /// Workshop carousel beyond the main thumbnail. Populated by
-    /// <c>SteamService.GetPublishedItemsAsync</c> when the query opts into
+    /// <c>SteamUgcQueries.GetPublishedItemsAsync</c> when the query opts into
     /// <c>SetReturnAdditionalPreviews</c>.
     /// </summary>
     public List<WorkshopPreview> AdditionalPreviews { get; set; } = [];
@@ -111,15 +110,6 @@ public class WorkshopItem : INotifyPropertyChanged
     public bool IsVisibilityFriends => Visibility == VisibilityType.FriendsOnly;
     public bool IsVisibilityPrivate => Visibility == VisibilityType.Private;
     public bool IsVisibilityUnlisted => Visibility == VisibilityType.Unlisted;
-
-    public string VisibilityIcon => Visibility switch
-    {
-        VisibilityType.Public => "\ud83c\udf10",
-        VisibilityType.FriendsOnly => "\ud83d\udc65",
-        VisibilityType.Private => "\ud83d\udd12",
-        VisibilityType.Unlisted => "\ud83d\udd17",
-        _ => "\u2753"
-    };
 
     public event PropertyChangedEventHandler? PropertyChanged;
 

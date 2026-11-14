@@ -7,30 +7,30 @@ public static class BbCodeTags
 {
     public static IReadOnlyList<MarkupTag> Formatting { get; } =
     [
-        new("B", "[b]", "[/b]", Tooltip: "Bold text"),
-        new("I", "[i]", "[/i]", Tooltip: "Italic text"),
-        new("U", "[u]", "[/u]", Tooltip: "Underlined text"),
-        new("S", "[strike]", "[/strike]", Tooltip: "Strikethrough text"),
-        new("Spoiler", "[spoiler]", "[/spoiler]", Tooltip: "Spoiler"),
-        new("NoP", "[noparse]", "[/noparse]", Tooltip: "Doesn't parse [b]tags[/b]"),
+        new("B", "[b]", "[/b]", TooltipKey: "MarkupBold"),
+        new("I", "[i]", "[/i]", TooltipKey: "MarkupItalic"),
+        new("U", "[u]", "[/u]", TooltipKey: "MarkupUnderline"),
+        new("S", "[strike]", "[/strike]", TooltipKey: "MarkupStrikethrough"),
+        new("Spoiler", "[spoiler]", "[/spoiler]", TooltipKey: "MarkupSpoiler"),
+        new("NoP", "[noparse]", "[/noparse]", TooltipKey: "MarkupNoParse"),
     ];
 
     public static IReadOnlyList<MarkupTag> Structure { get; } =
     [
-        new("H1", "[h1]", "[/h1]", "Heading", "Heading 1"),
-        new("H2", "[h2]", "[/h2]", "Heading", "Heading 2"),
-        new("H3", "[h3]", "[/h3]", "Heading", "Heading 3"),
-        new("HR", "[hr][/hr]", "", Tooltip: "Render a horizontal rule"),
-        new("List", "[list]\n[*]", "\n[/list]", "Item", "Bullet List"),
-        new("OList", "[olist]\n[*]", "\n[/olist]", "Item", "Ordered list"),
+        new("H1", "[h1]", "[/h1]", "MarkupSampleHeading", "MarkupHeading1"),
+        new("H2", "[h2]", "[/h2]", "MarkupSampleHeading", "MarkupHeading2"),
+        new("H3", "[h3]", "[/h3]", "MarkupSampleHeading", "MarkupHeading3"),
+        new("HR", "[hr][/hr]", "", TooltipKey: "MarkupHorizontalRule"),
+        new("List", "[list]\n[*]", "\n[/list]", "MarkupSampleItem", "MarkupBulletList"),
+        new("OList", "[olist]\n[*]", "\n[/olist]", "MarkupSampleItem", "MarkupOrderedList"),
     ];
 
     public static IReadOnlyList<MarkupTag> Content { get; } =
     [
-        new("URL", "[url=https://]", "[/url]", "link", "Website link"),
-        new("Img", "[img]", "[/img]", "https://", "Image"),
-        new("Quote", "[quote=author]", "[/quote]", "Quoted text", "Originally posted by author:\nQuoted text"),
-        new("Code", "[code]", "[/code]", Tooltip: "Fixed-width font,\npreserves    spaces"),
-        new("Table", "[table]\n[tr]\n[td]", "[/td]\n[/tr]\n[/table]", "Cell", "Table"),
+        new("URL", "[url=https://]", "[/url]", "MarkupSampleLink", "MarkupLink"),
+        new("Img", "[img]", "[/img]", TooltipKey: "MarkupImage", Placeholder: "https://"),
+        new("Quote", "[quote=author]", "[/quote]", "MarkupSampleQuote", "MarkupQuoteWithAuthor"),
+        new("Code", "[code]", "[/code]", TooltipKey: "MarkupCodeBlock"),
+        new("Table", "[table]\n[tr]\n[td]", "[/td]\n[/tr]\n[/table]", "MarkupSampleCell", "MarkupTable"),
     ];
 }

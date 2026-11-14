@@ -143,38 +143,6 @@ public class SessionRepository : ISessionRepository
         }
     }
 
-    public async Task DeleteSessionAsync(string sessionId)
-    {
-        try
-        {
-            var filePath = GetSessionFilePath(sessionId);
-            if (File.Exists(filePath))
-            {
-                File.Delete(filePath);
-                Log.Info($"Session deleted: {sessionId}");
-            }
-
-            // If we're deleting the active session, clear it
-            if (_settingsService.Settings.ActiveSessionId == sessionId)
-            {
-                _settingsService.Settings.ActiveSessionId = null;
-                _settingsService.Save();
-
-                // Set another session as active if available
-                var remaining = await GetAllSessionsAsync();
-                if (remaining.Count > 0)
-                {
-                    await SetActiveSessionAsync(remaining[0].Id);
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Log.Error($"Failed to delete session {sessionId}: {ex.Message}");
-            throw;
-        }
-    }
-
     public Task SetActiveSessionAsync(string sessionId)
     {
         _settingsService.Settings.ActiveSessionId = sessionId;

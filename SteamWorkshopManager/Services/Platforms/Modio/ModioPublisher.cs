@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.ExceptionServices;
+using System.Text.Json.Serialization.Metadata;
+using System.Threading;
 using System.Threading.Tasks;
 using SteamWorkshopManager.Core.Sessions;
 using SteamWorkshopManager.Helpers;
@@ -80,9 +83,8 @@ public sealed class ModioPublisher(ModioApiClient client, ModioAccount account, 
     public async Task<ModioMod> GetModAsync(ulong modId, string? revision = null)
     {
         var gameId = ActiveGameIdUnsigned();
-        return await cache.GetOrFetchAsync(Key(modId, ModEntry), ModioJsonContext.Default.ModioMod,
-                   () => account.RunAsync<ModioMod?>(async auth => await client.GetModAsync(auth, gameId, (long)modId)),
-                   Policy, forceRefresh: revision is null, version: revision)
+        return await ReadAsync(Key(modId, ModEntry), ModioJsonContext.Default.ModioMod,
+                   auth => client.GetModAsync(auth, gameId, (long)modId), Policy, revision is null, revision)
                ?? throw new ModioApiException(0, 0, "mod.io returned no mod.");
     }
 
@@ -96,57 +98,62 @@ public sealed class ModioPublisher(ModioApiClient client, ModioAccount account, 
     }
 
     /// <exception cref="ModioApiException">mod.io refused a step; the steps before it are kept.</exception>
-    public async Task UpdateAsync(ModioModUpdate update, IProgress<UploadProgress>? progress = null)
+    public async Task UpdateAsync(ModioModUpdate update, IProgress<UploadProgress>? progress = null,
+        CancellationToken ct = default)
     {
         var gameId = ActiveGameId();
         var modId = (long)update.ModId;
         try
         {
             progress?.Report(new UploadProgress("PreparingUpdate", 0, 0, 5));
-            await account.RunAsync(auth => client.EditModAsync(auth, gameId, modId, update.Edit));
+            await account.RunAsync(auth => client.EditModAsync(auth, gameId, modId, update.Edit, ct));
 
             if (update.TagsToRemove.Count > 0)
-                await account.RunAsync(async auth => { await client.DeleteTagsAsync(auth, gameId, modId, update.TagsToRemove); return true; });
+                await account.RunAsync(async auth => { await client.DeleteTagsAsync(auth, gameId, modId, update.TagsToRemove, ct); return true; });
             if (update.TagsToAdd.Count > 0)
-                await account.RunAsync(async auth => { await client.AddTagsAsync(auth, gameId, modId, update.TagsToAdd); return true; });
+                await account.RunAsync(async auth => { await client.AddTagsAsync(auth, gameId, modId, update.TagsToAdd, ct); return true; });
 
             if (update.LogoPath is { } logo)
             {
                 progress?.Report(new UploadProgress("UploadingImage", 0, 0, 10));
-                await account.RunAsync(async auth => { await client.SetLogoAsync(auth, gameId, modId, logo); return true; });
+                await account.RunAsync(async auth => { await client.SetLogoAsync(auth, gameId, modId, logo, ct); return true; });
             }
 
-            await SendMediaAsync(gameId, modId, update.Media, progress);
+            await SendMediaAsync(gameId, modId, update.Media, progress, ct);
 
             if (update.File is { } file)
-                await UploadContentAsync(gameId, modId, file, progress);
+                await UploadContentAsync(gameId, modId, file, progress, ct);
 
             Log.Info($"mod.io mod {modId} updated");
         }
         finally
         {
-            Forget(update.ModId);
+            Forget(gameId, update.ModId);
             // Closes the upload toast whatever happened.
             progress?.Report(new UploadProgress("Done", 0, 0, 100));
         }
     }
 
-    public async Task UpdateMediaAsync(ulong modId, ModioMediaChange media, IProgress<UploadProgress>? progress = null)
+    public async Task UpdateMediaAsync(ulong modId, ModioMediaChange media, IProgress<UploadProgress>? progress = null,
+        CancellationToken ct = default)
     {
-        try { await SendMediaAsync(ActiveGameId(), (long)modId, media, progress); }
+        var gameId = ActiveGameId();
+        try { await SendMediaAsync(gameId, (long)modId, media, progress, ct); }
         finally
         {
-            Forget(modId);
+            Forget(gameId, modId);
             progress?.Report(new UploadProgress("Done", 0, 0, 100));
         }
     }
 
-    public async Task UploadFileAsync(ulong modId, ModioFileUpload file, IProgress<UploadProgress>? progress = null)
+    public async Task UploadFileAsync(ulong modId, ModioFileUpload file, IProgress<UploadProgress>? progress = null,
+        CancellationToken ct = default)
     {
-        try { await UploadContentAsync(ActiveGameId(), (long)modId, file, progress); }
+        var gameId = ActiveGameId();
+        try { await UploadContentAsync(gameId, (long)modId, file, progress, ct); }
         finally
         {
-            Forget(modId);
+            Forget(gameId, modId);
             progress?.Report(new UploadProgress("Done", 0, 0, 100));
         }
     }
@@ -157,18 +164,16 @@ public sealed class ModioPublisher(ModioApiClient client, ModioAccount account, 
     public async Task<ModioGame> GetGameAsync()
     {
         var gameId = ActiveGameIdUnsigned();
-        return await cache.GetOrFetchAsync(CacheKey.ModIoGame(gameId, "game.json"), ModioJsonContext.Default.ModioGame,
-                   () => account.RunAsync<ModioGame?>(async auth => await client.GetGameAsync(auth, gameId)),
-                   GamePolicy)
+        return await ReadAsync(CacheKey.ModIoGame(gameId, "game.json"), ModioJsonContext.Default.ModioGame,
+                   auth => client.GetGameAsync(auth, gameId), GamePolicy, forceRefresh: false, revision: null)
                ?? throw new ModioApiException(0, 0, "mod.io returned no game.");
     }
 
     public async Task<List<ModioModDependency>> GetDependenciesAsync(ulong modId, string? revision = null)
     {
         var gameId = ActiveGameIdUnsigned();
-        return await cache.GetOrFetchAsync(Key(modId, DependenciesEntry), ModioJsonContext.Default.ListModioModDependency,
-                   () => account.RunAsync<List<ModioModDependency>?>(async auth => await client.GetDependenciesAsync(auth, gameId, (long)modId)),
-                   Policy, forceRefresh: revision is null, version: revision)
+        return await ReadAsync(Key(modId, DependenciesEntry), ModioJsonContext.Default.ListModioModDependency,
+                   auth => client.GetDependenciesAsync(auth, gameId, (long)modId), Policy, revision is null, revision)
                ?? [];
     }
 
@@ -197,20 +202,40 @@ public sealed class ModioPublisher(ModioApiClient client, ModioAccount account, 
     public async Task<List<ModioModfile>> GetFilesAsync(ulong modId, string? revision = null)
     {
         var gameId = ActiveGameIdUnsigned();
-        return await cache.GetOrFetchAsync(Key(modId, FilesEntry), ModioJsonContext.Default.ListModioModfile,
-                   () => account.RunAsync<List<ModioModfile>?>(async auth => await client.GetModfilesAsync(auth, gameId, (long)modId)),
-                   Policy, forceRefresh: revision is null, version: revision)
+        return await ReadAsync(Key(modId, FilesEntry), ModioJsonContext.Default.ListModioModfile,
+                   auth => client.GetModfilesAsync(auth, gameId, (long)modId), Policy, revision is null, revision)
                ?? [];
+    }
+
+    /// <summary>
+    /// Cached read that keeps mod.io's own error. The cache turns a failed fetch into a miss,
+    /// which would hide a rate limit, a 404 or terms to accept behind "returned nothing".
+    /// </summary>
+    private async Task<T?> ReadAsync<T>(CacheKey key, JsonTypeInfo<T> type, Func<ModioCredentials, Task<T>> call,
+        CachePolicy policy, bool forceRefresh, string? revision) where T : class
+    {
+        Exception? failure = null;
+        var value = await cache.GetOrFetchAsync(key, type, async () =>
+        {
+            try { return await account.RunAsync<T?>(async auth => await call(auth)); }
+            catch (Exception ex) { failure = ex; throw; }
+        }, policy, forceRefresh, revision);
+
+        // A stale entry served on error still wins: only a miss surfaces the failure.
+        if (value is null && failure is not null) ExceptionDispatchInfo.Capture(failure).Throw();
+        return value;
     }
 
     private CacheKey Key(ulong modId, string name) => CacheKey.ModIoMod(ActiveGameIdUnsigned(), modId, name);
 
     /// <summary>Our own write changed the mod: its cached reads are no longer right.</summary>
-    private void Forget(ulong modId)
+    private void Forget(ulong modId) => Forget(ActiveGameIdUnsigned(), modId);
+
+    // With the game captured up front: the session can change while an upload runs.
+    private void Forget(long gameId, ulong modId)
     {
-        cache.Remove(Key(modId, ModEntry));
-        cache.Remove(Key(modId, FilesEntry));
-        cache.Remove(Key(modId, DependenciesEntry));
+        foreach (var name in (string[])[ModEntry, FilesEntry, DependenciesEntry])
+            cache.Remove(CacheKey.ModIoMod((uint)gameId, modId, name));
     }
 
     /// <summary>Makes an older file the one players download, without uploading anything.</summary>
@@ -270,18 +295,20 @@ public sealed class ModioPublisher(ModioApiClient client, ModioAccount account, 
         finally { Forget(modId); }
     }
 
-    private async Task SendMediaAsync(long gameId, long modId, ModioMediaChange media, IProgress<UploadProgress>? progress)
+    private async Task SendMediaAsync(long gameId, long modId, ModioMediaChange media, IProgress<UploadProgress>? progress,
+        CancellationToken ct)
     {
         if (!media.HasRemovals && !media.HasAdditions) return;
 
         progress?.Report(new UploadProgress("UploadingImage", 0, 0, 15));
         if (media.HasRemovals)
-            await account.RunAsync(async auth => { await client.DeleteMediaAsync(auth, gameId, modId, media); return true; });
+            await account.RunAsync(async auth => { await client.DeleteMediaAsync(auth, gameId, modId, media, ct); return true; });
         if (media.HasAdditions)
-            await account.RunAsync(async auth => { await client.AddMediaAsync(auth, gameId, modId, media); return true; });
+            await account.RunAsync(async auth => { await client.AddMediaAsync(auth, gameId, modId, media, ct); return true; });
     }
 
-    private async Task UploadContentAsync(long gameId, long modId, ModioFileUpload file, IProgress<UploadProgress>? progress)
+    private async Task UploadContentAsync(long gameId, long modId, ModioFileUpload file, IProgress<UploadProgress>? progress,
+        CancellationToken ct)
     {
         progress?.Report(new UploadProgress("PreparingContent", 0, 0, 20));
         var dir = AppPaths.TempUploadDir();
@@ -289,8 +316,9 @@ public sealed class ModioPublisher(ModioApiClient client, ModioAccount account, 
         {
             Directory.CreateDirectory(dir);
             var zip = Path.Combine(dir, $"mod-{modId}.zip");
-            await Task.Run(() => ModioContentArchive.Create(file.Folder, zip));
-            await account.RunAsync(auth => client.UploadModfileAsync(auth, gameId, modId, zip, file.Version, file.Changelog, progress));
+            await Task.Run(() => ModioContentArchive.Create(file.Folder, zip), ct);
+            ct.ThrowIfCancellationRequested();
+            await account.RunAsync(auth => client.UploadModfileAsync(auth, gameId, modId, zip, file.Version, file.Changelog, progress, ct));
         }
         finally
         {

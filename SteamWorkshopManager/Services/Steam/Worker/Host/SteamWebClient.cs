@@ -15,7 +15,7 @@ internal static class SteamWebClient
     private static HTTPCookieContainerHandle _cookieContainer;
     private static bool _initialized;
 
-    public static async Task InitializeAsync()
+    public static void Initialize()
     {
         if (_initialized) return;
 
@@ -38,36 +38,19 @@ internal static class SteamWebClient
             if (_cookieContainer.m_HTTPCookieContainerHandle != 0)
                 SteamHTTP.SetHTTPRequestCookieContainer(handle, _cookieContainer);
 
-            var tcs = new TaskCompletionSource<HTTPRequestCompleted_t>();
-            var callResult = CallResult<HTTPRequestCompleted_t>.Create((result, failure) =>
-            {
-                if (failure)
-                    tcs.TrySetException(new Exception("SteamHTTP request failed"));
-                else
-                    tcs.TrySetResult(result);
-            });
-
             if (!SteamHTTP.SendHTTPRequest(handle, out var apiCall))
             {
                 Log.Warning("Failed: SendHTTPRequest returned false");
                 return null;
             }
 
-            callResult.Set(apiCall);
-
-            var timeout = DateTime.UtcNow.AddSeconds(timeoutSeconds);
-            while (!tcs.Task.IsCompleted && DateTime.UtcNow < timeout)
-            {
-                await Task.Delay(100);
-            }
-
-            if (!tcs.Task.IsCompleted)
+            var answer = await SteamCall.AwaitAsync<HTTPRequestCompleted_t>(
+                apiCall, TimeSpan.FromSeconds(timeoutSeconds), "SteamHTTP request failed");
+            if (answer is not { } completed)
             {
                 Log.Warning("Request timed out");
                 return null;
             }
-
-            var completed = await tcs.Task;
 
             if (!completed.m_bRequestSuccessful || completed.m_eStatusCode != EHTTPStatusCode.k_EHTTPStatusCode200OK)
             {
